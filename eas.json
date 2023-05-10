@@ -1,0 +1,32 @@
+{
+  "cli": {
+    "version": ">= 3.7.2"
+  },
+  "build": {
+    "production": {
+      "ios": {
+        "resourceClass": "m-medium"
+      },
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "development": {
+      "extends": "production",
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "staging": {
+      "extends": "development"
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "appleId": "kkylee2001@icloud.com",
+        "ascAppId": "6446234330",
+        "appleTeamId": "97LMDYM6GF"
+      }
+    }
+  }
+}

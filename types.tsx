@@ -1,0 +1,57 @@
+/**
+ * Learn more about using TypeScript with React Navigation:
+ * https://reactnavigation.org/docs/typescript/
+ */
+
+import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
+import { CompositeScreenProps, NavigatorScreenParams } from '@react-navigation/native';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { MediaType } from './types/Media';
+
+declare global {
+  namespace ReactNavigation {
+    interface RootParamList extends RootStackParamList {}
+  }
+}
+
+export type RootStackParamList = {
+  Root: NavigatorScreenParams<RootTabParamList> | undefined;
+  Modal: undefined;
+  NotFound: undefined;
+  WorkoutPlay: {id: string; workoutId?: string;}
+  Image: {uris: string[], defaultIndex?: number | undefined};
+  Run: undefined;
+  Settings: undefined;
+  Apply: undefined;
+  PersonalInformation: undefined;
+  Subscription: undefined;
+  Help: undefined;
+  About: undefined;
+  Login: undefined;
+  ForgotPassword: undefined;
+  GetStarted: undefined;
+  Registration: undefined;
+  GenerateMeal: undefined;
+  Account: undefined;
+  ChangePassword: undefined;
+  UpdateEmail: undefined;
+  DeleteAccount: undefined;
+  FinishedExercise: undefined;
+};
+
+export type RootStackScreenProps<Screen extends keyof RootStackParamList> = NativeStackScreenProps<
+  RootStackParamList,
+  Screen
+>;
+
+export type RootTabParamList = {
+  Home: undefined;
+  Exercise: undefined;
+  Food: undefined;
+  Profile: undefined
+};
+
+export type RootTabScreenProps<Screen extends keyof RootTabParamList> = CompositeScreenProps<
+  BottomTabScreenProps<RootTabParamList, Screen>,
+  NativeStackScreenProps<RootStackParamList>
+>;

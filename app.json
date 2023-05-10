@@ -1,0 +1,66 @@
+{
+  "expo": {
+    "name": "Rage - Health",
+    "slug": "rage",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "rage",
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Rage accesses your photos or videos so that you can upload them.",
+          "cameraPermission": "Rage accesses your camera so you can take photos or videos to upload"
+        }
+      ],
+      [
+        "expo-tracking-transparency",
+        {
+          "userTrackingPermission": "This identifier will be used to deliver personalized ads to you."
+        }
+      ]
+    ],
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/images/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FF3333"
+    },
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.health.rage"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": "com.health.rage"
+    },
+    "web": {
+      "favicon": "./assets/images/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "ef537a39-f407-4561-b2b8-5fdf2be97a7f"
+      }
+    },
+    "owner": "kyle.lookfong"
+  },
+  "react-native-google-mobile-ads": {
+    "android_app_id": "ca-app-pub-8201182773199572~8350476114",
+    "ios_app_id": "ca-app-pub-8201182773199572~8067652508",
+    "user_tracking_usage_description": "This will be used to deliver personalized ads to you.",
+    "delay_app_measurement_init": true
+  }
+}

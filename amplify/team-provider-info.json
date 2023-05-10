@@ -1,0 +1,43 @@
+{
+  "dev": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-rage-dev-120538-authRole",
+      "UnauthRoleArn": "arn:aws:iam::408450834902:role/amplify-rage-dev-120538-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::408450834902:role/amplify-rage-dev-120538-authRole",
+      "Region": "us-east-1",
+      "DeploymentBucketName": "amplify-rage-dev-120538-deployment",
+      "UnauthRoleName": "amplify-rage-dev-120538-unauthRole",
+      "StackName": "amplify-rage-dev-120538",
+      "StackId": "arn:aws:cloudformation:us-east-1:408450834902:stack/amplify-rage-dev-120538/b2dfe280-a57f-11ed-a32b-0adbb06ea993",
+      "AmplifyAppId": "d1hvc4yve37x56"
+    },
+    "categories": {
+      "api": {
+        "rage": {}
+      },
+      "auth": {
+        "rage": {}
+      },
+      "storage": {
+        "s3ragestorage3172b28d": {}
+      },
+      "function": {
+        "payoutInserter": {
+          "stripeApiKey": "sk_test_51Muh8GIcSSXdXL0WKnxgJs2xUREpH2KPBEEfcc10fntYzkkYmuwgXrcBYbPQD1nNykSkZotKxU0pwzJpwKqDKmOt00pBXM0eTO"
+        },
+        "PayoutCreator": {
+          "secretsPathAmplifyAppId": "d1hvc4yve37x56",
+          "deploymentBucketName": "amplify-rage-dev-120538-deployment",
+          "s3Key": "amplify-builds/PayoutCreator-4e31586a336976766e54-build.zip",
+          "stripeId": "sk_test_51Muh8GIcSSXdXL0WKnxgJs2xUREpH2KPBEEfcc10fntYzkkYmuwgXrcBYbPQD1nNykSkZotKxU0pwzJpwKqDKmOt00pBXM0eTO"
+        },
+        "PayoutInserter": {
+          "secretsPathAmplifyAppId": "d1hvc4yve37x56"
+        },
+        "PayoutInsert": {
+          "secretsPathAmplifyAppId": "d1hvc4yve37x56"
+        }
+      }
+    }
+  }
+}

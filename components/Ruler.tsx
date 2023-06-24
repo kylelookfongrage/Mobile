@@ -45,7 +45,7 @@ export const Ruler = (props: RulerProps) => {
 
 
     const dm = useColorScheme() === 'dark'
-    return <View style={tw`bg-red-200`}>
+    return <View style={{backgroundColor: 'transparent'}}>
         <View style={tw`items-center justify-center`}>
             <Text style={tw`text-lg font-bold`}>{text}{' '}{unit}</Text>
             <ExpoIcon name='caret-down-outline' iconName='ion' size={25} color={dm ? 'white' : 'black'} />

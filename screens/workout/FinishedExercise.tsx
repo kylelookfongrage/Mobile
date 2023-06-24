@@ -1,19 +1,40 @@
-import { TouchableOpacity, useColorScheme, View } from 'react-native'
-import React from 'react'
+import { TouchableOpacity, useColorScheme } from 'react-native'
+import React, { useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Text } from '../../components/Themed'
+import { Text, View } from '../../components/Themed'
 import tw from 'twrnc'
 import AnimatedLottieView from 'lottie-react-native'
 import trophy from '../../assets/animations/trophy.json'
 import { useNavigation } from '@react-navigation/native'
 import ThisAdHelpsKeepFree from '../../components/ThisAdHelpsKeepFree'
+import { useCommonAWSIds } from '../../hooks/useCommonContext'
+import { sleep } from '../../data'
 
 export default function FinishedExercise() {
     const dm = useColorScheme() === 'dark'
     const navigator = useNavigation()
+    const {subscribed} = useCommonAWSIds()
+    const [canMove, setCanMove] = useState<boolean>(false)
+    let [time, setTime] = useState<number>(0)
+    let waitTime = 5
+    React.useEffect(() => {
+        if (subscribed) {
+            setCanMove(true)
+        }
+    }, [subscribed])
+    React.useEffect(() => {
+        setTimeout(() => {
+            if (time < waitTime){
+                setTime(time + 1)
+            } else {
+                setCanMove(true)
+            }
+        }, 1000);
+    })
+    let buttonColor = canMove ? (dm ? 'red-600' : "red-500") : (dm ? 'red-600/40' : 'red-500/40')
     return (
-        <SafeAreaView style={tw`px-4`}>
-            <View style={tw`justify-between h-12/12 flex`}>
+        <View style={[tw`px-4`, {flex: 1}]} includeBackground>
+            <SafeAreaView style={tw`justify-between h-12/12 flex`}>
                 <View>
                     <View style={tw`items-center justify-center w-12/12`}>
                         <AnimatedLottieView autoPlay
@@ -25,12 +46,14 @@ export default function FinishedExercise() {
                     <Text style={tw`text-center px-4`}>You have successfully completed a workout or run. Your progress has been saved!</Text>
                 </View>
                 <ThisAdHelpsKeepFree />
-                <TouchableOpacity onPress={() => {
+                <TouchableOpacity 
+                disabled={!canMove}
+                onPress={() => {
                     navigator.navigate('Root')
-                }} style={tw`bg-${dm ? 'red-600' : "red-500"} px-5 mx-9 h-12 justify-center rounded-xl`}>
-                    <Text numberOfLines={1} style={tw`text-center text-white`} weight='semibold'>Go Home</Text>
+                }} style={tw`bg-${buttonColor} px-5 mx-9 h-12 justify-center rounded-xl`}>
+                    <Text numberOfLines={1} style={tw`text-center text-white`} weight='semibold'>Go Home {(waitTime > time && !subscribed) && (waitTime - time)}</Text>
                 </TouchableOpacity>
-            </View>
-        </SafeAreaView>
+            </SafeAreaView>
+        </View>
     )
 }

@@ -103,30 +103,6 @@
           "resourceName": "PayoutCreator"
         }
       ]
-    },
-    "AMPLIFY_function_PayoutInsert_secretsPathAmplifyAppId": {
-      "usedBy": [
-        {
-          "category": "function",
-          "resourceName": "PayoutInsert"
-        }
-      ]
-    },
-    "AMPLIFY_function_PayoutInserter_secretsPathAmplifyAppId": {
-      "usedBy": [
-        {
-          "category": "function",
-          "resourceName": "PayoutInserter"
-        }
-      ]
-    },
-    "AMPLIFY_function_payoutInserter_stripeApiKey": {
-      "usedBy": [
-        {
-          "category": "function",
-          "resourceName": "payoutInserter"
-        }
-      ]
     }
   },
   "storage": {

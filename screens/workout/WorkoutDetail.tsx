@@ -1,6 +1,6 @@
-import { View, SafeAreaView, ScrollView, TextInput, TouchableOpacity, Image, Dimensions, Switch, Alert } from 'react-native'
+import { SafeAreaView, ScrollView, TextInput, TouchableOpacity, Image, Dimensions, Switch, Alert } from 'react-native'
 import React from 'react'
-import { Text } from '../../components/Themed'
+import { Text, View } from '../../components/Themed'
 import tw from 'twrnc'
 import useColorScheme from '../../hooks/useColorScheme'
 import { ExpoIcon } from '../../components/ExpoIcon'
@@ -49,7 +49,12 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
   const [exercises, setExercises] = React.useState<Exercise[]>([])
   const [exerciseDetails, setExerciseDetails] = React.useState<WorkoutDetails[]>([])
   const [equiptment, setEquiptment] = React.useState<Equiptment[]>([])
-  const [originalPremium, setOriginalPremium] = React.useState<boolean>(false)
+  const [originalPremium, setOriginalPremium] = React.useState<boolean | null | undefined>(null)
+  const [originalName, setOriginalName] = React.useState<string>('')
+  const [originalDescription, setOriginalDescription] = React.useState<string>('')
+  const [originalImage, setOriginalImage] = React.useState<MediaType[]>([])
+  const [originalCategory, setOrignalCategory] = React.useState<Category>(workoutCategories[0])
+  const [orignalExercises, setOriginalExercises] = React.useState<WorkoutDetails[]>([])
   const dm = useColorScheme() === 'dark'
   const [authorId, setAuthorId] = React.useState<string>('')
   const [editMode, setEditMode] = React.useState<boolean>(false)
@@ -62,8 +67,9 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
 
   React.useEffect(() => {
     if (!id && !workoutId) {
+      setIsUsersWorkout(true)
       setAuthor(username)
-      DataStore.save(new Workout({ name: '', description: '', sub: sub, premium: false, img: '', userID: userId })).then(w => {
+      DataStore.save(new Workout({ name: '', description: '', sub: sub, img: '', userID: userId })).then(w => {
         setWorkoutId(w.id)
       })
     }
@@ -82,25 +88,25 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
         }
       })
       if (wo.img) {
-        if (isStorageUri(wo.img)) {
-          Storage.get(wo.img).then(url => {
-            setImg([{ uri: url, type: 'image' }])
-          })
-        } else {
-          setImg([{ uri: wo.img || '', type: 'image' }])
-        }
+        setImg([{type: 'image', uri: wo.img}])
+        setOriginalImage([{type: 'image', uri: wo.img}])
       }
+      setOriginalDescription(wo.description)
+      setOriginalName(wo.name)
       setName(wo.name)
+      setIsUsersWorkout(wo.userID === userId)
       setDescription(wo.description)
       setPremium(wo.premium || false)
       if (wo.userID === userId) {
 
         setCanViewDetails(true)
       }
-      setOriginalPremium(wo.premium || false)
+      setOriginalPremium(wo.premium)
       const canBeCategory = workoutCategories.filter(x => x.name === wo.category)
       setWorkoutCategory(canBeCategory.length > 0 ? canBeCategory[0] : workoutCategories[0])
+      setOrignalCategory(canBeCategory.length > 0 ? canBeCategory[0] : workoutCategories[0])
       setUpdating(false)
+      DataStore.query(WorkoutDetails, wd => wd.workoutID.eq(workoutId)).then(x => setOriginalExercises(x))
 
     })
     let subscription = DataStore.observeQuery(WorkoutDetails, wd => wd.workoutID.eq(workoutId), { sort: x => x.createdAt('ASCENDING') }).subscribe(async ss => {
@@ -132,11 +138,31 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
   }, [workoutId])
 
   React.useEffect(() => {
-    if (originalPremium === premium) return;
-    if (editMode === true) return;
-    setPremium(originalPremium)
+    const resetExercises = async () => {
+      for (var ex of orignalExercises) {
+        const potential = await DataStore.query(WorkoutDetails, ex.id)
+        if (!potential) {
+          await DataStore.save(new WorkoutDetails({
+            userID: ex.userID, workoutID: ex.workoutID, exerciseID: ex.exerciseID,
+            sets: ex.sets, secs: ex.secs, reps: ex.reps, rest: ex.rest, note: ex.note
+          }))
+        }
+      }
+      for (var exercise of exerciseDetails) {
+        if (!orignalExercises.find(x => x.id === exercise.id)) {
+          await DataStore.delete(WorkoutDetails, exercise.id)
+        }
+      }
+    }
+    if (editMode === false) {
+      setName(originalName)
+      setImg(originalImage)
+      setDescription(originalDescription)
+      setWorkoutCategory(originalCategory)
+      setPremium(originalPremium || false)
+      resetExercises()
+    }
   }, [editMode])
-
 
   React.useEffect(() => {
     if (!exercises || exercises.length === 0) return;
@@ -174,6 +200,7 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
 
   const [premium, setPremium] = React.useState<boolean>(false)
   const [errors, setErrors] = React.useState<string[]>([])
+  const [isUsersWorkouts, setIsUsersWorkout] = React.useState<boolean>(false)
 
   const equs: { img: string, name: string, id: string }[] = []
   equiptment.forEach(e => {
@@ -185,6 +212,7 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
   })
 
   const [updating, setUpdating] = React.useState<boolean>(false)
+
   const onWorkoutSave = async () => {
     setErrors([])
     if (!workoutId) {
@@ -203,6 +231,14 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
       setErrors(['Your workouts must have at least one set'])
       return;
     }
+
+    if (premium === true) {
+      let exercisesThatAreNotTheUsers = exercises.filter(x => x.userID !== userId)
+      if (exercisesThatAreNotTheUsers.length > 0) {
+        setErrors(['For a premium workout, all exercises must be your own']);
+        return;
+      }
+    }
     let mediaToUpload = img.length === 0 ? defaultImage : img[0].uri
     if (img.length === 0) {
       setImg([{ uri: defaultImage, type: 'image' }])
@@ -211,7 +247,7 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
     const original = await DataStore.query(Workout, workoutId)
     if (original) {
       let uploadImg = defaultImage
-      if (mediaToUpload !== defaultImage && !isStorageUri(mediaToUpload)) {
+      if ((mediaToUpload !== defaultImage) && !isStorageUri(mediaToUpload)) {
         const uri = await uploadImageAndGetID(img[0])
         if (uri) {
           uploadImg = uri
@@ -219,7 +255,6 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
         console.log(uri)
 
       }
-      setOriginalPremium(premium)
       await DataStore.save(Workout.copyOf(original, og => {
         og.premium = premium;
         og.description = description || '';
@@ -238,6 +273,12 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
           x.note = ed.note;
         }))
       }))
+      setOriginalPremium(premium)
+      setOrignalCategory(workoutCategory)
+      setOriginalDescription(description || '')
+      setOriginalName(name)
+      setOriginalImage([{type: 'image', uri: uploadImg}])
+      setOriginalExercises(exerciseDetails)
       alert('Your workout has been saved!')
       setEditMode(false)
       setUpdating(false)
@@ -261,7 +302,7 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
   }, [])
 
   return (
-    <View style={tw`h-12/12`}>
+    <View style={{flex: 1}} includeBackground>
       <BackButton Right={() => {
         if (!editMode || !id) {
           return null;
@@ -295,7 +336,7 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
                 placeholder='Workout Name'
                 numberOfLines={2}
                 placeholderTextColor={'gray'}
-                style={tw`text-2xl mb-2 py-2 ${borderStyle} 
+                style={tw`text-2xl font-bold mb-2 py-2 ${borderStyle} 
                               text-${dm ? 'white' : 'black'}`}
               />
               <TouchableOpacity onPress={() => {
@@ -308,7 +349,7 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
                 <Text>by {<Text style={tw`text-red-600`}>{author}</Text>}</Text>
               </TouchableOpacity>
             </View>
-            {props.editable && <TouchableOpacity onPress={() => setEditMode(!editMode)}>
+            {(props.editable || isUsersWorkouts) && <TouchableOpacity onPress={() => setEditMode(!editMode)}>
               <Text>{editMode ? 'Cancel' : "Edit"}</Text>
             </TouchableOpacity>}
             {!editMode && <TouchableOpacity style={tw`px-3`} onPress={async () => {
@@ -325,9 +366,12 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
               <ExpoIcon name={favorite ? 'heart' : 'heart-outline'} iconName='ion' color={'red'} size={25} />
             </TouchableOpacity>}
           </View>
-          {(editMode) && <View style={tw`py-5 px-5 flex-row items-center`}>
+          {(editMode) && <View style={tw`p-5`}>
+            <View style={tw`flex flex-row items-center`}>
             <Text style={tw`text-xl mr-4`} weight='semibold'>Premium</Text>
-            <Switch value={premium} onValueChange={setPremium} disabled={!editMode} />
+            <Switch value={premium} onValueChange={setPremium} disabled={(!editMode || originalPremium === true || originalPremium === false )} />
+            </View>
+            <Text>Please note that you cannot change premium status once saved</Text>
           </View>}
           <View style={tw`py-5 px-5`}>
             <Text style={tw`text-2xl`} weight='bold'>Description</Text>

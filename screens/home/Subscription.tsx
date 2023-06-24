@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
-import { View, Image, TouchableOpacity, useColorScheme, Platform } from 'react-native'
-import { Text } from '../../components/Themed'
+import { TouchableOpacity, useColorScheme, Platform } from 'react-native'
+import { Text, View } from '../../components/Themed'
 import { useCommonAWSIds } from '../../hooks/useCommonContext'
 import { BackButton } from '../../components/BackButton'
 import { ScrollView } from 'react-native-gesture-handler'
@@ -87,7 +87,7 @@ export default function Subscription() {
   }
   
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1 }} includeBackground>
       <BackButton name='Subscription' Right={() => {
         return <TouchableOpacity disabled={(subscribed || uploading)} onPress={async () => {
           setUploading(true)

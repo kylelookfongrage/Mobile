@@ -1,6 +1,6 @@
-import { ScrollView, View, TextInput, useColorScheme, TouchableOpacity, ActivityIndicator } from 'react-native'
+import { ScrollView, TextInput, useColorScheme, TouchableOpacity, ActivityIndicator } from 'react-native'
 import React from 'react'
-import { Text } from '../../components/Themed'
+import { Text, View } from '../../components/Themed'
 import { BackButton } from '../../components/BackButton'
 import tw from 'twrnc'
 import { ErrorMessage } from '../../components/ErrorMessage'
@@ -32,12 +32,14 @@ export default function GenerateMeal() {
             return;
         }
         setUploading(true)
-        const res = await completePrompt(prompt + ' put ingredients first')
-        setUploading(false)
-        if (!res) {
+        let res = ''
+        try {
+            res = (await completePrompt(prompt + ' put ingredients first')) || ''
+        } catch (error) {
             setErrors(['There was a problem completing your prompt, please try a shorter prompt.'])
             return;
         }
+        setUploading(false)
         setResult(res)
     }
     const { aiResult, setAiResult, setCurrentIngredietId, userId, subscribed } = useCommonAWSIds()
@@ -104,7 +106,7 @@ export default function GenerateMeal() {
     const [editSteps, setEditSteps] = React.useState<boolean>(false)
 
     if (!subscribed) {
-        return <View>
+        return <View includeBackground style={{flex: 1}}>
             <BackButton name='Generate Meal' />
             <View style={tw`items-center justify-center px-4`}>
                 <AnimatedLottieView autoPlay loop source={cooking} style={tw`h-70 w-70`} />
@@ -120,7 +122,7 @@ export default function GenerateMeal() {
 
 
     return (
-        <View style={{ flex: 1 }}>
+        <View style={{ flex: 1 }} includeBackground>
             <BackButton name='Generate Meal' func={() => {
                 setAiResult(null)
                 setCurrentIngredietId(null)
@@ -128,18 +130,20 @@ export default function GenerateMeal() {
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[tw`px-4 pt-6 pb-40`]}>
                 {errors.length > 0 && <View style={tw`pb-6`}>
                     <ErrorMessage errors={errors} onDismissTap={() => setErrors([])} /></View>}
-                <TextInput style={tw`px-4 py-4 rounded-lg border border-${dm ? 'white' : 'black'} rounded-xl text-${dm ? 'white' : 'black'}`} multiline numberOfLines={10} value={prompt} onChangeText={(x) => {
+                <TextInput style={tw`px-4 py-4 rounded bg-gray-${dm ? '500' : '400/50'} rounded-xl text-${dm ? 'white' : 'black'}`} multiline numberOfLines={10} value={prompt} onChangeText={(x) => {
                     if (!x.includes(defaultPromptText)) {
                         setPrompt(defaultPromptText)
                     } else {
                         setPrompt(x)
                     }
                 }} placeholder='...' />
-                <TouchableOpacity onPress={onGenerateTap} disabled={uploading} style={tw`w-12/12 items-center mt-9 py-2 rounded-lg bg-red-${dm ? '700' : '500'}`}>
+                <View style={tw`flex items-center justify-center`}>
+                <TouchableOpacity onPress={onGenerateTap} disabled={uploading} style={tw`w-7/12 justify-center items-center mt-9 py-3 rounded-lg bg-red-${dm ? '700' : '500'}`}>
                     {uploading && <ActivityIndicator />}
                     {!uploading && <Text style={tw`text-white`} weight='semibold'>{result ? 'Regenerate' : 'Generate'} 🪄</Text>}
                 </TouchableOpacity>
-                {result && <Expand header='Chat GPT Says:' body={result} />}
+                </View>
+                {result && <Expand header='OpenAI Says:' body={result} />}
                 {result && <View style={tw`flex-row items-center mt-4`}>
                     <Text style={tw`text-lg`} weight='semibold'>Name:</Text>
                     <TextInput

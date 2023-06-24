@@ -1,6 +1,6 @@
-import { TouchableOpacity, useColorScheme, View, TextInput, ScrollView } from 'react-native'
+import { TouchableOpacity, useColorScheme, TextInput, ScrollView } from 'react-native'
 import React from 'react'
-import { Text } from '../../components/Themed'
+import { Text, View } from '../../components/Themed'
 import { BackButton } from '../../components/BackButton'
 import tw from 'twrnc'
 import { ErrorMessage } from '../../components/ErrorMessage'
@@ -60,7 +60,7 @@ export default function ChangePassword() {
   }
 
   return (
-    <View style={{flex: 1}}>
+    <View style={{flex: 1}} includeBackground>
       <BackButton name='Back' />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[tw`px-4 mt-9`]}>
         {errors.length > 0 && <ErrorMessage errors={errors} onDismissTap={() => setErrors([])} />}

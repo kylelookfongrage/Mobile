@@ -93,10 +93,12 @@ export const ImagePickerView = (props: ImagePickerViewProps) => {
     React.useEffect(() => {
         //@ts-ignore
         setMediaSources([])
+        console.log('from ipv')
+        console.log(props.srcs)
         if (props.srcs && props.srcs.length > 0) {
             Promise.all(props.srcs.map(async x => {
-                if (isStorageUri(x.uri)) {
-                    const url = await Storage.get(x.uri)
+                if (isStorageUri(x.uri || defaultImage)) {
+                    const url = await Storage.get(x.uri||defaultImage)
                     return { uri: url, type: x.type, awsId: x.uri }
                 } else {
                     return x
@@ -143,8 +145,8 @@ export const ImagePickerView = (props: ImagePickerViewProps) => {
                     width: props.snapTo || Dimensions.get('screen').width
                 }]}>
                     {mediaSources.length > 1 && <View style={[{ position: 'absolute', top: 40, right: 20, zIndex: 1 }, tw`py-2 px-4 bg-gray-${dm ? '700' : '300'} rounded-lg`]}>
-                        {(i === mediaSources.length - 1 && props.editable) && <Text style={tw`text-white`}>Scroll to add</Text>}
-                        {(i !== mediaSources.length - 1 || !props.editable) && <Text style={tw`text-white`}>{i + 1}/{mediaSources.length}</Text>}
+                        {(i === mediaSources.length - 1 && props.editable) && <Text style={tw``}>Scroll to add</Text>}
+                        {(i !== mediaSources.length - 1 || !props.editable) && <Text style={tw``}>{i + 1}/{mediaSources.length}</Text>}
                     </View>}
                     {imageSource && imageSource.type === 'image' && <TouchableOpacity onPress={() => {
                         const numberOfVideos = mediaSources.filter(x => x.type === 'video').length

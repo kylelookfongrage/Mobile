@@ -1,6 +1,6 @@
-import { Dimensions, Image, RefreshControl, useColorScheme, View, ActivityIndicator } from 'react-native'
+import { Dimensions, Image, RefreshControl, useColorScheme, ActivityIndicator } from 'react-native'
 import React, { useState } from 'react'
-import { Text } from '../../components/Themed'
+import { Text, View } from '../../components/Themed'
 import { BackButton } from '../../components/BackButton'
 import tw from 'twrnc'
 import { useCommonAWSIds } from '../../hooks/useCommonContext'
@@ -14,6 +14,7 @@ import { defaultImage, isStorageUri } from '../../data'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { useNavigation } from '@react-navigation/native'
 import { Env } from '../../env'
+import { ExpoIcon } from '../../components/ExpoIcon'
 
 const Stack = createNativeStackNavigator()
 export default function CreatorHub() {
@@ -57,32 +58,32 @@ function PayoutDetail(props: { id: string, dest: string }) {
     prepare()
   }, [])
 
-  async function onFinalizePress() {
-    console.log(payout)
-    if (!payout || !payout.amount || !dest) {
-      alert('There was a problem, please check your internet and try again')
-      return;
-    }
-    setUploading(true)
-    const originalPayout = await DataStore.query(Payouts, id)
-    if (!originalPayout) {
-      alert('There was a problem fetching your payout, please try again')
-      setUploading(false)
-      return
-    }
-    const res = await createPayout(payout.amount * 100, dest)
-    if (res['error']) {
-      alert(res['error']['message'] || 'There was a problem processing this payout')
-      setUploading(false)
-      return;
-    }
-    await DataStore.save(Payouts.copyOf(originalPayout, x => {
-      x.stripeId = res.id
-      x.paidDate = moment().format('YYYY-MM-DD')
-    }))
-    setPayout({...payout, stripeId: res.id})
-    setUploading(false)
-  }
+  // async function onFinalizePress() {
+  //   console.log(payout)
+  //   if (!payout || !payout.amount || !dest) {
+  //     alert('There was a problem, please check your internet and try again')
+  //     return;
+  //   }
+  //   setUploading(true)
+  //   const originalPayout = await DataStore.query(Payouts, id)
+  //   if (!originalPayout) {
+  //     alert('There was a problem fetching your payout, please try again')
+  //     setUploading(false)
+  //     return
+  //   }
+  //   const res = await createPayout(payout.amount * 100, dest)
+  //   if (res['error']) {
+  //     alert(res['error']['message'] || 'There was a problem processing this payout')
+  //     setUploading(false)
+  //     return;
+  //   }
+  //   await DataStore.save(Payouts.copyOf(originalPayout, x => {
+  //     x.stripeId = res.id
+  //     x.paidDate = moment().format('YYYY-MM-DD')
+  //   }))
+  //   setPayout({ ...payout, stripeId: res.id })
+  //   setUploading(false)
+  // }
   const dm = useColorScheme() === 'dark'
   const navigator = useNavigation()
   const height = Dimensions.get('screen').height
@@ -90,19 +91,27 @@ function PayoutDetail(props: { id: string, dest: string }) {
     <View style={tw`justify-between h-12/12 pb-9`}>
       {!payout && <Text>There was a problem finding this payout, please check your internet connection and try again</Text>}
       {payout && <View>
-        <View style={tw`mb-4 justify-between items-center flex-row`}>
-          <Text weight='semibold' style={tw`text-lg`}>Payout Details</Text>
-          <Text>{moment(payout.activityStart).format('MMM/Do')} - {moment(payout.activityEnd).format('MMM/Do')}</Text>
+        <View style={tw`mb-4 justify-between items-start flex-row`}>
+          <View>
+            <Text weight='semibold' style={tw`text-lg`}>Payout Details</Text>
+            <Text>{moment(payout.activityStart).format('MMM/Do')} - {moment(payout.activityEnd).format('MMM/Do')}</Text>
+          </View>
+          <TouchableOpacity style={tw`p-2`} onPress={() => {
+            //@ts-ignore
+            navigator.pop()
+          }}>
+            <ExpoIcon iconName='feather' name='x-circle' color='gray' size={25} />
+          </TouchableOpacity>
         </View>
+        <Text style={tw`text-gray-500 text-center py-2 text-xs`}>Please note that tax reporting fees could decrease your payout amount</Text>
+        {payout.paidDate && <PayoutDetailLineItem name='Paid' desc={moment(payout.paidDate).format('LL')} />}
         <PayoutDetailLineItem name='Workout Activity' desc={payout.workoutActivity?.toFixed() || ''} />
         <PayoutDetailLineItem name='Meal Activity' desc={payout.mealActivity?.toFixed() || ''} />
         <PayoutDetailLineItem name='Amount' desc={"$" + payout.amount?.toFixed() || ''} />
-        {!payout.stripeId && <TouchableOpacity disabled={uploading} onPress={onFinalizePress} style={tw`my-2 p-4 rounded-lg`}>
-          <Text style={tw`text-center underline`} weight='bold'>Finalize Payout</Text>
-        </TouchableOpacity>}
+        {(payout.paidDate && moment(payout.paidDate).month() === 11) && <PayoutDetailLineItem name='Tax Reporting Fee' desc='$2.99' />}
         {payout.stripeId && <View>
           <PayoutDetailLineItem name='Status' desc={status} />
-          <Text style={tw`text-center my-4 text-gray-500`}>Please allow up to 7 business days for your payout to be sent to the institution provided to Stripe</Text>
+          <Text style={tw`text-center my-4 text-gray-500 text-xs`}>Please allow up to 7 business days for your payout to be sent to the institution provided to Stripe</Text>
           <TouchableOpacity style={tw`p-3`} onPress={async () => {
             if (!recipt) return;
             console.log(recipt)
@@ -144,6 +153,7 @@ function CreatorScreen() {
   const [payouts, setPayouts] = useState<Payouts[]>([])
   const navigator = useNavigation()
   const [refreshing, setRefresing] = useState<boolean>(false)
+  const [outstandingPayouts, setOutstandingPayouts] = useState<Payouts[]>([])
 
   //TODO: Make stripeId object on user, how do we automate payouts? Add payouts table
 
@@ -190,24 +200,25 @@ function CreatorScreen() {
       m.createdAt.ge(moment().subtract(30, 'days').format('YYYY-MM-DD'))
     ]))
     const workoutsWithData = await Promise.all(workoutData.map(async workout => {
-      let obj = {
-        name: workout.name,
-        id: workout.id,
-        image: defaultImage,
-        usage: 0
-      }
+
       const usages = (await DataStore.query(WorkoutPlay, x => x.and(wp => [
         wp.date.ge(moment().startOf('month').format('YYYY-MM-DD')),
         wp.date.le(moment().endOf('month').format('YYYY-MM-DD')),
         wp.WorkoutPlayDetails.workoutID.eq(workout.id),
         wp.userID.ne(userId)
       ]))).length
-      obj.usage = usages
-      if (workout.img && isStorageUri(workout.img)) {
-        obj.image = await Storage.get(workout.img)
+      const usage = usages
+      let image = workout.img || defaultImage
+      if (isStorageUri(image)) {
+        image = await Storage.get(image)
       }
 
-      return obj
+      return {
+        name: workout.name,
+        id: workout.id,
+        image: image,
+        usage: usage
+      }
     }))
     const mealsWithData = await Promise.all(mealData.map(async meal => {
       let obj = {
@@ -223,23 +234,24 @@ function CreatorScreen() {
         mp.userID.ne(userId)
       ]))).length
       obj.usage = usages
-      if (meal.media && meal.media.length) {
-        let img = meal.media.filter(x => x?.type === 'image')[0]
-        if (img && img.uri) obj.image = isStorageUri(img.uri) ? await Storage.get(img.uri) : img.uri
-      }
+      let img = meal.media?.filter(x => x?.type === 'image')?.[0]?.uri || defaultImage
+      obj.image = isStorageUri(img) ? await Storage.get(img) : img
 
       return obj
     }))
     const pts = await DataStore.query(Payouts, x => x.and(p => [
       p.userID.eq(userId)//, p.amount.ne(0)
     ]), {
-      sort: x => x.createdAt('DESCENDING')
+      sort: x => x.createdAt('DESCENDING'),
     })
     setRefresing(false)
-    setPayouts(pts)
+    setOutstandingPayouts(pts.filter(x => (!x.stripeId && !x.paidDate)))
+    setPayouts(pts.slice(0, 19))
     setWorkouts(workoutsWithData)
     setMeals(mealsWithData)
   }
+
+  const outstandingPayoutAmount = outstandingPayouts.reduce((prev, curr) => prev + (curr.amount || 0), 0)
 
   React.useEffect(() => {
     setUploading(true)
@@ -283,8 +295,31 @@ function CreatorScreen() {
   }
 
   const dm = useColorScheme() === 'dark'
+
+  const onFinalizePress = async () => {
+    setUploading(true)
+    const res = await createPayout(outstandingPayoutAmount * 100, destinationObject)
+    if (res['error']) {
+      alert(res['error']['message'] || 'There was a problem processing this payout')
+      setUploading(false)
+      return;
+    }
+    let paidDate = moment().format('YYYY-MM-DD')
+    let stripePayoutId = res.id
+    for (var payout of outstandingPayouts) {
+      const ogPayout = await DataStore.query(Payouts, payout.id)
+      if (ogPayout) {
+        await DataStore.save(Payouts.copyOf(ogPayout, x => {
+          x.paidDate=paidDate;
+          x.stripeId=stripePayoutId
+        }))
+      }
+    }
+    await prepare()
+  }
+
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1 }} includeBackground>
       <BackButton />
       <ScrollView style={tw`px-4 pt-6`} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={prepare} />} showsVerticalScrollIndicator={false}>
         <Text style={tw`text-lg`} weight='semibold'>{stripeEnabled ? 'Creator Portal' : 'Become a Personal Trainer or Food Professional'}</Text>
@@ -309,7 +344,7 @@ function CreatorScreen() {
           <Divider style={tw`bg-gray-500 my-6`} />
           <Text style={tw`text-lg`} weight='semibold'>Usage Information</Text>
           <Text style={tw`text-center text-xs text-gray-500 mt-3`}>This includes workouts and meals that are premium for the month by other users</Text>
-          <Text weight='semibold' style={tw`my-4`}>Workouts</Text>
+          {workouts.length > 0 && <Text weight='semibold' style={tw`my-4`}>Workouts</Text>}
           {workouts.map(wo => {
             return <View key={wo.id} style={tw`flex-row items-center my-2`}>
               <Image source={{ uri: wo.image }} style={tw`h-15 w-15 rounded-xl`} />
@@ -319,7 +354,7 @@ function CreatorScreen() {
               </View>
             </View>
           })}
-          <Text weight='semibold' style={tw`my-4`}>Meals</Text>
+          {meals.length > 0 && <Text weight='semibold' style={tw`my-4`}>Meals</Text>}
           {meals.map(wo => {
             return <View key={wo.id} style={tw`flex-row items-center my-2`}>
               <Image source={{ uri: wo.image }} style={tw`h-15 w-15 rounded-xl`} />
@@ -330,7 +365,7 @@ function CreatorScreen() {
             </View>
           })}
           <Text weight='semibold' style={tw`mt-6 text-lg`}>Payouts</Text>
-          <Text style={tw`text-gray-500 text-xs text-center mt-3`}>Payouts are made on the 16th of each month, creators get a prorated percentage Rage's profits</Text>
+          <Text style={tw`text-gray-500 text-xs text-center mt-3`}>Payouts are made on the 16th of each month, creators get a prorated percentage Rage's profits.</Text>
           {payouts.map((payout, i) => {
             console.log(payout.id)
             if (!payout.activityEnd || !payout.activityStart) return;
@@ -351,8 +386,24 @@ function CreatorScreen() {
             </TouchableOpacity>
           })}
         </View>}
-        <View style={tw`h-40`} />
+        <View style={tw`h-60`} />
       </ScrollView>
+      {outstandingPayoutAmount > 4.99 && <View style={[
+        {
+          position: 'absolute',
+          bottom: 10,
+          flex: 1
+        },
+        tw`w-12/12`
+      ]}>
+        {/* Add Food Button */}
+        <View style={tw`py-5 w-12/12 items-center px-7 flex-row justify-center`}>
+          <TouchableOpacity disabled={uploading === true} onPress={onFinalizePress} style={tw`bg-${dm ? 'red-600' : "red-500"} mr-2 px-5 h-12 justify-center rounded-full`}>
+            {!uploading && <Text numberOfLines={1} style={tw`text-center text-white`} weight='semibold'>Cash Out</Text>}
+            {uploading && <ActivityIndicator />}
+          </TouchableOpacity>
+        </View>
+      </View>}
     </View>
   )
 }

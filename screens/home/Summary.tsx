@@ -1,6 +1,6 @@
-import { View, ScrollView, TouchableOpacity, Image, Dimensions } from 'react-native'
+import { ScrollView, TouchableOpacity, Image, Animated, Easing } from 'react-native'
 import React from 'react'
-import { Text } from '../../components/Themed'
+import { Text, View } from '../../components/Themed'
 import { SafeAreaView } from 'react-native-safe-area-context';
 import tw from 'twrnc'
 import { ExpoIcon } from '../../components/ExpoIcon';
@@ -17,22 +17,25 @@ import { getMatchingNavigationScreen } from '../../data';
 import * as Haptics from 'expo-haptics'
 import { useProgressValues } from '../../hooks/useProgressValues';
 import RunListComponent from '../../components/RunListComponent';
+import AnimatedLottieView from 'lottie-react-native';
+import drinkWater from '../../assets/animations/drinkwater.json'
+import moment from 'moment';
+import ThisAdHelpsKeepFree from '../../components/ThisAdHelpsKeepFree';
 
 
 export const SummaryScreen = () => {
 
   const dateContext = useDateContext()
   const { sub, userId, progressId, setProgressId } = useCommonAWSIds()
-  const { formattedDate, AWSDate } = { formattedDate: dateContext.formattedDate, AWSDate: dateContext.AWSDate }
+  const { formattedDate, AWSDate, today, setDate } = { formattedDate: dateContext.formattedDate, AWSDate: dateContext.AWSDate, today: dateContext.date, setDate: dateContext.setDate }
   const { food, meals, workouts, fat, weight, goal, water, runs } = useProgressValues({ foodAndMeals: true, activitiesAndWorkouts: true, metrics: true })
   const totalCalories = getTdee(goal, weight, fat)
   const dm = useColorScheme() === 'dark'
   const navigator = useNavigation()
 
 
-
   React.useEffect(() => {
-    DataStore.query(Progress, p => p.and(x => [x.sub.eq(sub), x.date.eq(AWSDate)])).then(p => {
+    DataStore.query(Progress, p => p.and(x => [x.userID.eq(userId), x.date.eq(AWSDate)])).then(p => {
       DataStore.query(User, userId).then((u) => {
         if (u) {
           const ux = u
@@ -58,25 +61,33 @@ export const SummaryScreen = () => {
   }, [caloriesFromFoodAndMeals, totalCalories])
 
   const cpRef = React.useRef<AnimatedCircularProgress | null>(null)
-  const waterRef = React.useRef<AnimatedCircularProgress | null>(null)
+  const waterRef = React.useRef(new Animated.Value(0))
+  const waterGoal = Number(weight * 0.5)
 
   React.useEffect(() => {
     if (weight) {
-      const waterUserShouldHave = weight * 0.5
-      waterRef.current?.animate((water / waterUserShouldHave) * 100, 800)
+      const progress = water > waterGoal ? 1 : water / waterGoal
+      Animated.timing(waterRef.current, {
+        toValue: progress,
+        duration: 1000,
+        easing: Easing.linear,
+        useNativeDriver: false
+      }).start();
+
     }
   }, [water, weight])
 
   const lastRun = runs[runs.length - 1]
+  const daysToDisplay = [0, 1, 2, 3, 4, 5, 6].map(x => moment(today).startOf('week').add(x, 'days'))
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1 }} includeBackground>
       <SafeAreaView edges={['top']} style={[{ flex: 1 }, tw`h-12/12`]} >
         <View style={tw`px-4`}>
           <View style={tw`flex-row items-center justify-between`}>
-            <Text weight='bold' style={tw`text-2xl max-w-9/12`}>Daily Summary</Text>
+            <Text weight='bold' style={tw`text-2xl max-w-9/12`}>Summary</Text>
             {/* @ts-ignore */}
             <TouchableOpacity style={tw`p-3`} onPress={() => navigator.navigate('Calendar')}>
-              <ExpoIcon iconName='feather' name='calendar' size={30} color={dm ? 'white' : 'black'} />
+              <ExpoIcon iconName='feather' name='calendar' size={25} color={dm ? 'white' : 'black'} />
             </TouchableOpacity>
           </View>
           <TouchableOpacity onPress={() => {
@@ -87,71 +98,85 @@ export const SummaryScreen = () => {
           </TouchableOpacity>
         </View>
         <ScrollView style={[tw`px-4 h-12/12`]} showsVerticalScrollIndicator={false}>
+          <View style={[tw`flex-row items-center justify-between w-12/12 mb-3`]}>
+            {daysToDisplay.map(day => {
+              const isSelected = day.isSame(today, 'date')
+              let selectedColorTint = '500'
+              if (!isSelected) {
+                if (!dm) selectedColorTint = '300'
+              }
+              return <TouchableOpacity key={day.format('LL')}
+                onPress={() => setDate(day)}
+                style={tw`h-${isSelected ? '30' : '20'} w-12 bg-${isSelected ? 'red' : 'gray'}-${selectedColorTint} rounded-full items-center justify-center`}>
+                <Text weight='bold' style={tw`text-lg ${(dm || isSelected) ? 'text-white' : ''}`}>{day.format('DD')}</Text>
+                <Text weight='semibold' style={tw`text-xs ${(dm || isSelected) ? 'text-white' : ''}`}>{day.format('dd')}</Text>
+              </TouchableOpacity>
+            })}
+          </View>
           <TouchableOpacity onPress={() => {
             const screen = getMatchingNavigationScreen('SummaryFoodList', navigator)
             //@ts-ignore
             navigator.navigate(screen)
-          }} style={tw`bg-gray-${dm ? '700/40' : '200'} mb-4 p-5 rounded-lg flex-row items-center justify-between`}>
+          }} style={tw`bg-${dm ? 'gray-700/40' : 'gray-500/20'} mb-4 p-5 rounded-lg items-center justify-between`}>
+            <Text style={tw`text-lg mb-2`} weight='semibold'>Macronutrients</Text>
             <AnimatedCircularProgress
               size={150}
               width={6}
-              rotation={320}
+              rotation={270}
               fill={0}
-              style={tw`mt-2 mb-4`}
+              arcSweepAngle={180}
+              style={tw`mt-2 -mb-6`}
               lineCap='round'
               tintColor="#D22B2B"
-              backgroundColor={!dm ? '#50C878' : '#097969'}
+              backgroundColor={!dm ? '#C0C0C0': '#808080'}
               ref={cpRef}
             >
               {
                 (fill) => (
-                  <View style={tw`items-center`}>
+                  <View style={tw`items-center -mt-4`}>
                     <Text style={tw`text-lg`} weight='semibold'>{totalCalories <= caloriesFromFoodAndMeals ? 0 : Math.round(totalCalories - caloriesFromFoodAndMeals).toFixed()}{<Text style={tw`text-xs`} weight='semibold'>kcal</Text>}</Text>
                     <Text>Remaining</Text>
                   </View>
                 )
               }
             </AnimatedCircularProgress>
-            <View style={[tw`pr-9 rounded justify-center`]}>
-              <Text style={tw`text-lg`} weight='bold'>{Math.abs(totalCalories - caloriesFromFoodAndMeals).toFixed()} {<Text style={tw`text-xs`} weight='bold'>kcal</Text>}</Text>
-              <Text style={tw`text-gray-500`}>Caloric {Math.round(totalCalories) > Math.round(caloriesFromFoodAndMeals) ? 'Deficit' : totalCalories === caloriesFromFoodAndMeals ? 'Maintenance' : 'Surplus'}</Text>
+            <View style={[tw`rounded flex-row items-center justify-around w-12/12`]}>
+              <View>
+                <Text style={tw`text-lg`} weight='bold'>{Math.abs(totalCalories).toFixed()} {<Text style={tw`text-xs`} weight='bold'>kcal</Text>}</Text>
+                <Text style={tw`text-gray-500`}>Caloric Goal</Text>
+              </View>
               {/* @ts-ignore */}
-              <Text style={tw`text-lg mt-4`} weight='bold'>{Math.round(proteinFromFoodAndMeals)}{<Text style={tw`text-xs`} weight='bold'> g</Text>}</Text>
-              <Text style={tw`text-gray-500`}>Protein</Text>
-              <Text style={tw`text-lg mt-4`} weight='bold'>{Math.round(carbsFromFoodAndMeals)}{<Text style={tw`text-xs`} weight='bold'> g</Text>}</Text>
-              <Text style={tw`text-gray-500`}>Carbs</Text>
+              <View>
+                <Text style={tw`text-lg`} weight='bold'>{Math.round(proteinFromFoodAndMeals)}{<Text style={tw`text-xs`} weight='bold'> g</Text>}</Text>
+                <Text style={tw`text-gray-500`}>Protein</Text>
+              </View>
+              <View>
+                <Text style={tw`text-lg`} weight='bold'>{Math.round(carbsFromFoodAndMeals)}{<Text style={tw`text-xs`} weight='bold'> g</Text>}</Text>
+                <Text style={tw`text-gray-500`}>Carbs</Text>
+              </View>
             </View>
           </TouchableOpacity>
 
-          <Text style={tw`text-xl mb-2`} weight='semibold'>Metrics</Text>
-          <View style={tw`flex-row items-center`}>
-            <View style={tw`w-6.5/12 h-12/12 bg-gray-${dm ? '700/40' : '200'} p-5 rounded-lg items-center`}>
-              <Text weight='semibold'>{<ExpoIcon name='droplet' iconName='feather' size={20} color='#0096FF' />}  Water Intake</Text>
-              <AnimatedCircularProgress
-                size={120}
-                width={6}
-                rotation={360}
-                fill={0}
-                style={tw`mt-2 mb-4`}
-                lineCap='round'
-                tintColor="#0096FF"
-                backgroundColor={'#888888'}
-                ref={waterRef}
-              >
-                {
-                  (fill) => (
-                    <View style={tw`items-center`}>
-                      <View style={tw`flex-row items-center`}>
-                        <Text style={tw`text-lg`} weight='semibold'>{water}</Text>
-                      </View>
-                      <Text>of {Number(weight * 0.5).toFixed()} fl oz</Text>
-                    </View>
-                  )
-                }
-              </AnimatedCircularProgress>
-              <View style={tw`flex-row items-center justify-around w-12/12`}>
+          <View style={tw`w-12/12 max-h-1.5/12 bg-gray-${dm ? '700/40' : '500/20'} px-6 rounded-lg items-center justify-between flex-row my-4`}>
+            <View style={tw``}>
+              <Text weight='semibold' style={tw`mt-2 text-lg`}>Water Intake</Text>
+              <Text style={tw`text-gray-500 text-xs mb-4`}>{water.toFixed()} of {waterGoal.toFixed()} fl oz</Text>
+            </View>
+            <View style={tw`flex-row items-center`}>
+              <AnimatedLottieView progress={waterRef.current} autoPlay={false} style={tw`h-35 -mr-3`} source={drinkWater} />
 
-                <TouchableOpacity style={tw`bg-gray-${dm ? '600' : '400'} px-4 py-2 rounded-lg`} onPress={async () => {
+              <View style={tw`items-center justify-around`}>
+                <TouchableOpacity style={tw`px-4 py-2 rounded-lg`} onPress={async () => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                  const originalProgress = await DataStore.query(Progress, progressId)
+                  if (!originalProgress) return;
+                  await DataStore.save(Progress.copyOf(originalProgress, x => {
+                    x.water = (x.water || 0) + 10
+                  }))
+                }}>
+                  <Text weight='bold' style={tw`text-lg`}>+</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={tw`px-4 py-2 rounded-lg`} onPress={async () => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
                   const originalProgress = await DataStore.query(Progress, progressId)
                   if (!originalProgress) return;
@@ -160,48 +185,58 @@ export const SummaryScreen = () => {
                       x.water = (x.water || 0) - 10
                   }))
                 }}>
-                  <Text>-</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={tw`bg-blue-400 px-4 py-2 rounded-lg`} onPress={async () => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-                  const originalProgress = await DataStore.query(Progress, progressId)
-                  if (!originalProgress) return;
-                  await DataStore.save(Progress.copyOf(originalProgress, x => {
-                    x.water = (x.water || 0) + 10
-                  }))
-                }}>
-                  <Text>+</Text>
+                  <Text weight='bold' style={tw`text-gray-500 text-lg`}>-</Text>
                 </TouchableOpacity>
               </View>
             </View>
-            <TouchableOpacity onPress={() => {
-              navigator.navigate('PersonalInformation')
-            }} style={tw`w-5/12 ml-4 h-12/12 bg-gray-${dm ? '700/40' : '200'} rounded-lg p-4`}>
-              <Text style={tw``} weight='semibold'>{<ExpoIcon name='archive' iconName='feather' size={20} color='gray' />} Personal Info</Text>
-              <View style={tw`mt-4`}>
-                <View style={tw`items-center justify-center items-center`}>
-                  <Text style={tw`text-3xl text-center mb-2`} weight='semibold'>{weight} {<Text style={tw`text-red-500 text-sm`}>lbs</Text>}</Text>
-                  <Text style={tw`text-3xl mb-2`} weight='semibold'>{fat} {<Text style={tw`text-red-500 text-sm`}>%</Text>}</Text>
-                  <Text style={tw`text-3xl`} weight='semibold'>Goal</Text>
-                  <Text style={tw`text-red-500 text-sm`}>{goal.toString()}</Text>
-                </View>
+          </View>
+          <TouchableOpacity onPress={() => {
+            navigator.navigate('PersonalInformation')
+          }} style={tw`w-12/12 bg-gray-${dm ? '700/40' : '500/20'} rounded-lg p-4 mt-4 mb-6`}>
+            <Text style={tw`text-lg text-center`} weight='semibold'>Personal Information</Text>
+            <View style={tw`mt-4 flex-row items-center justify-around`}>
+              <View>
+              <Text style={tw`text-xs text-gray-500`}>Weight</Text>
+              <Text style={tw`text-lg`} weight='semibold'>{weight} {<Text style={tw`text-red-500 text-sm`}>lbs</Text>}</Text>
               </View>
+              <View style={[tw`h-15 bg-gray-${dm ? '600' : '400'}`, { width: 1 }]} />
+              <View>
+              <Text style={tw`text-xs text-gray-500`}>Body Fat</Text>
+              <Text style={tw`text-lg`} weight='semibold'>{fat} {<Text style={tw`text-red-500 text-sm`}>%</Text>}</Text>
+              </View>
+              <View style={[tw`h-15 bg-gray-${dm ? '600' : '400'}`, { width: 1 }]} />
+              <View style={tw`bg-transparent`}>
+              <Text style={tw`text-xs text-gray-500`}>Goal</Text>
+              <Text style={tw`text-lg text-center`} weight='semibold'>{goal.toString()}</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+          <View style={tw`flex-row items-center justify-between w-12/12 mt-2`}>
+            <Text style={tw`text-lg`} weight='semibold'>Latest {lastRun?.runType || 'Run'} Activity</Text>
+            <TouchableOpacity style={tw`p-3`} onPress={() => {
+              //@ts-ignore
+              navigator.navigate('Run', { progressId: progressId })
+            }}>
+              <Text style={tw`text-red-500`} weight='semibold'>Start a Run</Text>
             </TouchableOpacity>
           </View>
-          <View style={tw`flex-row flex-wrap justify-between w-12/12 mb-6`}>
-
-            
-          </View>
-          <Text style={tw`text-lg mt-2`}>Latest {lastRun?.runType || 'Run'} Activity</Text>
-          {runs.length === 0 && <Text style={tw`text-center mt-4`}>No runs to display</Text>}
+          {runs.length === 0 && <Text style={tw`text-center my-6`}>No runs to display</Text>}
           {lastRun && <RunListComponent run={lastRun} onPress={() => {
             const screen = getMatchingNavigationScreen('ListRun', navigator)
             //@ts-ignore
             navigator.navigate(screen)
           }} />}
-          <Text style={tw`text-lg mt-4`}>Workouts</Text>
-          {workouts.length === 0 && <Text style={tw`text-center py-4`}>There are no workouts to display</Text>}
+          <View style={tw`flex-row items-center justify-between w-12/12 mt-6`}>
+            <Text style={tw`text-lg`} weight='semibold'>Workouts</Text>
+            <TouchableOpacity style={tw`p-3`} onPress={() => {
+              const screen = getMatchingNavigationScreen('ListWorkout', navigator)
+              //@ts-ignore
+              navigator.navigate(screen, { progressId: progressId })
+            }}>
+              <Text style={tw`text-red-500`} weight='semibold'>Search Workouts</Text>
+            </TouchableOpacity>
+          </View>
+          {workouts.length === 0 && <Text style={tw`text-center my-6`}>There are no workouts to display</Text>}
           {workouts.map((w, i) => {
             return <TouchableOpacity
               onPress={() => {
@@ -215,38 +250,10 @@ export const SummaryScreen = () => {
               </View>
             </TouchableOpacity>
           })}
+          <View style={tw`pb-10`} />
+          <ThisAdHelpsKeepFree />
           <View style={tw`pb-40`} />
         </ScrollView>
-        <FloatingActionButton options={[
-          {
-            name: 'Add Food', icon: () => (<Text style={{ fontSize: 15 }}>🍎</Text>), onPress: () => {
-              //@ts-ignore
-              navigator.navigate('SListFood', { progressId: progressId })
-            }
-          },
-          {
-            name: 'Add Meal', icon: () => (<Text style={{ fontSize: 15 }}>🍽</Text>), onPress: () => {
-              //@ts-ignore
-              navigator.navigate('SListMeals', { progressId: progressId })
-            }
-          },
-          {
-            name: 'Search Workouts', icon: () => (<Text style={{ fontSize: 15 }}>🏋️‍♀️</Text>), onPress: () => {
-              //@ts-ignore
-              navigator.navigate('SListWorkout', { progressId: progressId })
-            }
-          },
-          {
-            name: 'Start a Run', icon: () => (<Text style={{ fontSize: 15 }}>👟</Text>), onPress: () => {
-              //@ts-ignore
-              navigator.navigate('Run', { progressId: progressId })
-            }
-          },
-        ]}
-          initialIcon={'plus'}
-          openIcon={() => {
-            return <ExpoIcon name='close' iconName='ion' color='white' size={23} />
-          }} />
       </SafeAreaView>
     </View>
   )

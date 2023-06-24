@@ -58,7 +58,9 @@ export function useProgressValues(props: useProgressValuesProps) {
         if (!progressId || !foodAndMeals) return;
         let subscription = DataStore.observeQuery(FoodProgress, f => f.progressID.eq(progressId)).subscribe(ss => {
             const { items } = ss
-            setFood(items)
+            Promise.all(items.map(async x => {
+                return {...x, img: x.img ? (isStorageUri(x.img) ? await Storage.get(x.img) : x.img) : null}
+            })).then(x => setFood(x))
         })
         return () => {
             subscription.unsubscribe()
@@ -100,9 +102,8 @@ export function useProgressValues(props: useProgressValuesProps) {
                     mealProgresses.push({ ...meal, ...extendedProps, media: [{ type: 'image', uri: defaultImage }] })
                 } else {
                     const imgs = await Promise.all(meal.media.map(async i => {
-                        if (!i) return { type: 'image', uri: defaultImage }
-                        if (!i.uri) return { type: 'image', uri: defaultImage }
-                        return { ...i, uri: isStorageUri(i?.uri) ? await Storage.get(i.uri) : i.uri }
+                        let uri = i?.uri || defaultImage
+                        return { ...i, uri: isStorageUri(uri) ? await Storage.get(uri) : uri }
                     }))
                     mealProgresses.push({ ...meal, ...extendedProps, media: imgs })
                 }
@@ -128,7 +129,7 @@ export function useProgressValues(props: useProgressValuesProps) {
           if (items.length > 0) {
             Promise.all(items.map(async wo => {
               const workouts = await wo.WorkoutPlayDetails.toArray()
-              const defaultWorkout = { ...wo, picture: defaultImage }
+              const defaultWorkout = { ...wo, picture: isStorageUri(defaultImage) ? await Storage.get(defaultImage) : defaultImage }
               if (workouts.length === 0) {
                 return defaultWorkout
               }

@@ -1,6 +1,6 @@
-import { ActivityIndicator, TextInput, StyleSheet, TouchableOpacity, useColorScheme, View } from 'react-native'
+import { ActivityIndicator, TextInput, StyleSheet, TouchableOpacity, useColorScheme } from 'react-native'
 import React from 'react'
-import { Text } from '../../components/Themed'
+import { Text, View } from '../../components/Themed'
 import { Auth } from 'aws-amplify'
 import { BackButton } from '../../components/BackButton'
 import tw from 'twrnc'
@@ -82,7 +82,7 @@ export default function UpdateEmail() {
   });
 
   return (
-    <View>
+    <View style={{flex: 1}} includeBackground>
       <BackButton />
       <View style={tw`px-4 mt-9`}>
         {errors.length > 0 && <View style={tw`mb-4`}>

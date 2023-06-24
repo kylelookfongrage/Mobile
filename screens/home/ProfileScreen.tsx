@@ -1,11 +1,5 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import ListMeals from "../diet/ListMeals";
-import MealDetail from "../diet/MealDetail";
-import FoodDetail from "../diet/FoodDetail";
-import ExerciseDetail from "../workout/ExerciseDetail";
-import WorkoutDetail from "../workout/WorkoutDetail";
 import Profile from "./Profile";
-import Subscribees from "./Subscribees";
 import { getCommonScreens } from "../../components/GetCommonScreens";
 
 

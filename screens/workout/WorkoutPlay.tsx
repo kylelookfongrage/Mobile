@@ -1,6 +1,6 @@
-import { ScrollView, TextInput, TouchableOpacity, View, Image, Alert, ActivityIndicator, Dimensions } from 'react-native'
+import { ScrollView, TextInput, TouchableOpacity, Image, Alert, ActivityIndicator, Dimensions } from 'react-native'
 import React from 'react'
-import { Text } from '../../components/Themed'
+import { Text, View } from '../../components/Themed'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import tw from 'twrnc'
 import useColorScheme from '../../hooks/useColorScheme'
@@ -56,6 +56,7 @@ export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
     const [selectedWorkoutDetail, setSelectedWorkoutDetail] = React.useState<WorkoutDetails | undefined>(undefined)
     const [paused, setPaused] = React.useState<boolean>(true)
     const [originalDetails, setOriginalDetails] = React.useState<WorkoutPlayDetail[]>([])
+    const [shouldShowMore, setShouldShowMore] = React.useState<boolean>(false)
     React.useEffect(() => {
         const fetchDetails = async () => {
             let fetchedPlayDetails: WorkoutPlayDetail[] = []
@@ -100,7 +101,7 @@ export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
             const exercisesWithMedia: ExerciseDisplay[] = await Promise.all(exercisesToFetch.map(async x => {
                 const exerciseWithoutMedia = await DataStore.query(Exercise, x.id)
                 let defaultExercise: ExerciseDisplay = {
-                    media: [{ type: 'image', uri: defaultImage }],
+                    media: [{ type: 'image', uri: isStorageUri(defaultImage) ? await Storage.get(defaultImage) : defaultImage }],
                     name: exerciseWithoutMedia?.title || 'Exercise',
                     description: exerciseWithoutMedia?.description || '',
                     id: exerciseWithoutMedia?.id || x.id,
@@ -108,12 +109,18 @@ export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
                 //TODO: Remove media filter so it can be fetched
                 if (exerciseWithoutMedia && exerciseWithoutMedia?.media) {
                     //@ts-ignore
-                    const media: MediaType[] = exerciseWithoutMedia.media || []
+                    const media: MediaType[] = await Promise.all((exerciseWithoutMedia.media || defaultExercise.media).map(async x => {
+                        //@ts-ignore
+                        if (isStorageUri(x?.uri)) {
+                            //@ts-ignore
+                            return {...x, uri: await Storage.get(x?.uri)}
+                        } 
+                        return x
+                    }))
                     defaultExercise['media'] = media
                 }
                 return defaultExercise
             }))
-            console.log(exercisesWithMedia)
             setExercises(exercisesWithMedia)
         }
         fetchDetails()
@@ -203,12 +210,15 @@ export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
     }
     const currentExercise = exercises.filter(x => x.id === selectedWorkoutDetail?.exerciseID)[0]
     return (
-        <SafeAreaView style={[tw`h-12/12 w-12/12`, { flex: 1 }]} edges={['top']}>
+        <View style={[{ flex: 1 }]} includeBackground>
+            <SafeAreaView edges={['top']}>
             <ScrollView showsVerticalScrollIndicator={false}>
                 <ImagePickerView height={Dimensions.get('screen').height * 0.45} srcs={currentExercise.media} editable={false} />
                 <View style={tw`px-4 pt-2`}>
                     <Text style={tw`text-xl max-w-9/12`} weight='bold'>{currentExercise.name}</Text>
-                    <Text style={tw`max-w-9/12`}>{currentExercise.description}</Text>
+                    <Text style={tw``}>{currentExercise.description.length > 100 ? (shouldShowMore ? currentExercise.description : currentExercise.description.substring(0, 100)) : currentExercise.description} 
+                    <Text style={tw`ml-4 text-gray-500`} weight='semibold' onPress={() => setShouldShowMore(!shouldShowMore)}>  {(currentExercise.description.length > 100) ? (shouldShowMore ? 'Hide' : 'Show More') : ''}</Text>
+                    </Text>
                     {selectedWorkoutDetail.note && <Text>Note: {selectedWorkoutDetail.note}</Text>}
 
                     <View style={tw`items-center w-12/12 items-center justify-center`}>
@@ -325,6 +335,7 @@ export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
                 {/* Finish Workout Button */}
                 <View style={tw`h-40`} />
             </ScrollView>
+            </SafeAreaView>
             <View style={[
                 {
                     position: 'absolute',
@@ -351,7 +362,7 @@ export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
                     </TouchableOpacity>
                 </View>
             </View>
-        </SafeAreaView>
+        </View>
     )
 }
 

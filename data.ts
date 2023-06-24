@@ -30,6 +30,8 @@ interface EdamamFood {
 
 export interface EdamamParserResponse {
     text: string;
+    error?: string;
+    message?: string;
     parsed: {
         food: EdamamFood
     }[];
@@ -375,7 +377,7 @@ export const titleCase = (str: string) => {
     for(var i = 0; i< sentence.length; i++){
        sentence[i] = sentence[i][0].toUpperCase() + sentence[i].slice(1);
     }
-    return sentence.join()
+    return sentence.join(' ')
 }
 
 
@@ -562,3 +564,17 @@ export const defaultRunTypes: RunType[] = [
     { name: 'Surf', emoji: '🏄‍♀️' },
     { name: 'Swim', emoji: '🏊' }
 ]
+
+
+
+export const formatCash = (n:number) => {
+    if (n < 1e3) return n;
+    if (n >= 1e3 && n < 1e6) return +(n / 1e3).toFixed(1) + "K";
+    if (n >= 1e6 && n < 1e9) return +(n / 1e6).toFixed(1) + "M";
+    if (n >= 1e9 && n < 1e12) return +(n / 1e9).toFixed(1) + "B";
+    if (n >= 1e12) return +(n / 1e12).toFixed(1) + "T";
+};
+
+
+export const substringForLists = (str: string, amt:number=20) => (str.length > amt ? str.substring(0, amt) + '...' : str)
+ 

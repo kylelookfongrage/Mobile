@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "Rage - Health",
-    "slug": "rage",
+    "name": "Rage - Personal Health",
+    "slug": "ragepersonalhealth",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "rage",
+    "scheme": "ragepersonalhealth",
     "plugins": [
       [
         "expo-image-picker",
@@ -35,7 +35,8 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.health.rage"
+      "bundleIdentifier": "com.health.rage",
+      "buildNumber": "4"
     },
     "android": {
       "adaptiveIcon": {
@@ -52,10 +53,10 @@
     },
     "extra": {
       "eas": {
-        "projectId": "ef537a39-f407-4561-b2b8-5fdf2be97a7f"
+        "projectId": "cef1e5e1-1c0d-4cfc-9adc-e6b22e8203ad"
       }
     },
-    "owner": "kyle.lookfong"
+    "owner": "rageappinc"
   },
   "react-native-google-mobile-ads": {
     "android_app_id": "ca-app-pub-8201182773199572~8350476114",

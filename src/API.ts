@@ -456,6 +456,8 @@ export type CreateWorkoutPlayInput = {
   sub?: string | null,
   totalTime?: number | null,
   userID: string,
+  date?: string | null,
+  workoutID?: string | null,
   _version?: number | null,
 };
 
@@ -463,6 +465,8 @@ export type ModelWorkoutPlayConditionInput = {
   sub?: ModelIDInput | null,
   totalTime?: ModelIntInput | null,
   userID?: ModelIDInput | null,
+  date?: ModelStringInput | null,
+  workoutID?: ModelIDInput | null,
   and?: Array< ModelWorkoutPlayConditionInput | null > | null,
   or?: Array< ModelWorkoutPlayConditionInput | null > | null,
   not?: ModelWorkoutPlayConditionInput | null,
@@ -475,6 +479,8 @@ export type WorkoutPlay = {
   totalTime?: number | null,
   WorkoutPlayDetails?: ModelWorkoutPlayDetailConnection | null,
   userID: string,
+  date?: string | null,
+  workoutID?: string | null,
   createdAt: string,
   updatedAt: string,
   _version: number,
@@ -494,6 +500,8 @@ export type UpdateWorkoutPlayInput = {
   sub?: string | null,
   totalTime?: number | null,
   userID?: string | null,
+  date?: string | null,
+  workoutID?: string | null,
   _version?: number | null,
 };
 
@@ -575,6 +583,8 @@ export type CreateWorkoutInput = {
   premium?: boolean | null,
   category?: string | null,
   userID: string,
+  public?: boolean | null,
+  initialWorkout?: string | null,
   _version?: number | null,
 };
 
@@ -586,6 +596,8 @@ export type ModelWorkoutConditionInput = {
   premium?: ModelBooleanInput | null,
   category?: ModelStringInput | null,
   userID?: ModelIDInput | null,
+  public?: ModelBooleanInput | null,
+  initialWorkout?: ModelIDInput | null,
   and?: Array< ModelWorkoutConditionInput | null > | null,
   or?: Array< ModelWorkoutConditionInput | null > | null,
   not?: ModelWorkoutConditionInput | null,
@@ -604,6 +616,9 @@ export type Workout = {
   category?: string | null,
   userID: string,
   Applications?: ModelApplicationConnection | null,
+  WorkoutPlays?: ModelWorkoutPlayConnection | null,
+  public?: boolean | null,
+  initialWorkout?: string | null,
   createdAt: string,
   updatedAt: string,
   _version: number,
@@ -625,6 +640,13 @@ export type ModelApplicationConnection = {
   startedAt?: number | null,
 };
 
+export type ModelWorkoutPlayConnection = {
+  __typename: "ModelWorkoutPlayConnection",
+  items:  Array<WorkoutPlay | null >,
+  nextToken?: string | null,
+  startedAt?: number | null,
+};
+
 export type UpdateWorkoutInput = {
   id: string,
   name?: string | null,
@@ -634,6 +656,8 @@ export type UpdateWorkoutInput = {
   premium?: boolean | null,
   category?: string | null,
   userID?: string | null,
+  public?: boolean | null,
+  initialWorkout?: string | null,
   _version?: number | null,
 };
 
@@ -719,8 +743,9 @@ export type CreateEquiptmentInput = {
   id?: string | null,
   name: string,
   img: string,
-  userID: string,
+  userID?: string | null,
   sub?: string | null,
+  public?: boolean | null,
   _version?: number | null,
 };
 
@@ -729,6 +754,7 @@ export type ModelEquiptmentConditionInput = {
   img?: ModelStringInput | null,
   userID?: ModelIDInput | null,
   sub?: ModelIDInput | null,
+  public?: ModelBooleanInput | null,
   and?: Array< ModelEquiptmentConditionInput | null > | null,
   or?: Array< ModelEquiptmentConditionInput | null > | null,
   not?: ModelEquiptmentConditionInput | null,
@@ -739,9 +765,10 @@ export type Equiptment = {
   id: string,
   name: string,
   img: string,
-  userID: string,
+  userID?: string | null,
   sub?: string | null,
   ExerciseEquiptmentDetails?: ModelExerciseEquiptmentDetailConnection | null,
+  public?: boolean | null,
   createdAt: string,
   updatedAt: string,
   _version: number,
@@ -755,6 +782,7 @@ export type UpdateEquiptmentInput = {
   img?: string | null,
   userID?: string | null,
   sub?: string | null,
+  public?: boolean | null,
   _version?: number | null,
 };
 
@@ -771,6 +799,7 @@ export type CreateRunProgressInput = {
   sub?: string | null,
   userID: string,
   totalTime?: number | null,
+  runType?: string | null,
   _version?: number | null,
 };
 
@@ -785,6 +814,7 @@ export type ModelRunProgressConditionInput = {
   sub?: ModelIDInput | null,
   userID?: ModelIDInput | null,
   totalTime?: ModelIntInput | null,
+  runType?: ModelStringInput | null,
   and?: Array< ModelRunProgressConditionInput | null > | null,
   or?: Array< ModelRunProgressConditionInput | null > | null,
   not?: ModelRunProgressConditionInput | null,
@@ -799,6 +829,7 @@ export type RunProgress = {
   sub?: string | null,
   userID: string,
   totalTime?: number | null,
+  runType?: string | null,
   createdAt: string,
   updatedAt: string,
   _version: number,
@@ -820,6 +851,7 @@ export type UpdateRunProgressInput = {
   sub?: string | null,
   userID?: string | null,
   totalTime?: number | null,
+  runType?: string | null,
   _version?: number | null,
 };
 
@@ -958,6 +990,7 @@ export type CreateMealInput = {
   name: string,
   media?: Array< MediaInput | null > | null,
   isAiGenerated?: boolean | null,
+  public?: boolean | null,
   _version?: number | null,
 };
 
@@ -970,6 +1003,7 @@ export type ModelMealConditionInput = {
   sub?: ModelIDInput | null,
   name?: ModelStringInput | null,
   isAiGenerated?: ModelBooleanInput | null,
+  public?: ModelBooleanInput | null,
   and?: Array< ModelMealConditionInput | null > | null,
   or?: Array< ModelMealConditionInput | null > | null,
   not?: ModelMealConditionInput | null,
@@ -990,6 +1024,7 @@ export type Meal = {
   media?:  Array<Media | null > | null,
   Applications?: ModelApplicationConnection | null,
   isAiGenerated?: boolean | null,
+  public?: boolean | null,
   createdAt: string,
   updatedAt: string,
   _version: number,
@@ -1013,6 +1048,8 @@ export type MealProgress = {
   consumedWeight: number,
   progressID: string,
   userID: string,
+  progressDate?: string | null,
+  initialMeal?: string | null,
   createdAt: string,
   updatedAt: string,
   _version: number,
@@ -1038,6 +1075,7 @@ export type UpdateMealInput = {
   name?: string | null,
   media?: Array< MediaInput | null > | null,
   isAiGenerated?: boolean | null,
+  public?: boolean | null,
   _version?: number | null,
 };
 
@@ -1054,6 +1092,8 @@ export type CreateMealProgressInput = {
   consumedWeight: number,
   progressID: string,
   userID: string,
+  progressDate?: string | null,
+  initialMeal?: string | null,
   _version?: number | null,
 };
 
@@ -1064,6 +1104,8 @@ export type ModelMealProgressConditionInput = {
   consumedWeight?: ModelFloatInput | null,
   progressID?: ModelIDInput | null,
   userID?: ModelIDInput | null,
+  progressDate?: ModelStringInput | null,
+  initialMeal?: ModelIDInput | null,
   and?: Array< ModelMealProgressConditionInput | null > | null,
   or?: Array< ModelMealProgressConditionInput | null > | null,
   not?: ModelMealProgressConditionInput | null,
@@ -1077,6 +1119,8 @@ export type UpdateMealProgressInput = {
   consumedWeight?: number | null,
   progressID?: string | null,
   userID?: string | null,
+  progressDate?: string | null,
+  initialMeal?: string | null,
   _version?: number | null,
 };
 
@@ -1196,6 +1240,8 @@ export type CreateUserInput = {
   sub: string,
   tier?: TIER | null,
   numFollowers?: number | null,
+  stripeId?: string | null,
+  stripeEnabled?: boolean | null,
   _version?: number | null,
 };
 
@@ -1224,6 +1270,8 @@ export type ModelUserConditionInput = {
   sub?: ModelIDInput | null,
   tier?: ModelTIERInput | null,
   numFollowers?: ModelIntInput | null,
+  stripeId?: ModelStringInput | null,
+  stripeEnabled?: ModelBooleanInput | null,
   and?: Array< ModelUserConditionInput | null > | null,
   or?: Array< ModelUserConditionInput | null > | null,
   not?: ModelUserConditionInput | null,
@@ -1270,6 +1318,9 @@ export type User = {
   WorkoutPlayDetails?: ModelWorkoutPlayDetailConnection | null,
   WorkoutDetailModifiers?: ModelWorkoutDetailModifierConnection | null,
   PantryItems?: ModelPantryItemConnection | null,
+  stripeId?: string | null,
+  stripeEnabled?: boolean | null,
+  Payouts?: ModelPayoutsConnection | null,
   createdAt: string,
   updatedAt: string,
   _version: number,
@@ -1354,13 +1405,6 @@ export type ModelWorkoutConnection = {
   startedAt?: number | null,
 };
 
-export type ModelWorkoutPlayConnection = {
-  __typename: "ModelWorkoutPlayConnection",
-  items:  Array<WorkoutPlay | null >,
-  nextToken?: string | null,
-  startedAt?: number | null,
-};
-
 export type ModelFavoriteConnection = {
   __typename: "ModelFavoriteConnection",
   items:  Array<Favorite | null >,
@@ -1382,6 +1426,31 @@ export type ModelWorkoutDetailModifierConnection = {
   startedAt?: number | null,
 };
 
+export type ModelPayoutsConnection = {
+  __typename: "ModelPayoutsConnection",
+  items:  Array<Payouts | null >,
+  nextToken?: string | null,
+  startedAt?: number | null,
+};
+
+export type Payouts = {
+  __typename: "Payouts",
+  id: string,
+  userID: string,
+  stripeId?: string | null,
+  amount?: number | null,
+  paidDate?: string | null,
+  workoutActivity?: number | null,
+  activityStart?: string | null,
+  activityEnd?: string | null,
+  mealActivity?: number | null,
+  createdAt: string,
+  updatedAt: string,
+  _version: number,
+  _deleted?: boolean | null,
+  _lastChangedAt: number,
+};
+
 export type UpdateUserInput = {
   id: string,
   fat?: number | null,
@@ -1394,6 +1463,8 @@ export type UpdateUserInput = {
   sub?: string | null,
   tier?: TIER | null,
   numFollowers?: number | null,
+  stripeId?: string | null,
+  stripeEnabled?: boolean | null,
   _version?: number | null,
 };
 
@@ -1542,6 +1613,8 @@ export type ModelWorkoutPlayFilterInput = {
   sub?: ModelIDInput | null,
   totalTime?: ModelIntInput | null,
   userID?: ModelIDInput | null,
+  date?: ModelStringInput | null,
+  workoutID?: ModelIDInput | null,
   and?: Array< ModelWorkoutPlayFilterInput | null > | null,
   or?: Array< ModelWorkoutPlayFilterInput | null > | null,
   not?: ModelWorkoutPlayFilterInput | null,
@@ -1571,6 +1644,8 @@ export type ModelWorkoutFilterInput = {
   premium?: ModelBooleanInput | null,
   category?: ModelStringInput | null,
   userID?: ModelIDInput | null,
+  public?: ModelBooleanInput | null,
+  initialWorkout?: ModelIDInput | null,
   and?: Array< ModelWorkoutFilterInput | null > | null,
   or?: Array< ModelWorkoutFilterInput | null > | null,
   not?: ModelWorkoutFilterInput | null,
@@ -1593,6 +1668,7 @@ export type ModelEquiptmentFilterInput = {
   img?: ModelStringInput | null,
   userID?: ModelIDInput | null,
   sub?: ModelIDInput | null,
+  public?: ModelBooleanInput | null,
   and?: Array< ModelEquiptmentFilterInput | null > | null,
   or?: Array< ModelEquiptmentFilterInput | null > | null,
   not?: ModelEquiptmentFilterInput | null,
@@ -1605,6 +1681,7 @@ export type ModelRunProgressFilterInput = {
   sub?: ModelIDInput | null,
   userID?: ModelIDInput | null,
   totalTime?: ModelIntInput | null,
+  runType?: ModelStringInput | null,
   and?: Array< ModelRunProgressFilterInput | null > | null,
   or?: Array< ModelRunProgressFilterInput | null > | null,
   not?: ModelRunProgressFilterInput | null,
@@ -1644,6 +1721,7 @@ export type ModelMealFilterInput = {
   sub?: ModelIDInput | null,
   name?: ModelStringInput | null,
   isAiGenerated?: ModelBooleanInput | null,
+  public?: ModelBooleanInput | null,
   and?: Array< ModelMealFilterInput | null > | null,
   or?: Array< ModelMealFilterInput | null > | null,
   not?: ModelMealFilterInput | null,
@@ -1657,6 +1735,8 @@ export type ModelMealProgressFilterInput = {
   consumedWeight?: ModelFloatInput | null,
   progressID?: ModelIDInput | null,
   userID?: ModelIDInput | null,
+  progressDate?: ModelStringInput | null,
+  initialMeal?: ModelIDInput | null,
   and?: Array< ModelMealProgressFilterInput | null > | null,
   or?: Array< ModelMealProgressFilterInput | null > | null,
   not?: ModelMealProgressFilterInput | null,
@@ -1698,6 +1778,8 @@ export type ModelUserFilterInput = {
   sub?: ModelIDInput | null,
   tier?: ModelTIERInput | null,
   numFollowers?: ModelIntInput | null,
+  stripeId?: ModelStringInput | null,
+  stripeEnabled?: ModelBooleanInput | null,
   and?: Array< ModelUserFilterInput | null > | null,
   or?: Array< ModelUserFilterInput | null > | null,
   not?: ModelUserFilterInput | null,
@@ -1854,6 +1936,8 @@ export type ModelSubscriptionWorkoutPlayFilterInput = {
   sub?: ModelSubscriptionIDInput | null,
   totalTime?: ModelSubscriptionIntInput | null,
   userID?: ModelSubscriptionIDInput | null,
+  date?: ModelSubscriptionStringInput | null,
+  workoutID?: ModelSubscriptionIDInput | null,
   and?: Array< ModelSubscriptionWorkoutPlayFilterInput | null > | null,
   or?: Array< ModelSubscriptionWorkoutPlayFilterInput | null > | null,
 };
@@ -1881,6 +1965,8 @@ export type ModelSubscriptionWorkoutFilterInput = {
   premium?: ModelSubscriptionBooleanInput | null,
   category?: ModelSubscriptionStringInput | null,
   userID?: ModelSubscriptionIDInput | null,
+  public?: ModelSubscriptionBooleanInput | null,
+  initialWorkout?: ModelSubscriptionIDInput | null,
   and?: Array< ModelSubscriptionWorkoutFilterInput | null > | null,
   or?: Array< ModelSubscriptionWorkoutFilterInput | null > | null,
 };
@@ -1901,6 +1987,7 @@ export type ModelSubscriptionEquiptmentFilterInput = {
   img?: ModelSubscriptionStringInput | null,
   userID?: ModelSubscriptionIDInput | null,
   sub?: ModelSubscriptionIDInput | null,
+  public?: ModelSubscriptionBooleanInput | null,
   and?: Array< ModelSubscriptionEquiptmentFilterInput | null > | null,
   or?: Array< ModelSubscriptionEquiptmentFilterInput | null > | null,
 };
@@ -1912,6 +1999,7 @@ export type ModelSubscriptionRunProgressFilterInput = {
   sub?: ModelSubscriptionIDInput | null,
   userID?: ModelSubscriptionIDInput | null,
   totalTime?: ModelSubscriptionIntInput | null,
+  runType?: ModelSubscriptionStringInput | null,
   and?: Array< ModelSubscriptionRunProgressFilterInput | null > | null,
   or?: Array< ModelSubscriptionRunProgressFilterInput | null > | null,
 };
@@ -1961,6 +2049,7 @@ export type ModelSubscriptionMealFilterInput = {
   sub?: ModelSubscriptionIDInput | null,
   name?: ModelSubscriptionStringInput | null,
   isAiGenerated?: ModelSubscriptionBooleanInput | null,
+  public?: ModelSubscriptionBooleanInput | null,
   and?: Array< ModelSubscriptionMealFilterInput | null > | null,
   or?: Array< ModelSubscriptionMealFilterInput | null > | null,
 };
@@ -1973,6 +2062,8 @@ export type ModelSubscriptionMealProgressFilterInput = {
   consumedWeight?: ModelSubscriptionFloatInput | null,
   progressID?: ModelSubscriptionIDInput | null,
   userID?: ModelSubscriptionIDInput | null,
+  progressDate?: ModelSubscriptionStringInput | null,
+  initialMeal?: ModelSubscriptionIDInput | null,
   and?: Array< ModelSubscriptionMealProgressFilterInput | null > | null,
   or?: Array< ModelSubscriptionMealProgressFilterInput | null > | null,
 };
@@ -2012,6 +2103,8 @@ export type ModelSubscriptionUserFilterInput = {
   sub?: ModelSubscriptionIDInput | null,
   tier?: ModelSubscriptionStringInput | null,
   numFollowers?: ModelSubscriptionIntInput | null,
+  stripeId?: ModelSubscriptionStringInput | null,
+  stripeEnabled?: ModelSubscriptionBooleanInput | null,
   and?: Array< ModelSubscriptionUserFilterInput | null > | null,
   or?: Array< ModelSubscriptionUserFilterInput | null > | null,
 };
@@ -3327,7 +3420,7 @@ export type CreateEquiptmentMutation = {
     id: string,
     name: string,
     img: string,
-    userID: string,
+    userID?: string | null,
     sub?: string | null,
     ExerciseEquiptmentDetails?:  {
       __typename: "ModelExerciseEquiptmentDetailConnection",
@@ -3366,7 +3459,7 @@ export type UpdateEquiptmentMutation = {
     id: string,
     name: string,
     img: string,
-    userID: string,
+    userID?: string | null,
     sub?: string | null,
     ExerciseEquiptmentDetails?:  {
       __typename: "ModelExerciseEquiptmentDetailConnection",
@@ -3405,7 +3498,7 @@ export type DeleteEquiptmentMutation = {
     id: string,
     name: string,
     img: string,
-    userID: string,
+    userID?: string | null,
     sub?: string | null,
     ExerciseEquiptmentDetails?:  {
       __typename: "ModelExerciseEquiptmentDetailConnection",
@@ -4213,7 +4306,7 @@ export type CreateUserMutation = {
         id: string,
         name: string,
         img: string,
-        userID: string,
+        userID?: string | null,
         sub?: string | null,
         createdAt: string,
         updatedAt: string,
@@ -4614,7 +4707,7 @@ export type UpdateUserMutation = {
         id: string,
         name: string,
         img: string,
-        userID: string,
+        userID?: string | null,
         sub?: string | null,
         createdAt: string,
         updatedAt: string,
@@ -5015,7 +5108,7 @@ export type DeleteUserMutation = {
         id: string,
         name: string,
         img: string,
-        userID: string,
+        userID?: string | null,
         sub?: string | null,
         createdAt: string,
         updatedAt: string,
@@ -6803,7 +6896,7 @@ export type GetEquiptmentQuery = {
     id: string,
     name: string,
     img: string,
-    userID: string,
+    userID?: string | null,
     sub?: string | null,
     ExerciseEquiptmentDetails?:  {
       __typename: "ModelExerciseEquiptmentDetailConnection",
@@ -6845,7 +6938,7 @@ export type ListEquiptmentsQuery = {
       id: string,
       name: string,
       img: string,
-      userID: string,
+      userID?: string | null,
       sub?: string | null,
       ExerciseEquiptmentDetails?:  {
         __typename: "ModelExerciseEquiptmentDetailConnection",
@@ -6878,7 +6971,7 @@ export type SyncEquiptmentsQuery = {
       id: string,
       name: string,
       img: string,
-      userID: string,
+      userID?: string | null,
       sub?: string | null,
       ExerciseEquiptmentDetails?:  {
         __typename: "ModelExerciseEquiptmentDetailConnection",
@@ -7597,7 +7690,7 @@ export type GetUserQuery = {
         id: string,
         name: string,
         img: string,
-        userID: string,
+        userID?: string | null,
         sub?: string | null,
         createdAt: string,
         updatedAt: string,
@@ -9645,7 +9738,7 @@ export type OnCreateEquiptmentSubscription = {
     id: string,
     name: string,
     img: string,
-    userID: string,
+    userID?: string | null,
     sub?: string | null,
     ExerciseEquiptmentDetails?:  {
       __typename: "ModelExerciseEquiptmentDetailConnection",
@@ -9683,7 +9776,7 @@ export type OnUpdateEquiptmentSubscription = {
     id: string,
     name: string,
     img: string,
-    userID: string,
+    userID?: string | null,
     sub?: string | null,
     ExerciseEquiptmentDetails?:  {
       __typename: "ModelExerciseEquiptmentDetailConnection",
@@ -9721,7 +9814,7 @@ export type OnDeleteEquiptmentSubscription = {
     id: string,
     name: string,
     img: string,
-    userID: string,
+    userID?: string | null,
     sub?: string | null,
     ExerciseEquiptmentDetails?:  {
       __typename: "ModelExerciseEquiptmentDetailConnection",
@@ -10513,7 +10606,7 @@ export type OnCreateUserSubscription = {
         id: string,
         name: string,
         img: string,
-        userID: string,
+        userID?: string | null,
         sub?: string | null,
         createdAt: string,
         updatedAt: string,
@@ -10913,7 +11006,7 @@ export type OnUpdateUserSubscription = {
         id: string,
         name: string,
         img: string,
-        userID: string,
+        userID?: string | null,
         sub?: string | null,
         createdAt: string,
         updatedAt: string,
@@ -11313,7 +11406,7 @@ export type OnDeleteUserSubscription = {
         id: string,
         name: string,
         img: string,
-        userID: string,
+        userID?: string | null,
         sub?: string | null,
         createdAt: string,
         updatedAt: string,

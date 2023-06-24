@@ -1,13 +1,13 @@
-import { ScrollView, View } from 'react-native'
+import { ScrollView } from 'react-native'
 import React from 'react'
-import { Text } from '../../components/Themed'
+import { Text, View } from '../../components/Themed'
 import { BackButton } from '../../components/BackButton'
 import tw from 'twrnc'
 import { Expand } from '../../components/Expand'
 
 export default function Help() {
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1 }} includeBackground>
       <BackButton name='Back' />
       <ScrollView showsVerticalScrollIndicator={false} style={tw`px-4 pt-9`}>
         <Text style={tw`text-lg mb-4`} weight='semibold'>Help</Text>

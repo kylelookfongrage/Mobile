@@ -1,21 +1,22 @@
-import { View, ScrollView, TouchableOpacity, ImageBackground, Image, TextInput, ActivityIndicator, RefreshControl } from 'react-native'
+import { View, TouchableOpacity, ScrollView, Image, TextInput, ActivityIndicator, RefreshControl } from 'react-native'
 import React from 'react'
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Text } from '../../components/Themed';
+import { Text, SafeAreaView } from '../../components/Themed';
 import tw from 'twrnc'
 import { FloatingActionButton } from '../../components/FAB';
 import { useNavigation } from '@react-navigation/native';
 import { ExpoIcon } from '../../components/ExpoIcon';
 import useColorScheme from '../../hooks/useColorScheme';
-import { defaultImage, getMatchingNavigationScreen, isStorageUri } from '../../data';
+import { defaultImage, getMatchingNavigationScreen, isStorageUri, substringForLists } from '../../data';
 import { DataStore, Storage } from 'aws-amplify';
-import { Follower, FoodProgress, Ingredient, Meal, User } from '../../aws/models';
+import { Exercise, Follower, FoodProgress, Ingredient, Meal, User, Workout } from '../../aws/models';
 import { MediaType } from '../../types/Media';
 import { useDebounce } from '../../hooks/useDebounce';
 import { useCommonAWSIds } from '../../hooks/useCommonContext';
 import { getCommonScreens } from '../../components/GetCommonScreens';
 import GenerateMeal from './GenerateMeal';
+import AllergenAlert from '../../components/AllergenAlert';
+
 
 
 interface FoodTabProps {
@@ -41,8 +42,8 @@ interface FoodTabProps {
     FTUser: { id: string; };
     FTSubscribees: { to: string; from: string; };
     FTListWorkout: undefined;
-    FTListExercise: {workoutId?: string; editable: boolean;}
-    FTEquiptmentSearch: {exerciseId?: string;};
+    FTListExercise: { workoutId?: string; editable: boolean; }
+    FTEquiptmentSearch: { exerciseId?: string; };
     GenerateMeal: undefined
 }
 
@@ -61,6 +62,7 @@ export default function FoodTab() {
 interface MealDisplay extends Meal {
     coverImage: string;
     username: string;
+    userIsAllergic?: boolean;
 }
 
 interface UserDisplay {
@@ -73,6 +75,19 @@ interface UserDisplay {
 
 interface FoodDisplay extends FoodProgress {
     username: string;
+    userIsAllergic?: boolean;
+}
+
+interface ExerciseDisplay extends Exercise {
+    username: string;
+    name: string;
+    img: string;
+}
+
+interface WorkoutDisplay extends Workout {
+    username: string;
+    coverImage: string;
+    useCount: number;
 }
 
 export const FoodAndMeals = () => {
@@ -80,8 +95,8 @@ export const FoodAndMeals = () => {
     const dm = useColorScheme() === 'dark'
     const { userId } = useCommonAWSIds()
     const [users, setUsers] = React.useState<UserDisplay[]>([])
-    const [meals, setMeals] = React.useState<MealDisplay[]>([])
-    const [food, setFood] = React.useState<FoodDisplay[]>([])
+    const [q1, setQ1] = React.useState<MealDisplay[] | WorkoutDisplay[]>([])
+    const [q2, setQ2] = React.useState<FoodDisplay[] | ExerciseDisplay[]>([])
     const [loading, setLoading] = React.useState<boolean>(false)
 
     const [keyword, setKeyword] = React.useState<string>('')
@@ -90,154 +105,235 @@ export const FoodAndMeals = () => {
     const fetchFoodAndMeals = async () => {
         const searchTerm = debouncedKeyword
         setLoading(true)
-        const usersWithoutImages = await DataStore.query(User, u => u.and(x => [searchTerm ? x.username.contains(searchTerm.toLowerCase()) : x.username.ne(''), x.foodProfessional.eq(true)]), {
+        const usersWithoutImages = await DataStore.query(User, u => u.and(x => [searchTerm ? x.username.contains(searchTerm.toLowerCase()) : x.username.ne('')]), {
             sort: x => x.Followers('ASCENDING'),
             limit: 10
         })
         const usersWithImages: UserDisplay[] = await Promise.all(usersWithoutImages.map(async x => {
             const potentialFollowing = (await DataStore.query(Follower, f => f.and(y => [y.userID.eq(x.id), y.subscribedFrom.eq(userId)]))).length > 0
             const followers = (await x.Followers.toArray()).length
-            if (x.picture && isStorageUri(x.picture)) {
-                return { id: x.id, username: x.username, subCount: followers, following: potentialFollowing, picture: await Storage.get(x.picture) }
-            } else {
-                return { id: x.id, username: x.username, subCount: followers, following: potentialFollowing, picture: defaultImage }
-            }
+            let img = x.picture || defaultImage
+            return { id: x.id, username: x.username, subCount: followers, following: potentialFollowing, picture: isStorageUri(img) ? await Storage.get(img) : img }
+
         }))
         setUsers(usersWithImages)
-        const mealsWithoutImages = await DataStore.query(Meal, m => m.and(x => [searchTerm ? x.name.contains(searchTerm) : x.name.ne(''), x.public.eq(true)]), {
-            sort: x => x.createdAt('DESCENDING').MealProgresses('DESCENDING'),
-            limit: 10
-        })
-        const mealsWithImages: MealDisplay[] = await Promise.all(mealsWithoutImages.map(async x => {
-            const defaultMealToReturn = { ...x, coverImage: defaultImage, username: '' }
-            const user = await DataStore.query(User, x.userID)
-            if (!user || !x.media) {
-                return defaultMealToReturn
-            }
-            //@ts-ignore
-            let media: MediaType[] = [{uri: defaultImage, type: 'image'}]
-            try {
+        if (selectedOption === 'Meals & Food') {
+            const userAllergens = (await DataStore.query(User, userId))?.allergens || []
+            const mealsWithoutImages = await DataStore.query(Meal, m => m.and(x => [searchTerm ? x.name.contains(searchTerm) : x.name.ne(''), x.public.eq(true)]), {
+                sort: x => x.createdAt('DESCENDING').MealProgresses('DESCENDING'),
+                limit: 10
+            })
+            const mealsWithImages: MealDisplay[] = await Promise.all(mealsWithoutImages.map(async x => {
+                const defaultMealToReturn = { ...x, coverImage: defaultImage, username: '' }
+                const ingredients = (await x.Ingredients.toArray()) || []
+                const ingredientLabels = ingredients.map(ingr => (ingr.foodContentsLabel || '') + ingr.name).join(',').toLowerCase() || ''
+                const potentialAllergens = userAllergens.filter(al => ingredientLabels.includes(al?.toLowerCase() || 'nothing'))
+                console.log(ingredientLabels)
+                console.log(potentialAllergens)
+                const user = await DataStore.query(User, x.userID)
+                if (!user || !x.media) {
+                    return {...defaultMealToReturn, userIsAllergic: potentialAllergens.length > 0}
+                }
                 //@ts-ignore
-                media = x.media || []
-            } catch (error) {
-                
-            }
-            const images = media.filter(x => x.type === 'image')
-            if (images.length === 0) {
-                return defaultMealToReturn
-            }
-            return { ...x, coverImage: isStorageUri(images[0].uri) ? await Storage.get(images[0].uri) : images[0].uri, username: user.username }
-        }))
-        setMeals(mealsWithImages)
+                let media: MediaType[] = [{ uri: defaultImage, type: 'image' }]
+                try {
+                    //@ts-ignore
+                    media = x.media || []
+                } catch (error) {
 
-        const foodWithoutImages = await DataStore.query(FoodProgress, x => x.and(food => [searchTerm ? food.name.contains(searchTerm) : food.name.ne(''), food.userID.ne(''), food.img.ne('')]), {limit: 10, sort: x => x.createdAt('DESCENDING')})
-        const foodWithImages: FoodDisplay[] = await Promise.all(foodWithoutImages.map(async f => {
-            let username = 'Edamam Nutrition'
-            if (!f.edamamId) {
-                const user = await DataStore.query(User, f.userID || '')
-                username = user?.username || 'Edamam Nutrition'
-            }
-            return {...f, img: (f.img && isStorageUri(f.img)) ? await Storage.get(f.img) : f.img, username}
-        }))
-        setFood(foodWithImages)
+                }
+                const images: MediaType[] = media.filter(x => x.type === 'image') || []
+                if (images.length === 0) {
+                    defaultMealToReturn.coverImage = images[0].uri
+                }
+                return { ...x, userIsAllergic: potentialAllergens.length > 0, coverImage: isStorageUri(defaultMealToReturn.coverImage) ? await Storage.get(defaultMealToReturn.coverImage) : defaultMealToReturn.coverImage, username: user.username }
+            }))
+            setQ1(mealsWithImages)
+
+            const foodWithoutImages = await DataStore.query(FoodProgress, x => x.and(food => [searchTerm ? food.name.contains(searchTerm) : food.name.ne(''), food.userID.ne('')]), { limit: 10, sort: x => x.createdAt('DESCENDING') })
+            const foodWithImages: FoodDisplay[] = await Promise.all(foodWithoutImages.map(async f => {
+                let username = 'Edamam Nutrition'
+                const allergenSearchString = f.name + f.foodContentsLabel
+                const potentialAllergens = userAllergens.filter(al => allergenSearchString.toLowerCase()?.includes(al?.toLowerCase() || 'nothing'))
+                if (!f.edamamId) {
+                    const user = await DataStore.query(User, f.userID || '')
+                    username = user?.username || 'Edamam Nutrition'
+                }
+                return { ...f, userIsAllergic: potentialAllergens.length > 0, img: isStorageUri(f.img || defaultImage) ? await Storage.get(f.img || defaultImage) : f.img, username }
+            }))
+            setQ2(foodWithImages)
+        } else if (selectedOption === 'Workouts & Exercises') {
+            const ws = await DataStore.query(Workout, wo => wo.and(x => [debouncedKeyword ? x.name.contains(debouncedKeyword) : x.name.ne(''), x.WorkoutDetails.sets.gt(1)]), {
+                sort: x => x.createdAt('DESCENDING'), limit: 10
+            })
+            // graphqlOperation()
+            const wsWithImages: WorkoutDisplay[] = await Promise.all(ws.map(async wo => {
+                const user = await DataStore.query(User, wo.userID)
+                const username = user?.username
+                const useCount = (await wo.WorkoutPlayDetails.toArray()).length
+                let img = wo.img || defaultImage
+                return { ...wo, coverImage: isStorageUri(img) ? await Storage.get(img) : img, username: username || '', useCount }
+            }))
+            setQ1(wsWithImages.sort((a, b) => (b.useCount || 1) - (a.useCount || 0)))
+
+            const exercisesWithoutImages = await DataStore.query(Exercise, e => e.and(ex => [debouncedKeyword ? ex.title.contains(debouncedKeyword) : ex.title.ne('')]), {
+                limit: 10,
+                sort: y => y.createdAt('DESCENDING').WorkoutPlayDetails('DESCENDING')
+            })
+            const exercisesWithImages: ExerciseDisplay[] = await Promise.all(exercisesWithoutImages.map(async ex => {
+                const user = await DataStore.query(User, ex.userID)
+                const username = user?.username
+                //@ts-ignore
+                const media: MediaType[] = ex.media || []
+                const img = media.filter(x => x.type == 'image')?.[0]?.uri || defaultImage
+                return { ...ex, img: isStorageUri(img) ? await Storage.get(img) : img, username: username || '', name: ex.title }
+            }))
+            setQ2(exercisesWithImages)
+        }
+
         setLoading(false)
         setRefreshing(false)
     }
 
+    const searchOptions = ['Meals & Food', 'Workouts & Exercises'] as const
+    const [selectedOption, setSelectedOption] = React.useState<typeof searchOptions[number]>(searchOptions[0])
+
     React.useEffect(() => {
         fetchFoodAndMeals()
-    }, [debouncedKeyword])
+    }, [debouncedKeyword, selectedOption])
 
-    return <SafeAreaView style={[tw`h-12/12`]} edges={['top']}>
+    const color = dm ? 'white' : 'black'
+
+    //@ts-ignore
+    return <SafeAreaView style={[tw`h-12/12`]} edges={['top']} includeBackground>
         <ScrollView contentContainerStyle={[tw`px-4 py-3`]} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchFoodAndMeals} />}>
-            <Text style={tw`text-2xl max-w-7/12`} weight='bold'>Food and Meals</Text>
-            <View style={tw`w-12/12 mt-6 flex-row items-center py-3 px-4 justify-between bg-gray-${dm ? '700' : '300'} rounded-lg`}>
-                <TextInput value={keyword} onChangeText={setKeyword} placeholder='search...' style={tw`w-11/12 text-${dm ? 'white' : 'black'}`} />
-                <ExpoIcon name='search' iconName='feather' color={dm ? 'white' : 'gray'} size={25} />
+            <Text style={tw`text-2xl max-w-7/12`} weight='bold'>Search</Text>
+            <View style={tw`w-12/12 mt-6 flex-row items-center py-2.5 px-4 justify-between bg-gray-${dm ? '700' : '300'} rounded-lg`}>
+                <View style={tw`flex flex-row items-center`}>
+                    <ExpoIcon name='search' iconName='feather' color={'gray'} style={tw`pr-2`} size={25} />
+                    <TextInput value={keyword} onChangeText={setKeyword} placeholder='search...' style={tw`w-9/12 text-${dm ? 'white' : 'black'}`} />
+                </View>
+                <TouchableOpacity style={tw`p-2`} onPress={() => {setKeyword('')}}>
+                    <ExpoIcon name='x' iconName='feather' color={'gray'} style={tw``} size={20} />
+                </TouchableOpacity>
+            </View>
+            <View style={tw`flex-row justify-between py-4`}>
+                {searchOptions.map((o, i) => {
+                    const selected = selectedOption === o
+                    return <TouchableOpacity
+                        key={`Search option ${o} at idx ${i}`}
+                        style={tw`items-center py-2 px-5 ${selected ? 'border-b border-' + color : ''}`}
+                        onPress={() => setSelectedOption(o)}>
+                        <Text
+                            weight={selected ? 'semibold' : 'regular'}>{o}</Text>
+                    </TouchableOpacity>
+                })}
             </View>
             <View style={tw`flex-row items-center justify-between mt-9`}>
-                    <Text style={tw`text-lg`} weight='semibold'>Food Professionals</Text>
-                    <TouchableOpacity onPress={() => {
-                        const screen = getMatchingNavigationScreen('ListUser', navigator)
+                <Text style={tw`text-lg`} weight='semibold'>Users</Text>
+                <TouchableOpacity onPress={() => {
+                    const screen = getMatchingNavigationScreen('ListUser', navigator)
+                    //@ts-ignore
+                    navigator.navigate(screen, { foodProfessionals: true })
+                }}>
+                    <Text>See All</Text>
+                </TouchableOpacity>
+            </View>
+            {users.length === 0 && <Text style={tw`text-center my-5`}>No users to display</Text>}
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={tw`pt-4`} contentContainerStyle={tw`flex-row items-center justify-center`}>
+                {users.map((u) => {
+                    return <TouchableOpacity key={u.id} style={tw`items-center mr-2`} onPress={() => {
                         //@ts-ignore
-                        navigator.navigate(screen, { foodProfessionals: true })
+                        navigator.navigate('FTUser', { id: u.id })
                     }}>
-                        <Text>See All</Text>
+                        <Image source={{ uri: u.picture || defaultImage }} style={tw`w-17 h-17 rounded-full`} />
+                        <Text style={tw`max-w-23 text-center text-xs mt-2 text-red-500`} weight='regular'>@{substringForLists(u.username, 15)}</Text>
                     </TouchableOpacity>
-                </View>
-                {users.length === 0 && <Text style={tw`text-center my-5`}>No users to display</Text>}
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={tw`pt-4`}>
-                    {users.map((u) => {
-                        return <TouchableOpacity key={u.id} style={tw`mx-2`} onPress={() => {
-                            //@ts-ignore
-                            navigator.navigate('FTUser', { id: u.id })
-                        }}>
-                            <ImageBackground source={{ uri: u.picture || defaultImage }} style={tw`w-40 h-50 flex-col justify-end`}>
-                                {u.following && <View style={tw`bg-white rounded-xl p-1 w-20 my-2 mx-1 items-center`}>
-                                    <Text style={tw`text-black text-xs`}>Following</Text>
-                                </View>}
-                                <View style={tw`w-12/12 h-15 bg-gray-${dm ? '700' : '300'}/70 px-2 py-3`}>
-                                    <Text style={tw`max-w-35`} weight='semibold'>{u.username}</Text>
-                                    <Text style={tw`max-w-35`}>{u.subCount} subscribers</Text>
-                                </View>
-                            </ImageBackground>
-
-                        </TouchableOpacity>
-                    })}
-                </ScrollView>
-                <View style={tw`flex-row items-center justify-between mt-9`}>
-                    <Text style={tw`text-lg`} weight='semibold'>Meals</Text>
-                    <TouchableOpacity onPress={() => {
+                })}
+            </ScrollView>
+            <View style={tw`flex-row items-center justify-between mt-9`}>
+                <Text style={tw`text-lg`} weight='semibold'>{selectedOption === 'Meals & Food' ? 'Meals' : 'Workouts'}</Text>
+                <TouchableOpacity onPress={() => {
+                    if (selectedOption === 'Meals & Food') {
+                        const screen = getMatchingNavigationScreen('ListMeal', navigator)
                         //@ts-ignore
-                        navigator.navigate('FTListMeals')
-                    }}>
-                        <Text>See All</Text>
-                    </TouchableOpacity>
-                </View>
-                {meals.length === 0 && <Text style={tw`text-center my-5`}>No meals to display</Text>}
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={tw`pt-4`}>
-                    {meals.map((m, i) => {
-                        return <TouchableOpacity
-                            onPress={() => {
+                        navigator.navigate(screen)
+                    } else if (selectedOption === 'Workouts & Exercises') {
+                        const screen = getMatchingNavigationScreen('ListWorkout', navigator)
+                        //@ts-ignore
+                        navigator.navigate(screen)
+                    }
+                }}>
+                    <Text>See All</Text>
+                </TouchableOpacity>
+            </View>
+            {q1.length === 0 && <Text style={tw`text-center my-5`}>No {selectedOption === 'Meals & Food' ? 'meals' : 'workouts'} to display</Text>}
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={tw`pt-4`}>
+                {q1.map((m, i) => {
+                    return <TouchableOpacity
+                        onPress={() => {
+                            if (selectedOption === 'Meals & Food') {
+                                const screen = getMatchingNavigationScreen('MealDetail', navigator)
                                 //@ts-ignore
-                                navigator.navigate('FTMealDetail', { id: m.id })
-                            }}
-                            key={`meal ${m.id} at index ${i}`} style={tw`mx-2 max-w-30`}>
-                            <Image style={tw`w-30 h-30`} source={{ uri: m.coverImage || defaultImage }} />
-                            <View style={tw`w-12/12 h-15 py-3`}>
-                                <Text style={tw`max-w-30`} weight='semibold'>{m.name.length > 15 ? m.name.substring(0, 15) + '...' : m.name}</Text>
-                                <Text style={tw`max-w-30 text-xs`}>by {<Text style={tw`text-red-500 text-xs`}>{m.username}</Text>}</Text>
-                            </View>
-                        </TouchableOpacity>
-                    })}
-                </ScrollView>
-                <View style={tw`flex-row items-center justify-between mt-9`}>
-                    <Text style={tw`text-lg`} weight='semibold'>Food</Text>
-                    <TouchableOpacity onPress={() => {
-                        //@ts-ignore
-                        navigator.navigate('FTListFood')
-                    }}>
-                        <Text>See All</Text>
-                    </TouchableOpacity>
-                </View>
-                {food.length === 0 && <Text style={tw`text-center my-5`}>No food to display</Text>}
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={tw`pt-4`}>
-                    {food.map((m, i) => {
-                        return <TouchableOpacity
-                            onPress={() => {
+                                navigator.navigate(screen, { id: m.id })
+                            } else if (selectedOption === 'Workouts & Exercises') {
+                                const screen = getMatchingNavigationScreen('WorkoutDetail', navigator)
                                 //@ts-ignore
-                                navigator.navigate('FTFoodDetail', { id: m.id, src: 'existing', editable: true })
-                            }}
-                            key={`meal ${m.id} at index ${i}`} style={tw`mx-2 max-w-30`}>
-                            <Image style={tw`w-30 h-30`} source={{ uri: m.img || defaultImage }} />
-                            <View style={tw`w-12/12 h-15 py-3`}>
-                                <Text style={tw`max-w-30`} weight='semibold'>{m.name.length > 15 ? m.name.substring(0, 15) + '...' : m.name}</Text>
-                                <Text style={tw`max-w-30 text-xs`}>by {<Text style={tw`text-red-500 text-xs`}>{m.username}</Text>}</Text>
-                            </View>
-                        </TouchableOpacity>
-                    })}
-                </ScrollView>
-                <View style={tw`pb-40`} />
+                                navigator.navigate(screen, { id: m.id })
+                            }
+                        }}
+                        key={`meal ${m.id} at index ${i}`} style={tw`mx-1 flex-col items-start`}>
+                        <Image style={tw`w-20 h-20 rounded-lg`} source={{ uri: m.coverImage || defaultImage }} />
+                        <View style={tw`pt-2`}>
+                            <Text style={tw`max-w-25 text-xs`}>{substringForLists(m.name)}</Text>
+                            <Text style={tw`text-red-500 max-w-25 text-xs`}>@{substringForLists(m.username)}</Text>
+                            {/* @ts-ignore */}
+                            {m.userIsAllergic && <AllergenAlert size={15} style={tw`text-center mt-2`} />}
+                        </View>
+                    </TouchableOpacity>
+                })}
+            </ScrollView>
+            <View style={tw`flex-row items-center justify-between mt-9`}>
+                <Text style={tw`text-lg`} weight='semibold'>{selectedOption === 'Meals & Food' ? 'Food' : 'Exercises'}</Text>
+                <TouchableOpacity onPress={() => {
+                    if (selectedOption === 'Meals & Food') {
+                        const screen = getMatchingNavigationScreen('ListFood', navigator)
+                        //@ts-ignore
+                        navigator.navigate(screen)
+                    } else if (selectedOption === 'Workouts & Exercises') {
+                        const screen = getMatchingNavigationScreen('ListExercise', navigator)
+                        //@ts-ignore
+                        navigator.navigate(screen)
+                    }
+                }}>
+                    <Text>See All</Text>
+                </TouchableOpacity>
+            </View>
+            {q2.length === 0 && <Text style={tw`text-center my-5`}>No {selectedOption === 'Meals & Food' ? 'food' : 'exercises'} to display</Text>}
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={tw`pt-4`}>
+                {q2.map((m, i) => {
+                    return <TouchableOpacity
+                        onPress={() => {
+                            if (selectedOption === 'Meals & Food') {
+                                const screen = getMatchingNavigationScreen('FoodDetail', navigator)
+                                //@ts-ignore
+                                navigator.navigate(screen, { id: m.id, src: 'existing', editable: true })
+                            } else if (selectedOption === 'Workouts & Exercises') {
+                                const screen = getMatchingNavigationScreen('ExerciseDetail', navigator)
+                                //@ts-ignore
+                                navigator.navigate(screen, { id: m.id })
+                            }
+                        }}
+                        key={`meal ${m.id} at index ${i}`} style={tw`mx-1 flex-col`}>
+                        <Image style={tw`w-20 h-20 rounded-lg mb-2`} source={{ uri: m.img || defaultImage }} />
+                        <Text style={tw`max-w-25 text-xs`}>{substringForLists(m.name)}</Text>
+                        <Text style={tw`text-red-500 text-xs max-w-25`}>@{substringForLists(m.username)}</Text>
+                        {/* @ts-ignore */}
+                        {m.userIsAllergic && <AllergenAlert size={15} style={tw`text-center`} />}
+                    </TouchableOpacity>
+                })}
+            </ScrollView>
+            <View style={tw`pb-40`} />
         </ScrollView>
         <FloatingActionButton options={[
             {
@@ -253,13 +349,27 @@ export const FoodAndMeals = () => {
                 }
             },
             {
-                name: 'AI Generated', icon: () => (<Text style={{ fontSize: 15 }}>🪄</Text>), onPress: () => {
+                name: 'Generate Meal', icon: () => (<Text style={{ fontSize: 15 }}>🪄</Text>), onPress: () => {
                     //@ts-ignore
                     navigator.navigate('GenerateMeal')
                 }
-            }
+            },
+            {
+                name: 'New Exercise', icon: () => (<Text style={{ fontSize: 15 }}>👟</Text>), onPress: () => {
+                    //@ts-ignore
+                    navigator.navigate('FTExerciseDetail', { id: null, editable: true })
+                }
+            },
+            {
+                name: 'New Workout', icon: () => (<Text style={{ fontSize: 15 }}>🏋️‍♀️</Text>), onPress: () => {
+                    //@ts-ignore
+                    navigator.navigate('FTWorkoutDetail', { id: null, editable: true })
+                }
+            },
         ]} initialIcon={'plus'} bgColor='teal-500' openIcon={() => {
             return <ExpoIcon name='close' iconName='ion' color='black' size={23} />
         }} />
     </SafeAreaView>
 }
+
+

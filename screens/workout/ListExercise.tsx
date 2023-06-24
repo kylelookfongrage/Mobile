@@ -1,6 +1,6 @@
-import { SafeAreaView, ScrollView, TextInput, TouchableOpacity, Image, useColorScheme, View } from 'react-native'
+import { ScrollView, TextInput, TouchableOpacity, Image, useColorScheme } from 'react-native'
 import React from 'react'
-import { Text } from '../../components/Themed'
+import { Text, View } from '../../components/Themed'
 import { useDebounce } from '../../hooks/useDebounce'
 import tw from 'twrnc'
 import { ExpoIcon } from '../../components/ExpoIcon'
@@ -42,18 +42,15 @@ export default function ListExercise(props: ListExerciseProps) {
         const exercisesWithoutImages = await DataStore.query(Exercise, x => x.and(ex => [
             debouncedSearchTerm ? ex.title.contains(debouncedSearchTerm) : ex.title.ne(''),
             selectedOption === 'My Exercises' ? ex.userID.eq(userId) : ex.userID.ne('')
-        ]))
+        ]),  { limit: 40 })
         const exercisesWithImages: ListExerciseSearchResultsType[] = await Promise.all(exercisesWithoutImages.map(async ex => {
             const user = await DataStore.query(User, ex.userID)
             const author = user?.username || ''
             //@ts-ignore
             const media: MediaType[] = ex.media || []
-            const images = media.filter(x => x.type == 'image')
-            if (images.length === 0 || (images.length > 0 && !isStorageUri(images[0].uri))) {
-                return { id: ex.id, name: ex.title, img: defaultImage, author, favorited: false }
-            } else {
-                return { id: ex.id, name: ex.title, img: await Storage.get(images[0].uri), author, favorited: false}
-            }
+            const img = media.filter(x => x.type == 'image')?.[0]?.uri
+            return { id: ex.id, name: ex.title, img: isStorageUri(img) ? await Storage.get(img) : img, author, favorited: false}
+
         }))
         setResults(exercisesWithImages)
     }
@@ -64,7 +61,7 @@ export default function ListExercise(props: ListExerciseProps) {
 
     React.useEffect(() => { }, [selectedOption])
     return (
-        <View style={{ flex: 1 }}>
+        <View style={{ flex: 1 }} includeBackground>
             <BackButton name='Exercises' />
             <ScrollView
                 showsVerticalScrollIndicator={false}
@@ -90,7 +87,7 @@ export default function ListExercise(props: ListExerciseProps) {
                         </TouchableOpacity>
                     })}
                 </View>
-                {results.length === 0 && <View style={tw`w-12/12 justify-center items-center mt-15`}><Text style={tw`text-xl`} weight='bold'>No results to display</Text></View>}
+                {results.length === 0 && <View style={tw`w-12/12 justify-center items-center mt-9`}><Text>No results to display</Text></View>}
                 {results.map((r, idx) => {
                     return <TouchableOpacity
                         onPress={() => {
@@ -101,14 +98,14 @@ export default function ListExercise(props: ListExerciseProps) {
                             }
                         }}
                         key={`search result at index ${idx}`}
-                        style={[tw`my-2 max-w-11/12 flex-row items-center justify-between rounded-lg py-4 px-4 mx-4 bg-${dm ? 'gray-700' : 'gray-300'}`,
+                        style={[tw`my-2 max-w-11/12 flex-row items-center justify-between rounded-lg py-4 px-4 mx-4 bg-${dm ? 'gray-700' : 'gray-400/20'}`,
                         ]}
                     >
                         <View style={tw`flex-row items-center max-w-8/12`}>
-                            <Image source={{ uri: r.img || defaultImage }} style={tw`h-20 w-20 rounded mr-2`} />
+                            <Image source={{ uri: r.img || defaultImage }} style={tw`h-15 w-15 rounded mr-2`} />
                             <View>
-                                <Text style={tw`text-lg`} weight='semibold'>{r.name}</Text>
-                                <Text style={tw`text-${dm ? 'red-300' : 'red-700'}`}>by {r.author}</Text>
+                                <Text style={tw``} weight='semibold'>{r.name}</Text>
+                                <Text style={tw`text-red-500 text-xs`}>@{r.author}</Text>
                             </View>
                         </View>
                     </TouchableOpacity>

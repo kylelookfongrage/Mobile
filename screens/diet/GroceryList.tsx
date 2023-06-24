@@ -1,6 +1,6 @@
-import { ScrollView, View, Image, useColorScheme, ActivityIndicator, Alert } from 'react-native'
+import { ScrollView, Image, useColorScheme, ActivityIndicator, Alert } from 'react-native'
 import React from 'react'
-import { Text } from '../../components/Themed'
+import { Text, View } from '../../components/Themed'
 import { BackButton } from '../../components/BackButton'
 import { Ingredient, PantryItem } from '../../aws/models'
 import { useCommonAWSIds } from '../../hooks/useCommonContext'
@@ -43,7 +43,7 @@ export default function GroceryList() {
         navigator.navigate(screen)
     }
     return (
-        <View style={{ flex: 1 }}>
+        <View style={{ flex: 1 }} includeBackground>
             <BackButton />
             <ScrollView showsVerticalScrollIndicator={false} style={tw`px-4 pt-6`}>
                 <Text style={tw`text-lg`} weight='semibold'>Grocery List</Text>
@@ -123,8 +123,8 @@ export function PantryItemView(props: {item: PantryItem, onItemPress?: (id: stri
     React.useEffect(() => {
         DataStore.query(Ingredient, ingredientID).then(async x => {
             if (x) {
-                if (x.img && isStorageUri(x.img)) {
-                    setIngredient({ ...x, img: await Storage.get(x.img) })
+                if (isStorageUri(x.img || defaultImage)) {
+                    setIngredient({ ...x, img: await Storage.get(x.img || defaultImage) })
                 } else setIngredient(x)
             }
         })

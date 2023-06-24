@@ -1,6 +1,6 @@
-import { ScrollView, View, TextInput, Image, TouchableOpacity } from 'react-native'
+import { ScrollView, TextInput, Image, TouchableOpacity } from 'react-native'
 import React from 'react'
-import { Text } from '../../components/Themed'
+import { Text, View } from '../../components/Themed'
 import * as ImagePicker from 'expo-image-picker';
 import tw from 'twrnc'
 import { ExpoIcon } from '../../components/ExpoIcon'
@@ -31,7 +31,7 @@ export default function EquiptmentSearch(props: { exerciseId: string }) {
     React.useEffect(() => {
         DataStore.observeQuery(Equiptment, e => e.and(eq => [
             debouncedSearchTerm ? eq.name.contains(searchKey) : eq.name.ne(''),
-            eq.or(u => [u.userID.eq(userId)])
+            eq.or(u => [u.userID.eq(userId), u.public.eq(true)])
         ])).subscribe(ss => {
             const {items} = ss
             Promise.all(items.map((async r => {
@@ -93,7 +93,7 @@ export default function EquiptmentSearch(props: { exerciseId: string }) {
     }
 
     return (
-        <View style={{flex: 1}}>
+        <View style={{flex: 1}} includeBackground>
             <BackButton />
             <ScrollView contentContainerStyle={tw`pb-40`} showsVerticalScrollIndicator={false}>
                 <View style={tw`px-4 h-12/12`}>

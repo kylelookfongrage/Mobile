@@ -37,6 +37,8 @@ export type RootStackParamList = {
   UpdateEmail: undefined;
   DeleteAccount: undefined;
   FinishedExercise: undefined;
+  Allergens: undefined;
+  UserBio: undefined;
 };
 
 export type RootStackScreenProps<Screen extends keyof RootStackParamList> = NativeStackScreenProps<

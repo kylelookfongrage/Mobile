@@ -1,6 +1,6 @@
-import { View } from 'react-native'
 import { CalendarList } from 'react-native-calendars'
 import React from 'react'
+import { View } from '../../components/Themed'
 import { useNavigation } from '@react-navigation/native'
 import useColorScheme from '../../hooks/useColorScheme'
 import moment, { Moment } from 'moment'
@@ -28,7 +28,7 @@ export default function Calendar() {
     const markedDate = AWSDate
     const dm = useColorScheme() === 'dark'
     return (
-        <View style={tw`bg-${dm ? 'black' : 'white'} h-12/12`}>
+        <View style={{flex: 1}} includeBackground>
             <BackButton />
             <CalendarList
                 // Callback which gets executed when visible months change in scroll view. Default = undefined
@@ -41,7 +41,7 @@ export default function Calendar() {
                 hideExtraDays={true}
                 hideArrows={false}
                 style={tw``}
-                theme={{ calendarBackground: dm ? 'black' : 'white', dayTextColor: dm ? 'white' : 'black', monthTextColor: dm ? 'white' : 'black' }}
+                theme={{ calendarBackground: 'transparent', dayTextColor: dm ? 'white' : 'black', monthTextColor: dm ? 'white' : 'black' }}
                 // date={markedDate}
                 horizontal={true}
                 // Enable paging on horizontal, default = false

@@ -1,6 +1,6 @@
-import { ActivityIndicator, ScrollView, TextInput, StyleSheet, TouchableOpacity, useColorScheme, View } from 'react-native'
+import { ActivityIndicator, ScrollView, TextInput, StyleSheet, TouchableOpacity, useColorScheme } from 'react-native'
 import React from 'react'
-import { Text } from '../../components/Themed'
+import { Text, View } from '../../components/Themed'
 import tw from 'twrnc'
 import { BackButton } from '../../components/BackButton'
 import { ExpoIcon } from '../../components/ExpoIcon'
@@ -91,7 +91,7 @@ export default function ForgotPassword() {
     }
     
     return (
-        <View style={{ flex: 1 }}>
+        <View style={{ flex: 1 }} includeBackground>
             <BackButton />
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={tw`px-4 mt-9`}>
                 {errors.length > 0 && <View style={tw`pb-6`}>

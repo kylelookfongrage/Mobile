@@ -1,6 +1,6 @@
-import { TouchableOpacity, View } from 'react-native'
+import { TouchableOpacity } from 'react-native'
 import React from 'react'
-import { Text } from '../../components/Themed'
+import { Text, View } from '../../components/Themed'
 import tw from 'twrnc'
 import { useNavigation } from '@react-navigation/native'
 import { ExpoIcon } from '../../components/ExpoIcon'
@@ -28,7 +28,7 @@ export default function Settings() {
         { title: 'About', icon: 'info', screen: 'About', payload: { personal: true } }
     ]
     return (
-        <View style={tw``}>
+        <View style={{flex: 1}} includeBackground>
             <BackButton name='Settings' />
             <View style={tw`w-12/12 px-4 mt-4`}>
                 {settings.map((setting, i) => {

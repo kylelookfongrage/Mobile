@@ -1,7 +1,7 @@
-import { View, TouchableOpacity, ScrollView, TextInput, ActivityIndicator } from 'react-native'
+import { TouchableOpacity, ScrollView, TextInput, ActivityIndicator } from 'react-native'
 import React from 'react'
 import { ExpoIcon } from '../../components/ExpoIcon'
-import { Text } from '../../components/Themed'
+import { Text, View } from '../../components/Themed'
 import tw from 'twrnc'
 import { Avatar } from 'react-native-paper'
 import { defaultImage, isStorageUri, titleCase, uploadImageAndGetID } from '../../data'
@@ -69,9 +69,9 @@ export default function PersonalInfoScreen(props: PersonalInformationProps) {
             setPic(defaultImage)
             mediaToUpload = defaultImage
         }
-        const re = /^(\d|\w)+$/
+        const re = /^(?=[a-zA-Z0-9._]{4,20}$)(?!.*[_.]{2})[^_.].*[^_.]$/
         if (!newUsername.match(re)) {
-            setErrors(['Your username can only contain characters or numbers, no special characters or spaces'])
+            setErrors(['Your username must be between 4 and 20 characters without special characters. Underscores and periods are allowed once'])
             return;
         }
         setUploading(true)
@@ -110,7 +110,7 @@ export default function PersonalInfoScreen(props: PersonalInformationProps) {
         setUploading(false)
     }
     return (
-        <View style={[tw``, { flex: 1 }]}>
+        <View style={[{ flex: 1 }]} includeBackground>
             <BackButton name='My Info'/>
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={tw`px-4`}>
                 {errors.length !== 0 &&
@@ -177,7 +177,7 @@ interface ProfilePicProps{
 }
 export const ProfilePicture = (props: ProfilePicProps) => {
     const {uri, onChange} = props
-    const [img, setImg] = React.useState<string>(uri)
+    const [img, setImg] = React.useState<string | null>(null)
     const currentMediaPermissions = ImagePicker.useMediaLibraryPermissions()
     const onChangeImagePress = async () => {
         const fetchImage = async () => {
@@ -215,14 +215,14 @@ export const ProfilePicture = (props: ProfilePicProps) => {
         }
     }
     React.useEffect(() => {
-        if (isStorageUri(uri)) {
-            Storage.get(uri).then(x => setImg(x))
-        } else {
-            setImg(uri)
+        const prepare = async () => {
+            let img = uri || defaultImage
+            setImg(isStorageUri(img) ? await Storage.get(img) : img)
         }
+        prepare()
     }, [uri])
     return <TouchableOpacity onPress={onChangeImagePress} style={tw`items-center justify-center mt-3 w-12/12`}>
-    <Avatar.Image source={{ uri: img || defaultImage }} />
+    {img && <Avatar.Image source={{ uri: img }} />}
     <Text style={tw`mt-2`}>Change Image</Text>
 </TouchableOpacity>
 }

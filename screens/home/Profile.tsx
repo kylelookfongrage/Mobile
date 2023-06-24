@@ -1,16 +1,18 @@
-import { ScrollView, View, TouchableOpacity, Image, Dimensions, RefreshControl } from 'react-native'
+import { ScrollView, TouchableOpacity, Dimensions, Image, RefreshControl } from 'react-native'
 import React from 'react'
-import { Text } from '../../components/Themed'
+import { Text, View } from '../../components/Themed'
 import tw from 'twrnc'
 import useColorScheme from '../../hooks/useColorScheme';
 import { ExpoIcon } from '../../components/ExpoIcon';
 import { useNavigation } from '@react-navigation/native';
 import { MediaType } from '../../types/Media';
+import * as WebBrowser from 'expo-web-browser'
 import { DataStore, Storage } from 'aws-amplify';
-import { Follower, Goal, Meal, User, Workout } from '../../aws/models';
+import { Exercise, Follower, Goal, Meal, User, Workout } from '../../aws/models';
 import { useCommonAWSIds } from '../../hooks/useCommonContext';
-import { defaultImage, getMatchingNavigationScreen, isStorageUri } from '../../data';
+import { defaultImage, formatCash, getMatchingNavigationScreen, isStorageUri, substringForLists } from '../../data';
 import { BackButton } from '../../components/BackButton';
+
 
 
 
@@ -21,19 +23,25 @@ interface ProfileProps {
 }
 
 const quickLinks: {name: string, icon: string, screen: string}[] = [
-    {name: 'Grocery List', icon: 'shopping-cart', screen: 'GroceryList'},
+    {name: 'Groceries', icon: 'shopping-cart', screen: 'GroceryList'},
     {name: 'Pantry', icon: 'shopping-bag', screen: 'Pantry'},
     {name: 'Favorites', icon: 'heart', screen: 'Favorites'},
+    {name: 'Allergens', icon: 'alert-circle', screen: 'Allergens'}
 
 ]
 
-
+interface ProfileExercise extends Exercise {
+    img: string;
+}
 export default function Profile(props: ProfileProps) {
     const { id } = props
     const { userId, username } = useCommonAWSIds()
     const [pic, setPic] = React.useState<MediaType[]>([])
     const [workouts, setWorkouts] = React.useState<Workout[]>([])
+    const [exercises, setExercises] = React.useState<ProfileExercise[]>([])
     const [meals, setMeals] = React.useState<Meal[]>([])
+    const [bio, setBio] = React.useState<string | null | undefined>('')
+    const [profileLink, setProfileLink] = React.useState<string>('')
     const isCurrentUsersProfile = id === userId || !id
     const navigator = useNavigation()
 
@@ -42,57 +50,56 @@ export default function Profile(props: ProfileProps) {
 
     }, [])
 
-    const fetchUserInfo = () => {
+    const fetchUserInfo = async () => {
         const queryID = props.id || userId
         if (!queryID) return
         let profileUsername = username
-        DataStore.query(User, queryID).then(x => {
-            if (x) {
-                profileUsername = x.username + ' '
-                if (x.personalTrainer) {
-                    profileUsername += '🏋️‍♀️'
-                }
-                if (x.foodProfessional) {
-                    profileUsername += '🍎'
-                }
-                setProfileName(profileUsername)
-                x.Followers.toArray().then(x => setFollowers(x.length))
+        const user = await DataStore.query(User, queryID)
+        if (user) {
+            const picture = user.picture || defaultImage
+            profileUsername = user.username + ' '
+            setProfileName(profileUsername)
+            setBio(user.bio)
+            setName(user.name)
+            if (user.links?.[0]) {
+                setProfileLink(user.links?.[0])
             }
-            if (x?.picture && isStorageUri(x.picture)) {
-                Storage.get(x.picture).then(x => {
-                    setPic([{ type: 'image', uri: x }])
-                })
-            } else if (x?.picture) {
-                setPic([{ type: 'image', uri: x.picture || '' }])
-            }
-        })
-        DataStore.query(Workout, x => x.and(w => [w.userID.eq(queryID), w.name.ne(''), w.img.ne('')]), { sort: x => x.createdAt("DESCENDING"), limit: 20 }).then(async userWorkouts => {
-            const workoutsWithImages = await Promise.all(userWorkouts.map(async wo => {
-                if (wo.img && isStorageUri(wo.img)) {
-                    return { ...wo, userID: profileUsername, img: await Storage.get(wo.img) }
-                } else {
-                    return { ...wo, userID: profileUsername }
-                }
-            }))
-            setWorkouts(workoutsWithImages)
-        })
-        DataStore.query(Meal, m => m.and(x => [x.userID.eq(queryID), x.name.ne(''), x.public.eq(true)]), { sort: x => x.createdAt("DESCENDING"), limit: 20 }).then(async userMeals => {
-            const mealsWithImages = await Promise.all(userMeals.map(async userMeal => {
-                //@ts-ignore
-                const media: MediaType[] = userMeal.media || []
-                const images = media.filter(x => x.type === 'image')
-                if (images.length > 0) {
-                    return { ...userMeal, userID: profileUsername, media: [{ type: 'image', uri: isStorageUri(images[0].uri) ? await Storage.get(images[0].uri) : images[0].uri }] }
-                } else {
-                    return { ...userMeal, media: [{ type: 'image', uri: defaultImage }], userID: profileUsername }
-                }
-            }))
+            // setProfileLink(user.lin)
+            const potentialFollowers = await DataStore.query(Follower, f => f.userID.eq(userId))
+            setFollowers(potentialFollowers.length)
+            setPic([{ type: 'image', uri: isStorageUri(picture) ? await Storage.get(picture) : picture }])
+        }
+        const potentialFollowing = await DataStore.query(Follower, f => f.subscribedFrom.eq(queryID))
+        setFollowing(potentialFollowing.length)
+        const userWorkouts = await DataStore.query(Workout, x => x.and(w => [w.userID.eq(queryID), w.name.ne(''), w.img.ne('')]), { sort: x => x.createdAt("DESCENDING"), limit: 20 })
+        const workoutsWithImages = await Promise.all(userWorkouts.map(async wo => {
+            let img = wo.img || defaultImage
+            return { ...wo, userID: profileUsername, img: isStorageUri(img) ? await Storage.get(img) : img }
+        }))
+        setWorkouts(workoutsWithImages)
+        const userMeals = await DataStore.query(Meal, m => m.and(x => [x.userID.eq(queryID), x.name.ne(''), x.public.eq(true)]), { sort: x => x.createdAt("DESCENDING"), limit: 20 })
+        const mealsWithImages = await Promise.all(userMeals.map(async userMeal => {
             //@ts-ignore
-            setMeals(mealsWithImages)
-        })
-        DataStore.query(Follower, f => f.subscribedFrom.eq(queryID)).then(x => {
-            setFollowing(x.length)
-        })
+            const media: MediaType[] = userMeal.media || []
+            const images = media.filter(x => x.type === 'image')
+            let img = images[0]?.uri || defaultImage
+            return { ...userMeal, userID: profileUsername, media: [{ type: 'image', uri: isStorageUri(img) ? await Storage.get(img) : img }] }
+        }))
+        //@ts-ignore
+        setMeals(mealsWithImages)
+        if (isCurrentUsersProfile) {
+            const exercisesWithoutImages = await DataStore.query(Exercise, e => e.and(ex => [ex.title.ne(''), ex.userID.eq(queryID)]), {
+                limit: 10,
+                sort: y => y.createdAt('DESCENDING')
+              })
+              const exercisesWithImages: ProfileExercise[] = await Promise.all(exercisesWithoutImages.map(async ex => {
+                //@ts-ignore
+                const media: MediaType[] = ex.media || []
+                const img = media.filter(x => x.type == 'image')?.[0]?.uri || defaultImage
+                return { ...ex, img: isStorageUri(img) ? await Storage.get(img) : img }
+              }))
+              setExercises(exercisesWithImages)
+        }
         setRefreshing(false)
     }
 
@@ -113,6 +120,8 @@ export default function Profile(props: ProfileProps) {
     const [isFollowing, setIsFollowing] = React.useState<boolean>(false)
     const dm = useColorScheme() === 'dark'
     const [refreshing, setRefreshing] = React.useState<boolean>(false)
+    const [name, setName] = React.useState<string | null | undefined>('')
+    const [showBio, setShowBio] = React.useState<boolean>(false)
 
     const onFollowingPress = async () => {
         if (!id) return;
@@ -127,8 +136,7 @@ export default function Profile(props: ProfileProps) {
         }
     }
 
-
-    return <View style={{ flex: 1 }}>
+    return <View style={{ flex: 1 }} includeBackground>
         {id && <BackButton />}
         <ScrollView contentContainerStyle={[tw`w-12/12 px-4 mt-6 pb-40`]} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchUserInfo} />}>
             {!id && <TouchableOpacity style={tw`justify-end w-12/12 mt-9 items-end`} onPress={() => {
@@ -136,21 +144,19 @@ export default function Profile(props: ProfileProps) {
             }}>
                 <ExpoIcon name='settings' iconName='feather' size={25} color={dm ? 'white' : 'black'} />
             </TouchableOpacity>}
-            <View style={tw`flex-row w-12/12`}>
+            <View style={tw`flex-row items-center`}>
                 <TouchableOpacity onPress={() => {
-                    navigator.navigate('Image', { uris: [pic.length > 0 ? pic[0].uri : defaultImage] })
-                }}>
-                    <Image source={{ uri: pic.length > 0 ? pic[0].uri : defaultImage }} style={tw`w-15 h-15 rounded-full`} />
+                        navigator.navigate('Image', { uris: [pic.length > 0 ? pic[0].uri : defaultImage] })
+                    }}>
+                    {pic.length > 0 && <Image source={{ uri: pic[0].uri }} style={tw`w-20 h-20 rounded-full`} />}
                 </TouchableOpacity>
-                <View style={tw`ml-4`}>
-                    <Text style={tw`text-lg`} weight="semibold">{profileName}</Text>
-                    <View style={tw`bg-gray-${dm ? '700' : 300} w-10/12 flex-row items-center justify-around px-9 py-2 my-4 rounded-xl`}>
-                        <TouchableOpacity onPress={() => {
+                <View style={tw`flex-row w-9/12 justify-around items-center`}>
+                <TouchableOpacity onPress={() => {
                             const screen = getMatchingNavigationScreen('Subscribees', navigator)
                             //@ts-ignore
                             navigator.push(screen, { to: props.id || userId })
                         }} style={tw`items-center justify-center`}>
-                            <Text>{followers}</Text>
+                            <Text>{formatCash(followers)}</Text>
                             <Text weight='semibold'>Followers</Text>
                         </TouchableOpacity>
                         <TouchableOpacity onPress={() => {
@@ -158,18 +164,40 @@ export default function Profile(props: ProfileProps) {
                             //@ts-ignore
                             navigator.push(screen, { from: props.id || userId })
                         }} style={tw`items-center justify-center`}>
-                            <Text>{following}</Text>
+                            <Text>{formatCash(following)}</Text>
                             <Text weight='semibold'>Following</Text>
                         </TouchableOpacity>
-                    </View>
                 </View>
             </View>
+            {name && <Text style={tw`mt-4`} weight='bold'>{name}</Text>}
+            <Text style={tw`my-${(name) ? '1' : '4'} text-gray-500`} weight='semibold'>{<Text style={tw`text-xs text-gray-500`}>@</Text>}{profileName}</Text>
+            {bio && <Text style={tw`mb-1`}>{(showBio || bio.length <= 150) ? bio : bio.substring(0, 149)} {(bio.length >= 150) && <Text style={tw`text-gray-500`} weight='semibold' onPress={() => {setShowBio(!showBio)}}>...{showBio ? 'Hide' : 'Show More'}</Text>}</Text>}
+            {profileLink && <TouchableOpacity onPress={async () => {
+                try {
+                    let url = 'https://'
+                    if (!profileLink.includes('http')) {
+                        url += profileLink
+                    } else {
+                        url = profileLink
+                    }
+                    await WebBrowser.openBrowserAsync(url)
+                } catch (error) {
+                    alert('There was a problem opening this link')
+                }
+            }}>
+                    <Text style={tw`text-red-500`} weight='semibold'>{profileLink}</Text>
+                </TouchableOpacity>}
             {!isCurrentUsersProfile && <TouchableOpacity onPress={onFollowingPress} style={tw`bg-red-${dm ? '700' : '300'} items-center justify-center p-3 mx-6 rounded-xl mt-3 mb-6`}>
                 <Text>{isFollowing ? 'Unfollow' : 'Follow'}</Text>
             </TouchableOpacity>}
             {isCurrentUsersProfile && <View>
+                <TouchableOpacity onPress={() => {
+                    navigator.navigate('UserBio')
+                }}>
+                    <Text style={tw`text-center my-3 text-gray-500`} weight='bold'>Edit Account Info</Text>
+                    </TouchableOpacity>
                 <Text style={tw`text-xl`} weight='bold'>Quick Links</Text>
-                <View style={tw`flex-row items-center justify-between px-9 py-4`}>
+                <View style={tw`flex-row items-center justify-around px-3 py-4`}>
                    {quickLinks.map(link => {
                     return <TouchableOpacity onPress={() => {
                         const screen = getMatchingNavigationScreen(link.screen, navigator)
@@ -182,7 +210,7 @@ export default function Profile(props: ProfileProps) {
                    })}
                 </View>
             </View>}
-            <Text style={tw`text-xl mb-4`} weight="semibold">Meals</Text>
+            <Text style={tw`text-lg mb-4`} weight="semibold">Meals</Text>
             {meals.length === 0 && <Text style={tw`text-center my-5`}>No meals to display</Text>}
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 {meals.map((meal, i) => {
@@ -198,15 +226,13 @@ export default function Profile(props: ProfileProps) {
                             //@ts-ignore
                             navigator.push(screen, { id: meal.id, editable: isCurrentUsersProfile })
                         }}
-                        style={[tw`items-start px-3`, { width: Dimensions.get('screen').width * 0.40 }]}>
-                        <Image source={{ uri: img || defaultImage }} style={tw`h-25 w-25 rounded-lg`} resizeMode='cover' />
-                        <Text weight='semibold'>{meal.name}</Text>
-                        <Text numberOfLines={2}>{meal.userID}</Text>
-                        {/* <Text>{r.calories} kcal</Text> */}
+                        style={[tw`items-start mx-1`]}>
+                        <Image source={{ uri: img || defaultImage }} style={tw`h-20 w-20 rounded-lg mb-1`} resizeMode='cover' />
+                        <Text style={tw`text-xs max-w-20`}>{substringForLists(meal.name)}</Text>
                     </TouchableOpacity>
                 })}
             </ScrollView>
-            <Text style={tw`text-xl my-4`} weight="semibold">Workouts</Text>
+            <Text style={tw`text-lg my-4`} weight="semibold">Workouts</Text>
             {workouts.length === 0 && <Text style={tw`text-center my-5`}>No workouts to display</Text>}
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 {workouts.map((workout, i) => {
@@ -215,16 +241,36 @@ export default function Profile(props: ProfileProps) {
                         onPress={() => {
                             const screen = getMatchingNavigationScreen('WorkoutDetail', navigator)
                             //@ts-ignore
-                            navigator.navigate(screen, { editable: isCurrentUsersProfile, id: workout.id })
+                            navigator.navigate(screen, { id: workout.id })
                         }}
-                        style={[tw`items-start px-3`, { width: Dimensions.get('screen').width * 0.40 }]}>
-                        <Image source={{ uri: workout.img || defaultImage }} style={tw`h-25 w-25 rounded-lg`} resizeMode='cover' />
-                        <Text weight='semibold'>{workout.name}</Text>
-                        <Text numberOfLines={2}>{workout.userID}</Text>
+                        style={[tw`items-start px-1`]}>
+                        <Image source={{ uri: workout.img || defaultImage }} style={tw`h-20 w-20 rounded-lg`} resizeMode='cover' />
+                        <Text style={tw`text-xs max-w-20`}>{substringForLists(workout.name)}</Text>
                         {/* <Text>{r.calories} kcal</Text> */}
                     </TouchableOpacity>
                 })}
             </ScrollView>
+            {isCurrentUsersProfile && <View style={{flex: 1}}>
+                <Text style={tw`text-lg my-4`} weight="semibold">Exercises</Text>
+                {exercises.length === 0 && <Text style={tw`text-center my-5`}>No exercises to display</Text>}
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {exercises.map((exercise, i) => {
+                    return <TouchableOpacity
+                        key={`workout ${exercise.title} at index ${i}`}
+                        onPress={() => {
+                            const screen = getMatchingNavigationScreen('ExerciseDetail', navigator)
+                            //@ts-ignore
+                            navigator.navigate(screen, { editable: isCurrentUsersProfile, id: exercise.id })
+                        }}
+                        style={[tw`items-start px-1`]}>
+                        <Image source={{ uri: exercise.img || defaultImage }} style={tw`h-20 w-20 rounded-lg`} resizeMode='cover' />
+                        <Text style={tw`text-xs max-w-20`}>{substringForLists(exercise.title)}</Text>
+                        {/* <Text>{r.calories} kcal</Text> */}
+                    </TouchableOpacity>
+                })}
+                </ScrollView>
+            </View>}
+            <View style={tw`h-20`}/>
         </ScrollView>
     </View>
 

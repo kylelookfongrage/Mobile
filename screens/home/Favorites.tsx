@@ -1,6 +1,6 @@
-import { TextInput, TouchableOpacity, useColorScheme, View, Image, RefreshControl } from 'react-native'
+import { TextInput, TouchableOpacity, useColorScheme, Image, RefreshControl } from 'react-native'
 import React from 'react'
-import { Text } from '../../components/Themed'
+import { Text, View } from '../../components/Themed'
 import { BackButton } from '../../components/BackButton'
 import { ScrollView } from 'react-native-gesture-handler'
 import tw from 'twrnc'
@@ -33,7 +33,7 @@ export default function Favorites() {
     const searchItem: FavoriteType = selectedOption === 'Meals' ? FavoriteType.MEAL : (selectedOption === 'Exercises' ? FavoriteType.EXERCISE : FavoriteType.WORKOUT)
     const items = await DataStore.query(Favorite, f => f.and(fav => [
       fav.userID.eq(userId), fav.type.eq(searchItem)
-    ]), { limit: 40, sort: x => x.createdAt('DESCENDING') })
+    ]), { limit: 50, sort: x => x.createdAt('DESCENDING') })
     if (items.length === 0) {
       setRefreshing(false)
       setResults([])
@@ -41,7 +41,7 @@ export default function Favorites() {
     }
 
     if (searchItem === FavoriteType.EXERCISE) {
-      const exercises = await DataStore.query(Exercise, e => e.or(ex => items.map(i => ex.id.eq(i.potentialID))))
+      const exercises = await DataStore.query(Exercise, e => e.or(ex => items.map(i => ex.id.eq(i.potentialID))), { limit: 50 })
       const exercisesWithImages = await Promise.all(exercises.map(async exercise => {
         const user = await DataStore.query(User, exercise.userID)
         let defaultReturnItem = {
@@ -50,22 +50,16 @@ export default function Favorites() {
           image: defaultImage,
           author: user?.username || 'Rage'
         }
-        if (exercise.media) {
-          const firstImage = exercise.media.filter(x => x?.type === 'image')
-          if (firstImage.length > 0) {
-            const image = firstImage[0]?.uri
-            if (image) {
-              defaultReturnItem['image'] = isStorageUri(image) ? await Storage.get(image) : image
-            }
-          }
-        }
+        const firstImage = exercise.media?.filter(x => x?.type === 'image')?.[0]?.uri || defaultImage
+        defaultReturnItem['image'] = isStorageUri(firstImage) ? await Storage.get(firstImage) : firstImage
+
         return defaultReturnItem
       }))
       setResults(exercisesWithImages)
     }
 
     else if (searchItem === FavoriteType.WORKOUT) {
-      const workouts = await DataStore.query(Workout, e => e.or(ex => items.map(i => ex.id.eq(i.potentialID))))
+      const workouts = await DataStore.query(Workout, e => e.or(ex => items.map(i => ex.id.eq(i.potentialID))), { limit: 50 })
       const workoutsWithImages = await Promise.all(workouts.map(async workout => {
         const user = await DataStore.query(User, workout.userID)
         let defaultReturnItem = {
@@ -74,17 +68,15 @@ export default function Favorites() {
           image: defaultImage,
           author: user?.username || 'Rage'
         }
-        if (workout.img) {
-          const image = workout.img
-          defaultReturnItem['image'] = isStorageUri(image) ? await Storage.get(image) : image
-        }
+        const image = workout.img || defaultImage
+        defaultReturnItem['image'] = isStorageUri(image) ? await Storage.get(image) : image
         return defaultReturnItem
       }))
       setResults(workoutsWithImages)
     }
 
     else if (searchItem === FavoriteType.MEAL) {
-      const meals = await DataStore.query(Meal, e => e.or(ex => items.map(i => ex.id.eq(i.potentialID))))
+      const meals = await DataStore.query(Meal, e => e.or(ex => items.map(i => ex.id.eq(i.potentialID))), { limit: 50 })
       const mealsWIthImages = await Promise.all(meals.map(async meal => {
         const user = await DataStore.query(User, meal.userID)
         let defaultReturnItem = {
@@ -93,15 +85,8 @@ export default function Favorites() {
           image: defaultImage,
           author: user?.username || 'Rage'
         }
-        if (meal.media) {
-          const firstImage = meal.media.filter(x => x?.type === 'image')
-          if (firstImage.length > 0) {
-            const image = firstImage[0]?.uri
-            if (image) {
-              defaultReturnItem['image'] = isStorageUri(image) ? await Storage.get(image) : image
-            }
-          }
-        }
+        const firstImage = meal.media?.filter(x => x?.type === 'image')?.[0]?.uri || defaultImage
+        defaultReturnItem['image'] = isStorageUri(firstImage) ? await Storage.get(firstImage) : firstImage
         return defaultReturnItem
       }))
       setResults(mealsWIthImages)
@@ -115,7 +100,7 @@ export default function Favorites() {
   const navigator = useNavigation()
   const [refreshing, setRefreshing] = React.useState<boolean>(false)
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1 }} includeBackground>
       <BackButton name='Favorites' />
       <ScrollView refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchResults} />} showsVerticalScrollIndicator={false} style={tw`mt-6 px-4`}>
         <View style={tw`flex flex-row items-center py-3 px-5 mt-6 w-12/12 bg-${dm ? 'gray-600' : 'gray-300'} rounded-xl`}>
@@ -151,12 +136,12 @@ export default function Favorites() {
               }
               const screen = getMatchingNavigationScreen(screenKey, navigator)
               //@ts-ignore
-              navigator.navigate(screen, {id: res.id, editable: false})
+              navigator.navigate(screen, { id: res.id, editable: false })
             }} key={res.id + `-${i}`} style={tw`flex-row items-center my-2 justify-between bg-gray-${dm ? '700' : '300'} p-3 rounded-xl`}>
               <View style={tw`flex-row items-center`}>
-                <Image source={{uri: res.image || defaultImage}} style={tw`h-15 w-15 rounded-xl`} />
-                <View style={tw`ml-3`}>
-                  <Text>{res.name}</Text>
+                <Image source={{ uri: res.image || defaultImage }} style={tw`h-15 w-15 rounded-xl`} />
+                <View style={tw`ml-3 max-w-8.5/12`}>
+                  <Text style={tw``}>{res.name}</Text>
                   <Text>By {<Text style={tw`text-red-500`}>{res.author}</Text>}</Text>
                 </View>
               </View>

@@ -16,6 +16,10 @@ import Pantry from '../screens/diet/Pantry'
 import Favorites from "../screens/home/Favorites"
 import SummaryFoodList from "../screens/home/SummaryFoodList"
 import ListRuns from "../screens/home/ListRuns"
+import AddExerciseToWorkout from "../screens/workout/AddExerciseToWorkout"
+import Allergens from "../screens/home/Allergens"
+import PostComments from "../screens/workout/PostComments"
+import Bio from "../screens/home/Bio"
 
 export const getCommonScreens = (prefix: string, Stack: any) => {
     return <Stack.Group>
@@ -28,12 +32,17 @@ export const getCommonScreens = (prefix: string, Stack: any) => {
             {props => <ListMeals {...props} grocery={props.route?.params?.grocery} progressId={props.route?.params?.progressId} />}
             </Stack.Screen>
             <Stack.Screen name={prefix + 'MealDetail'} options={{ headerShown: false }}>
-                    {/* @ts-ignore */}
-                    {props => <MealDetail {...props} grocery={props.route?.params?.grocery} progressId={props.route?.params?.progressId} idFromProgress={props.route?.params?.idFromProgress} id={props.route?.params?.id} editable={props.route?.params?.editable} />}
-                </Stack.Screen>
-                <Stack.Screen name={prefix + 'ProgressMeal'} options={{presentation: 'transparentModal', headerShown: false}}>
-                    {props => <ProgressMeal id={props?.route?.params?.id} />}
-                </Stack.Screen>
+                {/* @ts-ignore */}
+                {props => <MealDetail {...props} grocery={props.route?.params?.grocery} progressId={props.route?.params?.progressId} idFromProgress={props.route?.params?.idFromProgress} id={props.route?.params?.id} editable={props.route?.params?.editable} />}
+            </Stack.Screen>
+            <Stack.Screen name={prefix + 'PostComments'} options={{ headerShown: false, presentation: 'transparentModal' }}>
+                {/* @ts-ignore */}
+                {props => <PostComments {...props} postId={props.route?.params?.postId} postType={props.route?.params?.postType} />}
+            </Stack.Screen>
+            <Stack.Screen name={prefix + 'ProgressMeal'} options={{presentation: 'transparentModal', headerShown: false}}>
+                {/* @ts-ignore */}
+                {props => <ProgressMeal id={props?.route?.params?.id} />}
+            </Stack.Screen>
             <Stack.Screen name={prefix + 'FoodDetail'} options={{ headerShown: false }}>
                 {/* @ts-ignore */}
                 {props => <FoodDetail
@@ -51,7 +60,11 @@ export const getCommonScreens = (prefix: string, Stack: any) => {
                     grocery={props.route?.params?.grocery}
                 />}
             </Stack.Screen>
-            <Stack.Screen name={prefix + 'ListWorkout'} component={ListWorkout} options={{ headerShown: false }} />
+            <Stack.Screen name={prefix + 'Allergens'} component={Allergens} options={{ headerShown: false, presentation: 'transparentModal' }} />
+            <Stack.Screen name={prefix + 'ListWorkout'} options={{ headerShown: false }}>
+                {/* @ts-ignore */}
+                {props => <ListWorkout {...props} exerciseId={props.route?.params?.exerciseId} />}
+            </Stack.Screen>
             <Stack.Screen name={prefix + 'ListExercise'} options={{ headerShown: false }} >
             {/* @ts-ignore */}
             {props => <ListExercise {...props} workoutId={props.route?.params?.workoutId} editable={props.route?.params?.editable} />}
@@ -63,6 +76,10 @@ export const getCommonScreens = (prefix: string, Stack: any) => {
             <Stack.Screen name={prefix + 'ExerciseDetail'} options={{ headerShown: false }}>
                 {/* @ts-ignore */}
                 {props => <ExerciseDetail {...props} id={props.route?.params?.id} editable={props.route?.params?.editable} workoutId={props.route?.params?.workoutId} />}
+            </Stack.Screen>
+            <Stack.Screen name={prefix + 'AddExerciseToWorkout'} options={{headerShown: false}}>
+                {/* @ts-ignore */}
+                {props => <AddExerciseToWorkout {...props} exerciseId={props.route?.params?.exerciseId}/>}
             </Stack.Screen>
             <Stack.Screen name={prefix + 'WorkoutDetail'} options={{ headerShown: false }}>
                 {/* @ts-ignore */}

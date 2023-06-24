@@ -1,6 +1,6 @@
-import { ScrollView, useColorScheme, View, TouchableOpacity, Image, TextInput } from 'react-native'
+import { ScrollView, useColorScheme, TouchableOpacity, Image, TextInput } from 'react-native'
 import React from 'react'
-import { Text } from '../../components/Themed'
+import { Text, View } from '../../components/Themed'
 import { useDebounce } from '../../hooks/useDebounce'
 import tw from 'twrnc'
 import { ExpoIcon } from '../../components/ExpoIcon'
@@ -9,10 +9,12 @@ import { useNavigation } from '@react-navigation/native'
 import Barcode from '@kichiyaki/react-native-barcode-generator'
 import { BarCodeScanner } from 'expo-barcode-scanner'
 import { DataStore, Storage } from 'aws-amplify'
-import { FoodProgress } from '../../aws/models'
+import { FoodProgress, Ingredient, User } from '../../aws/models'
 import { useCommonAWSIds } from '../../hooks/useCommonContext'
 import { BackButton } from '../../components/BackButton'
 import { ActivityIndicator } from 'react-native-paper'
+import moment from 'moment'
+import AllergenAlert from '../../components/AllergenAlert'
 
 
 interface ListFoodSearchResults {
@@ -20,6 +22,7 @@ interface ListFoodSearchResults {
     name: string;
     calories: number;
     image: string;
+    createdAt?: Date,
     foodContentsLabel: string;
     category?: "Generic foods" | 'Generic meals' | 'Packaged foods' | 'Fast foods';
     measures?: {
@@ -54,16 +57,25 @@ export default function ListFood(props: ListFoodProps) {
   const searchOptions = ['All', 'My Foods', 'Barcode'] as const 
   const [barcode, setBarcode] = React.useState<string | null>(null);
   const [selectedOption, setSelectedOption] = React.useState<typeof searchOptions[number]>(searchOptions[0])
+  const [userAllergens, setUserAllergens] = React.useState<string[]>([])
   const [results, setResults] = React.useState<ListFoodSearchResults[]>([])
   const [displaySearchState, setDisplaySearchState] = React.useState('Search for food!')
   React.useEffect(() => {
     setResults([])
-    if (debouncedSearchTerm && selectedOption === 'All') {
+    if (selectedOption === 'All') {
+      if (!debouncedSearchTerm) {
+        setDisplaySearchState('Search for food!')
+        return;
+      }
       setDisplaySearchState('Searching....')
       FetchEdamamParser({
         ingr: debouncedSearchTerm
       }).then((x) => {
         if (x.hints.length > 0) {
+          if (x?.error) {
+            setDisplaySearchState('No matches found')
+            return;
+          }
           setResults(x.hints.map((y) => ({
             name: y.food.label,
             image: y.food.image,
@@ -77,23 +89,47 @@ export default function ListFood(props: ListFoodProps) {
           setDisplaySearchState('There is no food to display, please refine your search')
         }
       })
-    } if (debouncedSearchTerm && selectedOption === 'My Foods') {
-      DataStore.query(FoodProgress, f => f.and(food => [food.userID.eq(userId), food.name.contains(debouncedSearchTerm)])).then(async foodItems => {
+    } else if (selectedOption === 'My Foods' && !props.mealId) {
+      DataStore.query(FoodProgress, f => f.and(food => [food.userID.eq(userId), debouncedSearchTerm ? food.name.contains(debouncedSearchTerm) : food.name.ne('')]), {
+        limit: 40, sort: x => x.createdAt('DESCENDING')
+      })
+      .then(async foodItems => {
         //@ts-ignore
         const foodsWithPictures: ListFoodSearchResults[] = await Promise.all(foodItems.map(async foodItem => {
           const returningObject = {
             id: foodItem.id,
             name: foodItem.name,
             calories: foodItem.kcal,
-            image: foodItem.img ? (isStorageUri(foodItem.img) ? await Storage.get(foodItem.img) : foodItem.img) : defaultImage,
+            image: isStorageUri(foodItem.img || defaultImage) ? await Storage.get(foodItem.img || defaultImage) : (foodItem.img || defaultImage),
             foodContentsLabel: foodItem.foodContentsLabel || '',
-            category: foodItem.category || 'Generic foods'
+            category: foodItem.category || 'Generic foods',
+            createdAt: foodItem.createdAt
           }
           return returningObject;
         }))
         setResults(foodsWithPictures)
       })
 
+    } else if (selectedOption === 'My Foods' && props.mealId) {
+      DataStore.query(Ingredient, f => f.and(food => [food.userID.eq(userId), debouncedSearchTerm ? food.name.contains(debouncedSearchTerm) : food.name.ne('')]), {
+        limit: 40, sort: x => x.createdAt('DESCENDING')
+      })
+      .then(async foodItems => {
+        //@ts-ignore
+        const foodsWithPictures: ListFoodSearchResults[] = await Promise.all(foodItems.map(async foodItem => {
+          const returningObject = {
+            id: foodItem.id,
+            name: foodItem.name,
+            calories: foodItem.kcal,
+            image: isStorageUri(foodItem.img || defaultImage) ? await Storage.get(foodItem.img || defaultImage) : (foodItem.img || defaultImage),
+            foodContentsLabel: foodItem.foodContentsLabel || '',
+            category: foodItem.category || 'Generic foods',
+            createdAt: foodItem.createdAt
+          }
+          return returningObject;
+        }))
+        setResults(foodsWithPictures)
+      })
     }
 
   }, [debouncedSearchTerm, selectedOption])
@@ -102,7 +138,11 @@ export default function ListFood(props: ListFoodProps) {
       FetchEdamamParser({
         upc: barcode
       }).then((x) => {
-        if (x.hints.length > 0) {
+        if (x?.error) {
+          setDisplaySearchState('No matches found')
+          return;
+        }
+        if (x?.hints?.length > 0) {
           setResults(x.hints.map((y) => ({
             name: y.food.label,
             image: y.food.image,
@@ -120,6 +160,17 @@ export default function ListFood(props: ListFoodProps) {
       })
     }
   }, [barcode])
+  console.log(displaySearchState)
+  React.useEffect(() => {
+    const prepare = async () => {
+      const user = await DataStore.query(User, userId)
+      if (user) {
+        //@ts-ignore
+        setUserAllergens(user.allergens || [])
+      }
+    }
+    prepare()
+  }, [])
 
   React.useLayoutEffect(() => {
     setSearchKey('')
@@ -136,7 +187,7 @@ export default function ListFood(props: ListFoodProps) {
 
 
   return (
-    <View>
+    <View style={{flex: 1}} includeBackground>
        <BackButton />
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[tw`px-4`]}>
         <View style={tw`flex flex-row items-center py-3 px-5 mt-6 w-12/12 bg-${dm ? 'gray-600' : 'gray-300'} rounded-xl`}>
@@ -163,7 +214,7 @@ export default function ListFood(props: ListFoodProps) {
               </TouchableOpacity>
             })}
           </View>
-          {(displaySearchState !== '' && results.length === 0 && selectedOption !== 'Barcode') && <View style={tw`w-12/12 justify-center items-center mt-15`}><Text style={tw`text-xl`} weight='bold'>{displaySearchState}</Text></View>}
+          {(displaySearchState !== '' && results.length === 0 && selectedOption !== 'Barcode') && <View style={tw`w-12/12 justify-center items-center mt-9`}><Text>{displaySearchState}</Text></View>}
           {selectedOption === 'Barcode' && <View>
             {!barcode && <BarcodeScannerView 
             style={tw`h-50 w-12/12 rounded-xl border border-${dm ? 'white' : 'black'}`}
@@ -179,7 +230,9 @@ export default function ListFood(props: ListFoodProps) {
               </TouchableOpacity>
               </View>}
             </View>}
+          {(results.length === 0 && selectedOption === 'Barcode' && barcode) && <View style={tw`w-12/12 justify-center items-center my-9`}><Text>{displaySearchState}</Text></View>}
             {results.map((r, idx) => {
+              const userIsAllergic = userAllergens.filter(x => `${r.name} ${r.foodContentsLabel}`.toLowerCase().includes(x)).length > 0
             // TODO: some images are undefined, replace with icon in these cases
             return <TouchableOpacity 
                 key={`food item ${r.name} at index ${idx}`} 
@@ -202,11 +255,12 @@ export default function ListFood(props: ListFoodProps) {
                   })
                 }}
                 style={tw`flex-row items-center px-2 my-3 w-12/12`}>
-                {r.image ? <Image source={{uri: r.image}} style={tw`h-20 w-20 rounded-xl`} resizeMode='cover' /> : <View style={tw`h-20 w-20 items-center justify-center rounded-xl bg-gray-${dm ? '700' : '300'}`}>
+                {r.image ? <Image source={{uri: r.image}} style={tw`h-15 w-15 rounded-xl`} resizeMode='cover' /> : <View style={tw`h-15 w-15 items-center justify-center rounded-xl bg-gray-${dm ? '700' : '300'}`}>
                   {/* @ts-ignore */}
                   <Text style={tw`text-2xl`}>{categoryMapping[r.category?.toLowerCase()]}</Text></View>}
                 <View style={tw`w-12/12 items-start mx-4`}>
-                <Text style={tw`text-lg max-w-9/12`} weight='bold'>{r.name}</Text>
+                <Text style={tw`max-w-9/12`} weight='semibold'>{r.name} {userIsAllergic && <AllergenAlert size={15} />}</Text>
+                {selectedOption === 'My Foods' && <Text style={tw`text-xs`}>{r.createdAt && moment(r.createdAt).format('LL')}</Text>}
                 </View>
             </TouchableOpacity>
           })}

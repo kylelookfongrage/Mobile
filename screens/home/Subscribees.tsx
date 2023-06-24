@@ -1,13 +1,14 @@
-import { Image, ScrollView, TouchableOpacity, View } from 'react-native'
+import { Image, ScrollView, TextInput, TouchableOpacity, useColorScheme } from 'react-native'
 import React from 'react'
-import { Text } from '../../components/Themed'
+import { Text, View } from '../../components/Themed'
 import { useNavigation } from '@react-navigation/native'
-import { Follower, User } from '../../aws/models'
+import { User } from '../../aws/models'
 import tw from 'twrnc'
 import { DataStore, Storage } from 'aws-amplify'
 import { defaultImage, getMatchingNavigationScreen, isStorageUri } from '../../data'
 import { ExpoIcon } from '../../components/ExpoIcon'
 import { BackButton } from '../../components/BackButton'
+import { useDebounce } from '../../hooks/useDebounce'
 
 interface SubscribeesProps{
     to: string;
@@ -18,24 +19,37 @@ export default function Subscribees(props: SubscribeesProps) {
     const navigator = useNavigation()
     const {to, from} = props;
     const [users, setUsers] = React.useState<User[]>([])
+    const [searchKey, setSearchKey] = React.useState<string>()
+    const debouncedSearchTerm = useDebounce(searchKey, 500);
+    
     React.useEffect(() => {
         const fetchSubscribees = async () => {
-            const followersOrFollowees = await DataStore.query(Follower, to ? x => x.userID.eq(to) : x => x.subscribedFrom.eq(from), {limit: 50})
-            const usersFromFollowers = await DataStore.query(User, x => x.or(u => followersOrFollowees.map(fol => u.id.eq(to ? fol.subscribedFrom : fol.userID))))
-            const usersWithPictures = await Promise.all(usersFromFollowers.map(async follower => {
-                if (follower.picture && isStorageUri(follower.picture)) {
-                    return {...follower, picture: await Storage.get(follower.picture)}
-                }else {
-                    return {...follower, picture: follower.picture || defaultImage}
-                }
+            const followersOrFollowees = await DataStore.query(User, u => u.and(x => [
+                to ? x.Followers.userID.eq(to) : x.Followers.subscribedFrom.eq(from), debouncedSearchTerm ? x.username.contains(debouncedSearchTerm.toLowerCase()) : x.username.ne('')
+            ]), {limit: 50})
+            const usersWithPictures = await Promise.all(followersOrFollowees.map(async follower => {
+                let img = follower.picture || defaultImage
+                return {...follower, picture: isStorageUri(img) ? await Storage.get(img) : img}
             }))
             setUsers(usersWithPictures)
         }
         fetchSubscribees()
-    }, [])
+    }, [debouncedSearchTerm])
+    const dm = useColorScheme() === 'dark'
     return (
-    <View style={[tw``, {flex: 1}]}>
+    <View style={[tw``, {flex: 1}]} includeBackground>
         <BackButton />
+        <View style={tw`px-4`}>
+        <View style={tw`flex flex-row items-center py-3 px-5 mt-6 w-12/12 bg-${dm ? 'gray-600' : 'gray-300'} rounded-xl`}>
+                    <ExpoIcon name='search' iconName='feather' color='gray' size={25} />
+                    <TextInput
+                        placeholder='User'
+                        placeholderTextColor={'gray'}
+                        style={tw`w-9/12 py-2 px-3 text-${dm ? 'white' : 'black'}`}
+                        value={searchKey} onChangeText={setSearchKey}
+                    />
+                </View>
+        </View>
         {users.length === 0 && <Text style={tw`text-center mt-9`}>There are no subscribers</Text>}
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={tw`px-4 mt-6 pb-40`}>
         {users.map((item) => {

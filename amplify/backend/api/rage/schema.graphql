@@ -1,3 +1,35 @@
+type TaxReports @model @auth(rules: [{allow: public}]) {
+  id: ID!
+  paidStripeFee: Boolean
+  year: Int
+  Payouts: [Payouts] @hasMany(indexName: "byTaxReports", fields: ["id"])
+  userID: ID! @index(name: "byUser")
+}
+
+enum ReportReasons {
+  VIOLENCE
+  NUDITY
+  SPAM
+  HATE_SPEECH
+  OTHER
+}
+
+type ReportsOfTerms @model @auth(rules: [{allow: public}]) {
+  id: ID!
+  potentialID: ID
+  reasonDescription: String
+  reportType: ReportReasons
+  userID: ID! @index(name: "byUser")
+}
+
+type Comments @model @auth(rules: [{allow: public}]) {
+  id: ID!
+  string: String
+  userID: ID! @index(name: "byUser")
+  potentialID: ID
+  type: FavoriteType
+}
+
 type Payouts @model @auth(rules: [{allow: public}]) {
   id: ID!
   userID: ID! @index(name: "byUser")
@@ -8,6 +40,7 @@ type Payouts @model @auth(rules: [{allow: public}]) {
   activityStart: AWSDate
   activityEnd: AWSDate
   mealActivity: Int
+  taxreportsID: ID @index(name: "byTaxReports")
 }
 
 type Activity {
@@ -46,6 +79,8 @@ enum FavoriteType {
   FOOD
   EXERCISE
   WORKOUT
+  POST
+  COMMENT
 }
 
 type Coordinates {
@@ -288,6 +323,16 @@ type User @model @auth(rules: [{allow: public}]) {
   stripeId: String
   stripeEnabled: Boolean
   Payouts: [Payouts] @hasMany(indexName: "byUser", fields: ["id"])
+  categories: [String]
+  allergens: [String]
+  accepted_terms: Boolean
+  bio: String
+  Comments: [Comments] @hasMany(indexName: "byUser", fields: ["id"])
+  ReportsOfTerms: [ReportsOfTerms] @hasMany(indexName: "byUser", fields: ["id"])
+  TaxReports: [TaxReports] @hasMany(indexName: "byUser", fields: ["id"])
+  accepted_content_creator_terms: String
+  links: [String]
+  name: String
 }
 
 type Progress @model @auth(rules: [{allow: public}]) {

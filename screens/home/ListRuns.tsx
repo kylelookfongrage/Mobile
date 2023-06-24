@@ -1,6 +1,5 @@
-import { View } from 'react-native'
 import React, { useEffect, useState } from 'react'
-import { Text } from '../../components/Themed'
+import { View } from '../../components/Themed'
 import { RunProgress } from '../../aws/models'
 import { useCommonAWSIds } from '../../hooks/useCommonContext'
 import { DataStore } from 'aws-amplify'
@@ -16,11 +15,11 @@ export default function ListRuns() {
     const {progressId} = useCommonAWSIds()
 
     useEffect(() => {
-        DataStore.query(RunProgress, rp => rp.progressID.eq(progressId)).then(setRuns)
+        DataStore.query(RunProgress, rp => rp.progressID.eq(progressId), {limit: 10, sort: x => x.createdAt('DESCENDING')}).then(setRuns)
     }, [])
     const navigator = useNavigation()
   return (
-    <View style={{flex: 1}}>
+    <View style={{flex: 1}} includeBackground>
       <BackButton name='Daily Activity' /> 
       <ScrollView style={tw`px-4 pt-6`} showsVerticalScrollIndicator={false}>
       {runs.map(x => {

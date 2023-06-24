@@ -3,9 +3,13 @@
  * https://docs.expo.io/guides/color-schemes/
  */
 
-import { Text as DefaultText, View as DefaultView } from 'react-native';
+import { Storage } from 'aws-amplify';
+import { useEffect, useState } from 'react';
+import { Text as DefaultText, View as DefaultView, Image as DefaultImage} from 'react-native';
+import { SafeAreaView as DefaultSafeAreaView } from 'react-native-safe-area-context';
 
 import Colors from '../constants/Colors';
+import { isStorageUri } from '../data';
 import useColorScheme from '../hooks/useColorScheme';
 
 export function useThemeColor(
@@ -31,8 +35,10 @@ interface WeightProps{
   weight?: 'thin' | 'extralight' | 'regular' | 'medium' | 'semibold' | 'bold' | 'extrabold' | 'black'
 }
 
+
 export type TextProps = ThemeProps & DefaultText['props'] & WeightProps ;
 export type ViewProps = ThemeProps & DefaultView['props'];
+export type ImageProps = ThemeProps & DefaultImage['props']
 
 export function Text(props: TextProps) {
   const { style, lightColor, darkColor, weight, ...otherProps } = props;
@@ -66,10 +72,21 @@ export function Text(props: TextProps) {
 
   return <DefaultText style={[{ color, fontFamily: font }, style]} {...otherProps} />;
 }
-
-export function View(props: ViewProps) {
-  const { style, lightColor, darkColor, ...otherProps } = props;
-  const backgroundColor = useThemeColor({ light: lightColor, dark: darkColor }, 'background');
+interface ViewProps2 extends ViewProps {
+  includeBackground?: boolean
+}
+export function View(props: ViewProps2) {
+  const { style, lightColor, darkColor, includeBackground, ...otherProps } = props;
+  const backgroundColor = includeBackground ? useThemeColor({ light: lightColor, dark: darkColor }, 'background') : '';
 
   return <DefaultView style={[{ backgroundColor }, style]} {...otherProps} />;
 }
+
+
+export function SafeAreaView(props: ViewProps2) {
+  const { style, lightColor, darkColor, includeBackground, ...otherProps } = props;
+  const backgroundColor = includeBackground ? useThemeColor({ light: lightColor, dark: darkColor }, 'background') : '';
+
+  return <DefaultSafeAreaView style={[{ backgroundColor }, style]} {...otherProps} />;
+}
+

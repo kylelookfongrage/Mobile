@@ -36,6 +36,8 @@ function App() {
   const [userId, setUserId] = React.useState<string>('')
   const [hasSubscribedBefore, setHasSubscribedBefore] = React.useState<boolean>(false)
   const [status, setStatus] = React.useState<{fp: boolean; pt: boolean}>({fp: false, pt: false})
+  const [workouts, setWorkouts] = React.useState<WorkoutAddition[]>([])
+
 
   React.useEffect(() => {
     if (!userId) return;
@@ -44,7 +46,7 @@ function App() {
       if (!x) return;
       Purchases.addCustomerInfoUpdateListener(info => {
         if (info?.entitlements?.active['pro']?.isActive) {
-          setSubscribed(false)
+          setSubscribed(true)
         }
         if (Object.keys(info?.entitlements?.all).length > 0) {
           setHasSubscribedBefore(true)
@@ -86,8 +88,10 @@ function App() {
             status, setStatus
          }}>
         <DateContext.Provider value={{date, setDate, formattedDate, AWSDate}}>
-        <Navigation colorScheme={colorScheme} />
-        <StatusBar />
+        <ExerciseAdditionsContext.Provider value={{workouts, setWorkouts}}>
+          <Navigation colorScheme={colorScheme} />
+          <StatusBar />
+        </ExerciseAdditionsContext.Provider>
         </DateContext.Provider>
         </CommonContext.Provider>
       </SafeAreaProvider>
@@ -101,4 +105,5 @@ import { GenerateMealResult } from './data';
 import { Tier } from './aws/models';
 import Purchases from 'react-native-purchases';
 import { Platform } from 'react-native';
+import { ExerciseAdditionsContext, WorkoutAddition } from './hooks/useExerciseAdditions';
 export default App;

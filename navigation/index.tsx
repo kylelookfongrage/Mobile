@@ -3,8 +3,8 @@ import { BottomTabBarProps, createBottomTabNavigator } from '@react-navigation/b
 import { NavigationContainer, DefaultTheme, DarkTheme, useNavigation } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import * as React from 'react';
-import { Text } from '../components/Themed';
-import { ColorSchemeName, Pressable, TouchableOpacity, View } from 'react-native';
+import { Text, View } from '../components/Themed';
+import { ColorSchemeName, Pressable, TouchableOpacity } from 'react-native';
 import tw from 'twrnc';
 
 import Colors from '../constants/Colors';
@@ -50,6 +50,7 @@ import UpdateEmail from '../screens/home/UpdateEmail';
 import DeleteAccount from '../screens/home/DeleteAccount';
 import ForgotPassword from '../screens/onboarding/ForgotPassword';
 import FinishedExercise from '../screens/workout/FinishedExercise';
+import Bio from '../screens/home/Bio';
 
 
 function RootNavigator() {
@@ -66,6 +67,7 @@ function RootNavigator() {
     {(props) => <WorkoutPlayScreen {...props} id={props.route.params.id} workoutId={props.route?.params?.workoutId}/>}
     </Stack.Screen>
     <Stack.Screen name="Run" options={{ headerShown: false }}>
+      {/* @ts-ignore */}
       {(props) => <RunTracker id={props?.route?.params?.id} />}
     </Stack.Screen>
     <Stack.Screen name="Settings" component={Settings} options={{ headerShown: false }} />
@@ -78,6 +80,7 @@ function RootNavigator() {
     <Stack.Screen name="Subscription" component={Subscription} options={{ headerShown: false }} />
     <Stack.Screen name="Help" component={Help} options={{ headerShown: false }} />
     <Stack.Screen name="About" component={About} options={{ headerShown: false }} />
+    <Stack.Screen name='UserBio' component={Bio} options={{ headerShown: false }} />
     <Stack.Screen name="FinishedExercise" component={FinishedExercise} options={{ headerShown: false, gestureEnabled: false }} />
   </Stack.Navigator>
   }
@@ -163,35 +166,32 @@ function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const {setAiResult, setCurrentIngredietId} = useCommonAWSIds()
   const iconsAndColors = {
     'Home': {
-      icon: "home",
+      icon: "activity",
+      label: 'Activity',
       color: dm ? "red-400" : "red-400"
     },
     'Exercise': {
-      icon: "zap",
+      icon: "compass",
+      label: 'For You',
       color: dm ? "yellow-400" : "yellow-500"
     },
     'Profile': {
       icon: "user",
+      label: 'Profile',
       color: dm ? "white" : "gray-400"
     },
     'Food': {
-      icon: "book",
+      icon: "search",
+      label: 'Search',
       color: dm ? "teal-600" : "teal-700"
     }
   };
   return (
-    <View style={[{ flexDirection: 'row' }, tw`h-23 items-center justify-between bg-${dm ? "gray-600" : "gray-200"} w-12/12`]}>
+    <View includeBackground style={[{ flexDirection: 'row' }, tw`h-23 items-center justify-between w-12/12 border-t border-${dm ? 'gray-600' : 'gray-400'}`]}>
       {state.routes.map((route, index) => {
         // @ts-ignore
-        const { icon, color } = iconsAndColors[route.name]
+        const { icon, color, label } = (iconsAndColors[route.name]) || {icon: 'home', color: 'red-500', label: 'Home'}
         const { options } = descriptors[route.key];
-        const label =
-          options.tabBarLabel !== undefined
-            ? options.tabBarLabel
-            : options.title !== undefined
-              ? options.title
-              : route.name;
-
         const isFocused = state.index === index;
 
         const onPress = () => {
@@ -231,7 +231,7 @@ function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
             style={[{ flex: 1 }, tw`p-2`]}
           >
             <View style={tw`items-center`}>
-              {!isFocused && <ExpoIcon name={icon} iconName='feather' size={20} style={tw`text-${color}`} />}
+              {!isFocused && <ExpoIcon name={icon} iconName='feather' size={22} style={tw`text-${color}`} />}
               {isFocused && <View style={tw`items-center`}>
                 <Text weight='bold' style={tw`text-center text-${isFocused ? color : 'gray-700'}`}>
                   {/* @ts-ignore */}

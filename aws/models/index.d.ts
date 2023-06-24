@@ -2,11 +2,21 @@ import { ModelInit, MutableModel } from "@aws-amplify/datastore";
 // @ts-ignore
 import { LazyLoading, LazyLoadingDisabled, AsyncCollection } from "@aws-amplify/datastore";
 
+export enum ReportReasons {
+  VIOLENCE = "VIOLENCE",
+  NUDITY = "NUDITY",
+  SPAM = "SPAM",
+  HATE_SPEECH = "HATE_SPEECH",
+  OTHER = "OTHER"
+}
+
 export enum FavoriteType {
   MEAL = "MEAL",
   FOOD = "FOOD",
   EXERCISE = "EXERCISE",
-  WORKOUT = "WORKOUT"
+  WORKOUT = "WORKOUT",
+  POST = "POST",
+  COMMENT = "COMMENT"
 }
 
 export enum Tier {
@@ -66,6 +76,18 @@ type LazyCoordinates = {
 export declare type Coordinates = LazyLoading extends LazyLoadingDisabled ? EagerCoordinates : LazyCoordinates
 
 export declare const Coordinates: (new (init: ModelInit<Coordinates>) => Coordinates)
+
+type TaxReportsMetaData = {
+  readOnlyFields: 'createdAt' | 'updatedAt';
+}
+
+type ReportsOfTermsMetaData = {
+  readOnlyFields: 'createdAt' | 'updatedAt';
+}
+
+type CommentsMetaData = {
+  readOnlyFields: 'createdAt' | 'updatedAt';
+}
 
 type PayoutsMetaData = {
   readOnlyFields: 'createdAt' | 'updatedAt';
@@ -147,6 +169,84 @@ type ProgressMetaData = {
   readOnlyFields: 'createdAt' | 'updatedAt';
 }
 
+type EagerTaxReports = {
+  readonly id: string;
+  readonly paidStripeFee?: boolean | null;
+  readonly year?: number | null;
+  readonly Payouts?: (Payouts | null)[] | null;
+  readonly userID: string;
+  readonly createdAt?: string | null;
+  readonly updatedAt?: string | null;
+}
+
+type LazyTaxReports = {
+  readonly id: string;
+  readonly paidStripeFee?: boolean | null;
+  readonly year?: number | null;
+  readonly Payouts: AsyncCollection<Payouts>;
+  readonly userID: string;
+  readonly createdAt?: string | null;
+  readonly updatedAt?: string | null;
+}
+
+export declare type TaxReports = LazyLoading extends LazyLoadingDisabled ? EagerTaxReports : LazyTaxReports
+
+export declare const TaxReports: (new (init: ModelInit<TaxReports, TaxReportsMetaData>) => TaxReports) & {
+  copyOf(source: TaxReports, mutator: (draft: MutableModel<TaxReports, TaxReportsMetaData>) => MutableModel<TaxReports, TaxReportsMetaData> | void): TaxReports;
+}
+
+type EagerReportsOfTerms = {
+  readonly id: string;
+  readonly potentialID?: string | null;
+  readonly reasonDescription?: string | null;
+  readonly reportType?: ReportReasons | keyof typeof ReportReasons | null;
+  readonly userID: string;
+  readonly createdAt?: string | null;
+  readonly updatedAt?: string | null;
+}
+
+type LazyReportsOfTerms = {
+  readonly id: string;
+  readonly potentialID?: string | null;
+  readonly reasonDescription?: string | null;
+  readonly reportType?: ReportReasons | keyof typeof ReportReasons | null;
+  readonly userID: string;
+  readonly createdAt?: string | null;
+  readonly updatedAt?: string | null;
+}
+
+export declare type ReportsOfTerms = LazyLoading extends LazyLoadingDisabled ? EagerReportsOfTerms : LazyReportsOfTerms
+
+export declare const ReportsOfTerms: (new (init: ModelInit<ReportsOfTerms, ReportsOfTermsMetaData>) => ReportsOfTerms) & {
+  copyOf(source: ReportsOfTerms, mutator: (draft: MutableModel<ReportsOfTerms, ReportsOfTermsMetaData>) => MutableModel<ReportsOfTerms, ReportsOfTermsMetaData> | void): ReportsOfTerms;
+}
+
+type EagerComments = {
+  readonly id: string;
+  readonly string?: string | null;
+  readonly userID: string;
+  readonly potentialID?: string | null;
+  readonly type?: FavoriteType | keyof typeof FavoriteType | null;
+  readonly createdAt?: string | null;
+  readonly updatedAt?: string | null;
+}
+
+type LazyComments = {
+  readonly id: string;
+  readonly string?: string | null;
+  readonly userID: string;
+  readonly potentialID?: string | null;
+  readonly type?: FavoriteType | keyof typeof FavoriteType | null;
+  readonly createdAt?: string | null;
+  readonly updatedAt?: string | null;
+}
+
+export declare type Comments = LazyLoading extends LazyLoadingDisabled ? EagerComments : LazyComments
+
+export declare const Comments: (new (init: ModelInit<Comments, CommentsMetaData>) => Comments) & {
+  copyOf(source: Comments, mutator: (draft: MutableModel<Comments, CommentsMetaData>) => MutableModel<Comments, CommentsMetaData> | void): Comments;
+}
+
 type EagerPayouts = {
   readonly id: string;
   readonly userID: string;
@@ -157,6 +257,7 @@ type EagerPayouts = {
   readonly activityStart?: string | null;
   readonly activityEnd?: string | null;
   readonly mealActivity?: number | null;
+  readonly taxreportsID?: string | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }
@@ -171,6 +272,7 @@ type LazyPayouts = {
   readonly activityStart?: string | null;
   readonly activityEnd?: string | null;
   readonly mealActivity?: number | null;
+  readonly taxreportsID?: string | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }
@@ -802,6 +904,16 @@ type EagerUser = {
   readonly stripeId?: string | null;
   readonly stripeEnabled?: boolean | null;
   readonly Payouts?: (Payouts | null)[] | null;
+  readonly categories?: (string | null)[] | null;
+  readonly allergens?: (string | null)[] | null;
+  readonly accepted_terms?: boolean | null;
+  readonly bio?: string | null;
+  readonly Comments?: (Comments | null)[] | null;
+  readonly ReportsOfTerms?: (ReportsOfTerms | null)[] | null;
+  readonly TaxReports?: (TaxReports | null)[] | null;
+  readonly accepted_content_creator_terms?: string | null;
+  readonly links?: (string | null)[] | null;
+  readonly name?: string | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }
@@ -839,6 +951,16 @@ type LazyUser = {
   readonly stripeId?: string | null;
   readonly stripeEnabled?: boolean | null;
   readonly Payouts: AsyncCollection<Payouts>;
+  readonly categories?: (string | null)[] | null;
+  readonly allergens?: (string | null)[] | null;
+  readonly accepted_terms?: boolean | null;
+  readonly bio?: string | null;
+  readonly Comments: AsyncCollection<Comments>;
+  readonly ReportsOfTerms: AsyncCollection<ReportsOfTerms>;
+  readonly TaxReports: AsyncCollection<TaxReports>;
+  readonly accepted_content_creator_terms?: string | null;
+  readonly links?: (string | null)[] | null;
+  readonly name?: string | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }

@@ -222,7 +222,7 @@ exports.handler = async (event) => {
       const mealActivity = Number(activity.mealActivity) || 0
       console.log(`meal: ${mealActivity}, workout: ${workoutActivity}`)
       const ratio = (mealActivity + workoutActivity) / (totalActivity || 1)
-      const payoutAmount = Math.floor(balance * ratio)
+      const payoutAmount = getStripeAmount(balance * ratio)
       console.log(`User ${key} will get the amount ${payoutAmount}, due to ratio ${ratio} and activity ${mealActivity + workoutActivity}`)
       let gql =  /* GraphQL */ `
       mutation PayoutInsert {
@@ -249,3 +249,19 @@ exports.handler = async (event) => {
     body: JSON.stringify(body),
   };
 };
+
+
+
+
+const getStripeAmount = (desiredAmt) => {
+  let fee = 2 // monthly user fee
+  fee += 0.25 // payout fee
+  let payoutPercentage = 0.25
+  let date = new Date()
+  if(date.getMonth() === 11){
+      fee += 3 // tax fee
+  }
+  let variable = payoutPercentage/100
+  let amountWithoutFees = desiredAmt / (1+variable / 100) - (fee)
+  return amountWithoutFees < 0 ? 0 : amountWithoutFees
+}

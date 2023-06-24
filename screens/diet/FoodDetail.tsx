@@ -1,5 +1,5 @@
-import { View, TouchableOpacity, ScrollView, KeyboardTypeOptions } from 'react-native';
-import { Text } from '../../components/Themed';
+import { TouchableOpacity, ScrollView, KeyboardTypeOptions } from 'react-native';
+import { Text, View } from '../../components/Themed';
 import React from 'react';
 import tw from 'twrnc';
 import { TextInput } from 'react-native';
@@ -19,6 +19,7 @@ import { DataStore } from 'aws-amplify';
 import { useCommonAWSIds } from '../../hooks/useCommonContext';
 import { ErrorMessage } from '../../components/ErrorMessage';
 import { BackButton } from '../../components/BackButton';
+import AllergenAlert from '../../components/AllergenAlert';
 
 // export const SummaryFoodConverter: FirestoreDataConverter<FoodProgressProps> = {
 //     toFirestore(post: WithFieldValue<FoodProgressProps>): DocumentData {
@@ -112,6 +113,7 @@ export default function FoodDetail(props: FoodDetailProps) {
     const [edamamId, setEdamamId] = React.useState<string | null>(null);
     const [author, setAuthor] = React.useState<string>('Edamam Nutrition')
     const [authorId, setAuthorId] = React.useState<string | null>(null)
+    const [userAllergens, setUserAllergens] = React.useState<string[]>([])
     React.useEffect(() => {
         //@ts-ignore
         if (src === 'api') {
@@ -203,6 +205,16 @@ export default function FoodDetail(props: FoodDetailProps) {
         }
     }, [])
 
+    React.useEffect(() => {
+        const prepare = async () => {
+          const user = await DataStore.query(User, userId)
+          if (user) {
+            //@ts-ignore
+            setUserAllergens(user.allergens || [])
+          }
+        }
+        prepare()
+      }, [])
 
     React.useEffect(() => {
         if (!Number.isNaN(Number(quantity)) && Number(quantity) > 0 && totalWeight && currentMeasure) {
@@ -345,8 +357,10 @@ export default function FoodDetail(props: FoodDetailProps) {
 
     }
 
+    const userIsAllergic = userAllergens.filter(x => `${name} ${ingredients}`.toLowerCase().includes(x || 'nothing')).length > 0
+
     return (
-        <View style={{flex: 1}}>
+        <View style={{flex: 1}} includeBackground>
             <BackButton />
             <ScrollView bounces={false} contentContainerStyle={[tw`items-center`]} showsVerticalScrollIndicator={false} >
                 <ImagePickerView
@@ -354,7 +368,7 @@ export default function FoodDetail(props: FoodDetailProps) {
                     srcs={imageSource}
                     onChange={setImageSource}
                     type='image' />
-                <View style={tw`bg-${dm ? "black" : 'white'} w-12/12 h-12/12 items-center pb-5`}>
+                <View includeBackground style={tw`w-12/12 h-12/12 items-center pb-5`}>
                     {errors.length > 0 && <ErrorMessage errors={errors} onDismissTap={() => setErrors([])} />}
                     {/* Title */}
                     <View style={tw`justify-between flex-row items-center w-12/12 px-4 py-4`}>
@@ -381,6 +395,7 @@ export default function FoodDetail(props: FoodDetailProps) {
                                 </TouchableOpacity>
                             </View>
                         </View>
+                        {userIsAllergic && <AllergenAlert />}
                     </View>
                     <View style={tw`items-start justify-start w-12/12 px-4 py-4`}>
                         <View style={tw`flex-row items-center justify-between w-12/12`}>

@@ -1,6 +1,6 @@
-import { ScrollView, TextInput, TouchableOpacity, View, Image, Alert, Dimensions } from 'react-native'
+import { ScrollView, TextInput, TouchableOpacity, Image, Alert, Dimensions } from 'react-native'
 import React, { useRef } from 'react'
-import { Text } from '../../components/Themed'
+import { Text, View } from '../../components/Themed'
 import { SafeAreaView } from 'react-native-safe-area-context';
 import tw from 'twrnc'
 import useColorScheme from '../../hooks/useColorScheme';
@@ -17,6 +17,7 @@ import { Meal, Ingredient, User, MealProgress, PantryItem, Favorite } from '../.
 import { useCommonAWSIds } from '../../hooks/useCommonContext';
 import { BackButton } from '../../components/BackButton';
 import { useDateContext } from '../home/Calendar';
+import AllergenAlert from '../../components/AllergenAlert';
 
 export const foodCategories: Category[] = [{ name: 'N/A', emoji: '🚫' }, ...Object.values(healthLabelMapping)].map(h => {
     return { name: h.name, emoji: h.emoji }
@@ -29,17 +30,21 @@ export interface MealDetailProps {
     idFromProgress?: string;
 }
 
+interface IngredientDisplay extends Ingredient {
+    userIsAllergic?: boolean;
+}
+
 export default function MealDetailScreen(props: MealDetailProps) {
     const { id, editable, idFromProgress } = props;
-    const {AWSDate} = useDateContext();
+    const { AWSDate } = useDateContext();
     const { userId, sub, progressId, username, subscribed } = useCommonAWSIds()
     const [imageSource, setImageSource] = React.useState<MediaType[]>([])
     const [author, setAuthor] = React.useState<string>(props.editable === true ? '' : '')
     const [name, setName] = React.useState<string>('')
     const [description, setDescription] = React.useState<string>('')
-    const [ingredients, setIngredients] = React.useState<Ingredient[]>([])
+    const [ingredients, setIngredients] = React.useState<IngredientDisplay[]>([])
     const [steps, setSteps] = React.useState<string[]>([])
-    const [originalPremium, setOriginalPremium] = React.useState<boolean>(true)
+    const [originalPremium, setOriginalPremium] = React.useState<boolean | null | undefined>(null)
     const [premium, setPremium] = React.useState<boolean>(true)
     const [canViewDetails, setCanViewDetails] = React.useState<boolean>(props.editable === true)
     const [mealId, setMealId] = React.useState(id)
@@ -55,8 +60,15 @@ export default function MealDetailScreen(props: MealDetailProps) {
     const [mealUserId, setMealUserId] = React.useState<string>('')
     const scrollRef = useRef<ScrollView | null>()
     const [isAIGenerated, setIsAIGenerated] = React.useState<boolean>(false)
-    const [editMealMode, setEditMealMode] = React.useState<boolean>(props.editable!!)
+    const [editMealMode, setEditMealMode] = React.useState<boolean>(props.editable === true)
     const borderStyle = editMealMode ? `border-b border-gray-500` : ''
+    const [isUsersMeal, setIsUsersMeal] = React.useState<boolean>(false);
+    const [originalName, setOriginalName] = React.useState<string>('')
+    const [originalDescription, setOriginalDescription] = React.useState<string>('')
+    const [originalSteps, setOriginalSteps] = React.useState<string[]>([])
+    const [originalcategory, setOriginalCategory] = React.useState<Category>(foodCategories[0])
+    const [originalImages, setOriginalImages] = React.useState<MediaType[]>([])
+    const [originalIngredients, setOriginalIngredients] = React.useState<Ingredient[]>([])
 
     React.useEffect(() => {
         if (subscribed) {
@@ -79,10 +91,10 @@ export default function MealDetailScreen(props: MealDetailProps) {
         const subscription = DataStore.observeQuery(Favorite, f => f.and(fav => [
             fav.potentialID.eq(mealId), fav.type.eq('MEAL'), fav.userID.eq(userId)
         ])).subscribe(ss => {
-            const {items} = ss;
+            const { items } = ss;
             if (items.length > 0) {
                 setFavorite(true)
-            }else {
+            } else {
                 setFavorite(false)
             }
         })
@@ -94,37 +106,43 @@ export default function MealDetailScreen(props: MealDetailProps) {
         DataStore.query(Meal, id).then((m) => {
             if (m) {
                 setIsAIGenerated(m.isAiGenerated || false)
-                if (m.media && m.media.length > 0) {
-                    if (m.isAiGenerated) {
-                        setImageSource([{ type: 'image', uri: defaultImage }])
-                    } else {
-                        //@ts-ignore
-                        setImageSource(m.media)
-                    }
-
-                }
+                //@ts-ignore
+                let imgs: MediaType[] = (m.media) || [{ type: 'image', uri: defaultImage }]
+                setImageSource(imgs)
+                setOriginalImages(imgs)
                 setMealUserId(m.userID)
+                setIsUsersMeal(m.userID === userId)
                 setName(m.name)
+                setOriginalName(m.name)
                 const potentialMealCateogry = foodCategories.filter(x => x.name === m.category)
                 setMealCategory(potentialMealCateogry.length > 0 ? potentialMealCateogry[0] : foodCategories[0])
-
+                setOriginalCategory(potentialMealCateogry.length > 0 ? potentialMealCateogry[0] : foodCategories[0])
                 setPremium(m.premium || false)
-                setOriginalPremium(m.premium || false)
+                setOriginalPremium(m.premium)
                 setSteps(m.steps || new Array())
+                setOriginalSteps(m.steps || new Array())
                 if (!m.premium || m.userID === userId) {
                     setCanViewDetails(true)
                 }
                 setDescription(m.description || '')
+                setOriginalDescription(m.description || '')
+                DataStore.query(Ingredient, i => i.mealID.eq(mealId)).then(x => setOriginalIngredients(x))
+
                 if (m.isAiGenerated) {
                     setAuthor('Open AI')
                 }
                 else if (m.userID) DataStore.query(User, m.userID).then(u => setAuthor(u?.username || ''))
-                subscription = DataStore.observeQuery(Ingredient, ingr => ingr.mealID.eq(mealId)).subscribe(ss => {
+                subscription = DataStore.observeQuery(Ingredient, ingr => ingr.mealID.eq(mealId)).subscribe(async ss => {
+                    const u = await DataStore.query(User, userId)
+                    const allergens = u?.allergens || []
                     const { items } = ss
                     Promise.all(items.map(async ingr => {
-                        if (isStorageUri(ingr.img || '')) {
-                            return { ...ingr, img: ingr.img ? await Storage.get(ingr.img) : '' }
-                        } else return ingr
+                        const searchKey=`${ingr.name} ${ingr.foodContentsLabel}`.toLowerCase()
+                        const potentialAllergic = allergens.filter(al => searchKey.includes(al?.toLowerCase() || 'nothing')).length > 0
+                        const defaultIngr = {...ingr, userIsAllergic: potentialAllergic }
+                        if (ingr.img && isStorageUri(ingr.img)) {
+                            return { ...defaultIngr, img: await Storage.get(ingr.img || defaultImage) }
+                        } else return defaultIngr
                     })).then(x => setIngredients(x))
                 })
             }
@@ -152,10 +170,42 @@ export default function MealDetailScreen(props: MealDetailProps) {
     const navigator = useNavigation()
 
     React.useEffect(() => {
-        if (originalPremium === premium) return;
-        if (editMode === true) return;
-        setPremium(originalPremium)
-    }, [editMode])
+        const resetIngredients = async () => {
+            for (var ingr of originalIngredients) {
+                const potential = await DataStore.query(Ingredient, x => x.and(i => [i.mealID.eq(mealId), i.id.eq(ingr.id)]))
+                if (potential.length === 0) {
+                    await DataStore.save(new Ingredient({
+                        name: ingr.name, units: ingr.units, quantity: ingr.quantity,
+                        protein: ingr.protein, carbs: ingr.carbs, fat: ingr.fat,
+                        otherNutrition: ingr.otherNutrition, measures: ingr.measures,
+                        healthLabels: ingr.healthLabels, totalWeight: ingr.totalWeight, img: ingr.img, 
+                        category: ingr.category, foodContentsLabel: ingr.foodContentsLabel,
+                        kcal: ingr.kcal, mealID: ingr.mealID, edamamId: ingr.edamamId, userID: ingr.userID
+                    }))
+                }
+            }
+            //@ts-ignore
+            for (var ingr of ingredients){
+                if (!originalIngredients.find(x => x.id === ingr.id)) {
+                    await DataStore.delete(Ingredient, ingr.id)
+                }
+            }
+        }
+        if (editMealMode === false) {
+            setEditMode(false)
+            setPremium(originalPremium || false)
+            setMealCategory(originalcategory)
+            setDescription(originalDescription)
+            console.log('setting image source')
+            console.log(originalImages)
+            setImageSource([...originalImages])
+            setName(originalName)
+            setSteps(originalSteps)
+            setIngredients(originalIngredients)
+            resetIngredients()
+
+        }
+    }, [editMealMode])
 
     const saveMeal = async () => {
         if (editMealMode) {
@@ -187,7 +237,7 @@ export default function MealDetailScreen(props: MealDetailProps) {
                         x.description = description;
                         x.premium = premium;
                         x.steps = steps;
-                        x.public=true;
+                        x.public = true;
                         x.category = mealCategory.name;
                     }))
                 } else {
@@ -211,11 +261,11 @@ export default function MealDetailScreen(props: MealDetailProps) {
                 let mealProgressId = idFromProgress
                 if (!idFromProgress) {
                     const newMealProgress = await DataStore.save(new MealProgress({ progressID: progressId, progressDate: AWSDate, name: name, mealID: mealId, totalWeight: 100, consumedWeight: 100, userID: userId }))
-                    mealProgressId=newMealProgress.id
+                    mealProgressId = newMealProgress.id
                 }
                 const screen = getMatchingNavigationScreen('ProgressMeal', navigator)
                 //@ts-ignore
-                navigator.navigate(screen, {id: mealProgressId})
+                navigator.navigate(screen, { id: mealProgressId })
                 return -1;
             }
         } else {
@@ -231,7 +281,7 @@ export default function MealDetailScreen(props: MealDetailProps) {
         }
     }, [isAIGenerated])
     return (
-        <View style={{ flex: 1 }}>
+        <View style={{ flex: 1 }} includeBackground>
             <BackButton Right={() => {
                 if (!editMealMode || !id) {
                     return null;
@@ -253,7 +303,7 @@ export default function MealDetailScreen(props: MealDetailProps) {
             }} />
             {/* @ts-ignore */}
             <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} ref={scrollRef}>
-                <ImagePickerView multiple editable={editMealMode === true} srcs={canViewDetails ? imageSource : [{type: 'image', uri: defaultImage}]} onChange={setImageSource} type='all' />
+                <ImagePickerView multiple editable={editMealMode === true} srcs={canViewDetails ? imageSource : imageSource.filter(x => x.type==='image')} onChange={setImageSource} type='all' />
                 <SafeAreaView edges={['left', 'right']} style={tw`px-4 pt-4`}>
                     {errors.length > 0 && <ErrorMessage errors={errors} onDismissTap={() => setErrors([])} />}
                     <View style={tw`flex-row w-12/12 items-center justify-between`}>
@@ -280,26 +330,29 @@ export default function MealDetailScreen(props: MealDetailProps) {
                             </TouchableOpacity>
                         </View>
                         <View style={tw`flex-row items-center`}>
-                        {props.editable && <TouchableOpacity style={tw`p-5 mr-4`} onPress={() => setEditMealMode(!editMealMode)}>
-                            <Text>{editMealMode ? 'Cancel' : "Edit"}</Text>
-                        </TouchableOpacity>}
-                       {(!editMealMode && !idFromProgress) &&  <TouchableOpacity onPress={async () => {
-                            const isFavorited = await DataStore.query(Favorite, f => f.and(fav => [
-                                fav.potentialID.eq(mealId), fav.userID.eq(userId), fav.type.eq('MEAL')
-                            ]))
-                            if (isFavorited.length > 0) {
-                                await DataStore.delete(Favorite, isFavorited[0].id)
-                            } else {
-                                await DataStore.save(new Favorite({userID: userId, potentialID: mealId, type: 'MEAL'}))
-                            }
-                       }}>
-                            <ExpoIcon name={favorite ? 'heart' : 'heart-outline'} iconName='ion' color={'red'} size={25} />
-                        </TouchableOpacity>}
+                            {(props.editable || isUsersMeal) && <TouchableOpacity style={tw`p-5 mr-4`} onPress={() => setEditMealMode(!editMealMode)}>
+                                <Text>{editMealMode ? 'Cancel' : "Edit"}</Text>
+                            </TouchableOpacity>}
+                            {(!editMealMode && !idFromProgress) && <TouchableOpacity onPress={async () => {
+                                const isFavorited = await DataStore.query(Favorite, f => f.and(fav => [
+                                    fav.potentialID.eq(mealId), fav.userID.eq(userId), fav.type.eq('MEAL')
+                                ]))
+                                if (isFavorited.length > 0) {
+                                    await DataStore.delete(Favorite, isFavorited[0].id)
+                                } else {
+                                    await DataStore.save(new Favorite({ userID: userId, potentialID: mealId, type: 'MEAL' }))
+                                }
+                            }}>
+                                <ExpoIcon name={favorite ? 'heart' : 'heart-outline'} iconName='ion' color={'red'} size={25} />
+                            </TouchableOpacity>}
                         </View>
                     </View>
-                    {(editMealMode) && <View style={tw`py-4 flex-row items-center`}>
-                        <Text style={tw`text-xl mr-4`} weight='semibold'>Premium</Text>
-                        <Switch value={premium} onValueChange={setPremium} disabled={(editMealMode !== true || isAIGenerated)} />
+                    {(editMealMode) && <View style={tw`mt-6`}>
+                        <View style={tw`flex flex-row items-center`}>
+                            <Text style={tw`text-xl mr-4`} weight='semibold'>Premium</Text>
+                            <Switch value={premium} onValueChange={setPremium} disabled={(editMealMode !== true || isAIGenerated || originalPremium === true || originalPremium === false)} />
+                        </View>
+                        <Text>Please note that you cannot change premium status once saved</Text>
                     </View>}
                     <View style={tw`py-5`}>
                         <Text style={tw`text-xl mb-2`} weight='semibold'>Category</Text>
@@ -323,22 +376,22 @@ export default function MealDetailScreen(props: MealDetailProps) {
                     {/* CALORIE BREAKDOWN */}
                     <View>
                         <Text style={tw`text-xl`} weight='semibold'>Total Macros</Text>
-                        <View style={tw`flex-row flex-wrap max-w-12/12 px-4 py-3 rounded my-3 w-12/12 bg-gray-${dm ? '700' : '300'}`}>
-                            <View style={tw`flex-row w-6/12 items-center`}>
-                                <Text style={tw`text-lg`} weight='semibold'>Calories: </Text>
-                                <Text>{calories.toFixed()}kcal</Text>
+                        <View style={tw`flex-row flex-wrap justify-center max-w-12/12 px-4 py-3 rounded my-3 w-12/12`}>
+                            <View style={tw`flex-row w-5.5/12 items-center justify-center bg-gray-${dm ? '700/60' : '300'} px-2 py-3 rounded-xl mr-6 mb-6`}>
+                                <Text style={tw`text-2xl`}>🔥 </Text>
+                                <Text style={tw`text-center`} weight='semibold'>{calories.toFixed()}{<Text>kCal</Text>}</Text>
                             </View>
-                            <View style={tw`flex-row w-6/12 items-center`}>
-                                <Text style={tw`text-lg`} weight='semibold'>Protein: </Text>
-                                <Text>{protein.toFixed()}g</Text>
+                            <View style={tw`flex-row w-5.5/12 items-center justify-center bg-gray-${dm ? '700/60' : '300'} px-2 py-3 rounded-xl mb-6`}>
+                                <Text style={tw`text-2xl`}>🥩 </Text>
+                                <Text style={tw`text-center`} weight='semibold'>{protein.toFixed()}{<Text>g protein</Text>}</Text>
                             </View>
-                            <View style={tw`flex-row w-6/12 items-center`}>
-                                <Text style={tw`text-lg`} weight='semibold'>Carbs: </Text>
-                                <Text>{carbs.toFixed()}g</Text>
+                            <View style={tw`flex-row w-5.5/12 items-center justify-center bg-gray-${dm ? '700/60' : '300'} px-2 py-3 rounded-xl mr-6`}>
+                                <Text style={tw`text-2xl`}>🌽 </Text>
+                                <Text style={tw`text-center`} weight='semibold'>{carbs.toFixed()}{<Text>g carbs</Text>}</Text>
                             </View>
-                            <View style={tw`flex-row w-6/12 items-center`}>
-                                <Text style={tw`text-lg`} weight='semibold'>Fat: </Text>
-                                <Text>{fat.toFixed()}g</Text>
+                            <View style={tw`flex-row w-5.5/12 items-center justify-center bg-gray-${dm ? '700/60' : '300'} px-2 py-3 rounded-xl`}>
+                                <Text style={tw`text-2xl`}>🥓 </Text>
+                                <Text style={tw`text-center`} weight='semibold'>{fat.toFixed()}{<Text>g fats</Text>}</Text>
                             </View>
                         </View>
                     </View>
@@ -370,24 +423,26 @@ export default function MealDetailScreen(props: MealDetailProps) {
                                         console.log(editMealMode)
                                         //@ts-ignore
                                         navigator.navigate(screen, {
-                                            mealId: mealId, src: 'backend', id: ingr.id, editable: editMealMode===true
+                                            mealId: mealId, src: 'backend', id: ingr.id, editable: editMealMode === true
                                         })
                                     }}
                                     key={`food item ${ingr.name} at index ${i}`}
                                     style={tw`flex-row items-center px-2 my-3`}>
-                                    {!editMode && ingr.img && <Image source={{ uri: ingr.img }} style={tw`h-20 w-20 rounded-full`} resizeMode='cover' />}
-                                    {!editMode && !ingr.img && <View style={tw`h-20 w-20 rounded-full bg-gray-300 items-center justify-center`}>
+                                    {!editMode && ingr.img && <Img uri={ingr.img} style={`h-15 w-15 rounded-full`} resizeMode='cover' />}
+                                    {!editMode && !ingr.img && <View style={tw`h-15 w-15 rounded-full bg-gray-300 items-center justify-center`}>
                                         {/* @ts-ignore */}
-                                        {ingr.healthLabels && ingr.healthLabels.length > 0 && <Text style={tw`text-xl`}>{healthLabelMapping[ingr.healthLabels[0]].emoji}</Text>}
+                                        {ingr.healthLabels && ingr.healthLabels.length > 0 && <Text style={tw`text-xl`}>{healthLabelMapping[ingr.healthLabels[0]]?.emoji || '🍎'}</Text>}
                                         {!ingr.healthLabels && <Text style={tw`text-xl`}>🍔</Text>}
                                     </View>}
                                     {editMode && <TouchableOpacity
-                                        onPress={() => { }}
+                                        onPress={async () => {
+                                            await DataStore.delete(Ingredient, ingr.id)
+                                         }}
                                         style={[tw`items-center justify-center h-20 w-20`]}>
                                         <ExpoIcon name='trash' iconName='feather' color={dm ? 'white' : 'black'} size={25} />
                                     </TouchableOpacity>}
                                     <View style={tw`px-2`}>
-                                        <Text style={tw`text-lg max-w-10/12`} weight='bold'>{ingr.name}</Text>
+                                        <Text style={tw`max-w-10/12`} weight='bold'>{ingr.name} {ingr.userIsAllergic && <AllergenAlert size={15} />}</Text>
                                         <Text style={tw``}>{ingr.quantity} {ingr.units}</Text>
                                         <Text>{Number(ingr.kcal).toFixed()} kcal | P: {Number(ingr.protein).toFixed()}g | C: {Number(ingr.carbs).toFixed()}g | F: {Number(ingr.fat).toFixed()}g</Text>
                                     </View>
@@ -473,4 +528,20 @@ export default function MealDetailScreen(props: MealDetailProps) {
             </View>
         </View>
     )
+}
+
+
+const Img = (props: {uri: string, style: string, resizeMode: string;}) => {
+    let [src, setSrc] = React.useState<string>('')
+    React.useEffect(() => {
+        let img = props.uri || defaultImage
+        if (isStorageUri(img)) {
+            Storage.get(img).then(x => setSrc(x))
+        } else {
+            setSrc(img)
+        }
+    }, [props.uri])
+    if (!src) return <View />
+    //@ts-ignore
+    return <Image source={{uri: src}} style={tw`${props.style}`} resizeMethod={props.resizeMode} />
 }

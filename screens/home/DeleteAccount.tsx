@@ -1,6 +1,6 @@
-import { ActivityIndicator, Alert, TouchableOpacity, useColorScheme, View } from 'react-native'
+import { ActivityIndicator, Alert, TouchableOpacity, useColorScheme } from 'react-native'
 import React from 'react'
-import { Text } from '../../components/Themed'
+import { Text, View } from '../../components/Themed'
 import { BackButton } from '../../components/BackButton'
 import tw from 'twrnc'
 import { ErrorMessage } from '../../components/ErrorMessage'
@@ -66,29 +66,8 @@ export default function DeleteAccount() {
     }
   }
   return (
-    <View>
-      <BackButton Right={() => {
-        return <TouchableOpacity onPress={async () => {
-          await DataStore.delete(FoodProgress, Predicates.ALL)
-          await DataStore.delete(MealProgress, Predicates.ALL)
-          await DataStore.delete(Follower, Predicates.ALL)
-          await DataStore.delete(Ingredient, Predicates.ALL)
-    
-          await DataStore.delete(Meal, Predicates.ALL)
-          await DataStore.delete(WorkoutPlayDetail, Predicates.ALL)
-          await DataStore.delete(WorkoutPlay, Predicates.ALL)
-          await DataStore.delete(WorkoutDetails, Predicates.ALL)
-          await DataStore.delete(ExerciseEquiptmentDetail, Predicates.ALL)
-          await DataStore.delete(Exercise, Predicates.ALL)
-          await DataStore.delete(Workout, Predicates.ALL)
-          await DataStore.delete(RunProgress, Predicates.ALL)
-          await DataStore.delete(Progress, Predicates.ALL)
-          await DataStore.delete(Application,  Predicates.ALL)
-          await DataStore.delete(Favorite, Predicates.ALL)
-        }}>
-          <Text>Delete all info (DEV ONLY)</Text>
-        </TouchableOpacity>
-      }} />
+    <View style={{flex: 1}} includeBackground>
+      <BackButton />
       <View style={tw`px-4`}>
         {errors.length > 0 && <View style={tw`mb-4`}>
           <ErrorMessage errors={errors} onDismissTap={() => setErrors([])} />

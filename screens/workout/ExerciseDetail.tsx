@@ -1,6 +1,6 @@
-import { View, TouchableOpacity, Image, ScrollView, TextInput } from 'react-native'
+import { TouchableOpacity, Image, ScrollView, TextInput } from 'react-native'
 import React, { useRef } from 'react'
-import { Text } from '../../components/Themed'
+import { Text, View } from '../../components/Themed'
 import useColorScheme from '../../hooks/useColorScheme';
 import tw from 'twrnc'
 import { ActivityIndicator } from 'react-native-paper';
@@ -15,6 +15,7 @@ import { Equiptment, Exercise, ExerciseEquiptmentDetail, Favorite, User, Workout
 import { useCommonAWSIds } from '../../hooks/useCommonContext';
 import { ZenObservable } from 'zen-observable-ts';
 import { BackButton } from '../../components/BackButton';
+import { useExerciseAdditions } from '../../hooks/useExerciseAdditions';
 
 
 export interface ExerciseDetailProps {
@@ -24,22 +25,28 @@ export interface ExerciseDetailProps {
 }
 
 export default function ExerciseDetail(props: ExerciseDetailProps) {
-    const { id, workoutId, editable } = props;
+    const { id, workoutId } = props;
     const { sub, userId, username } = useCommonAWSIds()
+    const {setWorkouts} = useExerciseAdditions()
     const [exerciseId, setExerciseId] = React.useState<string>(id || '')
     const [exerciseName, setExerciseName] = React.useState<string>('')
     const [description, setDescription] = React.useState<string>('')
     const [author, setAuthor] = React.useState<string>('')
-    const [editMode, setEditMode] = React.useState<boolean>(props.editable!!)
+    const [editable, setEditable] = React.useState<boolean>(props.editable!!)
+    const [editMode, setEditMode] = React.useState<boolean>(props.editable === true)
     const dm = useColorScheme() === 'dark'
     const color = dm ? 'white' : 'black'
-    const borderStyle = editable ? `border-b border-gray-700` : ''
+    const borderStyle = editMode ? `border-b border-gray-700` : ''
     const [video, setVideo] = React.useState<MediaType[]>([])
     const [equiptment, setEquiptment] = React.useState<Equiptment[]>([])
     const [errors, setErrors] = React.useState<string[]>([])
     const [uploading, setUploading] = React.useState<boolean>(false)
     const [authorId, setAuthorId] = React.useState<string>('')
     const [editEquiptment, setEditEquiptment] = React.useState<boolean>(false)
+    const [originalMedia, setOriginalMedia] = React.useState<MediaType[]>([])
+    const [originalName, setOriginalName] = React.useState<string>('')
+    const [orignalDescription, setOrignalDescription] = React.useState<string>('')
+    const [originalEquiptment, setOriginalEquiptment] = React.useState<Equiptment[]>([])
 
     React.useEffect(() => {
         if (!id) {
@@ -54,11 +61,17 @@ export default function ExerciseDetail(props: ExerciseDetailProps) {
         let subscription: ZenObservable.Subscription | null = null;
         DataStore.query(Exercise, exerciseId).then(e => {
             if (e) {
+                //@ts-ignore
+                setOriginalMedia(e.media) 
+                setOriginalName(e.title)
+                setOrignalDescription(e.description)
+                DataStore.query(Equiptment, eq => eq.ExerciseEquiptmentDetails.exerciseID.eq(exerciseId)).then(x => setOriginalEquiptment(x))
                 if (id) {
                     DataStore.query(User, e.userID).then(u => {
                         if (!u) return;
                         setAuthorId(u.id)
                         setAuthor(u?.username || '')
+                        setEditable((e.userID === userId) && !props.workoutId)
                     })
                 }
                 setDescription(e.description)
@@ -98,6 +111,34 @@ export default function ExerciseDetail(props: ExerciseDetailProps) {
 
     const navigator = useNavigation()
 
+    React.useEffect(() => {
+        const resetEquiptment = async () => {
+            for (var equ of originalEquiptment) {
+                let potential = await DataStore.query(Equiptment, eq => eq.ExerciseEquiptmentDetails.and(x => [
+                    x.equiptmentID.eq(equ.id), x.exerciseID.eq(exerciseId)
+                ]))
+                if (potential.length === 0) {
+                    await DataStore.save(new ExerciseEquiptmentDetail({exerciseID: exerciseId, equiptmentID: equ.id, userID: userId}))
+                }
+            }
+
+            for (var equ of equiptment) {
+                if (!originalEquiptment.find(x => x.id === equ.id)) {
+                    await DataStore.delete(ExerciseEquiptmentDetail, x => x.and(e => [
+                        e.exerciseID.eq(exerciseId), e.equiptmentID.eq(equ.id)
+                    ]))
+                }
+            }
+        }
+        if (editMode === false) {
+            setEditEquiptment(false)
+            setExerciseName(originalName)
+            setVideo(originalMedia)
+            setDescription(orignalDescription)
+            resetEquiptment()
+        }
+    }, [editMode])
+
     const onAddEquiptmentPress = () => {
         const screen = getMatchingNavigationScreen('EquiptmentSearch', navigator)
         if (screen !== null) {
@@ -110,7 +151,7 @@ export default function ExerciseDetail(props: ExerciseDetailProps) {
 
     const onDeleteEquiptmentPress = (id: any) => {
         DataStore.delete(ExerciseEquiptmentDetail, e => e.and(x => [
-            x.sub.eq(sub), x.equiptmentID.eq(id), x.exerciseID.eq(exerciseId)
+            x.userID.eq(userId), x.equiptmentID.eq(id), x.exerciseID.eq(exerciseId)
         ])).then(x => console.log(x))
     }
 
@@ -120,7 +161,8 @@ export default function ExerciseDetail(props: ExerciseDetailProps) {
             let mediaToUpload = video
             if (exerciseName === "" || description === '') {
                 setErrors(['Your exercise must have a name and description'])
-                return
+                setUploading(false)
+                return;
             }
             if (video.filter(x => x.type === 'image').length === 0) {
                 setVideo([...video, { type: 'image', uri: defaultImage }])
@@ -129,27 +171,23 @@ export default function ExerciseDetail(props: ExerciseDetailProps) {
             setUploading(true)
             try {
                 const imgs = await uploadMedias(mediaToUpload)
-                console.log(imgs)
                 const original = await DataStore.query(Exercise, exerciseId)
-                if (original)
+                if (original) {
                     await DataStore.save(Exercise.copyOf(original, x => {
                         x.media = imgs;
                         x.title = exerciseName;
-                        x.description = description
+                        x.description = description;
                     }))
+                    //@ts-ignore
+                    navigator.pop()
+                }
             } catch (error) {
                 setUploading(false)
                 //@ts-ignore
                 setErrors([error.toString()])
-            } finally {
-                if (errors.length === 0) {
-                    //@ts-ignore
-                    navigator.pop()
-                }
             }
         } else if (props.workoutId) {
             const wId = props.workoutId
-            console.log(wId)
             const wo = await DataStore.query(Workout, wId)
             if (!wo) {
                 setErrors(['There was a problem fetching your workout, please try again'])
@@ -160,6 +198,11 @@ export default function ExerciseDetail(props: ExerciseDetailProps) {
                 //@ts-ignore
                 navigator.pop()
             }
+        } else{
+            setWorkouts([])
+            const screen = getMatchingNavigationScreen('AddExerciseToWorkout', navigator)
+            //@ts-ignore
+            navigator.navigate(screen, {exerciseId: exerciseId})
         }
         // 
 
@@ -181,107 +224,123 @@ export default function ExerciseDetail(props: ExerciseDetailProps) {
     }, [])
 
     return (
-        <View style={[tw`h-12/12 flex`]}>
-            <BackButton />
-            <ScrollView showsVerticalScrollIndicator={false}>
-                <ImagePickerView multiple type='all' editable={editMode} srcs={video} onChange={setVideo} />
-                <View>
-                    {errors.length > 0 && <View style={tw`px-4 py-4`}>
-                        <ErrorMessage errors={errors} onDismissTap={() => setErrors([])} />
-                    </View>}
-                    <View style={tw`flex flex-row items-center justify-between`}>
-                        <View style={tw`pl-5 pt-4 w-8/12`}>
-                            <TextInput
-                                style={tw`text-2xl w-10/12 max-w-10/12 mb-2 py-2 ${borderStyle}
-                            text-${dm ? 'white' : 'black'} font-bold
-                            `}
-                                onChangeText={setExerciseName}
-                                value={exerciseName}
-                                editable={editMode === true}
-                                placeholder='Exercise Name'
-                            />
-                            <TouchableOpacity onPress={() => {
-                                //@ts-ignore
-                                navigator.push(getMatchingNavigationScreen('User', navigator), { id: authorId })
-                            }}>
-                                <Text>by {<Text style={tw`text-red-600`}>{author}</Text>}</Text>
-                            </TouchableOpacity>
-                        </View>
-                        {props.editable && <TouchableOpacity style={tw`py-5 px-4`} onPress={() => setEditMode(!editMode)}>
-                            <Text>{editMode ? 'Cancel' : "Edit"}</Text>
-                        </TouchableOpacity>}
-                        {!editMode &&  <TouchableOpacity style={tw`px-3`} onPress={async () => {
-                            const isFavorited = await DataStore.query(Favorite, f => f.and(fav => [
-                                fav.potentialID.eq(exerciseId), fav.userID.eq(userId), fav.type.eq('EXERCISE')
-                            ]))
-                            if (isFavorited.length > 0) {
-                                await DataStore.delete(Favorite, isFavorited[0].id)
-                            } else {
-                                await DataStore.save(new Favorite({userID: userId, potentialID: exerciseId, type: 'EXERCISE'}))
-                            }
-                       }}>
-                            <ExpoIcon name={favorite ? 'heart' : 'heart-outline'} iconName='ion' color={'red'} size={25} />
-                        </TouchableOpacity>}
-                    </View>
-                    <View style={tw`px-5 pt-5`}>
-                        <Text style={tw`text-2xl`} weight='bold'>Procedure</Text>
+        <View style={{flex: 1}} includeBackground>
+        <BackButton Right={() => {
+            if (!editMode) return <View />
+            return <TouchableOpacity style={tw`px-2`} onPress={async () => {
+                await DataStore.delete(Exercise, exerciseId)
+                //@ts-ignore
+                navigator.pop()
+            }}>
+                <Text weight='semibold' style={tw`text-red-500`}>Delete Exercise</Text>
+            </TouchableOpacity>
+        }} />
+        <ScrollView showsVerticalScrollIndicator={false}>
+            <ImagePickerView multiple type='all' editable={editMode} srcs={video} onChange={setVideo} />
+            <View>
+                {errors.length > 0 && <View style={tw`px-4 py-4`}>
+                    <ErrorMessage errors={errors} onDismissTap={() => setErrors([])} />
+                </View>}
+                <View style={tw`flex flex-row items-center justify-between`}>
+                    <View style={tw`pl-5 pt-4 w-8/12`}>
                         <TextInput
-                            value={description}
-                            multiline
-                            numberOfLines={4}
-                            onChangeText={setDescription}
+                            style={tw`text-2xl w-10/12 max-w-10/12 mb-2 py-2 ${borderStyle}
+                        text-${dm ? 'white' : 'black'} font-bold
+                        `}
+                            onChangeText={setExerciseName}
+                            value={exerciseName}
                             editable={editMode === true}
-                            placeholder='The description of your workout'
+                            multiline
+                            numberOfLines={3}
+                            placeholder='Exercise Name'
                             placeholderTextColor={'gray'}
-                            style={tw`max-w-10/12 py-1 text-${dm ? 'white' : 'black'}`}
                         />
-                        <View style={tw`h-10`} />
-                        <View style={tw`flex-row justify-between items-center`}>
-                            <Text style={tw`text-2xl`} weight='bold'>Equiptment</Text>
-                            {editable === true && <View style={tw`flex-row items-center w-5/12 justify-around`}>
-                                <TouchableOpacity onPress={() => setEditEquiptment(!editEquiptment)}>
-                                    <Text>{editEquiptment ? 'Cancel' : 'Edit'}</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity onPress={onAddEquiptmentPress}>
-                                    <Text>Add New</Text>
-                                </TouchableOpacity>
-                            </View>}
-                        </View>
-                        <View style={tw`flex-row flex-wrap max-w-12/12 mt-5`}>
-                            {equiptment.map((e, i) => {
-                                return <View style={tw`items-center w-6/12`} key={`Equiptment ${e.name} at ${i}`}>
-                                    {!editEquiptment && <Image source={{ uri: e.img }} style={{ width: 100, height: 100, resizeMode: 'contain' }} />}
-                                    {editEquiptment && <TouchableOpacity
-                                        onPress={() => onDeleteEquiptmentPress(e.id)}
-                                        style={[tw`items-center justify-center p-3`, { width: 100, height: 100 }]}>
-                                        <ExpoIcon name='trash' iconName='feather' color={dm ? 'white' : 'black'} size={30} />
-                                    </TouchableOpacity>}
-                                    <Text style={tw`pb-3 pt-2`} weight='bold'>{e.name}</Text>
-                                </View>
-                            })}
-                        </View>
+                        <TouchableOpacity onPress={() => {
+                            //@ts-ignore
+                            navigator.push(getMatchingNavigationScreen('User', navigator), { id: authorId })
+                        }}>
+                            <Text>by {<Text style={tw`text-red-600`}>{author}</Text>}</Text>
+                        </TouchableOpacity>
                     </View>
-                    <View style={tw`pb-30`} />
+                    {editable && <TouchableOpacity style={tw`py-5 px-4`} onPress={() => setEditMode(!editMode)}>
+                        <Text>{editMode ? 'Cancel' : "Edit"}</Text>
+                    </TouchableOpacity>}
+                    {!editMode &&  <TouchableOpacity style={tw`px-3`} onPress={async () => {
+                        const isFavorited = await DataStore.query(Favorite, f => f.and(fav => [
+                            fav.potentialID.eq(exerciseId), fav.userID.eq(userId), fav.type.eq('EXERCISE')
+                        ]))
+                        if (isFavorited.length > 0) {
+                            await DataStore.delete(Favorite, isFavorited[0].id)
+                        } else {
+                            await DataStore.save(new Favorite({userID: userId, potentialID: exerciseId, type: 'EXERCISE'}))
+                        }
+                   }}>
+                        <ExpoIcon name={favorite ? 'heart' : 'heart-outline'} iconName='ion' color={'red'} size={25} />
+                    </TouchableOpacity>}
                 </View>
-                <View style={tw`h-40`} />
-            </ScrollView>
-            {(workoutId || editMode) && <View style={[
-                {
-                    position: 'absolute',
-                    bottom: 0,
-                    flex: 1
-                },
-                tw`w-12/12`
-            ]}>
-                {/* Add Food Button */}
-                <View style={tw`py-5 w-12/12 items-center px-7 flex-row justify-center`}>
-                    <TouchableOpacity onPress={saveExercise} style={tw`bg-${dm ? 'red-600' : "red-500"} mr-2 px-5 h-12 justify-center rounded-full`}>
-                        {!uploading && <Text numberOfLines={1} style={tw`text-center text-white`} weight='semibold'>Save Exercise</Text>}
-                        {uploading && <ActivityIndicator />}
-                    </TouchableOpacity>
+                <View style={tw`px-5 pt-5`}>
+                    <Text style={tw`text-2xl`} weight='bold'>Procedure</Text>
+                    <TextInput
+                        value={description}
+                        multiline
+                        numberOfLines={4}
+                        onChangeText={setDescription}
+                        editable={editMode === true}
+                        placeholder='The description of your workout'
+                        placeholderTextColor={'gray'}
+                        style={tw`py-1 text-${dm ? 'white' : 'black'}`}
+                    />
+                    <View style={tw`h-10`} />
+                    <View style={tw`flex-row justify-between items-center`}>
+                        <Text style={tw`text-2xl`} weight='bold'>Equiptment</Text>
+                        {editMode === true && <View style={tw`flex-row items-center w-5/12 justify-around`}>
+                            <TouchableOpacity onPress={() => setEditEquiptment(!editEquiptment)}>
+                                <Text>{editEquiptment ? 'Cancel' : 'Edit'}</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={onAddEquiptmentPress}>
+                                <Text>Add New</Text>
+                            </TouchableOpacity>
+                        </View>}
+                    </View>
+                    <View style={tw`flex-row flex-wrap max-w-12/12 mt-5`}>
+                        {equiptment.map((e, i) => {
+                            return <View style={tw`items-center w-6/12`} key={`Equiptment ${e.name} at ${i}`}>
+                                {!editEquiptment && <TouchableOpacity onPress={() => {
+                                    navigator.navigate('Image', {uris: [e.img], defaultIndex: 0})
+                                }}>
+                                    <Image source={{ uri: e.img }} style={{ width: 100, height: 100, resizeMode: 'contain' }} />
+                                    </TouchableOpacity>}
+                                {editEquiptment && <TouchableOpacity
+                                    onPress={() => onDeleteEquiptmentPress(e.id)}
+                                    style={[tw`items-center justify-center p-3`, { width: 100, height: 100 }]}>
+                                    <ExpoIcon name='trash' iconName='feather' color={dm ? 'white' : 'black'} size={30} />
+                                </TouchableOpacity>}
+                                <Text style={tw`pb-3 pt-2`} weight='bold'>{e.name}</Text>
+                            </View>
+                        })}
+                    </View>
                 </View>
-            </View>}
+                <View style={tw`pb-30`} />
+            </View>
+            <View style={tw`h-40`} />
+        </ScrollView>
+        <View style={[
+            {
+                position: 'absolute',
+                bottom: 0,
+                flex: 1
+            },
+            tw`w-12/12`
+        ]}>
+            {/* Add Food Button */}
+            <View style={tw`py-5 w-12/12 items-center px-7 flex-row justify-center`}>
+                <TouchableOpacity onPress={saveExercise} style={tw`bg-${dm ? 'red-600' : "red-500"} mr-2 px-5 h-12 justify-center rounded-full`}>
+                    {!uploading && <Text numberOfLines={1} style={tw`text-center text-white`} weight='semibold'>{(editMode || workoutId) ? 'Save Exercise' : 'Add to Workout'}</Text>}
+                    {uploading && <ActivityIndicator />}
+                </TouchableOpacity>
+            </View>
         </View>
+    </View>
     )
 }
 

@@ -21,7 +21,7 @@ SplashScreen.preventAutoHideAsync();
 
 export default function GetStarted() {
   const [isReady, setIsReady] = React.useState<boolean>(false)
-  const { setSub, setUserId, setUsername, setStatus } = useCommonAWSIds()
+  const { setSub, setUserId, setUsername, setStatus, setSignedInWithEmail } = useCommonAWSIds()
   const width = Dimensions.get('screen').width
   const navigator = useNavigation()
   const x = useSharedValue(0)
@@ -35,11 +35,11 @@ export default function GetStarted() {
   React.useEffect(() => {
     const prepare = async () => {
       const config = await getAWSConfig()
-      console.log(config)
       Amplify.configure({...config, Analytics: {disabled: true}, Auth: {
         region: 'us-east-1',
         identityPoolRegion: 'us-east-1'
       }})
+      // await DataStore.clear()
     }
     prepare().then(_ => setAmplifyReady(true))
   }, [])
@@ -49,6 +49,11 @@ export default function GetStarted() {
       if (!amplifyReady) return;
       try {
         const user = await Auth.currentAuthenticatedUser()
+        if (user.attributes.identities) {
+          setSignedInWithEmail(false)
+        } else {
+          setSignedInWithEmail(true)
+        }
         const sub = user.attributes.sub
         const potentialMatches = await DataStore.query(User, x => x.sub.eq(sub))
         if (potentialMatches.length > 0) {
@@ -116,7 +121,7 @@ export default function GetStarted() {
             />
             <Text style={tw`mb-2 mt-6 text-xl`} weight='bold'>{screen.name}</Text>
             <Text style={tw`max-w-10/12 text-center`}>{screen.description}</Text>
-            <TouchableOpacity style={tw`mt-9 px-3 py-2 w-5/12 items-center rounded-xl bg-red-500`} onPress={() => {
+            <TouchableOpacity style={tw`mt-9 p-3 w-5/12 items-center rounded-xl bg-red-500`} onPress={() => {
               if (i !== onboardingScreens.length - 1) {
                 if (scrollRef.current) {
                   //@ts-ignore

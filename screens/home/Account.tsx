@@ -1,6 +1,6 @@
-import { TouchableOpacity, useColorScheme, View } from 'react-native'
+import { TouchableOpacity, useColorScheme } from 'react-native'
 import React from 'react'
-import { Text } from '../../components/Themed'
+import { Text, View } from '../../components/Themed'
 import { BackButton } from '../../components/BackButton'
 import { useNavigation } from '@react-navigation/native'
 import { AppSetting } from './Settings'
@@ -11,16 +11,17 @@ import { useCommonAWSIds } from '../../hooks/useCommonContext'
 
 export default function Account() {
     const navigator = useNavigation()
-    const {setUserId, signedInWithEmail} = useCommonAWSIds()
+    const {setUserId, signedInWithEmail, setUsername, setSub, setSubscribed, setHasSubscribedBefore, setStatus, setSignedInWithEmail} = useCommonAWSIds()
     const dm = useColorScheme() === 'dark'
     const emailSettings = signedInWithEmail ?  [{ title: 'Change Password', icon: 'lock', screen: 'ChangePassword' },
     { title: 'Update Email Address', icon: 'mail', screen: 'UpdateEmail' },] : []
     const settings: AppSetting[] = [
+        {title: 'Edit Bio', icon: 'paperclip', screen:'UserBio' },
         ...emailSettings,
         { title: 'Delete Account', icon: 'trash', screen: 'DeleteAccount' },
     ]
     return (
-        <View>
+        <View includeBackground style={{flex: 1}}>
             <BackButton name='Manage Account' />
             <View style={tw`px-4 mt-6`}>
             {settings.map((setting, i) => {
@@ -40,6 +41,12 @@ export default function Account() {
                 <TouchableOpacity onPress={async () => {
                     await Auth.signOut()
                     setUserId('');
+                    setUsername('')
+                    setSub('') 
+                    setSubscribed(false)
+                    setHasSubscribedBefore(false) 
+                    setStatus({pt: false, fp: false}) 
+                    setSignedInWithEmail(false)
                 }} style={tw`mt-9 items-center justify-center mx-6 bg-red-${dm ? '700' : '500'} p-3 rounded-lg`}>
                     <Text>Sign Out</Text>
                 </TouchableOpacity>

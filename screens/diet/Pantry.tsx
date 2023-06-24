@@ -1,6 +1,6 @@
-import { ScrollView, useColorScheme, View } from 'react-native'
+import { ScrollView, useColorScheme } from 'react-native'
 import React from 'react'
-import { Text } from '../../components/Themed'
+import { Text, View } from '../../components/Themed'
 import { BackButton } from '../../components/BackButton'
 import tw from 'twrnc'
 import { useCommonAWSIds } from '../../hooks/useCommonContext'
@@ -23,7 +23,7 @@ export default function Patry() {
         return () => subscription.unsubscribe()
     }, [])
     return (
-        <View>
+        <View includeBackground style={{flex: 1}}>
             <BackButton />
             <ScrollView showsVerticalScrollIndicator={false} style={tw`px-4 pt-6`}>
                 <Text style={tw`text-lg`} weight='semibold'>Pantry</Text>

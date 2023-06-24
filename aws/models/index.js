@@ -2,11 +2,21 @@
 import { initSchema } from '@aws-amplify/datastore';
 import { schema } from './schema';
 
+const ReportReasons = {
+  "VIOLENCE": "VIOLENCE",
+  "NUDITY": "NUDITY",
+  "SPAM": "SPAM",
+  "HATE_SPEECH": "HATE_SPEECH",
+  "OTHER": "OTHER"
+};
+
 const FavoriteType = {
   "MEAL": "MEAL",
   "FOOD": "FOOD",
   "EXERCISE": "EXERCISE",
-  "WORKOUT": "WORKOUT"
+  "WORKOUT": "WORKOUT",
+  "POST": "POST",
+  "COMMENT": "COMMENT"
 };
 
 const Tier = {
@@ -21,9 +31,12 @@ const Goal = {
   "SURPLUS": "SURPLUS"
 };
 
-const { Payouts, WorkoutDetailModifier, PantryItem, Application, Follower, Favorite, ExerciseEquiptmentDetail, WorkoutPlayDetail, WorkoutPlay, WorkoutDetails, Workout, Exercise, Equiptment, RunProgress, Ingredient, Meal, MealProgress, FoodProgress, User, Progress, Activity, Media, Coordinates } = initSchema(schema);
+const { TaxReports, ReportsOfTerms, Comments, Payouts, WorkoutDetailModifier, PantryItem, Application, Follower, Favorite, ExerciseEquiptmentDetail, WorkoutPlayDetail, WorkoutPlay, WorkoutDetails, Workout, Exercise, Equiptment, RunProgress, Ingredient, Meal, MealProgress, FoodProgress, User, Progress, Activity, Media, Coordinates } = initSchema(schema);
 
 export {
+  TaxReports,
+  ReportsOfTerms,
+  Comments,
   Payouts,
   WorkoutDetailModifier,
   PantryItem,
@@ -44,6 +57,7 @@ export {
   FoodProgress,
   User,
   Progress,
+  ReportReasons,
   FavoriteType,
   Tier,
   Goal,

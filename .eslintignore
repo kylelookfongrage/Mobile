@@ -1,2 +1,4 @@
 src/models
 aws/models
+
+amplify-codegen-temp/models

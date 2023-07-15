@@ -20,7 +20,6 @@ export default function Settings() {
     const { status, subscribed } = useCommonAWSIds()
     const navigator = useNavigation()
     const settings: AppSetting[] = [
-        { title: 'Personal Information', icon: 'user', screen: 'PersonalInformation' },
         { title: 'Manage Account', icon: 'unlock', screen: 'Account' },
         { title: 'Content Creator Hub', icon: 'briefcase', screen: 'Apply' },
         { title: subscribed ? 'Subscribe or Remove Ads' : 'Manage Subscription', icon: 'tag', screen: 'Subscription' },

@@ -86,7 +86,7 @@ export default function PersonalInfoScreen(props: PersonalInformationProps) {
             mediaToUpload = await uploadImageAndGetID({ type: 'image', uri: pic })
         }
         if (registration) {
-            const newUser = new User({ sub: sub, username: newUsername, weight: weight, fat: fat, goal: goal, picture: mediaToUpload, tier: Tier.FREE })
+            const newUser = new User({ sub: sub, username: newUsername, weight: weight, fat: fat, goal: goal, picture: mediaToUpload, tier: Tier.FREE, accepted_terms: true })
             await DataStore.save(newUser)
             setUserId(newUser.id)
             setUsername(newUser.username)            

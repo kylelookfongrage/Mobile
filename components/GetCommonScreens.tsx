@@ -20,6 +20,7 @@ import AddExerciseToWorkout from "../screens/workout/AddExerciseToWorkout"
 import Allergens from "../screens/home/Allergens"
 import PostComments from "../screens/workout/PostComments"
 import Bio from "../screens/home/Bio"
+import PostDetails from "../screens/workout/PostDetails"
 
 export const getCommonScreens = (prefix: string, Stack: any) => {
     return <Stack.Group>
@@ -29,7 +30,7 @@ export const getCommonScreens = (prefix: string, Stack: any) => {
             </Stack.Screen>
             <Stack.Screen name={prefix + 'ListMeals'} options={{ headerShown: false }}>
             {/* @ts-ignore */}
-            {props => <ListMeals {...props} grocery={props.route?.params?.grocery} progressId={props.route?.params?.progressId} />}
+            {props => <ListMeals {...props} grocery={props.route?.params?.grocery} progressId={props.route?.params?.progressId} userId={props.route?.params?.userId} />}
             </Stack.Screen>
             <Stack.Screen name={prefix + 'MealDetail'} options={{ headerShown: false }}>
                 {/* @ts-ignore */}
@@ -63,11 +64,11 @@ export const getCommonScreens = (prefix: string, Stack: any) => {
             <Stack.Screen name={prefix + 'Allergens'} component={Allergens} options={{ headerShown: false, presentation: 'transparentModal' }} />
             <Stack.Screen name={prefix + 'ListWorkout'} options={{ headerShown: false }}>
                 {/* @ts-ignore */}
-                {props => <ListWorkout {...props} exerciseId={props.route?.params?.exerciseId} />}
+                {props => <ListWorkout {...props} exerciseId={props.route?.params?.exerciseId} userId={props.route?.params?.userId} />}
             </Stack.Screen>
             <Stack.Screen name={prefix + 'ListExercise'} options={{ headerShown: false }} >
             {/* @ts-ignore */}
-            {props => <ListExercise {...props} workoutId={props.route?.params?.workoutId} editable={props.route?.params?.editable} />}
+            {props => <ListExercise {...props} workoutId={props.route?.params?.workoutId} editable={props.route?.params?.editable} userId={props.route?.params?.userId} />}
             </Stack.Screen>
             <Stack.Screen name={prefix + 'EquiptmentSearch'} options={{ headerShown: false }}>
             {/* @ts-ignore */}
@@ -112,6 +113,10 @@ export const getCommonScreens = (prefix: string, Stack: any) => {
             <Stack.Screen name={prefix + 'SummaryFoodList'} options={{ headerShown: false }}>
                 {/* @ts-ignore */}
                 {props => <SummaryFoodList {...props} />}
+            </Stack.Screen>
+            <Stack.Screen name={prefix + 'PostDetails'} options={{ headerShown: false }}>
+                {/* @ts-ignore */}
+                {props => <PostDetails {...props} id={props.route?.params?.id} />}
             </Stack.Screen>
             <Stack.Screen name={prefix + 'ListRun'} component={ListRuns} options={{ headerShown: false }} />
     </Stack.Group>

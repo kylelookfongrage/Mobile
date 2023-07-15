@@ -10,12 +10,13 @@ import { ExpoIcon } from '../../components/ExpoIcon'
 import { Workout, WorkoutPlayDetail, WorkoutDetails, WorkoutPlay, Exercise } from '../../aws/models'
 import { DataStore, Storage } from 'aws-amplify'
 import { MediaType } from '../../types/Media'
-import { defaultImage, isStorageUri, toHHMMSS } from '../../data'
+import { defaultImage, isStorageUri, toHHMMSS, animationMapping } from '../../data'
 import { useCommonAWSIds } from '../../hooks/useCommonContext'
 import { ImagePickerView } from '../../components/ImagePickerView'
 import AnimatedLottieView from 'lottie-react-native'
 import timer from '../../assets/animations/timer.json'
 import { useDateContext } from '../home/Calendar'
+import { useProgressValues } from '../../hooks/useProgressValues'
 
 interface WorkoutPlayProps {
     id?: string;
@@ -39,6 +40,7 @@ interface ExerciseDisplay {
 export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
     const dm = useColorScheme() === 'dark'
     const { sub, userId } = useCommonAWSIds()
+    const {selectedAnimation} = useProgressValues({metrics: true})
     const {AWSDate} = useDateContext()
     const { id, workoutId } = props;
     const navigator = useNavigation()
@@ -221,14 +223,20 @@ export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
                     </Text>
                     {selectedWorkoutDetail.note && <Text>Note: {selectedWorkoutDetail.note}</Text>}
 
-                    <View style={tw`items-center w-12/12 items-center justify-center`}>
-                        <Text style={tw`text-3xl my-4`} weight='regular'>{toHHMMSS(totalTime)}</Text>
+                    <View style={tw`items-center w-12/12 items-center justify-center bg-gray-${dm ? '700/40' : '500/30'} mt-3 mb-6 p-3 pb-6 rounded-xl`}>
+                        <Text style={tw`text-4xl my-4`} weight='regular'>{toHHMMSS(totalTime)}</Text>
                         <View style={tw`flex flex-row items-center justify-center`}>
+                            <View style={tw`items-center justify-center`}>
+                                <Text style={tw`mb-2 text-xs text-gray-500`} weight='semibold'>{paused ? 'Start' : 'Pause'}</Text>
                             <TouchableOpacity onPress={() => {
                                 setPaused(!paused)
-                            }} style={tw`bg-gray-${dm ? '700' : '300'}/60 items-end justify-center p-2.5 rounded-xl`}>
-                                <ExpoIcon iconName='feather' name={totalTime === 0 ? 'play' : (paused ? 'play' : 'pause')} size={25} color='gray' />
+                            }} style={tw`bg-slate-${dm ? '200' : '400'}/60 items-end justify-center p-4 rounded-full`}>
+                                <ExpoIcon iconName='feather' style={tw``} name={totalTime === 0 ? 'play' : (paused ? 'play' : 'pause')} size={25} color='#36454F' />
                             </TouchableOpacity>
+                            </View>
+                            <View style={[tw`bg-gray-500 mx-12`, {width: 1, height: 60}]} />
+                            <View style={tw`items-center justify-center`}>
+                            <Text style={tw`mb-2 text-xs text-gray-500`} weight='semibold'>Restart</Text>
                             <TouchableOpacity onPress={() => {
                                 Alert.alert("Are you sure you want to restart your time?", 'This will restart all of your progress.', [
                                     { text: 'Cancel' }, {
@@ -240,9 +248,10 @@ export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
                                         }
                                     }
                                 ])
-                            }} style={tw`ml-2 bg-gray-${dm ? '700' : '300'}/60 items-end justify-center p-2.5 rounded-xl`}>
-                                <ExpoIcon iconName='feather' name={'rotate-ccw'} size={25} color='gray' />
+                            }} style={tw`bg-slate-${dm ? '200' : '400'}/60 items-end justify-center p-4 rounded-full`}>
+                                <ExpoIcon iconName='feather' name={'rotate-ccw'} size={25} color='#36454F' />
                             </TouchableOpacity>
+                            </View>
                         </View>
                     </View>
                     <View style={tw`border border-${dm ? 'white' : 'black'} rounded-xl p-3 mt-4`}>
@@ -262,7 +271,7 @@ export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
                                 {selected && <View>
                                     <View style={tw`flex-row items-center mt-3 justify-around`}>
                                         <View style={tw`items-center`}>
-                                            <TextInput keyboardType='number-pad' placeholder='sets' style={tw`py-2 px-6 rounded-xl text-${dm ? 'white' : 'black'} bg-gray-${dm ? '700' : '300'}`} value={set.reps?.toString() || ''} onChangeText={(v) => {
+                                            <TextInput keyboardType='number-pad' placeholder='sets' style={tw`py-5 px-9 rounded-xl text-${dm ? 'white' : 'black'} bg-gray-${dm ? '700' : '300'}`} value={set.reps?.toString() || ''} onChangeText={(v) => {
                                                 const newValue = v.replace(/[^0-9]/g, '')
                                                 setSelectedWorkoutPlayDetail({...set, reps: Number(newValue) || null})
 
@@ -270,7 +279,7 @@ export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
                                         <Text style={tw`mt-2`} weight='semibold'>Reps</Text>   
                                         </View>
                                         <View style={tw`items-center`}>
-                                            <TextInput keyboardType='number-pad' placeholder='lbs' style={tw`py-2 px-6 rounded-xl text-${dm ? 'white' : 'black'} bg-gray-${dm ? '700' : '300'}`} value={set.weight?.toString() || ''} onChangeText={(v) => {
+                                            <TextInput keyboardType='number-pad' placeholder='lbs' style={tw`py-5 px-9 rounded-xl text-${dm ? 'white' : 'black'} bg-gray-${dm ? '700' : '300'}`} value={set.weight?.toString() || ''} onChangeText={(v) => {
                                                 const newValue = v.replace(/[^0-9]/g, '')
                                                 setSelectedWorkoutPlayDetail({...set, weight: Number(newValue) || null})
 
@@ -278,17 +287,18 @@ export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
                                         <Text style={tw`mt-2`} weight='semibold'>Weight</Text>   
                                         </View>
                                     </View>
-                                    {(set.completed && (set.rest !== selectedWorkoutDetail.rest)) && <View style={tw`flex-row items-center justify-center`}>
+                                    {(set.completed && (set.rest !== selectedWorkoutDetail.rest)) && <TouchableOpacity onLongPress={() => {
+                                        navigator.navigate('SelectSprite')
+                                    }} style={tw`flex-row items-center justify-center`}>
                                         <AnimatedLottieView autoPlay
                                             style={tw`h-15 w-15`}
-                                            // Find more Lottie files at https://lottiefiles.com/featured
-                                            source={timer} />
+                                            source={animationMapping.filter(x => x.name === selectedAnimation)?.[0]?.animation || timer} />
                                         <Text>Resting: {toHHMMSS(set.rest || 0)}</Text>
-                                    </View>}
+                                    </TouchableOpacity>}
                                     <TouchableOpacity onPress={() => {
                                         setSelectedWorkoutPlayDetail({ ...selectedWorkoutPlayDetail, completed: !selectedWorkoutPlayDetail.completed, rest: 0 })
                                     }} style={tw`mx-4 items-center justify-center p-2 bg-red-500 my-3 rounded-xl`}>
-                                        <Text>{set.completed ? 'Restart' : 'Complete'}</Text>
+                                        <Text style={tw`text-white`}>{set.completed ? 'Restart' : 'Complete'}</Text>
                                     </TouchableOpacity>
                                 </View>}
                             </View>
@@ -347,7 +357,7 @@ export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
                 {/* Add Food Button */}
                 <View style={tw`py-5 items-center flex-row justify-center`}>
                     <TouchableOpacity onPress={() => {
-                        Alert.alert('Are you sure you are finished?', 'You can resume this workout later IF you have started the clock!', [
+                        Alert.alert('Are you sure you are finished?', 'You can resume this workout later if you have started the clock!', [
                             {
                                 text: 'Yes', onPress: () => {
                                     // save workout

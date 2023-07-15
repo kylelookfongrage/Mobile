@@ -29,6 +29,7 @@ export interface ListWorkoutSearchResultsType {
 
 interface ListWorkoutProps {
   exerciseId?: string;
+  userId?: string;
 }
 export default function ListWorkout(props: ListWorkoutProps) {
   const {exerciseId} = props;
@@ -50,7 +51,7 @@ export default function ListWorkout(props: ListWorkoutProps) {
   const fetchWorkoutResults = async () => {
     const workoutsWithoutImages = await DataStore.query(Workout, x => x.and(wo => [
       debouncedSearchTerm ? wo.name.contains(debouncedSearchTerm) : wo.name.ne(''),
-      wo.img.ne(''), selectedOption === 'My Workouts' ? wo.userID.eq(userId) : wo.userID.ne(''),
+      wo.img.ne(''), selectedOption === 'My Workouts' ? wo.userID.eq(userId) : (props.userId ? wo.userID.eq(props.userId) : wo.userID.ne('')),
     ]),  { limit: 40 })
     const workoutsWithImages: ListWorkoutSearchResultsType[] = await Promise.all(workoutsWithoutImages.map(async wo => {
       const user = await DataStore.query(User, wo.userID)
@@ -87,6 +88,7 @@ export default function ListWorkout(props: ListWorkoutProps) {
         </View>
         <View style={tw`flex-row justify-around py-4 px-5`}>
             {searchOptions.map((o, i) => {
+              if (props.userId && o !== 'All') return;
               const selected = selectedOption === o
               if (exerciseId && o !== 'My Workouts') return;
               return <TouchableOpacity 

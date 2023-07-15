@@ -10,12 +10,13 @@ import { Picker } from '../diet/FoodDetail'
 import { Category, MediaType } from '../../types/Media'
 import { ImagePickerView } from '../../components/ImagePickerView'
 import { useCommonAWSIds } from '../../hooks/useCommonContext'
-import { Equiptment, Exercise, Favorite, User, Workout, WorkoutDetails } from '../../aws/models'
+import { Equiptment, Exercise, Favorite, FavoriteType, User, Workout, WorkoutDetails } from '../../aws/models'
 import { DataStore, Storage } from 'aws-amplify'
 import { defaultImage, getMatchingNavigationScreen, isStorageUri, toHHMMSS, uploadImageAndGetID } from '../../data'
 import { ErrorMessage } from '../../components/ErrorMessage'
 import { ActivityIndicator } from 'react-native-paper'
 import { BackButton } from '../../components/BackButton'
+import { ShowMoreButton } from '../home/ShowMore'
 
 export const workoutCategories: Category[] = [
   { name: 'N/A', emoji: '🚫' },
@@ -300,12 +301,12 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
     })
     return () => subscription.unsubscribe()
   }, [])
-
+  const firstImage = img.filter(x => x.type === 'image')
   return (
     <View style={{flex: 1}} includeBackground>
       <BackButton Right={() => {
         if (!editMode || !id) {
-          return null;
+          return <ShowMoreButton name={name} desc={'@'+author} id={workoutId || ''} img={firstImage.length === 0 ? defaultImage : firstImage[0].uri} type={FavoriteType.WORKOUT} userId={authorId} />
         }
         return <TouchableOpacity onPress={() => {
           Alert.alert("Are you sure you want to delete this workout?", "You cannot undo this action later, and all progress associated with this workout will be deleted.", [

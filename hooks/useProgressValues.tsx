@@ -36,6 +36,12 @@ export function useProgressValues(props: useProgressValuesProps) {
     const [water, setWater] = useState<number>(0)
     const [progressPicture, setProgressPicture] = useState<string>()
     const [activities, setActivities] = useState<Activity[]>([])
+    const [carbGoal, setCarbGoal] = useState<number>(0)
+    const [fatGoal, setFatGoal] = useState<number>(0)
+    const [proteinGoal, setProteinGoal] = useState<number>(0)
+    const [presetMacros, setPresetMacros] = useState<string | null>(null)
+    const [creatorTerms, setCreatorTerms] = useState<boolean>(false)
+    const [selectedAnimation, setSelectedAnimation] = useState<string | null>(null)
 
     useEffect(() => {
         if (!progressId || !metrics) return;
@@ -45,6 +51,8 @@ export function useProgressValues(props: useProgressValuesProps) {
                 const p = items[0]
                 setWater(p.water || 0)
                 setProgressPicture(p.picture)
+                setFat(p.fat)
+                setWeight(p.weight)
                 //@ts-ignore
                 setActivities(p.activities || [])
             }
@@ -73,10 +81,14 @@ export function useProgressValues(props: useProgressValuesProps) {
             const {items} = ss
             if (items[0]) {
                 const user = items[0]
-                setFat(user.fat)
-                setWeight(user.weight)
                 //@ts-ignore
                 setGoal(user.goal)
+                setCarbGoal(user.carbGoal || 0)
+                setFatGoal(user.fatGoal || 0)
+                setProteinGoal(user.proteinGoal || 0)
+                setPresetMacros(user.selectedGoal || null)
+                setCreatorTerms(user.accepted_content_creator_terms || false)
+                setSelectedAnimation(user.selectedSprite || null)
             }
         })
     }, [])
@@ -149,5 +161,5 @@ export function useProgressValues(props: useProgressValuesProps) {
         return () => subscription.unsubscribe()
       }, [AWSDate])
 
-      return { weight, fat, food, meals, runs, workouts, goal, water, progressPicture, activities }
+      return { weight, fat, food, meals, runs, workouts, goal, water, progressPicture, activities, carbGoal, proteinGoal, fatGoal, presetMacros, creatorTerms, selectedAnimation  }
 }

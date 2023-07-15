@@ -9,7 +9,7 @@ import Animated, {
     BounceInDown,
     FadeOut
 } from 'react-native-reanimated';
-import { EdamamNutrientsResponse, FetchEdamamNutrients, GenerateMealResult, getMatchingNavigationScreen, isStorageUri, uploadImageAndGetID } from '../../data';
+import { defaultImage, EdamamNutrientsResponse, FetchEdamamNutrients, GenerateMealResult, getMatchingNavigationScreen, isStorageUri, uploadImageAndGetID } from '../../data';
 import { useNavigation } from '@react-navigation/native';
 import { ActivityIndicator } from 'react-native-paper';
 import { MediaType } from '../../types/Media';
@@ -20,6 +20,8 @@ import { useCommonAWSIds } from '../../hooks/useCommonContext';
 import { ErrorMessage } from '../../components/ErrorMessage';
 import { BackButton } from '../../components/BackButton';
 import AllergenAlert from '../../components/AllergenAlert';
+import { ShowMoreButton } from '../home/ShowMore';
+import { FavoriteType } from '../../aws/models';
 
 // export const SummaryFoodConverter: FirestoreDataConverter<FoodProgressProps> = {
 //     toFirestore(post: WithFieldValue<FoodProgressProps>): DocumentData {
@@ -119,15 +121,13 @@ export default function FoodDetail(props: FoodDetailProps) {
         if (src === 'api') {
             setEdamamId(id)
             FetchEdamamNutrients({
-                app_id: '028e7728',
-                app_key: 'ab2e80c58bdc5491b4c0d34fd7d23d82',
                 ingredients: [
                     //@ts-ignore
                     { foodId: id, quantity: 1, measureURI: props.measures[0].uri }
                 ]
             }).then((v) => {
                 // set the health labels if there
-                setHealthLabels(v.healthLabels)
+                setHealthLabels(v.healthLabels || [])
                 setTotalWeight(v.totalWeight)
 
                 // get the nutrient values for calories, fat, sat fat, trans fat, cholesterol, sodium, carbs, fiber sugar, protein, then all of the other ones
@@ -287,7 +287,7 @@ export default function FoodDetail(props: FoodDetailProps) {
             if (progressId && !props.mealId && !currentIngredietId && !aiResult && !props.grocery) {
                 //@ts-ignore
                 if (src === 'api' || src === 'new' || src === undefined || src === 'existing') {
-                    DataStore.save(new FoodProgress({ ...document, progressID: progressId || '' })).then(x => {
+                    DataStore.save(new FoodProgress({ ...document, progressID: progressId || '', public: src==='new' })).then(x => {
                         //@ts-ignore
                         navigator.pop()
                     })
@@ -358,10 +358,12 @@ export default function FoodDetail(props: FoodDetailProps) {
     }
 
     const userIsAllergic = userAllergens.filter(x => `${name} ${ingredients}`.toLowerCase().includes(x || 'nothing')).length > 0
-
+    const firstImage = imageSource.filter(x => x.type === 'image')
     return (
         <View style={{flex: 1}} includeBackground>
-            <BackButton />
+            <BackButton Right={() => {
+                return <ShowMoreButton name={name} desc={'@'+author} img={firstImage.length === 0 ? defaultImage : firstImage[0].uri} id={id} type={FavoriteType.FOOD} userId={authorId || ''} />
+            }} />
             <ScrollView bounces={false} contentContainerStyle={[tw`items-center`]} showsVerticalScrollIndicator={false} >
                 <ImagePickerView
                     editable={editable === true}

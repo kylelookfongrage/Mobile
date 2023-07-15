@@ -77,6 +77,18 @@ export declare type Coordinates = LazyLoading extends LazyLoadingDisabled ? Eage
 
 export declare const Coordinates: (new (init: ModelInit<Coordinates>) => Coordinates)
 
+type ChatMessagesMetaData = {
+  readOnlyFields: 'createdAt' | 'updatedAt';
+}
+
+type ChatRoomMetaData = {
+  readOnlyFields: 'createdAt' | 'updatedAt';
+}
+
+type PostMetaData = {
+  readOnlyFields: 'createdAt' | 'updatedAt';
+}
+
 type TaxReportsMetaData = {
   readOnlyFields: 'createdAt' | 'updatedAt';
 }
@@ -169,6 +181,100 @@ type ProgressMetaData = {
   readOnlyFields: 'createdAt' | 'updatedAt';
 }
 
+type EagerChatMessages = {
+  readonly id: string;
+  readonly chatroomID: string;
+  readonly from: string;
+  readonly description: string;
+  readonly media?: (Media | null)[] | null;
+  readonly postID?: string | null;
+  readonly likes?: (string | null)[] | null;
+  readonly createdAt?: string | null;
+  readonly updatedAt?: string | null;
+}
+
+type LazyChatMessages = {
+  readonly id: string;
+  readonly chatroomID: string;
+  readonly from: string;
+  readonly description: string;
+  readonly media?: (Media | null)[] | null;
+  readonly postID?: string | null;
+  readonly likes?: (string | null)[] | null;
+  readonly createdAt?: string | null;
+  readonly updatedAt?: string | null;
+}
+
+export declare type ChatMessages = LazyLoading extends LazyLoadingDisabled ? EagerChatMessages : LazyChatMessages
+
+export declare const ChatMessages: (new (init: ModelInit<ChatMessages, ChatMessagesMetaData>) => ChatMessages) & {
+  copyOf(source: ChatMessages, mutator: (draft: MutableModel<ChatMessages, ChatMessagesMetaData>) => MutableModel<ChatMessages, ChatMessagesMetaData> | void): ChatMessages;
+}
+
+type EagerChatRoom = {
+  readonly id: string;
+  readonly users: string[];
+  readonly ChatMessages?: (ChatMessages | null)[] | null;
+  readonly accepted?: string | null;
+  readonly createdAt?: string | null;
+  readonly updatedAt?: string | null;
+}
+
+type LazyChatRoom = {
+  readonly id: string;
+  readonly users: string[];
+  readonly ChatMessages: AsyncCollection<ChatMessages>;
+  readonly accepted?: string | null;
+  readonly createdAt?: string | null;
+  readonly updatedAt?: string | null;
+}
+
+export declare type ChatRoom = LazyLoading extends LazyLoadingDisabled ? EagerChatRoom : LazyChatRoom
+
+export declare const ChatRoom: (new (init: ModelInit<ChatRoom, ChatRoomMetaData>) => ChatRoom) & {
+  copyOf(source: ChatRoom, mutator: (draft: MutableModel<ChatRoom, ChatRoomMetaData>) => MutableModel<ChatRoom, ChatRoomMetaData> | void): ChatRoom;
+}
+
+type EagerPost = {
+  readonly id: string;
+  readonly Comments?: (Comments | null)[] | null;
+  readonly description?: string | null;
+  readonly media?: (Media | null)[] | null;
+  readonly userID: string;
+  readonly workoutID?: string | null;
+  readonly mealID?: string | null;
+  readonly exerciseID?: string | null;
+  readonly runProgressID?: string | null;
+  readonly ChatMessages?: (ChatMessages | null)[] | null;
+  readonly draft?: boolean | null;
+  readonly public?: boolean | null;
+  readonly createdAt?: string | null;
+  readonly updatedAt?: string | null;
+}
+
+type LazyPost = {
+  readonly id: string;
+  readonly Comments: AsyncCollection<Comments>;
+  readonly description?: string | null;
+  readonly media?: (Media | null)[] | null;
+  readonly userID: string;
+  readonly workoutID?: string | null;
+  readonly mealID?: string | null;
+  readonly exerciseID?: string | null;
+  readonly runProgressID?: string | null;
+  readonly ChatMessages: AsyncCollection<ChatMessages>;
+  readonly draft?: boolean | null;
+  readonly public?: boolean | null;
+  readonly createdAt?: string | null;
+  readonly updatedAt?: string | null;
+}
+
+export declare type Post = LazyLoading extends LazyLoadingDisabled ? EagerPost : LazyPost
+
+export declare const Post: (new (init: ModelInit<Post, PostMetaData>) => Post) & {
+  copyOf(source: Post, mutator: (draft: MutableModel<Post, PostMetaData>) => MutableModel<Post, PostMetaData> | void): Post;
+}
+
 type EagerTaxReports = {
   readonly id: string;
   readonly paidStripeFee?: boolean | null;
@@ -227,6 +333,7 @@ type EagerComments = {
   readonly userID: string;
   readonly potentialID?: string | null;
   readonly type?: FavoriteType | keyof typeof FavoriteType | null;
+  readonly postID?: string | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }
@@ -237,6 +344,7 @@ type LazyComments = {
   readonly userID: string;
   readonly potentialID?: string | null;
   readonly type?: FavoriteType | keyof typeof FavoriteType | null;
+  readonly postID?: string | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }
@@ -601,6 +709,7 @@ type EagerExercise = {
   readonly WorkoutPlayDetails?: (WorkoutPlayDetail | null)[] | null;
   readonly WorkoutDetails?: (WorkoutDetails | null)[] | null;
   readonly ExerciseEquiptmentDetails?: (ExerciseEquiptmentDetail | null)[] | null;
+  readonly bodyPart?: string | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }
@@ -615,6 +724,7 @@ type LazyExercise = {
   readonly WorkoutPlayDetails: AsyncCollection<WorkoutPlayDetail>;
   readonly WorkoutDetails: AsyncCollection<WorkoutDetails>;
   readonly ExerciseEquiptmentDetails: AsyncCollection<ExerciseEquiptmentDetail>;
+  readonly bodyPart?: string | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }
@@ -838,6 +948,7 @@ type EagerFoodProgress = {
   readonly category?: string | null;
   readonly progressID: string;
   readonly userID?: string | null;
+  readonly public?: boolean | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }
@@ -861,6 +972,7 @@ type LazyFoodProgress = {
   readonly category?: string | null;
   readonly progressID: string;
   readonly userID?: string | null;
+  readonly public?: boolean | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }
@@ -911,9 +1023,15 @@ type EagerUser = {
   readonly Comments?: (Comments | null)[] | null;
   readonly ReportsOfTerms?: (ReportsOfTerms | null)[] | null;
   readonly TaxReports?: (TaxReports | null)[] | null;
-  readonly accepted_content_creator_terms?: string | null;
+  readonly accepted_content_creator_terms?: boolean | null;
   readonly links?: (string | null)[] | null;
   readonly name?: string | null;
+  readonly carbGoal?: number | null;
+  readonly fatGoal?: number | null;
+  readonly proteinGoal?: number | null;
+  readonly selectedGoal?: string | null;
+  readonly selectedSprite?: string | null;
+  readonly Posts?: (Post | null)[] | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }
@@ -958,9 +1076,15 @@ type LazyUser = {
   readonly Comments: AsyncCollection<Comments>;
   readonly ReportsOfTerms: AsyncCollection<ReportsOfTerms>;
   readonly TaxReports: AsyncCollection<TaxReports>;
-  readonly accepted_content_creator_terms?: string | null;
+  readonly accepted_content_creator_terms?: boolean | null;
   readonly links?: (string | null)[] | null;
   readonly name?: string | null;
+  readonly carbGoal?: number | null;
+  readonly fatGoal?: number | null;
+  readonly proteinGoal?: number | null;
+  readonly selectedGoal?: string | null;
+  readonly selectedSprite?: string | null;
+  readonly Posts: AsyncCollection<Post>;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }

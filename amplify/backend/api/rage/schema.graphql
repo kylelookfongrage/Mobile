@@ -1,3 +1,35 @@
+type ChatMessages @model @auth(rules: [{allow: public}]) {
+  id: ID!
+  chatroomID: ID! @index(name: "byChatRoom")
+  from: ID!
+  description: String!
+  media: [Media]
+  postID: ID @index(name: "byPost")
+  likes: [ID]
+}
+
+type ChatRoom @model @auth(rules: [{allow: public}]) {
+  id: ID!
+  users: [ID!]!
+  ChatMessages: [ChatMessages] @hasMany(indexName: "byChatRoom", fields: ["id"])
+  accepted: ID
+}
+
+type Post @model @auth(rules: [{allow: public}]) {
+  id: ID!
+  Comments: [Comments] @hasMany(indexName: "byPost", fields: ["id"])
+  description: String
+  media: [Media]
+  userID: ID! @index(name: "byUser")
+  workoutID: ID
+  mealID: ID
+  exerciseID: ID
+  runProgressID: ID
+  ChatMessages: [ChatMessages] @hasMany(indexName: "byPost", fields: ["id"])
+  draft: Boolean
+  public: Boolean
+}
+
 type TaxReports @model @auth(rules: [{allow: public}]) {
   id: ID!
   paidStripeFee: Boolean
@@ -28,6 +60,7 @@ type Comments @model @auth(rules: [{allow: public}]) {
   userID: ID! @index(name: "byUser")
   potentialID: ID
   type: FavoriteType
+  postID: ID @index(name: "byPost")
 }
 
 type Payouts @model @auth(rules: [{allow: public}]) {
@@ -189,6 +222,7 @@ type Exercise @model @auth(rules: [{allow: public}]) {
   WorkoutPlayDetails: [WorkoutPlayDetail] @hasMany(indexName: "byExercise", fields: ["id"])
   WorkoutDetails: [WorkoutDetails] @hasMany(indexName: "byExercise", fields: ["id"])
   ExerciseEquiptmentDetails: [ExerciseEquiptmentDetail] @hasMany(indexName: "byExercise", fields: ["id"])
+  bodyPart: String
 }
 
 type Equiptment @model @auth(rules: [{allow: public}]) {
@@ -282,6 +316,7 @@ type FoodProgress @model @auth(rules: [{allow: public}]) {
   category: String
   progressID: ID! @index(name: "byProgress")
   userID: ID @index(name: "byUser")
+  public: Boolean
 }
 
 enum GOAL {
@@ -330,9 +365,15 @@ type User @model @auth(rules: [{allow: public}]) {
   Comments: [Comments] @hasMany(indexName: "byUser", fields: ["id"])
   ReportsOfTerms: [ReportsOfTerms] @hasMany(indexName: "byUser", fields: ["id"])
   TaxReports: [TaxReports] @hasMany(indexName: "byUser", fields: ["id"])
-  accepted_content_creator_terms: String
+  accepted_content_creator_terms: Boolean
   links: [String]
   name: String
+  carbGoal: Float
+  fatGoal: Float
+  proteinGoal: Float
+  selectedGoal: String
+  selectedSprite: String
+  Posts: [Post] @hasMany(indexName: "byUser", fields: ["id"])
 }
 
 type Progress @model @auth(rules: [{allow: public}]) {

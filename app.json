@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Rage - Personal Health",
+    "name": "Rage",
     "slug": "ragepersonalhealth",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -36,7 +36,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.health.rage",
-      "buildNumber": "4"
+      "buildNumber": "5"
     },
     "android": {
       "adaptiveIcon": {

@@ -6,7 +6,7 @@ import MapView, { Marker, Polyline } from 'react-native-maps'
 import { defaultRunTypes, getTotalDistance, toHHMMSS } from '../data'
 import { RunProgress } from '../aws/models'
 
-export default function RunListComponent(props: {run: RunProgress, onPress?: (run: RunProgress) => void;}) {
+export default function RunListComponent(props: {run: RunProgress; onPress?: (run: RunProgress) => void; canScroll: boolean;}) {
     let {run} = props;
     const relevantCoordinates = run?.coordinates
     let lastRunCoordinates = relevantCoordinates?.[relevantCoordinates.length - 1] || {lat: 0, long: 0};
@@ -17,9 +17,9 @@ export default function RunListComponent(props: {run: RunProgress, onPress?: (ru
         props.onPress && props.onPress(props.run)
     }} style={tw`flex-row items-center justify-center`}>
             <MapView
-                rotateEnabled={false}
-                scrollEnabled={false}
-                zoomEnabled={false}
+                rotateEnabled={props.canScroll}
+                scrollEnabled={props.canScroll}
+                zoomEnabled={props.canScroll}
                 region={{
                   latitude: lastRunCoordinates.lat,
                   longitude: lastRunCoordinates.long,

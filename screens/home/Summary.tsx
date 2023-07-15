@@ -191,7 +191,8 @@ export const SummaryScreen = () => {
             </View>
           </View>
           <TouchableOpacity onPress={() => {
-            navigator.navigate('PersonalInformation')
+            //@ts-ignore
+            navigator.navigate('SummaryEdit', {progressId: progressId})
           }} style={tw`w-12/12 bg-gray-${dm ? '700/40' : '500/20'} rounded-lg p-4 mt-4 mb-6`}>
             <Text style={tw`text-lg text-center`} weight='semibold'>Personal Information</Text>
             <View style={tw`mt-4 flex-row items-center justify-around`}>

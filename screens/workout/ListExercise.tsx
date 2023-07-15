@@ -24,7 +24,8 @@ export interface ListExerciseSearchResultsType {
 
 interface ListExerciseProps {
     workoutId?: string;
-    editable?: boolean
+    editable?: boolean;
+    userId?: string;
 }
 export default function ListExercise(props: ListExerciseProps) {
     const { workoutId, editable } = props;
@@ -41,7 +42,7 @@ export default function ListExercise(props: ListExerciseProps) {
     const fetchExerciseResults = async () => {
         const exercisesWithoutImages = await DataStore.query(Exercise, x => x.and(ex => [
             debouncedSearchTerm ? ex.title.contains(debouncedSearchTerm) : ex.title.ne(''),
-            selectedOption === 'My Exercises' ? ex.userID.eq(userId) : ex.userID.ne('')
+            selectedOption === 'My Exercises' ? ex.userID.eq(userId) : (props.userId ? ex.userID.eq(props.userId) : ex.userID.ne(''))
         ]),  { limit: 40 })
         const exercisesWithImages: ListExerciseSearchResultsType[] = await Promise.all(exercisesWithoutImages.map(async ex => {
             const user = await DataStore.query(User, ex.userID)
@@ -75,8 +76,9 @@ export default function ListExercise(props: ListExerciseProps) {
                         value={searchKey} onChangeText={setSearchKey}
                     />
                 </View>
-                <View style={tw`flex-row justify-between py-4 px-5`}>
+                <View style={tw`flex-row justify-around py-4 px-5`}>
                     {searchOptions.map((o, i) => {
+                        if (props.userId && o !== 'All') return;
                         const selected = selectedOption === o
                         return <TouchableOpacity
                             key={`Search option ${o} at idx ${i}`}

@@ -89,8 +89,8 @@ function App() {
          }}>
         <DateContext.Provider value={{date, setDate, formattedDate, AWSDate}}>
         <ExerciseAdditionsContext.Provider value={{workouts, setWorkouts}}>
-          <Navigation colorScheme={colorScheme} />
-          <StatusBar />
+            <Navigation colorScheme={colorScheme} />
+            <StatusBar />
         </ExerciseAdditionsContext.Provider>
         </DateContext.Provider>
         </CommonContext.Provider>

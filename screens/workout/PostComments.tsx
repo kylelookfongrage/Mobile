@@ -54,6 +54,26 @@ export default function PostComments(props: { postId: string; postType: Favorite
     React.useEffect(() => {
         prepare()
     }, [])
+    const onSubmitPress = async () => {
+        if (newComment) {
+            let savedComment = await DataStore.save(new Comments({
+                type: postType,
+                potentialID: postId,
+                string: newComment,
+                userID: userId,
+                postID: props.postId
+            }))
+            let userDetails = await DataStore.query(User, userId)
+            let pfp = userDetails?.picture || defaultImage
+            if (isStorageUri(pfp)) {
+                pfp = await Storage.get(pfp)
+            }
+            let newComments = [...comments]
+            newComments.push({ ...savedComment, username: userDetails?.username || 'rage', picture: pfp, numberLikes: 0, userDidLike: false })
+            setComments(newComments)
+            setNewComment('')
+        }
+    }
     return (
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} enabled style={[{ marginTop: height * 0.30, height: height * 0.70, flex: 1 }, tw`bg-${dm ? 'gray-800' : 'gray-200'} rounded-t-3xl py-6`]}>
             <View style={tw`flex-row items-center justify-between px-6`}>
@@ -98,7 +118,7 @@ export default function PostComments(props: { postId: string; postType: Favorite
                                     }))
                                 }
                             }
-                            return <View key={comment.id} style={tw`py-3 my-1`}>
+                            return <View key={comment.id} style={tw`py-1 my-1`}>
                                 <View style={tw`flex-row items-center justify-between w-12/12`}>
                                     <View style={tw`flex-row items-start max-w-9/12`}>
                                         <Image source={{ uri: comment.picture }} style={tw`h-10 w-10 rounded-full mr-1.5`} />
@@ -113,40 +133,22 @@ export default function PostComments(props: { postId: string; postType: Favorite
                                             <Text style={tw`mt-1 text-gray-${dm ? '300' : '500'}`}>{comment.string}</Text>
                                         </View>
                                     </View>
-                                    <TouchableOpacity style={tw`p-3 items-center justify-center`} onPress={onLikeTap}>
+                                    <TouchableOpacity style={tw`p-2 items-center flex-row justify-center`} onPress={onLikeTap}>
                                         <ExpoIcon name={comment.userDidLike ? 'heart' : 'heart-outline'} iconName='ion' size={20} color={comment.userDidLike ? 'red' : 'gray'} />
-                                        <Text style={tw`text-xs text-gray-500`} weight='semibold'>{formatCash(comment.numberLikes)}</Text>
+                                        <Text style={tw`text-xs text-gray-500 ml-2`} weight='semibold'>{formatCash(comment.numberLikes)}</Text>
                                     </TouchableOpacity>
                                 </View>
-                                <Text style={tw`text-xs text-gray-500 text-right`}>{moment(comment.createdAt).fromNow(true)}</Text>
+                                <Text style={tw`text-xs text-gray-500 text-right`}>{moment(comment.createdAt).fromNow()}</Text>
                             </View>
                         })}
                     </Pressable>
                 </View>
             </ScrollView>
-            <View style={tw`${dm ? 'bg-gray-900' : 'bg-gray-300'} pt-3`}>
-                    <View style={tw`mb-4 w-12/12 flex-row items-center justify-around`}>
-                        <TextInput ref={commentInput} value={newComment} onChangeText={setNewComment} placeholderTextColor={'gray'} placeholder='Comment....' style={tw`border-2 border-gray-${dm ? '500' : '400'} w-9/12 rounded-2xl p-4 ml-3 text-${dm ? 'white' : 'black'}`} multiline numberOfLines={3} />
-                        <TouchableOpacity onPress={async () => {
-                            if (newComment) {
-                                let savedComment = await DataStore.save(new Comments({
-                                    type: postType,
-                                    potentialID: postId,
-                                    string: newComment,
-                                    userID: userId
-                                }))
-                                let userDetails = await DataStore.query(User, userId)
-                                let pfp = userDetails?.picture || defaultImage
-                                if (isStorageUri(pfp)) {
-                                    pfp = await Storage.get(pfp)
-                                }
-                                let newComments = [...comments]
-                                newComments.push({ ...savedComment, username: userDetails?.username || 'rage', picture: pfp, numberLikes: 0, userDidLike: false })
-                                setComments(newComments)
-                                setNewComment('')
-                            }
-                        }} style={tw`p-3.5 rounded-full items-center justify-center `}>
-                            <ExpoIcon name='message-circle' iconName='feather' size={30} color='gray' />
+            <View style={tw`pt-3`}>
+                    <View style={tw`mb-6 w-12/12 flex-row items-center justify-evenly`}>
+                        <TextInput onSubmitEditing={onSubmitPress} ref={commentInput} value={newComment} onChangeText={setNewComment} placeholderTextColor={'gray'} placeholder='Comment....' style={tw`bg-gray-${dm ? '700/50' : '300'} w-8.5/12 rounded-2xl p-4 text-${dm ? 'white' : 'black'}`} multiline numberOfLines={3} />
+                        <TouchableOpacity onPress={onSubmitPress} style={tw`items-center justify-center p-3 bg-gray-${dm ? '700/40' : '300'} rounded-full`}>
+                            <ExpoIcon name='message-circle' iconName='feather' size={25} color='gray' />
                         </TouchableOpacity>
 
                     </View>

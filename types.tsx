@@ -34,12 +34,25 @@ export type RootStackParamList = {
   GenerateMeal: undefined;
   Account: undefined;
   ChangePassword: undefined;
+  NewChat: undefined;
   UpdateEmail: undefined;
   DeleteAccount: undefined;
   FinishedExercise: undefined;
   Allergens: undefined;
   UserBio: undefined;
+  ShowMore: undefined;
+  Profile: undefined;
+  Report: undefined;
+  SummaryEdit: undefined;
+  SummaryMetric: undefined;
+  Quiz: undefined;
+  SelectSprite: undefined;
+  RegistrationEdit: undefined;
+  MakePost: undefined;
+  Inbox: undefined;
+  Message: {id: string}
 };
+
 
 export type RootStackScreenProps<Screen extends keyof RootStackParamList> = NativeStackScreenProps<
   RootStackParamList,

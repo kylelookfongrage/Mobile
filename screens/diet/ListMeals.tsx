@@ -30,6 +30,7 @@ export interface ListMealSearchResults {
 interface ListMealsProps {
     progressId?: string;
     grocery?: string;
+    userId?: string;
 }
 
 export default function ListMeals(props: ListMealsProps) {
@@ -54,7 +55,7 @@ export default function ListMeals(props: ListMealsProps) {
         if (selectedOption === 'All') {
             meals = await DataStore.query(Meal, x => x.and(m => [
                 debouncedSearchTerm ? m.name.contains(debouncedSearchTerm) : m.name.ne(''),
-                m.public.eq(true)
+                m.public.eq(true), props.userId ? m.userID.eq(props.userId) : m.userID.ne('')
             ]), { limit: 40 })
         } else if (selectedOption === 'From Pantry') {
             const pantryIngredients = await DataStore.query(PantryItem, pi => pi.and(x => [x.userID.eq(userId), x.purchased.eq(true)]),  { limit: 40 })
@@ -124,8 +125,9 @@ export default function ListMeals(props: ListMealsProps) {
                         value={searchKey} onChangeText={setSearchKey}
                     />
                 </View>
-                <View style={tw`flex-row justify-between py-4 px-5`}>
+                <View style={tw`flex-row justify-around py-4 px-5`}>
                     {searchOptions.map((o, i) => {
+                        if (props.userId && o !== 'All') return;
                         const selected = selectedOption === o
                         return <TouchableOpacity
                             key={`Search option ${o} at idx ${i}`}

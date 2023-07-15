@@ -19,7 +19,7 @@ import ThisAdHelpsKeepFree from '../../components/ThisAdHelpsKeepFree'
 
 export default function SummaryFoodList() {
     const { progressId, userId } = useCommonAWSIds()
-    const { food, meals } = useProgressValues({ foodAndMeals: true })
+    const { food, meals, carbGoal, fatGoal, proteinGoal, presetMacros } = useProgressValues({ foodAndMeals: true, metrics: true })
     const [totalCalories, setTotalCalories] = React.useState<number>(1400)
     const dm = useColorScheme() === 'dark'
     const navigator = useNavigation()
@@ -35,9 +35,9 @@ export default function SummaryFoodList() {
     const cabrsFromFoodAndMeals = food.reduce((prev, curr) => prev + curr.carbs, 0) + meals.reduce((prev, curr) => prev + curr.carbs, 0)
     const proteinFromFoodAndMeals = food.reduce((prev, curr) => prev + curr.protein, 0) + meals.reduce((prev, curr) => prev + curr.protein, 0)
     const fatFromFoodAndMeals = food.reduce((prev, curr) => prev + curr.fat, 0) + meals.reduce((prev, curr) => prev + curr.fat, 0)
-    const totalProteinGrams = (totalCalories * 0.4) / 4
-    const totalFatGrams = (totalCalories * 0.3) / 9
-    const totalCarbsGrams = (totalCalories * 0.3) / 4
+    const totalProteinGrams = proteinGoal || (totalCalories * 0.4) / 4
+    const totalFatGrams = fatGoal || (totalCalories * 0.3) / 9
+    const totalCarbsGrams = carbGoal || (totalCalories * 0.3) / 4
     const cpRef = React.useRef<AnimatedCircularProgress | null>(null)
     const proteinRef = React.useRef<AnimatedCircularProgress | null>(null)
     const carbsRef = React.useRef<AnimatedCircularProgress | null>(null)
@@ -54,7 +54,8 @@ export default function SummaryFoodList() {
             <BackButton name='Food and Meals' />
             <ScrollView style={tw`px-4 mt-4`} showsVerticalScrollIndicator={false}>
                 <View style={[tw`w-12/12 h-90 shadow-xl rounded-lg items-center justify-evenly bg-${dm ? 'gray-700/40' : 'gray-500/20'}`]}>
-                    <Text style={tw`text-lg mb-2 mt-3`} weight='semibold'>Daily Macros</Text>
+                    <Text style={tw`text-lg mt-3`} weight='semibold'>Daily Macros</Text>
+                    {presetMacros && <Text style={tw`text-gray-500`} weight='semibold'>{presetMacros} Diet</Text>}
                     <AnimatedCircularProgress
                         size={170}
                         width={6}

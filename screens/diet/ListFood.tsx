@@ -19,6 +19,8 @@ import AllergenAlert from '../../components/AllergenAlert'
 
 interface ListFoodSearchResults {
     id: string;
+    edamamId?: string;
+    fromEdamam?: boolean
     name: string;
     calories: number;
     image: string;
@@ -71,23 +73,38 @@ export default function ListFood(props: ListFoodProps) {
       FetchEdamamParser({
         ingr: debouncedSearchTerm
       }).then((x) => {
-        if (x.hints.length > 0) {
-          if (x?.error) {
-            setDisplaySearchState('No matches found')
-            return;
-          }
-          setResults(x.hints.map((y) => ({
-            name: y.food.label,
-            image: y.food.image,
-            category: y.food.category,
-            id: y.food.foodId,
-            calories: y.food.nutrients.ENERC_KCAL,
-            measures: y.measures,
-            foodContentsLabel: y.food.foodContentsLabel || ''
-          })))
-        }else {
-          setDisplaySearchState('There is no food to display, please refine your search')
-        }
+        DataStore.query(FoodProgress, f => f.and(food => [food.public.eq(true), food.or(i => [i.name.contains(debouncedSearchTerm), i.foodContentsLabel.contains(debouncedSearchTerm)])])).then(res => {
+          Promise.all(res.map(async result => {
+              let img = result.img || defaultImage
+              if (isStorageUri(img)) {
+                img = await Storage.get(img)
+              }
+              return {...result, img}
+          })).then(rests => {
+            if (x.hints.length > 0) {
+              if (x?.error) {
+                setDisplaySearchState('No matches found')
+                return;
+              }
+              let edamamResults = x.hints.map((y) => ({
+                name: y.food.label,
+                image: y.food.image,
+                category: y.food.category,
+                id: y.food.foodId,
+                edamamId: y.food.foodId,
+                fromEdamam: true,
+                calories: y.food.nutrients.ENERC_KCAL,
+                measures: y.measures,
+                foodContentsLabel: y.food.foodContentsLabel || ''
+              }))
+              let reses = [...edamamResults, ...rests]
+              //@ts-ignore
+              setResults(reses)
+            }else {
+              setDisplaySearchState('There is no food to display, please refine your search')
+            }
+          })
+        })
       })
     } else if (selectedOption === 'My Foods' && !props.mealId) {
       DataStore.query(FoodProgress, f => f.and(food => [food.userID.eq(userId), debouncedSearchTerm ? food.name.contains(debouncedSearchTerm) : food.name.ne('')]), {
@@ -150,6 +167,8 @@ export default function ListFood(props: ListFoodProps) {
             category: y.food.category,
             calories: y.food.nutrients.ENERC_KCAL,
             measures: y.measures,
+            fromEdamam: true,
+            edamamId: y.food.foodId,
             foodContentsLabel: y.food.foodContentsLabel || ''
           })))
         }else {
@@ -193,8 +212,8 @@ export default function ListFood(props: ListFoodProps) {
         <View style={tw`flex flex-row items-center py-3 px-5 mt-6 w-12/12 bg-${dm ? 'gray-600' : 'gray-300'} rounded-xl`}>
           <ExpoIcon name='search' iconName='feather' color='gray' size={25} />
           <TextInput
-            placeholder='Name'
-            placeholderTextColor={dm ? 'white' : 'gray'}
+            placeholder='food name...'
+            placeholderTextColor={'gray'}
             style={tw`w-9/12 py-2 px-3 text-${dm ? 'white' : 'black'}`}
             value={searchKey} onChangeText={setSearchKey}
           />
@@ -245,9 +264,9 @@ export default function ListFood(props: ListFoodProps) {
                     img: r.image, 
                     name: r.name, 
                     category: r.category,
-                    src: ['All', 'Barcode'].includes(selectedOption) ? 'api' : 'existing', 
-                    edamamId: ['All', 'Barcode'].includes(selectedOption) ? r.id : null,
-                    measures: r.measures, 
+                    src: r.fromEdamam ? 'api' : 'existing', 
+                    edamamId: r.edamamId || null,
+                    measures: r.fromEdamam ? r.measures : null, 
                     foodContentsLabel: r.foodContentsLabel,
                     progressId: props.progressId,
                     mealId: props.mealId,

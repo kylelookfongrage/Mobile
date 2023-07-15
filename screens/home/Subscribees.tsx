@@ -25,8 +25,9 @@ export default function Subscribees(props: SubscribeesProps) {
     React.useEffect(() => {
         const fetchSubscribees = async () => {
             const followersOrFollowees = await DataStore.query(User, u => u.and(x => [
-                to ? x.Followers.userID.eq(to) : x.Followers.subscribedFrom.eq(from), debouncedSearchTerm ? x.username.contains(debouncedSearchTerm.toLowerCase()) : x.username.ne('')
+                to ? x.Followers.userID.contains(to) : x.Followers.subscribedFrom.eq(from), (debouncedSearchTerm ? x.username.contains(debouncedSearchTerm.toLowerCase()) : x.username.ne(''))
             ]), {limit: 50})
+            console.log(to)
             const usersWithPictures = await Promise.all(followersOrFollowees.map(async follower => {
                 let img = follower.picture || defaultImage
                 return {...follower, picture: isStorageUri(img) ? await Storage.get(img) : img}
@@ -54,20 +55,17 @@ export default function Subscribees(props: SubscribeesProps) {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={tw`px-4 mt-6 pb-40`}>
         {users.map((item) => {
             let usernameText = item.username + ' '
-            if (item.personalTrainer) {
-                usernameText +=  '🏋️‍♀️'
-            } 
-            if (item.foodProfessional) {
-                usernameText +=  '🍎'
-            }
             return <TouchableOpacity key={item.id} style={tw`flex-row items-center justify-between py-4`} onPress={() => {
                 const screen = getMatchingNavigationScreen('User', navigator)
                 //@ts-ignore
                 navigator.push(screen, {id: item.id, personal: false})
             }}>
                 <View style={tw`flex-row items-center`}>
-                <Image style={tw`h-15 w-15 rounded-full`} source={{uri: item.picture || defaultImage}} />
-                <Text style={tw`ml-2`}>{usernameText}</Text>
+                <Image style={tw`h-10 w-10 rounded-full mr-2`} source={{uri: item.picture || defaultImage}} />
+                <View>
+                    <Text weight='semibold'>{item.name}</Text>
+                <Text style={tw`text-xs text-gray-500`}>@{usernameText}</Text>
+                </View>
                 </View>
                 <ExpoIcon name='chevron-right' iconName='feather' size={20} color='gray' />
             </TouchableOpacity>

@@ -13,7 +13,7 @@ import {
 import { useCommonAWSIds } from '../../hooks/useCommonContext'
 
 export default function DeleteAccount() {
-  const {userId} = useCommonAWSIds()
+  const {userId, setUserId} = useCommonAWSIds()
   const dm = useColorScheme() === 'dark'
   const [errors, setErrors] = React.useState<string[]>([])
   const [uploading, setUploading] = React.useState<boolean>(false)
@@ -58,6 +58,8 @@ export default function DeleteAccount() {
       await Auth.deleteUser()
       alert('Your account has officially been deleted')
       await Auth.signOut()
+      //@ts-ignore
+      setUserId(null)
       setUploading(false)
     }catch (e) {
       setUploading(false)

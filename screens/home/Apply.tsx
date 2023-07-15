@@ -8,13 +8,14 @@ import { ScrollView, TouchableOpacity } from 'react-native-gesture-handler'
 import * as WebBrowser from 'expo-web-browser'
 import { DataStore, Predicates, Storage } from 'aws-amplify'
 import { Meal, MealProgress, Payouts, User, Workout, WorkoutPlay } from '../../aws/models'
-import { Divider } from 'react-native-paper'
+import { Checkbox, Divider } from 'react-native-paper'
 import moment from 'moment'
 import { defaultImage, isStorageUri } from '../../data'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { useNavigation } from '@react-navigation/native'
 import { Env } from '../../env'
 import { ExpoIcon } from '../../components/ExpoIcon'
+import { useProgressValues } from '../../hooks/useProgressValues'
 
 const Stack = createNativeStackNavigator()
 export default function CreatorHub() {
@@ -58,32 +59,6 @@ function PayoutDetail(props: { id: string, dest: string }) {
     prepare()
   }, [])
 
-  // async function onFinalizePress() {
-  //   console.log(payout)
-  //   if (!payout || !payout.amount || !dest) {
-  //     alert('There was a problem, please check your internet and try again')
-  //     return;
-  //   }
-  //   setUploading(true)
-  //   const originalPayout = await DataStore.query(Payouts, id)
-  //   if (!originalPayout) {
-  //     alert('There was a problem fetching your payout, please try again')
-  //     setUploading(false)
-  //     return
-  //   }
-  //   const res = await createPayout(payout.amount * 100, dest)
-  //   if (res['error']) {
-  //     alert(res['error']['message'] || 'There was a problem processing this payout')
-  //     setUploading(false)
-  //     return;
-  //   }
-  //   await DataStore.save(Payouts.copyOf(originalPayout, x => {
-  //     x.stripeId = res.id
-  //     x.paidDate = moment().format('YYYY-MM-DD')
-  //   }))
-  //   setPayout({ ...payout, stripeId: res.id })
-  //   setUploading(false)
-  // }
   const dm = useColorScheme() === 'dark'
   const navigator = useNavigation()
   const height = Dimensions.get('screen').height
@@ -250,7 +225,7 @@ function CreatorScreen() {
     setWorkouts(workoutsWithData)
     setMeals(mealsWithData)
   }
-
+  const {creatorTerms} = useProgressValues({metrics: true})
   const outstandingPayoutAmount = outstandingPayouts.reduce((prev, curr) => prev + (curr.amount || 0), 0)
 
   React.useEffect(() => {
@@ -316,6 +291,52 @@ function CreatorScreen() {
       }
     }
     await prepare()
+  }
+  const [acceptedTerms, setAcceptedTerms] = useState<boolean>(false)
+  console.log(creatorTerms)
+  const onAcceptTerms = async () => {
+    setUploading(true)
+    try {
+      const user = await DataStore.query(User, userId)
+      if (!user) {
+        alert('There was a problem, please try again')
+        return;
+      }
+      const id = await DataStore.save(User.copyOf(user, x => {
+        x.accepted_content_creator_terms=true;
+      }))
+      console.log(id.id)
+    } catch (error) {
+      alert('There was a problem')
+      setUploading(false)
+    }
+    setUploading(false)
+  }
+  if (!creatorTerms) {
+    return <View style={{flex: 1}} includeBackground>
+      <BackButton />
+      <View style={tw`px-6 py-4`}>
+      <Text style={tw`text-xl`} weight='bold'>Content Creator Sign-Up</Text>
+      <Text style={tw`text-gray-500 my-3`}>By signing up as a content creator, you are agreeing to abide by the {<Text style={tw`text-red-500`} weight='semibold'>terms and conditions</Text>} of content creators. You may not upload other people's content as your own!</Text>
+      <View key={'accept-terms'} style={tw`flex-row items-center max-w-12/12`}>
+            <Checkbox.Android status={acceptedTerms ? 'checked' : 'unchecked'} color='red' uncheckedColor='gray' onPress={() => {
+                setAcceptedTerms(!acceptedTerms)
+            }} />   
+            <Text style={tw`max-w-10/12 text-gray-500`}>I accept</Text>
+        </View>
+        {acceptedTerms && <View style={tw`py-5 w-12/12 items-center px-7 flex-row justify-center`}>
+                    <TouchableOpacity
+                        disabled={uploading}
+                        onPress={() => {
+                            onAcceptTerms()
+                        }}
+                        style={tw`bg-${dm ? 'red-600' : "red-500"} mr-2 px-5 h-12 justify-center rounded-full`}>
+                        {!uploading && <Text numberOfLines={1} style={tw`text-center text-white`} weight='semibold'>Finish</Text>}
+                        {uploading && <ActivityIndicator />}
+                    </TouchableOpacity>
+                </View>}
+      </View>
+    </View>
   }
 
   return (

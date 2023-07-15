@@ -150,7 +150,7 @@ export const FoodAndMeals = () => {
             }))
             setQ1(mealsWithImages)
 
-            const foodWithoutImages = await DataStore.query(FoodProgress, x => x.and(food => [searchTerm ? food.name.contains(searchTerm) : food.name.ne(''), food.userID.ne('')]), { limit: 10, sort: x => x.createdAt('DESCENDING') })
+            const foodWithoutImages = await DataStore.query(FoodProgress, x => x.and(food => [searchTerm ? food.name.contains(searchTerm) : food.name.ne(''), food.userID.ne(''), food.public.eq(true)]), { limit: 10, sort: x => x.createdAt('DESCENDING') })
             const foodWithImages: FoodDisplay[] = await Promise.all(foodWithoutImages.map(async f => {
                 let username = 'Edamam Nutrition'
                 const allergenSearchString = f.name + f.foodContentsLabel
@@ -285,7 +285,7 @@ export const FoodAndMeals = () => {
                         key={`meal ${m.id} at index ${i}`} style={tw`mx-1 flex-col items-start`}>
                         <Image style={tw`w-20 h-20 rounded-lg`} source={{ uri: m.coverImage || defaultImage }} />
                         <View style={tw`pt-2`}>
-                            <Text style={tw`max-w-25 text-xs`}>{substringForLists(m.name)}</Text>
+                            <Text style={tw`max-w-22 text-xs`}>{substringForLists(m.name)}</Text>
                             <Text style={tw`text-red-500 max-w-25 text-xs`}>@{substringForLists(m.username)}</Text>
                             {/* @ts-ignore */}
                             {m.userIsAllergic && <AllergenAlert size={15} style={tw`text-center mt-2`} />}
@@ -326,7 +326,7 @@ export const FoodAndMeals = () => {
                         }}
                         key={`meal ${m.id} at index ${i}`} style={tw`mx-1 flex-col`}>
                         <Image style={tw`w-20 h-20 rounded-lg mb-2`} source={{ uri: m.img || defaultImage }} />
-                        <Text style={tw`max-w-25 text-xs`}>{substringForLists(m.name)}</Text>
+                        <Text style={tw`max-w-22 text-xs`}>{substringForLists(m.name)}</Text>
                         <Text style={tw`text-red-500 text-xs max-w-25`}>@{substringForLists(m.username)}</Text>
                         {/* @ts-ignore */}
                         {m.userIsAllergic && <AllergenAlert size={15} style={tw`text-center`} />}

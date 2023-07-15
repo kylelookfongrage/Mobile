@@ -178,7 +178,7 @@ export const FetchEdamamParser = async (body: EdamamParserRequest): Promise<Edam
 }
 
 export const FetchEdamamNutrients = async (body: EdamamNutrientsRequest): Promise<EdamamNutrientsResponse> => {
-    let url = `https://api.edamam.com/api/food-database/v2/nutrients?app_id=${body.app_id || Env.EDAMAM_API_KEY || '028e7728'}&app_key=${body.app_key || Env.EDAMAM_API_KEY || "ab2e80c58bdc5491b4c0d34fd7d23d82"}`
+    let url = `https://api.edamam.com/api/food-database/v2/nutrients?app_id=${body.app_id || Env.EDAMAM_PROJECT_ID || '028e7728'}&app_key=${body.app_key || Env.EDAMAM_API_KEY || "ab2e80c58bdc5491b4c0d34fd7d23d82"}`
     const res = await fetch(url, {
         method: "POST",
         headers: {
@@ -306,10 +306,10 @@ export const OpenFoodFactsBarcodeSearch = async (barcode: string) => {
 
 
 
-import { Storage } from 'aws-amplify';
+import { DataStore, Storage } from 'aws-amplify';
 //@ts-ignore
 import { v4 as uuidv4 } from 'uuid';
-import { Coordinates } from './aws/models';
+import { Coordinates, Exercise, Meal, User, Workout } from './aws/models';
 import { Env } from './env';
 //@ts-ignore
 import { Ingredient } from './src/models';
@@ -578,3 +578,60 @@ export const formatCash = (n:number) => {
 
 export const substringForLists = (str: string, amt:number=20) => (str.length > amt ? str.substring(0, amt) + '...' : str)
  
+
+
+import timer from './assets/animations/timer.json'
+import meditation from './assets/animations/meditation.json'
+import pigeon_wait from './assets/animations/pigeon_wait.json'
+import sloth_sleep from './assets/animations/sloth_sleep.json'
+import sloth_sleeping from './assets/animations/sloth_sleeping.json'
+import bear_sleep from './assets/animations/bear_sleep.json'
+import sleepy_sleep from './assets/animations/sleepy_sleep.json'
+import squirrel_sleep from './assets/animations/squirrel-sleeping.json'
+
+export const animationMapping = [
+    {name: 'Dog Run', animation: timer},
+    {name: 'Squirrel Sleep', animation: squirrel_sleep},
+    {name: 'Pigeon Wait', animation: pigeon_wait},
+    {name: 'Sloth Sleep', animation: sloth_sleep},
+    {name: 'Sloth Sleep (2)', animation: sloth_sleeping},
+    {name: 'Bear Sleep', animation: bear_sleep},
+    {name: 'Meditation', animation: meditation},
+    {name: 'Moon Sleep', animation: sleepy_sleep},
+]
+
+
+
+export const usernameRegex = /^(?=[a-zA-Z0-9._]{4,20}$)(?!.*[_.]{2})[^_.].*[^_.]$/
+
+
+
+export enum postMediaType {
+    none, media, meal, workout, exercise, run
+  }
+
+
+export interface PostMediaSearchDisplay {
+    id: string;
+    name?: string;
+    img?: string;
+    author?: string;
+    coordinates?: string;
+    totalTime?: number;
+  }
+
+
+
+export const getUsernameAndMedia = async (result: Meal | Workout | Exercise): Promise<PostMediaSearchDisplay> => {
+    let user = await DataStore.query(User, result.userID)
+    let username = user?.username || 'rage'
+    //@ts-ignore
+    let media = result.img ? [{ type: 'image', uri: result.img }] : result.media || []
+    //@ts-ignore
+    let img = media.filter(x => (x && x.uri && x.type && x.type === 'image'))?.[0]?.uri || defaultImage
+    if (isStorageUri(img)) {
+      img = await Storage.get(img)
+    }
+    //@ts-ignore
+    return { id: result.id, author: username, name: result.name || result.title || 'rage', img }
+  }

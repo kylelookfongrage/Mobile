@@ -11,11 +11,12 @@ import { ErrorMessage } from '../../components/ErrorMessage';
 import { MediaType } from '../../types/Media';
 import { defaultImage, getMatchingNavigationScreen, isStorageUri, uploadMedias } from '../../data';
 import { DataStore, Storage } from 'aws-amplify';
-import { Equiptment, Exercise, ExerciseEquiptmentDetail, Favorite, User, Workout, WorkoutDetails } from '../../aws/models';
+import { Equiptment, Exercise, ExerciseEquiptmentDetail, Favorite, FavoriteType, User, Workout, WorkoutDetails } from '../../aws/models';
 import { useCommonAWSIds } from '../../hooks/useCommonContext';
 import { ZenObservable } from 'zen-observable-ts';
 import { BackButton } from '../../components/BackButton';
 import { useExerciseAdditions } from '../../hooks/useExerciseAdditions';
+import { ShowMoreButton } from '../home/ShowMore';
 
 
 export interface ExerciseDetailProps {
@@ -222,11 +223,11 @@ export default function ExerciseDetail(props: ExerciseDetailProps) {
         })
         return () => subscription.unsubscribe()
     }, [])
-
+    const firstImage = video.filter(x => x.type === 'image')
     return (
         <View style={{flex: 1}} includeBackground>
         <BackButton Right={() => {
-            if (!editMode) return <View />
+            if (!editMode) return <ShowMoreButton name={exerciseName} desc={'@'+author} img={firstImage.length === 0 ? defaultImage : firstImage[0].uri} id={exerciseId} type={FavoriteType.EXERCISE} userId={authorId} />
             return <TouchableOpacity style={tw`px-2`} onPress={async () => {
                 await DataStore.delete(Exercise, exerciseId)
                 //@ts-ignore

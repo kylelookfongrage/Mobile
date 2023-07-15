@@ -13,11 +13,12 @@ import { Category, MediaType } from '../../types/Media';
 import { ImagePickerView } from '../../components/ImagePickerView';
 import { ErrorMessage } from '../../components/ErrorMessage';
 import { Auth, DataStore, Storage } from 'aws-amplify';
-import { Meal, Ingredient, User, MealProgress, PantryItem, Favorite } from '../../aws/models';
+import { Meal, Ingredient, User, MealProgress, PantryItem, Favorite, FavoriteType } from '../../aws/models';
 import { useCommonAWSIds } from '../../hooks/useCommonContext';
 import { BackButton } from '../../components/BackButton';
 import { useDateContext } from '../home/Calendar';
 import AllergenAlert from '../../components/AllergenAlert';
+import { ShowMoreButton } from '../home/ShowMore';
 
 export const foodCategories: Category[] = [{ name: 'N/A', emoji: '🚫' }, ...Object.values(healthLabelMapping)].map(h => {
     return { name: h.name, emoji: h.emoji }
@@ -280,11 +281,12 @@ export default function MealDetailScreen(props: MealDetailProps) {
             setPremium(false)
         }
     }, [isAIGenerated])
+    const firstImage = imageSource.filter(x => x.type === 'image')
     return (
         <View style={{ flex: 1 }} includeBackground>
             <BackButton Right={() => {
                 if (!editMealMode || !id) {
-                    return null;
+                    return <ShowMoreButton name={name} desc={'@'+author} img={firstImage.length === 0 ? defaultImage : firstImage[0].uri} id={mealId} type={FavoriteType.MEAL} userId={mealUserId} />
                 }
                 return <TouchableOpacity onPress={() => {
                     Alert.alert("Are you sure you want to delete this meal?", "You cannot undo this action later, and all progress associated with this meal will be deleted.", [

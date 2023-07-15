@@ -1,6 +1,6 @@
-import { View, ScrollView, Dimensions, TouchableOpacity, Platform } from 'react-native'
+import { ScrollView, Dimensions, TouchableOpacity, Platform } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Text } from '../../components/Themed'
+import { Text, View } from '../../components/Themed'
 import React, { useRef } from 'react'
 import * as SplashScreen from 'expo-splash-screen';
 import { Amplify, Auth, DataStore } from 'aws-amplify';
@@ -93,7 +93,7 @@ export default function GetStarted() {
   if (!isReady) return null;
 
   return (
-    <SafeAreaView style={[tw``, { flex: 1 }]}>
+    <View includeBackground style={[tw``, { flex: 1 }]}>
       <Animated.FlatList
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -136,7 +136,7 @@ export default function GetStarted() {
           </View>
         }}
       />
-    </SafeAreaView>
+    </View>
   )
 }
 

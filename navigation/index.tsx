@@ -36,7 +36,7 @@ export default function Navigation({ colorScheme }: { colorScheme: ColorSchemeNa
 }
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
-import { useCommonAWSIds } from '../hooks/useCommonContext'; 
+import { useCommonAWSIds } from '../hooks/useCommonContext';
 import Settings from '../screens/home/Settings';
 import ProfileScreen from '../screens/home/ProfileScreen';
 import PersonalInformation from '../screens/home/PersonalInformation';
@@ -51,38 +51,109 @@ import DeleteAccount from '../screens/home/DeleteAccount';
 import ForgotPassword from '../screens/onboarding/ForgotPassword';
 import FinishedExercise from '../screens/workout/FinishedExercise';
 import Bio from '../screens/home/Bio';
+import ShowMore from '../screens/home/ShowMore';
+import Profile from '../screens/home/Profile';
+import Report from '../screens/home/Report';
+import SummaryEdit from '../screens/home/SummaryEdit';
+import SummaryMetric from '../screens/home/SummaryMetric';
+import Quiz from '../screens/onboarding/Quiz';
+import SelectSprite from '../screens/workout/SelectSprite';
+import MakePost from '../screens/workout/MakePost';
+import Inbox from '../screens/workout/Inbox';
+import Message from '../screens/workout/Message';
+import { getCommonScreens } from '../components/GetCommonScreens';
+import NewChat from '../screens/workout/NewChat';
 
 
 function RootNavigator() {
   const commonContext = useCommonAWSIds()
-  const {userId} = commonContext
+  const { userId } = commonContext
   if (userId) {
     return <Stack.Navigator initialRouteName={'Root'}>
-    <Stack.Screen name="Root" component={BottomTabNavigator} options={{ headerShown: false }} />
-    <Stack.Screen name="NotFound" component={NotFoundScreen} options={{ title: 'Oops!' }} />
-    <Stack.Screen name='Image'options={{headerShown: false, presentation: 'containedModal'}}>
-      {props => <ImageDetailView uris={props.route?.params?.uris} defaultIndex={props.route?.params?.defaultIndex} />}
-    </Stack.Screen>
-    <Stack.Screen name='WorkoutPlay' options={{headerShown: false, gestureEnabled: false}}>
-    {(props) => <WorkoutPlayScreen {...props} id={props.route.params.id} workoutId={props.route?.params?.workoutId}/>}
-    </Stack.Screen>
-    <Stack.Screen name="Run" options={{ headerShown: false }}>
-      {/* @ts-ignore */}
-      {(props) => <RunTracker id={props?.route?.params?.id} />}
-    </Stack.Screen>
-    <Stack.Screen name="Settings" component={Settings} options={{ headerShown: false }} />
-    <Stack.Screen name="ChangePassword" component={ChangePassword} options={{ headerShown: false }} />
-    <Stack.Screen name="UpdateEmail" component={UpdateEmail} options={{ headerShown: false }} />
-    <Stack.Screen name="DeleteAccount" component={DeleteAccount} options={{ headerShown: false }} />
-    <Stack.Screen name="PersonalInformation" component={PersonalInformation} options={{ headerShown: false }} />
-    <Stack.Screen name="Apply" component={Apply} options={{ headerShown: false }} />
-    <Stack.Screen name="Account" component={Account} options={{ headerShown: false }} />
-    <Stack.Screen name="Subscription" component={Subscription} options={{ headerShown: false }} />
-    <Stack.Screen name="Help" component={Help} options={{ headerShown: false }} />
-    <Stack.Screen name="About" component={About} options={{ headerShown: false }} />
-    <Stack.Screen name='UserBio' component={Bio} options={{ headerShown: false }} />
-    <Stack.Screen name="FinishedExercise" component={FinishedExercise} options={{ headerShown: false, gestureEnabled: false }} />
-  </Stack.Navigator>
+      <Stack.Screen name="Root" component={BottomTabNavigator} options={{ headerShown: false }} />
+      <Stack.Screen name="NotFound" component={NotFoundScreen} options={{ title: 'Oops!' }} />
+      <Stack.Screen name='Image' options={{ headerShown: false, presentation: 'containedModal' }}>
+        {props => <ImageDetailView uris={props.route?.params?.uris} defaultIndex={props.route?.params?.defaultIndex} />}
+      </Stack.Screen>
+      <Stack.Screen name='WorkoutPlay' options={{ headerShown: false, gestureEnabled: false }}>
+        {(props) => <WorkoutPlayScreen {...props} id={props.route.params.id} workoutId={props.route?.params?.workoutId} />}
+      </Stack.Screen>
+      <Stack.Screen name="Run" options={{ headerShown: false }}>
+        {/* @ts-ignore */}
+        {(props) => <RunTracker id={props?.route?.params?.id} />}
+      </Stack.Screen>
+      <Stack.Screen name="Settings" component={Settings} options={{ headerShown: false }} />
+      <Stack.Screen name="ChangePassword" component={ChangePassword} options={{ headerShown: false }} />
+      <Stack.Screen name="UpdateEmail" component={UpdateEmail} options={{ headerShown: false }} />
+      <Stack.Screen name="DeleteAccount" component={DeleteAccount} options={{ headerShown: false }} />
+      <Stack.Screen name="PersonalInformation" component={PersonalInformation} options={{ headerShown: false }} />
+      <Stack.Screen name="Apply" component={Apply} options={{ headerShown: false }} />
+      <Stack.Screen name="Account" component={Account} options={{ headerShown: false }} />
+      <Stack.Screen name="Inbox" component={Inbox} options={{ headerShown: false }} />
+      <Stack.Screen name="Message" options={{ headerShown: false }}>
+        {props => <Message id={props.route?.params?.id} />}
+      </Stack.Screen>
+      <Stack.Screen name="Subscription" component={Subscription} options={{ headerShown: false }} />
+      <Stack.Screen name="Help" component={Help} options={{ headerShown: false }} />
+      <Stack.Screen name="About" component={About} options={{ headerShown: false }} />
+      <Stack.Screen name="Quiz" component={Quiz} options={{ headerShown: false }} />
+      <Stack.Screen name="NewChat" component={NewChat} options={{ headerShown: false, presentation: 'transparentModal', gestureEnabled: true, gestureDirection: 'vertical', fullScreenGestureEnabled: true }} />
+      <Stack.Screen name="SelectSprite" component={SelectSprite} options={{ headerShown: false, presentation: 'transparentModal' }} />
+      <Stack.Screen name='UserBio' options={{ headerShown: false }}>
+        {/* @ts-ignore */}
+        {props => <Bio registration={props.route?.params?.registration} />}
+      </Stack.Screen>
+      <Stack.Screen name="FinishedExercise" component={FinishedExercise} options={{ headerShown: false, gestureEnabled: false }} />
+      <Stack.Screen name="ShowMore" options={{ headerShown: false, presentation: 'transparentModal' }}>
+        {props => <ShowMore
+          // @ts-ignore
+          name={props.route?.params?.name} type={props.route?.params?.type} id={props.route?.params?.id}
+          // @ts-ignore
+          desc={props.route?.params?.desc} img={props.route?.params?.img} userId={props.route?.params?.userId}
+        />}
+      </Stack.Screen>
+      <Stack.Screen name={'Profile'} options={{ headerShown: false }}>
+        {/* @ts-ignore */}
+        {props => <Profile {...props} id={props.route?.params?.id} personal={false} registration={false} />}
+      </Stack.Screen>
+      {getCommonScreens('', Stack)}
+      <Stack.Screen name={'Report'} options={{ headerShown: false }}>
+        {/* @ts-ignore */}
+        {props => <Report {...props} // @ts-ignore
+          name={props.route?.params?.name} type={props.route?.params?.type} id={props.route?.params?.id}
+          // @ts-ignore
+          desc={props.route?.params?.desc} img={props.route?.params?.img} userId={props.route?.params?.userId} />}
+      </Stack.Screen>
+      <Stack.Screen name={'SummaryEdit'} options={{ headerShown: false }}>
+        {/* @ts-ignore */}
+        {props => <SummaryEdit {...props} progressId={props.route?.params?.progressId} />}
+      </Stack.Screen>
+      <Stack.Screen name={'RegistrationEdit'} options={{ headerShown: false }}>
+        {/* @ts-ignore */}
+        {props => <SummaryEdit {...props} registration />}
+      </Stack.Screen>
+      <Stack.Screen name={'SummaryMetric'} options={{ headerShown: false, presentation: 'transparentModal' }}>
+        {/* @ts-ignore */}
+        {props => <SummaryMetric {...props} weight={props.route?.params?.weight} />}
+      </Stack.Screen>
+      <Stack.Screen name='MakePost' options={{headerShown: false, gestureEnabled: true, gestureDirection: 'vertical', fullScreenGestureEnabled: true}}>
+          {props => <MakePost 
+            //@ts-ignore
+            workoutId={props.route?.params?.workoutId}
+            //@ts-ignore
+            mealId={props.route?.params?.mealId}
+            //@ts-ignore
+            exerciseId={props.route?.params?.exerciseId}
+            //@ts-ignore
+            runProgressId={props.route?.params?.runProgressId}
+            //@ts-ignore
+            description={props.route?.params?.description}
+            //@ts-ignore
+            media={props.route?.params?.media}
+            
+          />}
+      </Stack.Screen> 
+    </Stack.Navigator>
   }
   return (
     <Stack.Navigator initialRouteName={'GetStarted'}>
@@ -90,7 +161,7 @@ function RootNavigator() {
       <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />
       <Stack.Screen name="ForgotPassword" component={ForgotPassword} options={{ headerShown: false }} />
       <Stack.Screen name="Registration" options={{ headerShown: false }}>
-        {props => <PersonalInformation registration />}
+        {props => <Bio registration />}
       </Stack.Screen>
       <Stack.Screen name="NotFound" component={NotFoundScreen} options={{ title: 'Oops!' }} />
     </Stack.Navigator>
@@ -162,8 +233,8 @@ function BottomTabNavigator() {
 }
 
 function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
-  const dm = useColorScheme() ==='dark'
-  const {setAiResult, setCurrentIngredietId} = useCommonAWSIds()
+  const dm = useColorScheme() === 'dark'
+  const { setAiResult, setCurrentIngredietId } = useCommonAWSIds()
   const iconsAndColors = {
     'Home': {
       icon: "activity",
@@ -190,7 +261,7 @@ function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
     <View includeBackground style={[{ flexDirection: 'row' }, tw`h-23 items-center justify-between w-12/12 border-t border-${dm ? 'gray-600' : 'gray-400'}`]}>
       {state.routes.map((route, index) => {
         // @ts-ignore
-        const { icon, color, label } = (iconsAndColors[route.name]) || {icon: 'home', color: 'red-500', label: 'Home'}
+        const { icon, color, label } = (iconsAndColors[route.name]) || { icon: 'home', color: 'red-500', label: 'Home' }
         const { options } = descriptors[route.key];
         const isFocused = state.index === index;
 
@@ -221,7 +292,7 @@ function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 
         return (
           <TouchableOpacity
-          key={route.name}
+            key={route.name}
             accessibilityRole="button"
             accessibilityState={isFocused ? { selected: true } : {}}
             accessibilityLabel={options.tabBarAccessibilityLabel}

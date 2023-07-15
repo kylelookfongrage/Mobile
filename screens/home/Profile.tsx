@@ -8,10 +8,11 @@ import { useNavigation } from '@react-navigation/native';
 import { MediaType } from '../../types/Media';
 import * as WebBrowser from 'expo-web-browser'
 import { DataStore, Storage } from 'aws-amplify';
-import { Exercise, Follower, Goal, Meal, User, Workout } from '../../aws/models';
+import { Exercise, FavoriteType, Follower, Goal, Meal, User, Workout } from '../../aws/models';
 import { useCommonAWSIds } from '../../hooks/useCommonContext';
 import { defaultImage, formatCash, getMatchingNavigationScreen, isStorageUri, substringForLists } from '../../data';
 import { BackButton } from '../../components/BackButton';
+import { ShowMoreButton } from './ShowMore';
 
 
 
@@ -49,7 +50,6 @@ export default function Profile(props: ProfileProps) {
         fetchUserInfo()
 
     }, [])
-
     const fetchUserInfo = async () => {
         const queryID = props.id || userId
         if (!queryID) return
@@ -65,9 +65,10 @@ export default function Profile(props: ProfileProps) {
                 setProfileLink(user.links?.[0])
             }
             // setProfileLink(user.lin)
-            const potentialFollowers = await DataStore.query(Follower, f => f.userID.eq(userId))
-            setFollowers(potentialFollowers.length)
+            setFollowers((await user.Followers.toArray()).length)
             setPic([{ type: 'image', uri: isStorageUri(picture) ? await Storage.get(picture) : picture }])
+            const userPotentialFollowing = (await DataStore.query(Follower, f=>f.and(fav => [fav.subscribedFrom.eq(userId), fav.userID.eq(queryID)]))).length > 0
+            setIsFollowing(userPotentialFollowing)
         }
         const potentialFollowing = await DataStore.query(Follower, f => f.subscribedFrom.eq(queryID))
         setFollowing(potentialFollowing.length)
@@ -103,17 +104,6 @@ export default function Profile(props: ProfileProps) {
         setRefreshing(false)
     }
 
-    React.useEffect(() => {
-        if (!id) return;
-        const subscription = DataStore.observeQuery(Follower, x => x.and(y => [y.subscribedFrom.eq(userId), y.userID.eq(id)])).subscribe(ss => {
-            const { items } = ss
-            setIsFollowing(items.length > 0)
-        })
-        return () => {
-            subscription.unsubscribe()
-        }
-    }, [])
-
     const [profileName, setProfileName] = React.useState<string>('')
     const [followers, setFollowers] = React.useState<number>(0)
     const [following, setFollowing] = React.useState<number>(0)
@@ -137,7 +127,9 @@ export default function Profile(props: ProfileProps) {
     }
 
     return <View style={{ flex: 1 }} includeBackground>
-        {id && <BackButton />}
+        {id && <BackButton Right={() => {
+            return <ShowMoreButton name={name || ''} desc={'@' +profileName} img={pic[0]?.uri || defaultImage} id={props.id || ''} />
+        }} />}
         <ScrollView contentContainerStyle={[tw`w-12/12 px-4 mt-6 pb-40`]} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchUserInfo} />}>
             {!id && <TouchableOpacity style={tw`justify-end w-12/12 mt-9 items-end`} onPress={() => {
                 navigator.navigate('Settings')
@@ -210,7 +202,16 @@ export default function Profile(props: ProfileProps) {
                    })}
                 </View>
             </View>}
-            <Text style={tw`text-lg mb-4`} weight="semibold">Meals</Text>
+            <View style={tw`flex-row items-center justify-between mb-4 mt-4`}>
+                <Text style={tw`text-lg`} weight="semibold">Meals</Text>
+                <TouchableOpacity onPress={() => {
+                    const screen = getMatchingNavigationScreen('ListMeal', navigator)
+                    //@ts-ignore
+                    navigator.navigate(screen, {userId: props.id || userId})
+                }}>
+                    <Text>See All</Text>
+                </TouchableOpacity>
+            </View>
             {meals.length === 0 && <Text style={tw`text-center my-5`}>No meals to display</Text>}
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 {meals.map((meal, i) => {
@@ -232,7 +233,16 @@ export default function Profile(props: ProfileProps) {
                     </TouchableOpacity>
                 })}
             </ScrollView>
-            <Text style={tw`text-lg my-4`} weight="semibold">Workouts</Text>
+            <View style={tw`flex-row items-center justify-between mb-4 mt-4`}>
+                <Text style={tw`text-lg`} weight="semibold">Workouts</Text>
+                <TouchableOpacity onPress={() => {
+                    const screen = getMatchingNavigationScreen('ListWorkout', navigator)
+                    //@ts-ignore
+                    navigator.navigate(screen, {userId: props.id || userId})
+                }}>
+                    <Text>See All</Text>
+                </TouchableOpacity>
+            </View>
             {workouts.length === 0 && <Text style={tw`text-center my-5`}>No workouts to display</Text>}
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 {workouts.map((workout, i) => {
@@ -251,7 +261,16 @@ export default function Profile(props: ProfileProps) {
                 })}
             </ScrollView>
             {isCurrentUsersProfile && <View style={{flex: 1}}>
-                <Text style={tw`text-lg my-4`} weight="semibold">Exercises</Text>
+            <View style={tw`flex-row items-center justify-between mb-4 mt-4`}>
+                <Text style={tw`text-lg`} weight="semibold">Exercises</Text>
+                <TouchableOpacity onPress={() => {
+                    const screen = getMatchingNavigationScreen('ListExercise', navigator)
+                    //@ts-ignore
+                    navigator.navigate(screen, {userId: props.id || userId})
+                }}>
+                    <Text>See All</Text>
+                </TouchableOpacity>
+            </View>
                 {exercises.length === 0 && <Text style={tw`text-center my-5`}>No exercises to display</Text>}
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 {exercises.map((exercise, i) => {

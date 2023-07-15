@@ -64,21 +64,18 @@ export default function ListUsers(props: ListUsersProps) {
                 {results.length === 0 && <Text style={tw`text-center my-9`}>{displaySearchState}</Text>}
                 {results.length > 0 && <FlatList showsVerticalScrollIndicator={false} contentContainerStyle={tw`pb-90 mt-6`} data={results} keyExtractor={x => x.id} renderItem={({item}) => {
                     let usernameText = item.username + ' '
-                    if (item.personalTrainer) {
-                        usernameText +=  '🏋️‍♀️'
-                    } 
-                    if (item.foodProfessional) {
-                        usernameText +=  '🍎'
-                    }
-                    return <TouchableOpacity style={tw`pb-9 flex-row items-center justify-between`} onPress={() => {
+                    return <TouchableOpacity style={tw`py-2 flex-row items-center justify-between`} onPress={() => {
                         const screen = getMatchingNavigationScreen('User', navigator)
                         //@ts-ignore
                         navigator.navigate(screen, {id: item.id})
                     }}>
                         <View style={tw`flex-row items-center`}>
                             {/* @ts-ignore */}
-                            <Image source={{uri: item.picture}} style={tw`w-15 h-15 rounded-full mr-4`} />
-                            <Text>{usernameText}</Text>
+                            <Image source={{uri: item.picture}} style={tw`w-10 h-10 rounded-full mr-4`} />
+                            <View>
+                                <Text weight='semibold'>{item.name}</Text>
+                            <Text style={tw`text-xs text-gray-500`}>@{usernameText}</Text>
+                            </View>
                         </View>
                         <ExpoIcon color='gray' iconName='feather' name='chevron-right' size={20} />
                     </TouchableOpacity>

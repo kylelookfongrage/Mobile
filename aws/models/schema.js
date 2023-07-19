@@ -2079,12 +2079,13 @@ export const schema = {
                         "associatedWith": "exerciseID"
                     }
                 },
-                "bodyPart": {
-                    "name": "bodyPart",
-                    "isArray": false,
+                "bodyParts": {
+                    "name": "bodyParts",
+                    "isArray": true,
                     "type": "String",
                     "isRequired": false,
-                    "attributes": []
+                    "attributes": [],
+                    "isArrayNullable": true
                 },
                 "createdAt": {
                     "name": "createdAt",
@@ -2700,6 +2701,13 @@ export const schema = {
                     "isRequired": false,
                     "attributes": []
                 },
+                "originalMeal": {
+                    "name": "originalMeal",
+                    "isArray": false,
+                    "type": "ID",
+                    "isRequired": false,
+                    "attributes": []
+                },
                 "createdAt": {
                     "name": "createdAt",
                     "isArray": false,
@@ -2812,6 +2820,34 @@ export const schema = {
                 },
                 "initialMeal": {
                     "name": "initialMeal",
+                    "isArray": false,
+                    "type": "ID",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "servingSize": {
+                    "name": "servingSize",
+                    "isArray": false,
+                    "type": "String",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "servingUnit": {
+                    "name": "servingUnit",
+                    "isArray": false,
+                    "type": "String",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "servings": {
+                    "name": "servings",
+                    "isArray": false,
+                    "type": "String",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "originalMeal": {
+                    "name": "originalMeal",
                     "isArray": false,
                     "type": "ID",
                     "isRequired": false,
@@ -3591,6 +3627,13 @@ export const schema = {
                         "associatedWith": "userID"
                     }
                 },
+                "untitledfield": {
+                    "name": "untitledfield",
+                    "isArray": false,
+                    "type": "String",
+                    "isRequired": false,
+                    "attributes": []
+                },
                 "createdAt": {
                     "name": "createdAt",
                     "isArray": false,
@@ -3909,5 +3952,5 @@ export const schema = {
         }
     },
     "codegenVersion": "3.4.0",
-    "version": "b28c988dec8c2198786aa839d5837430"
+    "version": "60846e6397c0e6d48c95bac05be3c5c0"
 };

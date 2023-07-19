@@ -222,7 +222,7 @@ type Exercise @model @auth(rules: [{allow: public}]) {
   WorkoutPlayDetails: [WorkoutPlayDetail] @hasMany(indexName: "byExercise", fields: ["id"])
   WorkoutDetails: [WorkoutDetails] @hasMany(indexName: "byExercise", fields: ["id"])
   ExerciseEquiptmentDetails: [ExerciseEquiptmentDetail] @hasMany(indexName: "byExercise", fields: ["id"])
-  bodyPart: String
+  bodyParts: [String]
 }
 
 type Equiptment @model @auth(rules: [{allow: public}]) {
@@ -283,6 +283,7 @@ type Meal @model @auth(rules: [{allow: public}]) {
   Applications: [Application] @hasMany(indexName: "byMeal", fields: ["id"])
   isAiGenerated: Boolean
   public: Boolean
+  originalMeal: ID
 }
 
 type MealProgress @model @auth(rules: [{allow: public}]) {
@@ -295,6 +296,10 @@ type MealProgress @model @auth(rules: [{allow: public}]) {
   userID: ID! @index(name: "byUser")
   progressDate: AWSDate
   initialMeal: ID
+  servingSize: String
+  servingUnit: String
+  servings: String
+  originalMeal: ID
 }
 
 type FoodProgress @model @auth(rules: [{allow: public}]) {
@@ -374,6 +379,7 @@ type User @model @auth(rules: [{allow: public}]) {
   selectedGoal: String
   selectedSprite: String
   Posts: [Post] @hasMany(indexName: "byUser", fields: ["id"])
+  untitledfield: String
 }
 
 type Progress @model @auth(rules: [{allow: public}]) {

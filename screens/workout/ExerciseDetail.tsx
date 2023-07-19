@@ -1,5 +1,5 @@
 import { TouchableOpacity, Image, ScrollView, TextInput } from 'react-native'
-import React, { useRef } from 'react'
+import React, { useRef, useState } from 'react'
 import { Text, View } from '../../components/Themed'
 import useColorScheme from '../../hooks/useColorScheme';
 import tw from 'twrnc'
@@ -17,6 +17,7 @@ import { ZenObservable } from 'zen-observable-ts';
 import { BackButton } from '../../components/BackButton';
 import { useExerciseAdditions } from '../../hooks/useExerciseAdditions';
 import { ShowMoreButton } from '../home/ShowMore';
+import Body from 'react-native-body-highlighter'
 
 
 export interface ExerciseDetailProps {
@@ -48,6 +49,8 @@ export default function ExerciseDetail(props: ExerciseDetailProps) {
     const [originalName, setOriginalName] = React.useState<string>('')
     const [orignalDescription, setOrignalDescription] = React.useState<string>('')
     const [originalEquiptment, setOriginalEquiptment] = React.useState<Equiptment[]>([])
+    const [originalBodyParts, setOriginalBodyParts] = React.useState<string[]>([])
+    const [bodyParts, setBodyParts] = React.useState<string[]>([])
 
     React.useEffect(() => {
         if (!id) {
@@ -65,6 +68,10 @@ export default function ExerciseDetail(props: ExerciseDetailProps) {
                 //@ts-ignore
                 setOriginalMedia(e.media) 
                 setOriginalName(e.title)
+                //@ts-ignore
+                setOriginalBodyParts(e.bodyParts || [])
+                //@ts-ignore
+                setBodyParts(e.bodyParts || [])
                 setOrignalDescription(e.description)
                 DataStore.query(Equiptment, eq => eq.ExerciseEquiptmentDetails.exerciseID.eq(exerciseId)).then(x => setOriginalEquiptment(x))
                 if (id) {
@@ -135,6 +142,7 @@ export default function ExerciseDetail(props: ExerciseDetailProps) {
             setEditEquiptment(false)
             setExerciseName(originalName)
             setVideo(originalMedia)
+            setBodyParts(originalBodyParts)
             setDescription(orignalDescription)
             resetEquiptment()
         }
@@ -178,6 +186,7 @@ export default function ExerciseDetail(props: ExerciseDetailProps) {
                         x.media = imgs;
                         x.title = exerciseName;
                         x.description = description;
+                        x.bodyParts=bodyParts;
                     }))
                     //@ts-ignore
                     navigator.pop()
@@ -224,6 +233,12 @@ export default function ExerciseDetail(props: ExerciseDetailProps) {
         return () => subscription.unsubscribe()
     }, [])
     const firstImage = video.filter(x => x.type === 'image')
+
+    const data: {slug: string; intensity: number; color: string}[] = bodyParts.map(x => ({
+        slug: x, intensity: 1, color: ''
+    }))
+    console.log(bodyParts)
+
     return (
         <View style={{flex: 1}} includeBackground>
         <BackButton Right={() => {
@@ -292,6 +307,19 @@ export default function ExerciseDetail(props: ExerciseDetailProps) {
                         style={tw`py-1 text-${dm ? 'white' : 'black'}`}
                     />
                     <View style={tw`h-10`} />
+                    <View style={tw`items-center justify-center`}>
+                    <Body colors={['#FF0000']} data={data} scale={1.5} onMusclePress={(m) => {
+                        if (editMode) {
+                            const isSelected = bodyParts.includes(m.slug)
+                            if (isSelected) {
+                                setBodyParts([...bodyParts].filter(x => x !== m.slug))
+                            } else {
+                                setBodyParts([...bodyParts, m.slug])
+                            }
+
+                        }
+                    }}/>
+                    </View>
                     <View style={tw`flex-row justify-between items-center`}>
                         <Text style={tw`text-2xl`} weight='bold'>Equiptment</Text>
                         {editMode === true && <View style={tw`flex-row items-center w-5/12 justify-around`}>

@@ -709,7 +709,7 @@ type EagerExercise = {
   readonly WorkoutPlayDetails?: (WorkoutPlayDetail | null)[] | null;
   readonly WorkoutDetails?: (WorkoutDetails | null)[] | null;
   readonly ExerciseEquiptmentDetails?: (ExerciseEquiptmentDetail | null)[] | null;
-  readonly bodyPart?: string | null;
+  readonly bodyParts?: (string | null)[] | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }
@@ -724,7 +724,7 @@ type LazyExercise = {
   readonly WorkoutPlayDetails: AsyncCollection<WorkoutPlayDetail>;
   readonly WorkoutDetails: AsyncCollection<WorkoutDetails>;
   readonly ExerciseEquiptmentDetails: AsyncCollection<ExerciseEquiptmentDetail>;
-  readonly bodyPart?: string | null;
+  readonly bodyParts?: (string | null)[] | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }
@@ -866,6 +866,7 @@ type EagerMeal = {
   readonly Applications?: (Application | null)[] | null;
   readonly isAiGenerated?: boolean | null;
   readonly public?: boolean | null;
+  readonly originalMeal?: string | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }
@@ -885,6 +886,7 @@ type LazyMeal = {
   readonly Applications: AsyncCollection<Application>;
   readonly isAiGenerated?: boolean | null;
   readonly public?: boolean | null;
+  readonly originalMeal?: string | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }
@@ -905,6 +907,10 @@ type EagerMealProgress = {
   readonly userID: string;
   readonly progressDate?: string | null;
   readonly initialMeal?: string | null;
+  readonly servingSize?: string | null;
+  readonly servingUnit?: string | null;
+  readonly servings?: string | null;
+  readonly originalMeal?: string | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }
@@ -919,6 +925,10 @@ type LazyMealProgress = {
   readonly userID: string;
   readonly progressDate?: string | null;
   readonly initialMeal?: string | null;
+  readonly servingSize?: string | null;
+  readonly servingUnit?: string | null;
+  readonly servings?: string | null;
+  readonly originalMeal?: string | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }
@@ -1032,6 +1042,7 @@ type EagerUser = {
   readonly selectedGoal?: string | null;
   readonly selectedSprite?: string | null;
   readonly Posts?: (Post | null)[] | null;
+  readonly untitledfield?: string | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }
@@ -1085,6 +1096,7 @@ type LazyUser = {
   readonly selectedGoal?: string | null;
   readonly selectedSprite?: string | null;
   readonly Posts: AsyncCollection<Post>;
+  readonly untitledfield?: string | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }

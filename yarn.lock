@@ -9940,6 +9940,11 @@ quick-lru@^5.1.1:
   resolved "https://registry.npmjs.org/quick-lru/-/quick-lru-5.1.1.tgz"
   integrity sha512-WuyALRjWPDGtt/wzJiadO5AXY+8hZ80hVpe6MyivgraREW751X3SbhRvG3eLKOYN+8VEvqLcf3wdnt44Z4S4SA==
 
+ramda@^0.26.1:
+  version "0.26.1"
+  resolved "https://registry.yarnpkg.com/ramda/-/ramda-0.26.1.tgz#8d41351eb8111c55353617fc3bbffad8e4d35d06"
+  integrity sha512-hLWjpy7EnsDBb0p+Z3B7rPi3GDeRG5ZtiI33kJhTt+ORCd38AbAIjB/9zRIUoeTbE/AVX5ZkU7m6bznsvrf8eQ==
+
 range-parser@~1.2.1:
   version "1.2.1"
   resolved "https://registry.npmjs.org/range-parser/-/range-parser-1.2.1.tgz"
@@ -10012,6 +10017,14 @@ react-native-big-list@^1.6.0:
   integrity sha512-yW5xuAX/8zMZWfYYabCdi8EQBCK8zO957YdUe4QJshdwdHGMnc7wVJ4HLoyU1jzYcjGgJxoIU4sV3VZstyu8oQ==
   dependencies:
     prop-types "^15.7.2"
+
+react-native-body-highlighter@^2.1.4:
+  version "2.1.4"
+  resolved "https://registry.yarnpkg.com/react-native-body-highlighter/-/react-native-body-highlighter-2.1.4.tgz#a134acafb90fdfff0790c78b859a6ac427afc596"
+  integrity sha512-t53fg/m3cqykhG7C1p3hy+4K4ScOAfejkTaqNF4CpHM4Z5aJWvgrC4NdHq6M1NmsWyPmjUIhcwsLi6PhDNyh/Q==
+  dependencies:
+    ramda "^0.26.1"
+    react-native-svg "13.4.0"
 
 react-native-calendars@^1.1293.0:
   version "1.1293.0"

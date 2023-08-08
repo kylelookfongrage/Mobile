@@ -74,7 +74,7 @@ export default function PostDetails(props: { id: string }) {
             newComments.push({ ...comment, numLikes, userDidLike })
         }
         setPostComments([...postComments, ...newComments])
-        setAllFetched(newComments.length === 0)
+        setAllFetched(newComments.length < FETCH_AMOUNT)
         setUserMapping(internalUserInfo)
     }
     useEffect(() => {
@@ -95,9 +95,9 @@ export default function PostDetails(props: { id: string }) {
     }
     const [newComment, setNewComment] = useState<string>('')
     const [shouldShowMore, setShouldShowMore] = useState<boolean>(false);
-    if (!post) return <View />
+    if (!post) return <View includeBackground />
     const postUser = userMapping[post?.userID]
-    if (!postUser) return <View />
+    if (!postUser) return <View includeBackground />
 
     return (
         <View includeBackground style={{ flex: 1 }}>

@@ -50,7 +50,8 @@ export type RootStackParamList = {
   RegistrationEdit: undefined;
   MakePost: undefined;
   Inbox: undefined;
-  Message: {id: string}
+  Message: {id: string};
+  ChatDetail: {id: string};
 };
 
 

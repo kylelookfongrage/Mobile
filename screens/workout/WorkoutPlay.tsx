@@ -10,38 +10,29 @@ import { ExpoIcon } from '../../components/ExpoIcon'
 import { Workout, WorkoutPlayDetail, WorkoutDetails, WorkoutPlay, Exercise } from '../../aws/models'
 import { DataStore, Storage } from 'aws-amplify'
 import { MediaType } from '../../types/Media'
-import { defaultImage, isStorageUri, toHHMMSS, animationMapping } from '../../data'
+import { defaultImage, isStorageUri, toHHMMSS, animationMapping, ExerciseDisplay, WorkoutPlayDisplayProps, WorkoutMode } from '../../data'
 import { useCommonAWSIds } from '../../hooks/useCommonContext'
 import { ImagePickerView } from '../../components/ImagePickerView'
 import AnimatedLottieView from 'lottie-react-native'
 import timer from '../../assets/animations/timer.json'
 import { useDateContext } from '../home/Calendar'
 import { useProgressValues } from '../../hooks/useProgressValues'
+import WorkoutPlayStatic from '../../components/WorkoutPlayStatic'
+import WorkoutPlayMusic from '../../components/WorkoutPlayMusic'
 
 interface WorkoutPlayProps {
     id?: string;
     workoutId?: string;
 }
 
-interface ExerciseDisplay {
-    media: MediaType[];
-    name: string;
-    id: string;
-    description: string;
-}
 
-// export interface WorkoutPlayExercise {
-//     workoutId: string;
-//     exerciseId: string, name: string;
-//     secs: string; video: string;
-//     sets: { reps: string, rest: string, weight: string, secs: string, completed: boolean }[];
-// }
+
 
 export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
     const dm = useColorScheme() === 'dark'
     const { sub, userId } = useCommonAWSIds()
-    const {selectedAnimation} = useProgressValues({metrics: true})
-    const {AWSDate} = useDateContext()
+    const { selectedAnimation, selectedWorkoutMode } = useProgressValues({ metrics: true })
+    const { AWSDate } = useDateContext()
     const { id, workoutId } = props;
     const navigator = useNavigation()
 
@@ -68,12 +59,12 @@ export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
                 if (currentWorkoutPlay) {
                     setThisWorkout(currentWorkoutPlay)
                     setTotalTime(currentWorkoutPlay.totalTime || 0)
-                    fetchedPlayDetails = await DataStore.query(WorkoutPlayDetail, wpd => wpd.workoutplayID.eq(currentWorkoutPlay.id), {sort: x => x.createdAt("ASCENDING")})
+                    fetchedPlayDetails = await DataStore.query(WorkoutPlayDetail, wpd => wpd.workoutplayID.eq(currentWorkoutPlay.id), { sort: x => x.createdAt("ASCENDING") })
                     if (fetchedPlayDetails[0] && fetchedPlayDetails[0].workoutID) {
                         const workoutIdToFetch = fetchedPlayDetails[0].workoutID
                         const wo = await DataStore.query(Workout, workoutIdToFetch)
                         if (wo) {
-                            details = await DataStore.query(WorkoutDetails, wd => wd.workoutID.eq(wo.id), {sort: x => x.createdAt('ASCENDING')})
+                            details = await DataStore.query(WorkoutDetails, wd => wd.workoutID.eq(wo.id), { sort: x => x.createdAt('ASCENDING') })
                         }
                     }
 
@@ -87,7 +78,8 @@ export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
                 const workoutDetails = await DataStore.query(WorkoutDetails, x => x.workoutID.eq(workoutId), { sort: x => x.createdAt('ASCENDING') })
                 details = workoutDetails
                 for (var detail of workoutDetails) {
-                    for (let i = 0; i < (detail.sets || 0); i++) {
+                    let n = detail.sets || 1
+                    for (let i = 0; i < n; i++) {
                         const newDetail = new WorkoutPlayDetail({ workoutID: workoutId, exerciseID: detail.exerciseID, workoutdetailsID: detail.id, userID: userId, workoutplayID: newWorkoutPlay.id })
                         fetchedPlayDetails.push(newDetail)
                     }
@@ -98,8 +90,14 @@ export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
             setWorkoutDetails(details)
             setSelectedWorkoutPlayDetail(fetchedPlayDetails[0])
             setSelectedWorkoutDetail(details[0])
+            let exerciseIds = [...new Set(fetchedPlayDetails.map(x => ({id: x.exerciseID})))]
+            exerciseIds = exerciseIds.map(x => {
+                const potentialNote = details.find(x => x.exerciseID === x.exerciseID)?.note
+                return {...x, note: potentialNote || ''}
+            })
+            
             // get all of the exercise ID's fo the wplay details
-            const exercisesToFetch = [...new Set(details.map(x => ({ id: x.exerciseID, note: x.note })))]
+            const exercisesToFetch = exerciseIds
             const exercisesWithMedia: ExerciseDisplay[] = await Promise.all(exercisesToFetch.map(async x => {
                 const exerciseWithoutMedia = await DataStore.query(Exercise, x.id)
                 let defaultExercise: ExerciseDisplay = {
@@ -115,8 +113,8 @@ export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
                         //@ts-ignore
                         if (isStorageUri(x?.uri)) {
                             //@ts-ignore
-                            return {...x, uri: await Storage.get(x?.uri)}
-                        } 
+                            return { ...x, uri: await Storage.get(x?.uri) }
+                        }
                         return x
                     }))
                     defaultExercise['media'] = media
@@ -149,14 +147,49 @@ export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
         if (!selectedWorkoutPlayDetail.completed) {
             const newSetTime = (selectedWorkoutPlayDetail.secs || 0) + 1
             selectedSetToChange = { ...selectedWorkoutPlayDetail, secs: newSetTime }
-        } else if (timeToRest && selectedWorkoutPlayDetail.completed) {
-            if ((selectedWorkoutPlayDetail.rest || 0) < timeToRest) {
+        } else if (selectedWorkoutPlayDetail.completed) {
+            if (timeToRest && (selectedWorkoutPlayDetail.rest || 0) < timeToRest) {
                 const newRestTime = (selectedWorkoutPlayDetail.rest || 0) + 1
                 selectedSetToChange = { ...selectedWorkoutPlayDetail, rest: newRestTime }
+            } else if (selectedWorkoutDetail) {
+                // if mode is music player mode
+                forwardBackwardPress()
+
             }
         }
         if (!selectedSetToChange) return;
         setSelectedWorkoutPlayDetail(selectedSetToChange)
+    }
+
+
+    const forwardBackwardPress = (forward: boolean = true, shouldFinish=false) => {
+        if (!selectedWorkoutDetail || !selectedWorkoutPlayDetail) return;
+        if (!selectedWorkoutPlayDetail.completed && forward) {
+            setSelectedWorkoutPlayDetail({...selectedWorkoutPlayDetail, completed: true})
+            return;
+        }
+        if (workoutPlayDetails.filter(x => !x.completed).length === 0 && forward && shouldFinish) {
+            onFinishPress();
+            return;
+        }
+        const i = workoutPlayDetails.findIndex(x => x.id === selectedWorkoutPlayDetail.id)
+        if (!forward && (i === 0 || workoutPlayDetails[i-1]?.exerciseID === selectedWorkoutPlayDetail.id) && selectedWorkoutPlayDetail.completed) {
+            setSelectedWorkoutPlayDetail({...selectedWorkoutPlayDetail, completed: false})
+            return;
+        }
+        if (i === -1) return;
+        let newSet = workoutPlayDetails[forward ? i + 1 : i - 1]
+        if (newSet) {
+            if (newSet.exerciseID !== selectedWorkoutDetail.exerciseID) {
+                const i2 = workoutDetails.findIndex(x => x.exerciseID === newSet.exerciseID)
+                if (i2 === -1) {
+                    return;
+                }
+                setSelectedWorkoutDetail(workoutDetails[i2])
+            } 
+            setSelectedWorkoutPlayDetail({...newSet, completed: forward ? newSet.completed : false})
+        }
+       
     }
 
     React.useEffect(() => {
@@ -169,19 +202,23 @@ export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
     const saveWorkoutDetails = async () => {
         setPaused(true)
         if (!thisWorkout) return;
+        if (totalTime === 0) {
+            navigator.navigate('FinishedExercise')
+            return;
+        }
         const originalWorkoutPlay = await DataStore.query(WorkoutPlay, thisWorkout.id)
         if (originalWorkoutPlay) {
             await DataStore.save(WorkoutPlay.copyOf(originalWorkoutPlay, x => {
                 x.totalTime = (x.totalTime || 0) > totalTime ? x.totalTime : totalTime;
             }))
-        } 
+        }
         for (var detail of workoutPlayDetails) {
             const potentialOriginal = await DataStore.query(WorkoutPlayDetail, detail.id)
             if (potentialOriginal) {
                 await DataStore.save(WorkoutPlayDetail.copyOf(potentialOriginal, x => {
                     x.completed = detail.completed;
-                    x.secs=detail.secs;
-                    x.reps=detail.reps;
+                    x.secs = detail.secs;
+                    x.reps = detail.reps;
                     x.reps = detail.reps;
                     x.weight = detail.weight
                 }))
@@ -198,182 +235,68 @@ export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
                     userID: detail.userID,
                     workoutdetailsID: detail.workoutdetailsID
                 }
-                await DataStore.save(new WorkoutPlayDetail({...properties}))
+                await DataStore.save(new WorkoutPlayDetail({ ...properties }))
             }
         }
         navigator.navigate('FinishedExercise')
     }
 
+    const onFinishPress = () => {
+        Alert.alert('Are you sure you are finished?', 'You can resume this workout later if you have started the clock!', [
+            {
+                text: 'Yes', onPress: () => {
+                    // save workout
+                    saveWorkoutDetails()
+                }
+            },
+            { text: 'Cancel', onPress: () => { } }
+        ])
+    }
+
+    const onNewSetPress = () => {
+        if (!selectedWorkoutPlayDetail) return;
+        const newSet = new WorkoutPlayDetail({
+            workoutID: selectedWorkoutPlayDetail.workoutID,
+            exerciseID: selectedWorkoutPlayDetail.exerciseID,
+            workoutdetailsID: selectedWorkoutPlayDetail.workoutdetailsID,
+            userID: selectedWorkoutPlayDetail.userID,
+            workoutplayID: selectedWorkoutPlayDetail.workoutplayID,
+        })
+        setWorkoutPlayDetails([...workoutPlayDetails, newSet])
+        setSelectedWorkoutPlayDetail(newSet)
+    }
+
+    const onResetPress = () => {
+        Alert.alert("Are you sure you want to restart your time?", 'This will restart all of your progress.', [
+            { text: 'Cancel' }, {
+                text: 'Yes', onPress: async () => {
+                    setTotalTime(0)
+                    setWorkoutPlayDetails(originalDetails)
+                    setSelectedWorkoutPlayDetail(originalDetails[0])
+
+                }
+            }
+        ])
+    }
+
     if (!workoutDetails.length || !exercises.filter(x => x.id === selectedWorkoutDetail?.exerciseID).length || !selectedWorkoutDetail || !selectedWorkoutPlayDetail) {
-        return <SafeAreaView>
-            <Text>Loading...</Text>
-            <ActivityIndicator />
-        </SafeAreaView>
+        return <View includeBackground style={{ flex: 1 }}>
+            <SafeAreaView>
+                <Text>Loading...</Text>
+                <ActivityIndicator />
+            </SafeAreaView>
+        </View>
     }
     const currentExercise = exercises.filter(x => x.id === selectedWorkoutDetail?.exerciseID)[0]
-    return (
-        <View style={[{ flex: 1 }]} includeBackground>
-            <SafeAreaView edges={['top']}>
-            <ScrollView showsVerticalScrollIndicator={false}>
-                <ImagePickerView height={Dimensions.get('screen').height * 0.45} srcs={currentExercise.media} editable={false} />
-                <View style={tw`px-4 pt-2`}>
-                    <Text style={tw`text-xl max-w-9/12`} weight='bold'>{currentExercise.name}</Text>
-                    <Text style={tw``}>{currentExercise.description.length > 100 ? (shouldShowMore ? currentExercise.description : currentExercise.description.substring(0, 100)) : currentExercise.description} 
-                    <Text style={tw`ml-4 text-gray-500`} weight='semibold' onPress={() => setShouldShowMore(!shouldShowMore)}>  {(currentExercise.description.length > 100) ? (shouldShowMore ? 'Hide' : 'Show More') : ''}</Text>
-                    </Text>
-                    {selectedWorkoutDetail.note && <Text>Note: {selectedWorkoutDetail.note}</Text>}
-
-                    <View style={tw`items-center w-12/12 items-center justify-center bg-gray-${dm ? '700/40' : '500/30'} mt-3 mb-6 p-3 pb-6 rounded-xl`}>
-                        <Text style={tw`text-4xl my-4`} weight='regular'>{toHHMMSS(totalTime)}</Text>
-                        <View style={tw`flex flex-row items-center justify-center`}>
-                            <View style={tw`items-center justify-center`}>
-                                <Text style={tw`mb-2 text-xs text-gray-500`} weight='semibold'>{paused ? 'Start' : 'Pause'}</Text>
-                            <TouchableOpacity onPress={() => {
-                                setPaused(!paused)
-                            }} style={tw`bg-slate-${dm ? '200' : '400'}/60 items-end justify-center p-4 rounded-full`}>
-                                <ExpoIcon iconName='feather' style={tw``} name={totalTime === 0 ? 'play' : (paused ? 'play' : 'pause')} size={25} color='#36454F' />
-                            </TouchableOpacity>
-                            </View>
-                            <View style={[tw`bg-gray-500 mx-12`, {width: 1, height: 60}]} />
-                            <View style={tw`items-center justify-center`}>
-                            <Text style={tw`mb-2 text-xs text-gray-500`} weight='semibold'>Restart</Text>
-                            <TouchableOpacity onPress={() => {
-                                Alert.alert("Are you sure you want to restart your time?", 'This will restart all of your progress.', [
-                                    { text: 'Cancel' }, {
-                                        text: 'Yes', onPress: async () => {
-                                            setTotalTime(0)
-                                            setWorkoutPlayDetails(originalDetails)
-                                            setSelectedWorkoutPlayDetail(originalDetails[0])
-
-                                        }
-                                    }
-                                ])
-                            }} style={tw`bg-slate-${dm ? '200' : '400'}/60 items-end justify-center p-4 rounded-full`}>
-                                <ExpoIcon iconName='feather' name={'rotate-ccw'} size={25} color='#36454F' />
-                            </TouchableOpacity>
-                            </View>
-                        </View>
-                    </View>
-                    <View style={tw`border border-${dm ? 'white' : 'black'} rounded-xl p-3 mt-4`}>
-                        {workoutPlayDetails.filter(x => x.workoutdetailsID === selectedWorkoutDetail.id).map((set, i) => {
-                            const selected = selectedWorkoutPlayDetail.id === set.id
-                            return <View key={`set: ${set.id} at ${i}`} >
-                                <TouchableOpacity onPress={() => {
-                                    if (!selected) {
-                                        setSelectedWorkoutPlayDetail(set)
-                                    }
-                                }} style={tw`p-2 items-start justify-center`}>
-                                    <View style={tw`flex-row items-center`}>
-                                        <ExpoIcon name='check-circle' iconName='feather' size={20} color={set.completed ? 'green' : 'gray'} />
-                                        <Text style={tw`ml-2 ${set.completed ? 'line-through text-gray-500' : ''}`} weight={selected ? 'bold' : 'regular'}>Set {i + 1}: {toHHMMSS(set.secs || 0)} {selectedWorkoutDetail.secs ? 'of ' + toHHMMSS(selectedWorkoutDetail.secs) : ''}</Text>
-                                    </View>
-                                </TouchableOpacity>
-                                {selected && <View>
-                                    <View style={tw`flex-row items-center mt-3 justify-around`}>
-                                        <View style={tw`items-center`}>
-                                            <TextInput keyboardType='number-pad' placeholder='sets' style={tw`py-5 px-9 rounded-xl text-${dm ? 'white' : 'black'} bg-gray-${dm ? '700' : '300'}`} value={set.reps?.toString() || ''} onChangeText={(v) => {
-                                                const newValue = v.replace(/[^0-9]/g, '')
-                                                setSelectedWorkoutPlayDetail({...set, reps: Number(newValue) || null})
-
-                                            }} />
-                                        <Text style={tw`mt-2`} weight='semibold'>Reps</Text>   
-                                        </View>
-                                        <View style={tw`items-center`}>
-                                            <TextInput keyboardType='number-pad' placeholder='lbs' style={tw`py-5 px-9 rounded-xl text-${dm ? 'white' : 'black'} bg-gray-${dm ? '700' : '300'}`} value={set.weight?.toString() || ''} onChangeText={(v) => {
-                                                const newValue = v.replace(/[^0-9]/g, '')
-                                                setSelectedWorkoutPlayDetail({...set, weight: Number(newValue) || null})
-
-                                            }} />
-                                        <Text style={tw`mt-2`} weight='semibold'>Weight</Text>   
-                                        </View>
-                                    </View>
-                                    {(set.completed && (set.rest !== selectedWorkoutDetail.rest)) && <TouchableOpacity onLongPress={() => {
-                                        navigator.navigate('SelectSprite')
-                                    }} style={tw`flex-row items-center justify-center`}>
-                                        <AnimatedLottieView autoPlay
-                                            style={tw`h-15 w-15`}
-                                            source={animationMapping.filter(x => x.name === selectedAnimation)?.[0]?.animation || timer} />
-                                        <Text>Resting: {toHHMMSS(set.rest || 0)}</Text>
-                                    </TouchableOpacity>}
-                                    <TouchableOpacity onPress={() => {
-                                        setSelectedWorkoutPlayDetail({ ...selectedWorkoutPlayDetail, completed: !selectedWorkoutPlayDetail.completed, rest: 0 })
-                                    }} style={tw`mx-4 items-center justify-center p-2 bg-red-500 my-3 rounded-xl`}>
-                                        <Text style={tw`text-white`}>{set.completed ? 'Restart' : 'Complete'}</Text>
-                                    </TouchableOpacity>
-                                </View>}
-                            </View>
-                        })}
-                        <TouchableOpacity onPress={() => {
-                            const newSet = new WorkoutPlayDetail({
-                                workoutID: selectedWorkoutPlayDetail.workoutID,
-                                exerciseID: selectedWorkoutPlayDetail.exerciseID,
-                                workoutdetailsID: selectedWorkoutPlayDetail.workoutdetailsID,
-                                userID: selectedWorkoutPlayDetail.userID,
-                                workoutplayID: selectedWorkoutPlayDetail.workoutplayID,
-                            })
-                            setWorkoutPlayDetails([...workoutPlayDetails, newSet])
-                            setSelectedWorkoutPlayDetail(newSet)
-                        }} style={tw`flex-row items-center p-2 mt-4`}>
-                            <ExpoIcon name='plus' iconName='feather' size={20} color={'gray'} />
-                            <Text>New Set</Text>
-                        </TouchableOpacity>
-                    </View>
-
-                    <Text style={tw`mt-6 text-lg`} weight='semibold'>Exercises Remaining</Text>
-                    {workoutDetails.map((wd, idx) => {
-                        if (selectedWorkoutDetail.id === wd.id) return <View key={wd.id} />;
-                        const currentExerciseForWD = exercises.filter(x => x.id === wd.exerciseID)[0]
-                        if (!currentExerciseForWD) return
-                        let image = currentExerciseForWD.media.filter(x => x.type === 'image')[0]
-                        return <TouchableOpacity
-                            key={wd.id + `${idx}`}
-                            style={tw`px-4 py-3 my-2 bg-gray-${dm ? '700' : '300'} w-12/12 rounded-xl flex-row justify-between`}
-                            onPress={() => {
-                                setSelectedWorkoutDetail(wd)
-                                setSelectedWorkoutPlayDetail(workoutPlayDetails.filter(x => x.workoutdetailsID === wd.id)[0])
-                            }}>
-                            <View style={tw`flex-row`}>
-                                <Image source={{ uri: image.uri || defaultImage }} style={tw`h-15 w-15 rounded-lg`} />
-                                <View style={tw`justify-evenly ml-2 items-start max-w-11/12`}>
-                                    <Text style={tw``} weight='semibold'>{currentExerciseForWD.name}</Text>
-                                    <Text>{wd.sets} sets</Text>
-                                </View>
-                            </View>
-                        </TouchableOpacity>
-                    })}
-                </View>
-                {/* Finish Workout Button */}
-                <View style={tw`h-40`} />
-            </ScrollView>
-            </SafeAreaView>
-            <View style={[
-                {
-                    position: 'absolute',
-                    bottom: 10,
-                    flex: 1
-                },
-                tw`w-12/12`
-            ]}>
-                {/* Add Food Button */}
-                <View style={tw`py-5 items-center flex-row justify-center`}>
-                    <TouchableOpacity onPress={() => {
-                        Alert.alert('Are you sure you are finished?', 'You can resume this workout later if you have started the clock!', [
-                            {
-                                text: 'Yes', onPress: () => {
-                                    // save workout
-                                    saveWorkoutDetails()
-                                }
-                            },
-                            { text: 'Cancel', onPress: () => { } }
-                        ])
-
-                    }} style={tw`bg-${dm ? 'red-600' : "red-500"} px-5 h-12 justify-center rounded-full`}>
-                        <Text numberOfLines={1} style={tw`text-center text-white`} weight='semibold'>Finish Workout</Text>
-                    </TouchableOpacity>
-                </View>
-            </View>
-        </View>
-    )
+    const p: WorkoutPlayDisplayProps = {
+        currentExercise, exercises, shouldShowMore, setShouldShowMore, selectedWorkoutDetail, setSelectedWorkoutDetail,
+        paused, setPaused, totalTime, onResetPress, workoutPlayDetails, onNewSetPress, onFinishPress, animation: animationMapping.filter(x => x.name === selectedAnimation)?.[0]?.animation || timer,
+        selectedWorkoutPlayDetail, setSelectedWorkoutPlayDetail, workoutDetails, forwardBackwardPress
+    }
+    if (selectedWorkoutMode == WorkoutMode.player) {
+        return <WorkoutPlayMusic {...p} />
+    }
+    return <WorkoutPlayStatic {...p} />
 }
 
 

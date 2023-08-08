@@ -9,12 +9,14 @@ import { Ruler } from '../../components/Ruler'
 import { DataStore } from 'aws-amplify'
 import { Progress, User } from '../../aws/models'
 import { useCommonAWSIds } from '../../hooks/useCommonContext'
+import { BadgeType, useBadges } from '../../hooks/useBadges'
 
 export default function SummaryMetric(props: {weight?: boolean}) {
   const navigator = useNavigation()
   const {weight, fat} = useProgressValues({metrics: true}) 
   const {userId, progressId} = useCommonAWSIds() 
   const [newValue, setNewValue] = useState<number>(0)
+  const {logProgress} = useBadges()
   const padding = useSafeAreaInsets()
   const dm = useColorScheme() === 'dark'
   return <View style={[tw`bg-gray-${dm ? '800' : '200'}/95 px-6`, {paddingTop: padding.top, flex: 1}]}>
@@ -28,12 +30,10 @@ export default function SummaryMetric(props: {weight?: boolean}) {
             alert('There was a problem, please check your connection')
             return;
         }
-        await DataStore.save(User.copyOf(user, x => {
-           (props.weight ?  x.weight=newValue : x.fat=newValue)
-        }))
         await DataStore.save(Progress.copyOf(progress, x => {
             (props.weight ?  x.weight=newValue : x.fat=newValue)
         }))
+        // await logProgress(props.weight ? user.weight - )
         //@ts-ignore
         navigator.pop()
     }} style={tw`bg-${dm ? 'red-600' : "red-500"} mr-2 px-5 mx-20 mt-12 h-12 justify-center items-center rounded-full`}>

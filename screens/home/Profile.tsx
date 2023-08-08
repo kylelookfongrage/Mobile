@@ -78,25 +78,21 @@ export default function Profile(props: ProfileProps) {
             return { ...wo, userID: profileUsername, img: isStorageUri(img) ? await Storage.get(img) : img }
         }))
         setWorkouts(workoutsWithImages)
-        const userMeals = await DataStore.query(Meal, m => m.and(x => [x.userID.eq(queryID), x.name.ne(''), x.public.eq(true)]), { sort: x => x.createdAt("DESCENDING"), limit: 20 })
+        const userMeals = await DataStore.query(Meal, m => m.and(x => [x.userID.eq(queryID), x.name.ne(''), x.public.eq(true), x.preview.ne(null)]), { sort: x => x.createdAt("DESCENDING"), limit: 20 })
         const mealsWithImages = await Promise.all(userMeals.map(async userMeal => {
             //@ts-ignore
-            const media: MediaType[] = userMeal.media || []
-            const images = media.filter(x => x.type === 'image')
-            let img = images[0]?.uri || defaultImage
+            const img = userMeal.preview || defaultImage
             return { ...userMeal, userID: profileUsername, media: [{ type: 'image', uri: isStorageUri(img) ? await Storage.get(img) : img }] }
         }))
         //@ts-ignore
         setMeals(mealsWithImages)
         if (isCurrentUsersProfile) {
-            const exercisesWithoutImages = await DataStore.query(Exercise, e => e.and(ex => [ex.title.ne(''), ex.userID.eq(queryID)]), {
+            const exercisesWithoutImages = await DataStore.query(Exercise, e => e.and(ex => [ex.title.ne(''), ex.userID.eq(queryID), ex.preview.ne(null)]), {
                 limit: 10,
                 sort: y => y.createdAt('DESCENDING')
               })
               const exercisesWithImages: ProfileExercise[] = await Promise.all(exercisesWithoutImages.map(async ex => {
-                //@ts-ignore
-                const media: MediaType[] = ex.media || []
-                const img = media.filter(x => x.type == 'image')?.[0]?.uri || defaultImage
+                const img = ex.preview || defaultImage
                 return { ...ex, img: isStorageUri(img) ? await Storage.get(img) : img }
               }))
               setExercises(exercisesWithImages)
@@ -225,7 +221,7 @@ export default function Profile(props: ProfileProps) {
                         onPress={() => {
                             const screen = getMatchingNavigationScreen('MealDetail', navigator)
                             //@ts-ignore
-                            navigator.push(screen, { id: meal.id, editable: isCurrentUsersProfile })
+                            navigator.push(screen, { id: meal.id })
                         }}
                         style={[tw`items-start mx-1`]}>
                         <Image source={{ uri: img || defaultImage }} style={tw`h-20 w-20 rounded-lg mb-1`} resizeMode='cover' />
@@ -279,7 +275,7 @@ export default function Profile(props: ProfileProps) {
                         onPress={() => {
                             const screen = getMatchingNavigationScreen('ExerciseDetail', navigator)
                             //@ts-ignore
-                            navigator.navigate(screen, { editable: isCurrentUsersProfile, id: exercise.id })
+                            navigator.navigate(screen, { id: exercise.id })
                         }}
                         style={[tw`items-start px-1`]}>
                         <Image source={{ uri: exercise.img || defaultImage }} style={tw`h-20 w-20 rounded-lg`} resizeMode='cover' />

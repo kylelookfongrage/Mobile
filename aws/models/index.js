@@ -31,9 +31,16 @@ const Goal = {
   "SURPLUS": "SURPLUS"
 };
 
-const { ChatMessages, ChatRoom, Post, TaxReports, ReportsOfTerms, Comments, Payouts, WorkoutDetailModifier, PantryItem, Application, Follower, Favorite, ExerciseEquiptmentDetail, WorkoutPlayDetail, WorkoutPlay, WorkoutDetails, Workout, Exercise, Equiptment, RunProgress, Ingredient, Meal, MealProgress, FoodProgress, User, Progress, Activity, Media, Coordinates } = initSchema(schema);
+const { Review, FitnessPlanSubscription, FitnessPlanDetail, FitnessPlan, BadgeEarned, BadgeProgress, Badge, ChatMessages, ChatRoom, Post, TaxReports, ReportsOfTerms, Comments, Payouts, WorkoutDetailModifier, PantryItem, Application, Follower, Favorite, ExerciseEquiptmentDetail, WorkoutPlayDetail, WorkoutPlay, WorkoutDetails, Workout, Exercise, Equiptment, RunProgress, Ingredient, Meal, MealProgress, FoodProgress, User, Progress, Activity, Media, Coordinates } = initSchema(schema);
 
 export {
+  Review,
+  FitnessPlanSubscription,
+  FitnessPlanDetail,
+  FitnessPlan,
+  BadgeEarned,
+  BadgeProgress,
+  Badge,
   ChatMessages,
   ChatRoom,
   Post,

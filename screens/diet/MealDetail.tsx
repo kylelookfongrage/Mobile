@@ -1,12 +1,12 @@
 import { ScrollView, TextInput, TouchableOpacity, Image, Alert, Dimensions } from 'react-native'
-import React, { useRef } from 'react'
+import React, { useRef, useState } from 'react'
 import { Text, View } from '../../components/Themed'
 import { SafeAreaView } from 'react-native-safe-area-context';
 import tw from 'twrnc'
 import useColorScheme from '../../hooks/useColorScheme';
 import { ExpoIcon } from '../../components/ExpoIcon';
 import { useNavigation } from '@react-navigation/native';
-import { healthLabelMapping, Picker } from './FoodDetail';
+import { healthLabelMapping, NewFoodItemData, NutritionInfo, Picker } from './FoodDetail';
 import { ActivityIndicator, Switch } from 'react-native-paper';
 import { defaultImage, getMatchingNavigationScreen, isStorageUri, uploadMedias } from '../../data';
 import { Category, MediaType } from '../../types/Media';
@@ -19,6 +19,10 @@ import { BackButton } from '../../components/BackButton';
 import { useDateContext } from '../home/Calendar';
 import AllergenAlert from '../../components/AllergenAlert';
 import { ShowMoreButton } from '../home/ShowMore';
+import { BadgeType, useBadges } from '../../hooks/useBadges';
+import TabSelector from '../../components/TabSelector';
+import { useSwipe } from '../../hooks/useSwipe';
+import * as VT from 'expo-video-thumbnails'
 
 export const foodCategories: Category[] = [{ name: 'N/A', emoji: '🚫' }, ...Object.values(healthLabelMapping)].map(h => {
     return { name: h.name, emoji: h.emoji }
@@ -70,6 +74,7 @@ export default function MealDetailScreen(props: MealDetailProps) {
     const [originalcategory, setOriginalCategory] = React.useState<Category>(foodCategories[0])
     const [originalImages, setOriginalImages] = React.useState<MediaType[]>([])
     const [originalIngredients, setOriginalIngredients] = React.useState<Ingredient[]>([])
+    const {logProgress} = useBadges(false)
 
     React.useEffect(() => {
         if (subscribed) {
@@ -108,7 +113,7 @@ export default function MealDetailScreen(props: MealDetailProps) {
             if (m) {
                 setIsAIGenerated(m.isAiGenerated || false)
                 //@ts-ignore
-                let imgs: MediaType[] = (m.media) || [{ type: 'image', uri: defaultImage }]
+                let imgs: MediaType[] = (m.media) || []
                 setImageSource(imgs)
                 setOriginalImages(imgs)
                 setMealUserId(m.userID)
@@ -152,23 +157,43 @@ export default function MealDetailScreen(props: MealDetailProps) {
 
         return () => { subscription && subscription.unsubscribe() }
     }, [mealId])
-    const getMacrosFromIngredients = (ingrs: Ingredient[]): { protein: number, carbs: number; calories: number; fat: number } => {
+    const getMacrosFromIngredients = (ingrs: Ingredient[]): { protein: number, carbs: number; calories: number; fat: number, otherNutrition: {[k: string]: {value: number;}} } => {
         let protein: number = 0;
         let calories: number = 0;
         var carbs: number = 0;
         var fat: number = 0;
+        let otherNutrition: {[k: string]: {value: number}} = {}
         ingrs.forEach((i) => {
             calories += Number(i.kcal)
             protein += Number(i.protein)
             carbs += Number(i.carbs)
             fat += Number(i.fat)
+            try {
+                if (i.otherNutrition){
+                    Object.keys(i.otherNutrition).forEach(k => {
+                        const potential = otherNutrition[k]?.['value']
+                        //@ts-ignore
+                        const value = i.otherNutrition[k]
+                        if (value.hidden) return;
+                        if (potential) {
+                            otherNutrition[k]['value'] = (potential || 0) + (Number(value.value) || 0)
+                        } else {
+                            otherNutrition[k] = {
+                                value: (Number(value.value) || 0)
+                            }
+                        }
+                    })
+                }
+            } catch (error) {
+                console.log(error)
+            }
         })
-        return { protein, carbs, calories, fat }
+        return { protein, carbs, calories, fat, otherNutrition }
 
     }
-    const { protein, carbs, calories, fat } = getMacrosFromIngredients(ingredients)
-
+    const { protein, carbs, calories, fat, otherNutrition } = getMacrosFromIngredients(ingredients)
     const navigator = useNavigation()
+    const [hasChangedPhoto, setHasChangedPhoto] = useState<boolean>(false)
 
     React.useEffect(() => {
         const resetIngredients = async () => {
@@ -220,17 +245,30 @@ export default function MealDetailScreen(props: MealDetailProps) {
             } else if (ingredients.length === 0) {
                 setErrors(['Your meal must at least one ingredient'])
                 return -1
-            } else if (imageSource.filter(x => x.type === 'image').length === 0) {
-                setImageSource([{ type: 'image', uri: defaultImage }])
-                mediaToUpload = [{ type: 'image', uri: defaultImage }]
-            }
+            } 
             setUploading(true)
-
             try {
-                const imgs = await uploadMedias(mediaToUpload)
-                const imgJson = imgs
-                setOriginalPremium(premium)
                 const original = await DataStore.query(Meal, mealId)
+                if (!original) {
+                    throw Error ('Something went wrong, please try again')
+                }
+                const imgs = await uploadMedias(mediaToUpload)
+                let preview = ''
+                if (hasChangedPhoto) {
+                    preview = imgs[0]?.uri || defaultImage
+                    if (imgs[0]?.type === 'video') {
+                        if (imgs[0]?.uri && isStorageUri(imgs[0]?.uri)) preview = await Storage.get(imgs[0]?.uri)
+                        let {uri} = await VT.getThumbnailAsync(preview, {time: 0, quality: 0.7})
+                        console.log(`VT URI: ${uri}`)
+                        preview = uri
+                    }
+                }
+                const imgJson = imgs
+                let previewUpload: MediaType[] | null = null 
+                if (preview) {
+                    previewUpload = await uploadMedias([{type: 'image', uri: preview}])
+                }
+                setOriginalPremium(premium)
                 if (original) {
                     await DataStore.save(Meal.copyOf(original, x => {
                         x.media = imgJson;
@@ -240,6 +278,7 @@ export default function MealDetailScreen(props: MealDetailProps) {
                         x.steps = steps;
                         x.public = true;
                         x.category = mealCategory.name;
+                        x.preview=previewUpload?.[0]?.uri;
                     }))
                 } else {
                     throw Error("There was a problem saving your meal")
@@ -261,6 +300,7 @@ export default function MealDetailScreen(props: MealDetailProps) {
             } else {
                 let mealProgressId = idFromProgress
                 if (!idFromProgress) {
+                    logProgress(BadgeType.numFood)
                     const newMealProgress = await DataStore.save(new MealProgress({ progressID: progressId, progressDate: AWSDate, name: name, mealID: mealId, totalWeight: 100, consumedWeight: 100, userID: userId }))
                     mealProgressId = newMealProgress.id
                 }
@@ -282,6 +322,18 @@ export default function MealDetailScreen(props: MealDetailProps) {
         }
     }, [isAIGenerated])
     const firstImage = imageSource.filter(x => x.type === 'image')
+    const tabs = ['Overview', 'Macros', 'Ingredients', 'Steps'] as const 
+    const [selectedTab, setSelectedTab] = useState<typeof tabs[number]>(tabs[0])
+    const changeTab = (forward: boolean=true) => {
+        const currentTab = tabs.findIndex(x => x==selectedTab)
+        if (currentTab === -1) {
+          setSelectedTab(tabs[0])
+        } else {
+            let newTab = tabs[currentTab + (forward ? 1 : -1)]
+            if (newTab) setSelectedTab(newTab)
+        } 
+    }
+    const {onTouchStart, onTouchEnd} = useSwipe(changeTab, () => changeTab(false), 6)
     return (
         <View style={{ flex: 1 }} includeBackground>
             <BackButton Right={() => {
@@ -305,8 +357,12 @@ export default function MealDetailScreen(props: MealDetailProps) {
             }} />
             {/* @ts-ignore */}
             <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} ref={scrollRef}>
-                <ImagePickerView multiple editable={editMealMode === true} srcs={canViewDetails ? imageSource : imageSource.filter(x => x.type==='image')} onChange={setImageSource} type='all' />
-                <SafeAreaView edges={['left', 'right']} style={tw`px-4 pt-4`}>
+                <ImagePickerView multiple editable={editMealMode === true} srcs={canViewDetails ? imageSource : imageSource.filter(x => x.type==='image')} onChange={x => {
+                    setImageSource(x)
+                    setHasChangedPhoto(true)
+                }} type='all' />
+                <View style={[tw`pt-4`, {flex: 1}]}>
+                    <View style={tw`px-4`}>
                     {errors.length > 0 && <ErrorMessage errors={errors} onDismissTap={() => setErrors([])} />}
                     <View style={tw`flex-row w-12/12 items-center justify-between`}>
                         <View style={tw`max-w-8/12 w-8/12`}>
@@ -349,19 +405,18 @@ export default function MealDetailScreen(props: MealDetailProps) {
                             </TouchableOpacity>}
                         </View>
                     </View>
-                    {(editMealMode) && <View style={tw`mt-6`}>
+                    {(editMealMode) && <View style={tw`mt-6 `}>
                         <View style={tw`flex flex-row items-center`}>
                             <Text style={tw`text-xl mr-4`} weight='semibold'>Premium</Text>
                             <Switch value={premium} onValueChange={setPremium} disabled={(editMealMode !== true || isAIGenerated || originalPremium === true || originalPremium === false)} />
                         </View>
-                        <Text>Please note that you cannot change premium status once saved</Text>
+                        <Text style={tw`text-gray-500 text-xs mt-1 max-w-10/12`}>Please note that you cannot change premium status once saved</Text>
                     </View>}
-                    <View style={tw`py-5`}>
-                        <Text style={tw`text-xl mb-2`} weight='semibold'>Category</Text>
-                        <Picker width='12/12' data={foodCategories.map((w, i) => ({ label: `${w.name} ${w.emoji}`, value: i }))} onChange={function (d): void {
-                            setMealCategory(foodCategories[d.value])
-                        }} defaultIndex={foodCategories.findIndex(x => x.name === mealCategory.name) || 0} editable={editMealMode} />
                     </View>
+                    {/* @ts-ignore */}
+                    <TabSelector tabs={[...tabs]} selected={selectedTab} onTabChange={setSelectedTab} style={tw`mt-4 mb-2 -px-4`} />
+                    <View style={[tw`px-4 pb-60`, {flex: 1}]} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+                    {selectedTab === 'Overview' && <View>
                     <View style={tw`py-5`}>
                         <Text style={tw`text-xl`} weight='semibold'>Description</Text>
                         <TextInput
@@ -375,30 +430,21 @@ export default function MealDetailScreen(props: MealDetailProps) {
                             style={tw`max-w-10/12 text-${dm ? 'white' : 'black'}`}
                         />
                     </View>
-                    {/* CALORIE BREAKDOWN */}
-                    <View>
-                        <Text style={tw`text-xl`} weight='semibold'>Total Macros</Text>
-                        <View style={tw`flex-row flex-wrap justify-center max-w-12/12 px-4 py-3 rounded my-3 w-12/12`}>
-                            <View style={tw`flex-row w-5.5/12 items-center justify-center bg-gray-${dm ? '700/60' : '300'} px-2 py-3 rounded-xl mr-6 mb-6`}>
-                                <Text style={tw`text-2xl`}>🔥 </Text>
-                                <Text style={tw`text-center`} weight='semibold'>{calories.toFixed()}{<Text>kCal</Text>}</Text>
-                            </View>
-                            <View style={tw`flex-row w-5.5/12 items-center justify-center bg-gray-${dm ? '700/60' : '300'} px-2 py-3 rounded-xl mb-6`}>
-                                <Text style={tw`text-2xl`}>🥩 </Text>
-                                <Text style={tw`text-center`} weight='semibold'>{protein.toFixed()}{<Text>g protein</Text>}</Text>
-                            </View>
-                            <View style={tw`flex-row w-5.5/12 items-center justify-center bg-gray-${dm ? '700/60' : '300'} px-2 py-3 rounded-xl mr-6`}>
-                                <Text style={tw`text-2xl`}>🌽 </Text>
-                                <Text style={tw`text-center`} weight='semibold'>{carbs.toFixed()}{<Text>g carbs</Text>}</Text>
-                            </View>
-                            <View style={tw`flex-row w-5.5/12 items-center justify-center bg-gray-${dm ? '700/60' : '300'} px-2 py-3 rounded-xl`}>
-                                <Text style={tw`text-2xl`}>🥓 </Text>
-                                <Text style={tw`text-center`} weight='semibold'>{fat.toFixed()}{<Text>g fats</Text>}</Text>
-                            </View>
-                        </View>
+                    <View style={tw`pb-5`}>
+                        <Text style={tw`text-xl mb-2`} weight='semibold'>Category</Text>
+                        <Picker width='12/12' data={foodCategories.map((w, i) => ({ label: `${w.name} ${w.emoji}`, value: i }))} onChange={function (d): void {
+                            setMealCategory(foodCategories[d.value])
+                        }} defaultIndex={foodCategories.findIndex(x => x.name === mealCategory.name) || 0} editable={editMealMode} />
                     </View>
-                    {/* FOOD */}
-                    {canViewDetails && <View>
+                        </View>}
+                    {selectedTab === 'Macros' && <View style={tw`items-center justify-center mt-4`}>
+                            {/* CALORIE BREAKDOWN */}
+                        <NutritionInfo data={NewFoodItemData(calories, protein, fat, carbs, otherNutrition)} editable={false} onNutrientsChanged={() => {}} />
+                        </View>}
+                    
+                    {selectedTab === 'Ingredients' && <View>
+                        {canViewDetails && <View>
+                            
                         <View>
                             <View style={tw`flex-row justify-between items-center`}>
                                 <Text style={tw`text-xl`} weight='semibold'>Ingredients</Text>
@@ -450,9 +496,15 @@ export default function MealDetailScreen(props: MealDetailProps) {
                                     </View>
                                 </TouchableOpacity>
                             })}
-                        </View>
-                        {/* STEPS */}
-                        <View style={tw`flex-row justify-between items-center pt-7`}>
+                    </View>
+                            </View>}
+                        {!canViewDetails && <View />}
+                        </View>}
+
+                    {selectedTab === 'Steps' && <View>
+                            {canViewDetails && <View>
+                                    {/* STEPS */}
+                        <View style={tw`flex-row justify-between items-center`}>
                             <Text style={tw`text-xl`} weight='semibold'>Steps</Text>
                             {editMealMode && <View style={tw`flex-row items-center w-5/12 justify-end`}>
                                 {steps.length > 0 && <TouchableOpacity onPress={() => setEditSteps(!editSteps)} style={tw`p-3`}>
@@ -500,9 +552,11 @@ export default function MealDetailScreen(props: MealDetailProps) {
                                 </View>
                             })}
                         </View>}
-                    </View>}
-                </SafeAreaView>
-                <View style={tw`pb-60`} />
+                                </View>}
+                        </View>}
+                    {/* FOOD */}
+                    </View>
+                </View>
             </ScrollView>
             <View style={[
                 {

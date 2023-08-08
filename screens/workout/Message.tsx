@@ -113,6 +113,7 @@ export default function Message(props: { id: string }) {
     const usernames = Object.values(userInfo).map(x => x.name || ('@' + x.username))    
     const dm = useColorScheme() === 'dark'
     const padding = useSafeAreaInsets()
+    const navigator = useNavigation()
     const [newMessage, setNewMessage] = useState<string>('')
     const [keyboardPresent, setKeyboardPresent] = useState<boolean>(false)
     const scrollRef = useRef<ScrollView | null>(null)
@@ -142,7 +143,9 @@ export default function Message(props: { id: string }) {
     return (
         <KeyboardAvoidingView style={{flex: 1}} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} enabled>
             <View includeBackground style={{ flex: 1 }}>
-            <MessageHeader names={usernames} />
+            <MessageHeader names={usernames} onPress={() => {
+                navigator.navigate('ChatDetail', {id: props.id})
+            }}  />
             <ScrollView 
             showsVerticalScrollIndicator={false}
             snapToEnd
@@ -165,7 +168,7 @@ export default function Message(props: { id: string }) {
                         if (diff > 10) shouldShowTime = true
                     }
                     return <View key={message.id}>
-                        {shouldShowTime && <Text style={tw`text-center text-gray-500 my-3`} weight='semibold'>{moment(message.createdAt).format('lll')}</Text>}
+                        {shouldShowTime && <Text style={tw`text-center text-xs text-gray-500 my-3`} weight='regular'>{moment(message.createdAt).format('lll')}</Text>}
                         <ChatBubble 
                                 message={message} 
                                 userId={memoizedUserId}
@@ -247,7 +250,7 @@ const ChatBubble = (props: { isUsers: boolean; userId: string; message: ChatMess
     </View>
 }
 
-const MessageHeader = (props: { names: string[] }) => {
+const MessageHeader = (props: { names: string[]; onPress?: () => void; }) => {
     const navigator = useNavigation()
     const namesJoined = props.names.join(', ')
     const padding = useSafeAreaInsets()
@@ -257,7 +260,9 @@ const MessageHeader = (props: { names: string[] }) => {
             <ExpoIcon name='chevron-left' iconName='feather' size={25} color='gray' />
         </TouchableOpacity>
         <Text weight='semibold'>{namesJoined.substring(0, 20)}{namesJoined.length > 19 && "..."}</Text>
-        <TouchableOpacity style={tw`p-3`}>
+        <TouchableOpacity style={tw`p-3`} onPress={() => {
+            props.onPress && props.onPress()
+        }}>
             <ExpoIcon name='more-horizontal' iconName='feather' size={25} color='gray' />
         </TouchableOpacity>
     </View>

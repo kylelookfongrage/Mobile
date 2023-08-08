@@ -32,10 +32,10 @@ export default function Account() {
                 }}
                  key={i} style={tw`w-12/12 p-2 my-2 flex-row items-center justify-between`}>
                     <View style={tw`flex-row`}>
-                    <ExpoIcon name={setting.icon} iconName={setting.iconName || 'feather'} size={setting.size || 25} color='gray' />
+                    <ExpoIcon name={setting.icon} iconName={setting.iconName || 'feather'} size={setting.size || 20} color='gray' />
                     <Text style={tw`max-w-11/12 ml-3`}>{setting.title}</Text>
                     </View>
-                    <ExpoIcon name='chevron-right' iconName={'feather'} size={20} color='gray' />
+                    <ExpoIcon name='chevron-right' iconName={'feather'} size={15} color='gray' />
                 </TouchableOpacity>
             })}
                 <TouchableOpacity onPress={async () => {

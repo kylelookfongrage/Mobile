@@ -21,6 +21,7 @@ import AnimatedLottieView from 'lottie-react-native';
 import drinkWater from '../../assets/animations/drinkwater.json'
 import moment from 'moment';
 import ThisAdHelpsKeepFree from '../../components/ThisAdHelpsKeepFree';
+import { BadgeType, useBadges } from '../../hooks/useBadges';
 
 
 export const SummaryScreen = () => {
@@ -32,7 +33,7 @@ export const SummaryScreen = () => {
   const totalCalories = getTdee(goal, weight, fat)
   const dm = useColorScheme() === 'dark'
   const navigator = useNavigation()
-
+  const {logProgress} = useBadges(false)
 
   React.useEffect(() => {
     DataStore.query(Progress, p => p.and(x => [x.userID.eq(userId), x.date.eq(AWSDate)])).then(p => {
@@ -41,7 +42,7 @@ export const SummaryScreen = () => {
           const ux = u
           if (p.length === 0) {
             const newProgress = new Progress({ sub: sub.toString(), weight: ux.weight, fat: ux.fat, picture: '', date: AWSDate, userID: ux.id })
-            DataStore.save(newProgress).then(x => setProgressId(x.id))
+            DataStore.save(newProgress).then(x => setProgressId(x.id)).then(x => logProgress(BadgeType.progress))
           } else {
             setProgressId(p[0].id)
           }
@@ -222,7 +223,7 @@ export const SummaryScreen = () => {
             </TouchableOpacity>
           </View>
           {runs.length === 0 && <Text style={tw`text-center my-6`}>No runs to display</Text>}
-          {lastRun && <RunListComponent run={lastRun} onPress={() => {
+          {lastRun && <RunListComponent canScroll={false} run={lastRun} onPress={() => {
             const screen = getMatchingNavigationScreen('ListRun', navigator)
             //@ts-ignore
             navigator.navigate(screen)
@@ -241,13 +242,15 @@ export const SummaryScreen = () => {
           {workouts.map((w, i) => {
             return <TouchableOpacity
               onPress={() => {
-                navigator.navigate('WorkoutPlay', { id: w.id })
+                const screen = getMatchingNavigationScreen('CompletedExerciseDetails', navigator)
+                //@ts-ignore
+                navigator.navigate(screen, { workoutPlayId: w.id })
               }}
-              key={`workout ${w.id} at i ${i}`} style={tw`w-12/12 flex-row items-center p-4 mb-2 items-center ${dm ? 'bg-gray-700' : 'border border-black'} rounded-xl`}>
-              <Image source={{ uri: w.picture }} style={{ width: 60, height: 60, borderRadius: 10 }} />
+              key={`workout ${w.id} at i ${i}`} style={tw`w-12/12 flex-row items-center p-4 mb-2 items-center ${dm ? 'bg-gray-700' : 'border border-black'} rounded-3xl`}>
+              <Image source={{ uri: w.picture }} style={{ width: 40, height: 40, borderRadius: 10 }} />
               <View style={tw`ml-2`}>
-                <Text style={tw``}>{w.name}</Text>
-                <Text style={tw`text-gray-400`}>by {<Text style={tw`text-red-500`}>{w.author}</Text>}</Text>
+                <Text style={tw``}weight='semibold'>{w.name}</Text>
+                <Text style={tw`text-gray-400 text-xs`}>by {<Text style={tw`text-xs text-red-500`}>{w.author}</Text>}</Text>
               </View>
             </TouchableOpacity>
           })}

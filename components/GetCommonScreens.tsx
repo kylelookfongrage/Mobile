@@ -21,6 +21,7 @@ import Allergens from "../screens/home/Allergens"
 import PostComments from "../screens/workout/PostComments"
 import Bio from "../screens/home/Bio"
 import PostDetails from "../screens/workout/PostDetails"
+import CompletedExerciseDetails from "../screens/workout/CompletedExerciseDetails"
 
 export const getCommonScreens = (prefix: string, Stack: any) => {
     return <Stack.Group>
@@ -109,6 +110,10 @@ export const getCommonScreens = (prefix: string, Stack: any) => {
             <Stack.Screen name={prefix + 'Favorites'} options={{ headerShown: false }}>
                 {/* @ts-ignore */}
                 {props => <Favorites {...props} />}
+            </Stack.Screen>
+            <Stack.Screen name={prefix + 'CompletedExerciseDetails'} options={{ headerShown: false }}>
+                {/* @ts-ignore */}
+                {props => <CompletedExerciseDetails {...props} workoutPlayId={props?.route?.params?.workoutPlayId} />}
             </Stack.Screen>
             <Stack.Screen name={prefix + 'SummaryFoodList'} options={{ headerShown: false }}>
                 {/* @ts-ignore */}

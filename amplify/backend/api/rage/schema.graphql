@@ -1,3 +1,91 @@
+type Review @model @auth(rules: [{allow: public}]) {
+  id: ID!
+  description: String
+  stars: Int
+  userID: ID! @index(name: "byUser")
+  mealID: ID! @index(name: "byMeal")
+  workoutID: ID! @index(name: "byWorkout")
+  from: ID
+}
+
+type FitnessPlanSubscription @model @auth(rules: [{allow: public}]) {
+  id: ID!
+  fitnessplanID: ID! @index(name: "byFitnessPlan")
+  userID: ID! @index(name: "byUser")
+  streak: Int
+}
+
+type FitnessPlanDetail @model @auth(rules: [{allow: public}]) {
+  id: ID!
+  fitnessplanID: ID! @index(name: "byFitnessPlan")
+  dayOfWeek: Int
+  workoutID: ID! @index(name: "byWorkout")
+  mealID: ID! @index(name: "byMeal")
+}
+
+type FitnessPlan @model @auth(rules: [{allow: public}]) {
+  id: ID!
+  name: String
+  description: String
+  premium: Boolean
+  media: [Media]
+  isAIGenerated: Boolean
+  originalFitnessPlan: ID
+  FitnessPlanDetails: [FitnessPlanDetail] @hasMany(indexName: "byFitnessPlan", fields: ["id"])
+  FitnessPlanSubscriptions: [FitnessPlanSubscription] @hasMany(indexName: "byFitnessPlan", fields: ["id"])
+  Review: Review @hasOne
+  preview: String
+  tags: [String]
+}
+
+type BadgeEarned @model @auth(rules: [{allow: public}]) {
+  id: ID!
+  badgeID: ID! @index(name: "byBadge")
+  userID: ID! @index(name: "byUser")
+}
+
+type BadgeProgress @model @auth(rules: [{allow: public}]) {
+  id: ID!
+  numProgress: Int
+  weightDifference: Int
+  numWorkouts: Int
+  numFoodOrMeals: Int
+  numFollowers: Int
+  numContent: Int
+  bodyFatDifference: Int
+  payouts: Int
+  numProgressPhotots: Int
+  numWeight: Int
+  numReps: Int
+  numRuns: Int
+  numReports: Int
+  User: User @hasOne
+  numTime: Int
+}
+
+type Badge @model @auth(rules: [{allow: public}]) {
+  id: ID!
+  name: String
+  description: String
+  avatar: String
+  progressCount: Int
+  weightDifference: Int
+  numWorkouts: Int
+  numFoodOrMeals: Int
+  numFollowers: Int
+  numContent: Int
+  bodyFatDifference: Int
+  payouts: Int
+  numProgressPhoto: Int
+  numWeight: Int
+  numTime: Int
+  numReps: Int
+  numRuns: Int
+  numReports: Int
+  BadgeEarneds: [BadgeEarned] @hasMany(indexName: "byBadge", fields: ["id"])
+  priority: Int
+}
+
 type ChatMessages @model @auth(rules: [{allow: public}]) {
   id: ID!
   chatroomID: ID! @index(name: "byChatRoom")
@@ -193,6 +281,9 @@ type WorkoutDetails @model @auth(rules: [{allow: public}]) {
   userID: ID @index(name: "byUser")
   note: String
   WorkoutPlayDetails: [WorkoutPlayDetail] @hasMany(indexName: "byWorkoutDetails", fields: ["id"])
+  deleted: Boolean
+  priority: Int
+  metric: Boolean
 }
 
 type Workout @model @auth(rules: [{allow: public}]) {
@@ -210,6 +301,9 @@ type Workout @model @auth(rules: [{allow: public}]) {
   WorkoutPlays: [WorkoutPlay] @hasMany(indexName: "byWorkout", fields: ["id"])
   public: Boolean
   initialWorkout: ID
+  FitnessPlanDetails: [FitnessPlanDetail] @hasMany(indexName: "byWorkout", fields: ["id"])
+  Reviews: [Review] @hasMany(indexName: "byWorkout", fields: ["id"])
+  tags: [String]
 }
 
 type Exercise @model @auth(rules: [{allow: public}]) {
@@ -223,6 +317,8 @@ type Exercise @model @auth(rules: [{allow: public}]) {
   WorkoutDetails: [WorkoutDetails] @hasMany(indexName: "byExercise", fields: ["id"])
   ExerciseEquiptmentDetails: [ExerciseEquiptmentDetail] @hasMany(indexName: "byExercise", fields: ["id"])
   bodyParts: [String]
+  preview: String
+  tags: [String]
 }
 
 type Equiptment @model @auth(rules: [{allow: public}]) {
@@ -233,6 +329,7 @@ type Equiptment @model @auth(rules: [{allow: public}]) {
   sub: ID
   ExerciseEquiptmentDetails: [ExerciseEquiptmentDetail] @hasMany(indexName: "byEquiptment", fields: ["id"])
   public: Boolean
+  home: Boolean
 }
 
 type RunProgress @model @auth(rules: [{allow: public}]) {
@@ -266,6 +363,7 @@ type Ingredient @model @auth(rules: [{allow: public}]) {
   edamamId: String
   userID: ID @index(name: "byUser")
   PantryItems: [PantryItem] @hasMany(indexName: "byIngredient", fields: ["id"])
+  barcode: String
 }
 
 type Meal @model @auth(rules: [{allow: public}]) {
@@ -284,6 +382,10 @@ type Meal @model @auth(rules: [{allow: public}]) {
   isAiGenerated: Boolean
   public: Boolean
   originalMeal: ID
+  FitnessPlanDetails: [FitnessPlanDetail] @hasMany(indexName: "byMeal", fields: ["id"])
+  Reviews: [Review] @hasMany(indexName: "byMeal", fields: ["id"])
+  preview: String
+  tags: [String]
 }
 
 type MealProgress @model @auth(rules: [{allow: public}]) {
@@ -322,6 +424,8 @@ type FoodProgress @model @auth(rules: [{allow: public}]) {
   progressID: ID! @index(name: "byProgress")
   userID: ID @index(name: "byUser")
   public: Boolean
+  barcode: String
+  tags: [String]
 }
 
 enum GOAL {
@@ -337,8 +441,6 @@ type User @model @auth(rules: [{allow: public}]) {
   goal: GOAL!
   picture: String
   username: String!
-  personalTrainer: Boolean
-  foodProfessional: Boolean
   Progresses: [Progress] @hasMany(indexName: "byUser", fields: ["id"])
   Meals: [Meal] @hasMany(indexName: "byUser", fields: ["id"])
   Equiptments: [Equiptment] @hasMany(indexName: "byUser", fields: ["id"])
@@ -379,7 +481,22 @@ type User @model @auth(rules: [{allow: public}]) {
   selectedGoal: String
   selectedSprite: String
   Posts: [Post] @hasMany(indexName: "byUser", fields: ["id"])
-  untitledfield: String
+  BadgeEarneds: [BadgeEarned] @hasMany(indexName: "byUser", fields: ["id"])
+  workoutMode: String
+  FitnessPlanSubscriptions: [FitnessPlanSubscription] @hasMany(indexName: "byUser", fields: ["id"])
+  Reviews: [Review] @hasMany(indexName: "byUser", fields: ["id"])
+  calorieGoal: Float
+  verified: Boolean
+  emailAddress: String
+  height: Int
+  gender: String
+  weightDifferenceGoal: Int
+  fatDifferenceGoal: Int
+  goalByDate: AWSDate
+  metric: Boolean
+  workoutDaysOfWeek: [Int]
+  dob: AWSDate
+  fitnessBackground: String
 }
 
 type Progress @model @auth(rules: [{allow: public}]) {
@@ -395,5 +512,9 @@ type Progress @model @auth(rules: [{allow: public}]) {
   sub: ID
   water: Int
   activities: [Activity]
+  neckCircumference: Int
+  waistCircumference: Int
+  metric: Boolean
+  hipCircumference: Int
 }
  

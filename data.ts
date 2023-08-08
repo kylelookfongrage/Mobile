@@ -309,7 +309,7 @@ export const OpenFoodFactsBarcodeSearch = async (barcode: string) => {
 import { DataStore, Storage } from 'aws-amplify';
 //@ts-ignore
 import { v4 as uuidv4 } from 'uuid';
-import { Coordinates, Exercise, Meal, User, Workout } from './aws/models';
+import { Coordinates, Exercise, LazyWorkoutDetails, LazyWorkoutPlayDetail, Meal, User, Workout, WorkoutDetails, WorkoutPlayDetail } from './aws/models';
 import { Env } from './env';
 //@ts-ignore
 import { Ingredient } from './src/models';
@@ -634,4 +634,118 @@ export const getUsernameAndMedia = async (result: Meal | Workout | Exercise): Pr
     }
     //@ts-ignore
     return { id: result.id, author: username, name: result.name || result.title || 'rage', img }
+}
+
+export interface ChartMapping { date: string; reps: number; weight: number; secs: number };
+
+export function getFormattedDate(date: Date) {
+      
+    var month = (1 + date.getMonth()).toString();
+    month = month.length > 1 ? month : '0' + month;
+  
+    var day = date.getDate().toString();
+    day = day.length > 1 ? day : '0' + day;
+    
+    return month + '/' + day
   }
+
+export interface ExerciseDisplay {
+    media: MediaType[];
+    name: string;
+    id: string;
+    description: string;
+}
+
+export interface WorkoutPlayDisplayProps {
+    currentExercise: ExerciseDisplay;
+    exercises: ExerciseDisplay[];
+    shouldShowMore: boolean;
+    setShouldShowMore: React.Dispatch<React.SetStateAction<boolean>>;
+    selectedWorkoutDetail: LazyWorkoutDetails;
+    setSelectedWorkoutDetail: React.Dispatch<React.SetStateAction<LazyWorkoutDetails | undefined>>;
+    paused: boolean;
+    setPaused: React.Dispatch<React.SetStateAction<boolean>>;
+    totalTime: number;
+    onResetPress: () => void;
+    workoutPlayDetails: LazyWorkoutPlayDetail[];
+    onNewSetPress: () => void;
+    onFinishPress: () => void;
+    animation: any;
+    workoutDetails: WorkoutDetails[];
+    selectedWorkoutPlayDetail: WorkoutPlayDetail | undefined;
+    setSelectedWorkoutPlayDetail: React.Dispatch<React.SetStateAction<LazyWorkoutPlayDetail | undefined>>;
+    forwardBackwardPress: (b?: boolean) => void;
+} 
+
+
+
+export enum WorkoutMode {
+    default='DEFAULT',
+    player='PLAYER'
+}
+
+
+
+
+
+export function calculateBodyFat(sex: 'male' | 'female', unit: 'USC' | 'Metric', waist: number, neck: number, height: number, hip?: number): number {
+    const logWaistNeck = Math.log10(waist - neck);
+    const logHeight = Math.log10(height);
+  
+    let bfp: number;
+  
+    if (unit === 'USC') {
+      if (sex === 'female' && typeof hip !== 'number') {
+        throw new Error('Hip measurement is required for females in USC units.');
+      }
+      const logWaistHipNeck = Math.log10(waist + (hip || 0) - neck);
+  
+      if (height <= 0 || waist <= 0 || neck <= 0 || (hip !== undefined && hip <= 0)) {
+        throw new Error('All measurements must be positive numbers.');
+      }
+  
+      if (height <= neck || height <= waist || (hip !== undefined && height <= hip)) {
+        throw new Error('Height must be greater than neck, waist, and hip measurements.');
+      }
+  
+      if (waist <= neck || (hip !== undefined && waist <= hip)) {
+        throw new Error('Waist measurement must be greater than neck and hip measurements.');
+      }
+  
+      if (hip !== undefined && hip <= neck) {
+        throw new Error('Hip measurement must be greater than neck measurement.');
+      }
+  
+      if (sex === 'male') {
+        bfp = 86.010 * logWaistNeck - 70.041 * logHeight + 36.76;
+      } else {
+        if (waist + (hip || 0) - neck <= 0) {
+          throw new Error('Invalid measurements: waist + hip - neck must be greater than zero for females in USC units.');
+        }
+        bfp = 163.205 * logWaistHipNeck - 97.684 * logHeight - 78.387;
+      }
+    } else if (unit === 'Metric') {
+      if (height <= 0 || waist <= 0 || neck <= 0) {
+        throw new Error('All measurements must be positive numbers.');
+      }
+  
+      if (height <= neck || height <= waist) {
+        throw new Error('Height must be greater than neck and waist measurements.');
+      }
+  
+      if (waist <= neck) {
+        throw new Error('Waist measurement must be greater than neck measurement.');
+      }
+  
+      if (sex === 'male') {
+        bfp = 495 / (1.0324 - 0.19077 * logWaistNeck + 0.15456 * logHeight) - 450;
+      } else {
+        bfp = 495 / (1.29579 - 0.35004 * logWaistNeck + 0.22100 * logHeight) - 450;
+      }
+    } else {
+      throw new Error('Invalid unit. Please use either "USC" or "Metric".');
+    }
+  
+    return bfp;
+  }
+  

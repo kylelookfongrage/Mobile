@@ -1,7 +1,7 @@
 import { DataStore, Storage } from 'aws-amplify';
 import React, { useCallback, useMemo } from 'react';
 import { useState, useEffect } from 'react'
-import { ScrollView, TouchableOpacity, Image } from 'react-native';
+import { ScrollView, TouchableOpacity, Image, useColorScheme } from 'react-native';
 import { Exercise, Meal, Media, RunProgress, Workout } from '../aws/models';
 import { defaultImage, getMatchingNavigationScreen, getUsernameAndMedia, isStorageUri, PostMediaSearchDisplay, postMediaType } from '../data';
 import { ExpoIcon } from './ExpoIcon';
@@ -46,6 +46,7 @@ export function PostMedia(props: { media?: Media[]; mealId?: string; workoutId?:
 
     const [result, setResult] = useState<PostMediaSearchDisplay | RunProgress | null>(null)
     const navigator = useNavigation()
+    const dm = useColorScheme() === 'dark'
 
 
     useEffect(() => {
@@ -119,22 +120,25 @@ export function PostMedia(props: { media?: Media[]; mealId?: string; workoutId?:
                     navigator.navigate(screen, { id })
                 }
 
-            }} style={tw`items-center justify-center my-3 w-10/12 border border-gray-400 pb-5 pt-6 px-6 rounded-xl`}>
-                <View style={tw`rounded-xl items-end `}>
-                    {props.editable && <TouchableOpacity onPress={() => {
-                        props.onDismissTap && props.onDismissTap()
-                    }} style={[tw`w-8 h-8 p-2 mr-2 rounded-full items-center justify-center bg-black`, { zIndex: 1 }]}>
-                        <ExpoIcon name='x' iconName='feather' size={15} color='gray' />
-                    </TouchableOpacity>}
-                    <View style={tw`items-center justify-center ${props.editable ? '-mt-9' : ''}`}>
+            }} style={tw`items-center flex-row justify-between my-2 w-9/12 bg-${dm ? 'gray-800' : 'slate-400/40'} py-4 px-3 rounded-xl`}>
+                
+                <View style={tw`items-start flex-row justify-center pl-6 max-w-10/12`}>
                         {/* @ts-ignore */}
-                        <Image source={{ uri: result.img }} style={tw`h-30 w-30 rounded-lg`} />
+                        <Image source={{ uri: result.img }} style={tw`h-15 w-15 rounded-lg`} />
                         {/* @ts-ignore */}
-                        <Text weight='semibold' style={tw`text-center max-w-10/12 mt-3`}>{result.name}</Text>
+                        <View style={tw`ml-2`}>
+                        <Text weight='semibold' style={tw``}>{result.name}</Text>
                         {/* @ts-ignore */}
                         <Text style={tw`text-gray-500`}>@{result.author}</Text>
+                        </View>
                     </View>
-                </View>
+                    {props.editable && <View style={[tw`rounded-xl`, {position: 'absolute', top: 10, right: 10}]}>
+                    <TouchableOpacity onPress={() => {
+                        props.onDismissTap && props.onDismissTap()
+                    }} style={[tw`w-8 h-8 p-2 rounded-full items-center justify-center bg-black`]}>
+                        <ExpoIcon name='x' iconName='feather' size={15} color='gray' />
+                    </TouchableOpacity>
+                </View>}
             </TouchableOpacity>
         </View>
     }

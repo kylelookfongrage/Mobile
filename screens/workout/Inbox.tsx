@@ -71,13 +71,13 @@ export default function Inbox() {
         {rooms.map((x, i) => {
             if (!x) return <View key={'nouser-' + `${i}`} />
             return  <Swipeable key={x.id} renderRightActions={() => {
-                return <TouchableOpacity style={tw`ml-5 p-3 rounded-xl items-center justify-center bg-red-${dm ? '600' : '500'}`}>
-                    <ExpoIcon name='log-out' iconName='feather' size={20} color='white' />
+                return <TouchableOpacity style={tw`ml-5 p-3 my-2 rounded-xl items-center justify-center bg-red-${dm ? '600' : '500'}`}>
+                    <ExpoIcon name='log-out' iconName='feather' size={15} color='white' />
                     <Text style={tw`text-white text-center text-xs`}>Leave</Text>
                 </TouchableOpacity>
             }}>
                 <View includeBackground>
-                <TouchableOpacity onPress={() => navigator.navigate('Message', {id: x.id})} style={tw`flex-row items-center justify-between w-12/12 py-3 border-b border-gray-${dm ? '600' : '300'}`}>
+                <TouchableOpacity onPress={() => navigator.navigate('Message', {id: x.id})} style={tw`flex-row items-center justify-between w-12/12 py-3`}>
                 <View style={tw`flex-row items-center`}>
                     <Image source={{uri: x.lastMessageUserImg}} style={tw`h-10 w-10 rounded-full mr-2`} />
                     <View style={tw`max-w-10/12`}>

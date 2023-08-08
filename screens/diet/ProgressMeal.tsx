@@ -137,7 +137,7 @@ export default function ProgressMeal(props: any) {
     return <View style={[{ marginTop: height * 0.30, height: height * 0.70, flex: 1 }, tw`bg-${dm ? 'gray-800' : 'gray-200'} rounded-t-3xl p-6`]}>
         <View style={tw`justify-between h-12/12 pb-9`}>
             <View>
-                <Text style={tw`text-lg`} weight='semibold'>{meal?.name}</Text>
+                <Text style={tw`text-lg max-w-11/12`} weight='semibold'>{meal?.name}</Text>
                 <View style={tw`flex-row items-center justify-around my-6`}>
                     <VerticalNutrientDisplay title={nutrition.calories.toFixed()} unit="" desc="Calories" />
                     <VerticalNutrientDisplay title={nutrition.protein.toFixed()} unit="g" desc="Protein" />

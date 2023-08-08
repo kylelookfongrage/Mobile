@@ -42,6 +42,7 @@ export function useProgressValues(props: useProgressValuesProps) {
     const [presetMacros, setPresetMacros] = useState<string | null>(null)
     const [creatorTerms, setCreatorTerms] = useState<boolean>(false)
     const [selectedAnimation, setSelectedAnimation] = useState<string | null>(null)
+    const [selectedWorkoutMode, setSelectedWorkoutMode] = useState<string | null>(null);
 
     useEffect(() => {
         if (!progressId || !metrics) return;
@@ -89,6 +90,7 @@ export function useProgressValues(props: useProgressValuesProps) {
                 setPresetMacros(user.selectedGoal || null)
                 setCreatorTerms(user.accepted_content_creator_terms || false)
                 setSelectedAnimation(user.selectedSprite || null)
+                setSelectedWorkoutMode(user.workoutMode || null)
             }
         })
     }, [])
@@ -140,13 +142,9 @@ export function useProgressValues(props: useProgressValuesProps) {
           const { items } = ss
           if (items.length > 0) {
             Promise.all(items.map(async wo => {
-              const workouts = await wo.WorkoutPlayDetails.toArray()
               const defaultWorkout = { ...wo, picture: isStorageUri(defaultImage) ? await Storage.get(defaultImage) : defaultImage }
-              if (workouts.length === 0) {
-                return defaultWorkout
-              }
-              const workoutId = workouts[0].workoutID
-              const workoutWithPictureURL = await DataStore.query(Workout, workoutId)
+              if (!wo.workoutID) return defaultWorkout;
+              const workoutWithPictureURL = await DataStore.query(Workout, wo.workoutID)
               const userForWorkout = await DataStore.query(User, workoutWithPictureURL?.userID || '')
               if (!workoutWithPictureURL || !userForWorkout || !workoutWithPictureURL.img) {
                 return defaultWorkout
@@ -161,5 +159,5 @@ export function useProgressValues(props: useProgressValuesProps) {
         return () => subscription.unsubscribe()
       }, [AWSDate])
 
-      return { weight, fat, food, meals, runs, workouts, goal, water, progressPicture, activities, carbGoal, proteinGoal, fatGoal, presetMacros, creatorTerms, selectedAnimation  }
+      return { weight, fat, food, meals, runs, selectedWorkoutMode, workouts, goal, water, progressPicture, activities, carbGoal, proteinGoal, fatGoal, presetMacros, creatorTerms, selectedAnimation  }
 }

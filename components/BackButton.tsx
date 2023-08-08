@@ -1,10 +1,11 @@
 import React from 'react'
 import tw from 'twrnc'
-import { TouchableOpacity, useColorScheme, View } from 'react-native'
-import { Text } from './Themed'
+import { TouchableOpacity, useColorScheme } from 'react-native'
+import { Text, View } from './Themed'
 import { ExpoIcon } from './ExpoIcon'
 import { useNavigation } from '@react-navigation/native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import BackgroundGradient from './BackgroundGradient'
 
 
 
@@ -19,7 +20,7 @@ export const BackButton = (props: BackButtonProps) => {
     const insets = useSafeAreaInsets().top
     const dm = useColorScheme() === 'dark';
     const navigator = useNavigation()
-    return <View style={[tw`flex-row items-center justify-between pb-2 px-4`, {paddingTop: insets + 10}]}>
+    return <View style={[tw`flex-row items-center justify-between px-4 pb-2`, {paddingTop: insets}]}>
     <TouchableOpacity
         onPress={() => {
             func && func()

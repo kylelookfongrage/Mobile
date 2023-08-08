@@ -12,6 +12,7 @@ import { DataStore, Storage } from 'aws-amplify';
 import { useCommonAWSIds } from '../../hooks/useCommonContext';
 import { useNavigation } from '@react-navigation/native';
 import { ErrorMessage } from '../../components/ErrorMessage';
+import { BadgeType, useBadges } from '../../hooks/useBadges';
 
 export default function Report(props: {name: string, desc: string, img: string, id: string; type: FavoriteType, userId: string;}) {
     const reportReasons = [
@@ -29,6 +30,7 @@ export default function Report(props: {name: string, desc: string, img: string, 
     const {userId} = useCommonAWSIds()
     const navigator = useNavigation()
     const [picture, setPicture] = useState<string | null>(null)
+    const {logProgress} = useBadges(false)
     React.useEffect(() => {
         (async () => {
             if (props.img === defaultImage) {
@@ -54,6 +56,7 @@ export default function Report(props: {name: string, desc: string, img: string, 
                 throw Error('You have already reported this, please wait for us to take action!')
             }
             await DataStore.save(new ReportsOfTerms({reportType: selectedReason, reasonDescription: description, userID: userId, potentialID: props.id}))
+            logProgress(BadgeType.reports)
             //@ts-ignore
             navigator.pop()
         } catch (error) {

@@ -63,6 +63,7 @@ import Inbox from '../screens/workout/Inbox';
 import Message from '../screens/workout/Message';
 import { getCommonScreens } from '../components/GetCommonScreens';
 import NewChat from '../screens/workout/NewChat';
+import ChatDetail from '../screens/workout/ChatDetail';
 
 
 function RootNavigator() {
@@ -92,6 +93,9 @@ function RootNavigator() {
       <Stack.Screen name="Inbox" component={Inbox} options={{ headerShown: false }} />
       <Stack.Screen name="Message" options={{ headerShown: false }}>
         {props => <Message id={props.route?.params?.id} />}
+      </Stack.Screen>
+      <Stack.Screen name="ChatDetail" options={{ headerShown: false }}>
+        {props => <ChatDetail id={props.route?.params?.id} />}
       </Stack.Screen>
       <Stack.Screen name="Subscription" component={Subscription} options={{ headerShown: false }} />
       <Stack.Screen name="Help" component={Help} options={{ headerShown: false }} />

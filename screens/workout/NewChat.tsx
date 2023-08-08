@@ -73,7 +73,7 @@ export default function NewChat() {
     }
     return (
         <Pressable onPress={() => Keyboard.dismiss()} style={[{ height: h * .80, marginTop: h * .20, borderTopLeftRadius: h * .03, borderTopRightRadius: h * .03, flex: 1, paddingBottom: padding.bottom, paddingTop: 30 }, tw`bg-gray-${dm ? '800' : '400'} justify-between`]}>
-            <View style={tw`justify-center items-center`}>
+            <View style={[tw`justify-center items-center`, {flex: 1}]}>
                 <View style={tw`px-9 flex-row items-center justify-between mb-3 w-12/12`}>
                     <Text style={tw`text-lg`} weight='semibold'>Start a New Chat</Text>
                     {/* @ts-ignore */}

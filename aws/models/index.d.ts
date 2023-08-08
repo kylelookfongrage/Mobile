@@ -1,6 +1,6 @@
 import { ModelInit, MutableModel } from "@aws-amplify/datastore";
 // @ts-ignore
-import { LazyLoading, LazyLoadingDisabled, AsyncCollection } from "@aws-amplify/datastore";
+import { LazyLoading, LazyLoadingDisabled, AsyncCollection, AsyncItem } from "@aws-amplify/datastore";
 
 export enum ReportReasons {
   VIOLENCE = "VIOLENCE",
@@ -76,6 +76,34 @@ type LazyCoordinates = {
 export declare type Coordinates = LazyLoading extends LazyLoadingDisabled ? EagerCoordinates : LazyCoordinates
 
 export declare const Coordinates: (new (init: ModelInit<Coordinates>) => Coordinates)
+
+type ReviewMetaData = {
+  readOnlyFields: 'createdAt' | 'updatedAt';
+}
+
+type FitnessPlanSubscriptionMetaData = {
+  readOnlyFields: 'createdAt' | 'updatedAt';
+}
+
+type FitnessPlanDetailMetaData = {
+  readOnlyFields: 'createdAt' | 'updatedAt';
+}
+
+type FitnessPlanMetaData = {
+  readOnlyFields: 'createdAt' | 'updatedAt';
+}
+
+type BadgeEarnedMetaData = {
+  readOnlyFields: 'createdAt' | 'updatedAt';
+}
+
+type BadgeProgressMetaData = {
+  readOnlyFields: 'createdAt' | 'updatedAt';
+}
+
+type BadgeMetaData = {
+  readOnlyFields: 'createdAt' | 'updatedAt';
+}
 
 type ChatMessagesMetaData = {
   readOnlyFields: 'createdAt' | 'updatedAt';
@@ -179,6 +207,256 @@ type UserMetaData = {
 
 type ProgressMetaData = {
   readOnlyFields: 'createdAt' | 'updatedAt';
+}
+
+type EagerReview = {
+  readonly id: string;
+  readonly description?: string | null;
+  readonly stars?: number | null;
+  readonly userID: string;
+  readonly mealID: string;
+  readonly workoutID: string;
+  readonly from?: string | null;
+  readonly createdAt?: string | null;
+  readonly updatedAt?: string | null;
+}
+
+type LazyReview = {
+  readonly id: string;
+  readonly description?: string | null;
+  readonly stars?: number | null;
+  readonly userID: string;
+  readonly mealID: string;
+  readonly workoutID: string;
+  readonly from?: string | null;
+  readonly createdAt?: string | null;
+  readonly updatedAt?: string | null;
+}
+
+export declare type Review = LazyLoading extends LazyLoadingDisabled ? EagerReview : LazyReview
+
+export declare const Review: (new (init: ModelInit<Review, ReviewMetaData>) => Review) & {
+  copyOf(source: Review, mutator: (draft: MutableModel<Review, ReviewMetaData>) => MutableModel<Review, ReviewMetaData> | void): Review;
+}
+
+type EagerFitnessPlanSubscription = {
+  readonly id: string;
+  readonly fitnessplanID: string;
+  readonly userID: string;
+  readonly streak?: number | null;
+  readonly createdAt?: string | null;
+  readonly updatedAt?: string | null;
+}
+
+type LazyFitnessPlanSubscription = {
+  readonly id: string;
+  readonly fitnessplanID: string;
+  readonly userID: string;
+  readonly streak?: number | null;
+  readonly createdAt?: string | null;
+  readonly updatedAt?: string | null;
+}
+
+export declare type FitnessPlanSubscription = LazyLoading extends LazyLoadingDisabled ? EagerFitnessPlanSubscription : LazyFitnessPlanSubscription
+
+export declare const FitnessPlanSubscription: (new (init: ModelInit<FitnessPlanSubscription, FitnessPlanSubscriptionMetaData>) => FitnessPlanSubscription) & {
+  copyOf(source: FitnessPlanSubscription, mutator: (draft: MutableModel<FitnessPlanSubscription, FitnessPlanSubscriptionMetaData>) => MutableModel<FitnessPlanSubscription, FitnessPlanSubscriptionMetaData> | void): FitnessPlanSubscription;
+}
+
+type EagerFitnessPlanDetail = {
+  readonly id: string;
+  readonly fitnessplanID: string;
+  readonly dayOfWeek?: number | null;
+  readonly workoutID: string;
+  readonly mealID: string;
+  readonly createdAt?: string | null;
+  readonly updatedAt?: string | null;
+}
+
+type LazyFitnessPlanDetail = {
+  readonly id: string;
+  readonly fitnessplanID: string;
+  readonly dayOfWeek?: number | null;
+  readonly workoutID: string;
+  readonly mealID: string;
+  readonly createdAt?: string | null;
+  readonly updatedAt?: string | null;
+}
+
+export declare type FitnessPlanDetail = LazyLoading extends LazyLoadingDisabled ? EagerFitnessPlanDetail : LazyFitnessPlanDetail
+
+export declare const FitnessPlanDetail: (new (init: ModelInit<FitnessPlanDetail, FitnessPlanDetailMetaData>) => FitnessPlanDetail) & {
+  copyOf(source: FitnessPlanDetail, mutator: (draft: MutableModel<FitnessPlanDetail, FitnessPlanDetailMetaData>) => MutableModel<FitnessPlanDetail, FitnessPlanDetailMetaData> | void): FitnessPlanDetail;
+}
+
+type EagerFitnessPlan = {
+  readonly id: string;
+  readonly name?: string | null;
+  readonly description?: string | null;
+  readonly premium?: boolean | null;
+  readonly media?: (Media | null)[] | null;
+  readonly isAIGenerated?: boolean | null;
+  readonly originalFitnessPlan?: string | null;
+  readonly FitnessPlanDetails?: (FitnessPlanDetail | null)[] | null;
+  readonly FitnessPlanSubscriptions?: (FitnessPlanSubscription | null)[] | null;
+  readonly Review?: Review | null;
+  readonly preview?: string | null;
+  readonly tags?: (string | null)[] | null;
+  readonly createdAt?: string | null;
+  readonly updatedAt?: string | null;
+  readonly fitnessPlanReviewId?: string | null;
+}
+
+type LazyFitnessPlan = {
+  readonly id: string;
+  readonly name?: string | null;
+  readonly description?: string | null;
+  readonly premium?: boolean | null;
+  readonly media?: (Media | null)[] | null;
+  readonly isAIGenerated?: boolean | null;
+  readonly originalFitnessPlan?: string | null;
+  readonly FitnessPlanDetails: AsyncCollection<FitnessPlanDetail>;
+  readonly FitnessPlanSubscriptions: AsyncCollection<FitnessPlanSubscription>;
+  readonly Review: AsyncItem<Review | undefined>;
+  readonly preview?: string | null;
+  readonly tags?: (string | null)[] | null;
+  readonly createdAt?: string | null;
+  readonly updatedAt?: string | null;
+  readonly fitnessPlanReviewId?: string | null;
+}
+
+export declare type FitnessPlan = LazyLoading extends LazyLoadingDisabled ? EagerFitnessPlan : LazyFitnessPlan
+
+export declare const FitnessPlan: (new (init: ModelInit<FitnessPlan, FitnessPlanMetaData>) => FitnessPlan) & {
+  copyOf(source: FitnessPlan, mutator: (draft: MutableModel<FitnessPlan, FitnessPlanMetaData>) => MutableModel<FitnessPlan, FitnessPlanMetaData> | void): FitnessPlan;
+}
+
+type EagerBadgeEarned = {
+  readonly id: string;
+  readonly badgeID: string;
+  readonly userID: string;
+  readonly createdAt?: string | null;
+  readonly updatedAt?: string | null;
+}
+
+type LazyBadgeEarned = {
+  readonly id: string;
+  readonly badgeID: string;
+  readonly userID: string;
+  readonly createdAt?: string | null;
+  readonly updatedAt?: string | null;
+}
+
+export declare type BadgeEarned = LazyLoading extends LazyLoadingDisabled ? EagerBadgeEarned : LazyBadgeEarned
+
+export declare const BadgeEarned: (new (init: ModelInit<BadgeEarned, BadgeEarnedMetaData>) => BadgeEarned) & {
+  copyOf(source: BadgeEarned, mutator: (draft: MutableModel<BadgeEarned, BadgeEarnedMetaData>) => MutableModel<BadgeEarned, BadgeEarnedMetaData> | void): BadgeEarned;
+}
+
+type EagerBadgeProgress = {
+  readonly id: string;
+  readonly numProgress?: number | null;
+  readonly weightDifference?: number | null;
+  readonly numWorkouts?: number | null;
+  readonly numFoodOrMeals?: number | null;
+  readonly numFollowers?: number | null;
+  readonly numContent?: number | null;
+  readonly bodyFatDifference?: number | null;
+  readonly payouts?: number | null;
+  readonly numProgressPhotots?: number | null;
+  readonly numWeight?: number | null;
+  readonly numReps?: number | null;
+  readonly numRuns?: number | null;
+  readonly numReports?: number | null;
+  readonly User?: User | null;
+  readonly numTime?: number | null;
+  readonly createdAt?: string | null;
+  readonly updatedAt?: string | null;
+  readonly badgeProgressUserId?: string | null;
+}
+
+type LazyBadgeProgress = {
+  readonly id: string;
+  readonly numProgress?: number | null;
+  readonly weightDifference?: number | null;
+  readonly numWorkouts?: number | null;
+  readonly numFoodOrMeals?: number | null;
+  readonly numFollowers?: number | null;
+  readonly numContent?: number | null;
+  readonly bodyFatDifference?: number | null;
+  readonly payouts?: number | null;
+  readonly numProgressPhotots?: number | null;
+  readonly numWeight?: number | null;
+  readonly numReps?: number | null;
+  readonly numRuns?: number | null;
+  readonly numReports?: number | null;
+  readonly User: AsyncItem<User | undefined>;
+  readonly numTime?: number | null;
+  readonly createdAt?: string | null;
+  readonly updatedAt?: string | null;
+  readonly badgeProgressUserId?: string | null;
+}
+
+export declare type BadgeProgress = LazyLoading extends LazyLoadingDisabled ? EagerBadgeProgress : LazyBadgeProgress
+
+export declare const BadgeProgress: (new (init: ModelInit<BadgeProgress, BadgeProgressMetaData>) => BadgeProgress) & {
+  copyOf(source: BadgeProgress, mutator: (draft: MutableModel<BadgeProgress, BadgeProgressMetaData>) => MutableModel<BadgeProgress, BadgeProgressMetaData> | void): BadgeProgress;
+}
+
+type EagerBadge = {
+  readonly id: string;
+  readonly name?: string | null;
+  readonly description?: string | null;
+  readonly avatar?: string | null;
+  readonly progressCount?: number | null;
+  readonly weightDifference?: number | null;
+  readonly numWorkouts?: number | null;
+  readonly numFoodOrMeals?: number | null;
+  readonly numFollowers?: number | null;
+  readonly numContent?: number | null;
+  readonly bodyFatDifference?: number | null;
+  readonly payouts?: number | null;
+  readonly numProgressPhoto?: number | null;
+  readonly numWeight?: number | null;
+  readonly numTime?: number | null;
+  readonly numReps?: number | null;
+  readonly numRuns?: number | null;
+  readonly numReports?: number | null;
+  readonly BadgeEarneds?: (BadgeEarned | null)[] | null;
+  readonly priority?: number | null;
+  readonly createdAt?: string | null;
+  readonly updatedAt?: string | null;
+}
+
+type LazyBadge = {
+  readonly id: string;
+  readonly name?: string | null;
+  readonly description?: string | null;
+  readonly avatar?: string | null;
+  readonly progressCount?: number | null;
+  readonly weightDifference?: number | null;
+  readonly numWorkouts?: number | null;
+  readonly numFoodOrMeals?: number | null;
+  readonly numFollowers?: number | null;
+  readonly numContent?: number | null;
+  readonly bodyFatDifference?: number | null;
+  readonly payouts?: number | null;
+  readonly numProgressPhoto?: number | null;
+  readonly numWeight?: number | null;
+  readonly numTime?: number | null;
+  readonly numReps?: number | null;
+  readonly numRuns?: number | null;
+  readonly numReports?: number | null;
+  readonly BadgeEarneds: AsyncCollection<BadgeEarned>;
+  readonly priority?: number | null;
+  readonly createdAt?: string | null;
+  readonly updatedAt?: string | null;
+}
+
+export declare type Badge = LazyLoading extends LazyLoadingDisabled ? EagerBadge : LazyBadge
+
+export declare const Badge: (new (init: ModelInit<Badge, BadgeMetaData>) => Badge) & {
+  copyOf(source: Badge, mutator: (draft: MutableModel<Badge, BadgeMetaData>) => MutableModel<Badge, BadgeMetaData> | void): Badge;
 }
 
 type EagerChatMessages = {
@@ -630,6 +908,9 @@ type EagerWorkoutDetails = {
   readonly userID?: string | null;
   readonly note?: string | null;
   readonly WorkoutPlayDetails?: (WorkoutPlayDetail | null)[] | null;
+  readonly deleted?: boolean | null;
+  readonly priority?: number | null;
+  readonly metric?: boolean | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }
@@ -645,6 +926,9 @@ type LazyWorkoutDetails = {
   readonly userID?: string | null;
   readonly note?: string | null;
   readonly WorkoutPlayDetails: AsyncCollection<WorkoutPlayDetail>;
+  readonly deleted?: boolean | null;
+  readonly priority?: number | null;
+  readonly metric?: boolean | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }
@@ -670,6 +954,9 @@ type EagerWorkout = {
   readonly WorkoutPlays?: (WorkoutPlay | null)[] | null;
   readonly public?: boolean | null;
   readonly initialWorkout?: string | null;
+  readonly FitnessPlanDetails?: (FitnessPlanDetail | null)[] | null;
+  readonly Reviews?: (Review | null)[] | null;
+  readonly tags?: (string | null)[] | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }
@@ -689,6 +976,9 @@ type LazyWorkout = {
   readonly WorkoutPlays: AsyncCollection<WorkoutPlay>;
   readonly public?: boolean | null;
   readonly initialWorkout?: string | null;
+  readonly FitnessPlanDetails: AsyncCollection<FitnessPlanDetail>;
+  readonly Reviews: AsyncCollection<Review>;
+  readonly tags?: (string | null)[] | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }
@@ -710,6 +1000,8 @@ type EagerExercise = {
   readonly WorkoutDetails?: (WorkoutDetails | null)[] | null;
   readonly ExerciseEquiptmentDetails?: (ExerciseEquiptmentDetail | null)[] | null;
   readonly bodyParts?: (string | null)[] | null;
+  readonly preview?: string | null;
+  readonly tags?: (string | null)[] | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }
@@ -725,6 +1017,8 @@ type LazyExercise = {
   readonly WorkoutDetails: AsyncCollection<WorkoutDetails>;
   readonly ExerciseEquiptmentDetails: AsyncCollection<ExerciseEquiptmentDetail>;
   readonly bodyParts?: (string | null)[] | null;
+  readonly preview?: string | null;
+  readonly tags?: (string | null)[] | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }
@@ -743,6 +1037,7 @@ type EagerEquiptment = {
   readonly sub?: string | null;
   readonly ExerciseEquiptmentDetails?: (ExerciseEquiptmentDetail | null)[] | null;
   readonly public?: boolean | null;
+  readonly home?: boolean | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }
@@ -755,6 +1050,7 @@ type LazyEquiptment = {
   readonly sub?: string | null;
   readonly ExerciseEquiptmentDetails: AsyncCollection<ExerciseEquiptmentDetail>;
   readonly public?: boolean | null;
+  readonly home?: boolean | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }
@@ -817,6 +1113,7 @@ type EagerIngredient = {
   readonly edamamId?: string | null;
   readonly userID?: string | null;
   readonly PantryItems?: (PantryItem | null)[] | null;
+  readonly barcode?: string | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }
@@ -841,6 +1138,7 @@ type LazyIngredient = {
   readonly edamamId?: string | null;
   readonly userID?: string | null;
   readonly PantryItems: AsyncCollection<PantryItem>;
+  readonly barcode?: string | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }
@@ -867,6 +1165,10 @@ type EagerMeal = {
   readonly isAiGenerated?: boolean | null;
   readonly public?: boolean | null;
   readonly originalMeal?: string | null;
+  readonly FitnessPlanDetails?: (FitnessPlanDetail | null)[] | null;
+  readonly Reviews?: (Review | null)[] | null;
+  readonly preview?: string | null;
+  readonly tags?: (string | null)[] | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }
@@ -887,6 +1189,10 @@ type LazyMeal = {
   readonly isAiGenerated?: boolean | null;
   readonly public?: boolean | null;
   readonly originalMeal?: string | null;
+  readonly FitnessPlanDetails: AsyncCollection<FitnessPlanDetail>;
+  readonly Reviews: AsyncCollection<Review>;
+  readonly preview?: string | null;
+  readonly tags?: (string | null)[] | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }
@@ -959,6 +1265,8 @@ type EagerFoodProgress = {
   readonly progressID: string;
   readonly userID?: string | null;
   readonly public?: boolean | null;
+  readonly barcode?: string | null;
+  readonly tags?: (string | null)[] | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }
@@ -983,6 +1291,8 @@ type LazyFoodProgress = {
   readonly progressID: string;
   readonly userID?: string | null;
   readonly public?: boolean | null;
+  readonly barcode?: string | null;
+  readonly tags?: (string | null)[] | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }
@@ -1000,8 +1310,6 @@ type EagerUser = {
   readonly goal: Goal | keyof typeof Goal;
   readonly picture?: string | null;
   readonly username: string;
-  readonly personalTrainer?: boolean | null;
-  readonly foodProfessional?: boolean | null;
   readonly Progresses?: (Progress | null)[] | null;
   readonly Meals?: (Meal | null)[] | null;
   readonly Equiptments?: (Equiptment | null)[] | null;
@@ -1042,7 +1350,22 @@ type EagerUser = {
   readonly selectedGoal?: string | null;
   readonly selectedSprite?: string | null;
   readonly Posts?: (Post | null)[] | null;
-  readonly untitledfield?: string | null;
+  readonly BadgeEarneds?: (BadgeEarned | null)[] | null;
+  readonly workoutMode?: string | null;
+  readonly FitnessPlanSubscriptions?: (FitnessPlanSubscription | null)[] | null;
+  readonly Reviews?: (Review | null)[] | null;
+  readonly calorieGoal?: number | null;
+  readonly verified?: boolean | null;
+  readonly emailAddress?: string | null;
+  readonly height?: number | null;
+  readonly gender?: string | null;
+  readonly weightDifferenceGoal?: number | null;
+  readonly fatDifferenceGoal?: number | null;
+  readonly goalByDate?: string | null;
+  readonly metric?: boolean | null;
+  readonly workoutDaysOfWeek?: (number | null)[] | null;
+  readonly dob?: string | null;
+  readonly fitnessBackground?: string | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }
@@ -1054,8 +1377,6 @@ type LazyUser = {
   readonly goal: Goal | keyof typeof Goal;
   readonly picture?: string | null;
   readonly username: string;
-  readonly personalTrainer?: boolean | null;
-  readonly foodProfessional?: boolean | null;
   readonly Progresses: AsyncCollection<Progress>;
   readonly Meals: AsyncCollection<Meal>;
   readonly Equiptments: AsyncCollection<Equiptment>;
@@ -1096,7 +1417,22 @@ type LazyUser = {
   readonly selectedGoal?: string | null;
   readonly selectedSprite?: string | null;
   readonly Posts: AsyncCollection<Post>;
-  readonly untitledfield?: string | null;
+  readonly BadgeEarneds: AsyncCollection<BadgeEarned>;
+  readonly workoutMode?: string | null;
+  readonly FitnessPlanSubscriptions: AsyncCollection<FitnessPlanSubscription>;
+  readonly Reviews: AsyncCollection<Review>;
+  readonly calorieGoal?: number | null;
+  readonly verified?: boolean | null;
+  readonly emailAddress?: string | null;
+  readonly height?: number | null;
+  readonly gender?: string | null;
+  readonly weightDifferenceGoal?: number | null;
+  readonly fatDifferenceGoal?: number | null;
+  readonly goalByDate?: string | null;
+  readonly metric?: boolean | null;
+  readonly workoutDaysOfWeek?: (number | null)[] | null;
+  readonly dob?: string | null;
+  readonly fitnessBackground?: string | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }
@@ -1120,6 +1456,10 @@ type EagerProgress = {
   readonly sub?: string | null;
   readonly water?: number | null;
   readonly activities?: (Activity | null)[] | null;
+  readonly neckCircumference?: number | null;
+  readonly waistCircumference?: number | null;
+  readonly metric?: boolean | null;
+  readonly hipCircumference?: number | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }
@@ -1137,6 +1477,10 @@ type LazyProgress = {
   readonly sub?: string | null;
   readonly water?: number | null;
   readonly activities?: (Activity | null)[] | null;
+  readonly neckCircumference?: number | null;
+  readonly waistCircumference?: number | null;
+  readonly metric?: boolean | null;
+  readonly hipCircumference?: number | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }

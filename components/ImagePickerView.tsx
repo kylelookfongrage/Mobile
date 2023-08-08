@@ -93,8 +93,6 @@ export const ImagePickerView = (props: ImagePickerViewProps) => {
     React.useEffect(() => {
         //@ts-ignore
         setMediaSources([])
-        console.log('from ipv')
-        console.log(props.srcs)
         if (props.srcs && props.srcs.length > 0) {
             Promise.all(props.srcs.map(async x => {
                 if (isStorageUri(x.uri || defaultImage)) {

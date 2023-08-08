@@ -13,6 +13,7 @@ import { defaultRunTypes, getTotalDistance, RunType, toHHMMSS } from '../../data
 import { DataStore } from 'aws-amplify';
 import { useDateContext } from './Calendar';
 import { useCommonAWSIds } from '../../hooks/useCommonContext';
+import { BadgeType, useBadges } from '../../hooks/useBadges';
 
 
 
@@ -115,6 +116,7 @@ const RunTracker = (props: { id?: string }) => {
 
 
     const navigator = useNavigation()
+    const {logProgress} = useBadges()
 
     async function onSavePress() {
         setPaused(true)
@@ -129,6 +131,7 @@ const RunTracker = (props: { id?: string }) => {
             }
         } else {
             await DataStore.save(new RunProgress({ date: AWSDate, userID: userId, totalTime: totalTime, coordinates: coordinates, runType: runType.name, progressID: progressId }))
+            logProgress(BadgeType.runs)
         }
         navigator.navigate('FinishedExercise')
     }

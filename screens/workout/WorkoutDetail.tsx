@@ -1,5 +1,5 @@
-import { SafeAreaView, ScrollView, TextInput, TouchableOpacity, Image, Dimensions, Switch, Alert } from 'react-native'
-import React from 'react'
+import { SafeAreaView, ScrollView, TextInput, TouchableOpacity, Image, ActivityIndicator, Switch, Alert } from 'react-native'
+import React, { useCallback, useEffect, useState } from 'react'
 import { Text, View } from '../../components/Themed'
 import tw from 'twrnc'
 import useColorScheme from '../../hooks/useColorScheme'
@@ -10,13 +10,16 @@ import { Picker } from '../diet/FoodDetail'
 import { Category, MediaType } from '../../types/Media'
 import { ImagePickerView } from '../../components/ImagePickerView'
 import { useCommonAWSIds } from '../../hooks/useCommonContext'
-import { Equiptment, Exercise, Favorite, FavoriteType, User, Workout, WorkoutDetails } from '../../aws/models'
+import { Equiptment, Exercise, Favorite, FavoriteType, LazyWorkoutDetails, User, Workout, WorkoutDetails } from '../../aws/models'
 import { DataStore, Storage } from 'aws-amplify'
-import { defaultImage, getMatchingNavigationScreen, isStorageUri, toHHMMSS, uploadImageAndGetID } from '../../data'
+import { defaultImage, getMatchingNavigationScreen, isStorageUri, titleCase, toHHMMSS, uploadImageAndGetID } from '../../data'
 import { ErrorMessage } from '../../components/ErrorMessage'
-import { ActivityIndicator } from 'react-native-paper'
 import { BackButton } from '../../components/BackButton'
 import { ShowMoreButton } from '../home/ShowMore'
+import TabSelector from '../../components/TabSelector'
+import Body from 'react-native-body-highlighter'
+import { Swipeable } from 'react-native-gesture-handler'
+
 
 export const workoutCategories: Category[] = [
   { name: 'N/A', emoji: '🚫' },
@@ -62,9 +65,9 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
   const borderStyle = editMode ? `border-b border-gray-500` : ''
   React.useEffect(() => {
     if (subscribed) {
-        setCanViewDetails(true)
+      setCanViewDetails(true)
     }
-}, [subscribed])
+  }, [subscribed])
 
   React.useEffect(() => {
     if (!id && !workoutId) {
@@ -89,8 +92,8 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
         }
       })
       if (wo.img) {
-        setImg([{type: 'image', uri: wo.img}])
-        setOriginalImage([{type: 'image', uri: wo.img}])
+        setImg([{ type: 'image', uri: wo.img }])
+        setOriginalImage([{ type: 'image', uri: wo.img }])
       }
       setOriginalDescription(wo.description)
       setOriginalName(wo.name)
@@ -202,6 +205,13 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
   const [premium, setPremium] = React.useState<boolean>(false)
   const [errors, setErrors] = React.useState<string[]>([])
   const [isUsersWorkouts, setIsUsersWorkout] = React.useState<boolean>(false)
+  let bodyPartMapping: { [k: string]: number } = {}
+  exercises.forEach((e) => {
+    for (var part of (e.bodyParts || [])) {
+      if (!part) continue
+      bodyPartMapping[part] = (bodyPartMapping[part] || 0) + 1
+    }
+  })
 
   const equs: { img: string, name: string, id: string }[] = []
   equiptment.forEach(e => {
@@ -278,7 +288,7 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
       setOrignalCategory(workoutCategory)
       setOriginalDescription(description || '')
       setOriginalName(name)
-      setOriginalImage([{type: 'image', uri: uploadImg}])
+      setOriginalImage([{ type: 'image', uri: uploadImg }])
       setOriginalExercises(exerciseDetails)
       alert('Your workout has been saved!')
       setEditMode(false)
@@ -302,11 +312,24 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
     return () => subscription.unsubscribe()
   }, [])
   const firstImage = img.filter(x => x.type === 'image')
+  const tabs = ['Muscles', 'Overview', 'Exercises', 'Equiptment'] as const
+  const [selectedTab, setSelectedTab] = useState<typeof tabs[number]>(tabs[0])
+  const pickerData = workoutCategories.map((w, i) => ({ label: `${w.name} ${w.emoji}`, value: i }))
+  const changeTab = (forward: boolean=true) => {
+    const currentTab = tabs.findIndex(x => x==selectedTab)
+    if (currentTab === -1) {
+      setSelectedTab(tabs[0])
+    } else {
+        let newTab = tabs[currentTab + (forward ? 1 : -1)]
+        if (newTab) setSelectedTab(newTab)
+    } 
+}
+const {onTouchStart, onTouchEnd} = useSwipe(changeTab, () => changeTab(false), 6)
   return (
-    <View style={{flex: 1}} includeBackground>
+    <View style={{ flex: 1 }} includeBackground>
       <BackButton Right={() => {
         if (!editMode || !id) {
-          return <ShowMoreButton name={name} desc={'@'+author} id={workoutId || ''} img={firstImage.length === 0 ? defaultImage : firstImage[0].uri} type={FavoriteType.WORKOUT} userId={authorId} />
+          return <ShowMoreButton name={name} desc={'@' + author} id={workoutId || ''} img={firstImage.length === 0 ? defaultImage : firstImage[0].uri} type={FavoriteType.WORKOUT} userId={authorId} />
         }
         return <TouchableOpacity onPress={() => {
           Alert.alert("Are you sure you want to delete this workout?", "You cannot undo this action later, and all progress associated with this workout will be deleted.", [
@@ -323,12 +346,12 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
           <Text style={tw`text-red-500`} weight='semibold'>Delete Workout</Text>
         </TouchableOpacity>
       }} />
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <ImagePickerView editable={editMode === true} srcs={(canViewDetails || editMode) ? img : [{ type: 'image', uri: defaultImage }]} onChange={setImg} type='image' />
+      <ScrollViewWithDrag showsVerticalScrollIndicator={false} TopView={() => <ImagePickerView editable={editMode === true} srcs={(canViewDetails || editMode) ? img : [{ type: 'image', uri: defaultImage }]} onChange={setImg} type='image' />}>
+        
         {errors.length > 0 && <View style={tw`px-4 py-3`}>
           <ErrorMessage errors={errors} onDismissTap={() => setErrors([])} /></View>}
-        <SafeAreaView>
-          <View style={tw`flex-row items-center justify-between px-5 w-12/12`}>
+        <View includeBackground style={[tw``, {zIndex: 1, flex: 1}]}>
+          <View includeBackground style={[tw`flex-row items-center justify-between px-5 w-12/12 -mt-6 rounded-3xl`, {zIndex: 1}]}>
             <View style={tw`w-8/12 max-w-8/12`}>
               <TextInput
                 value={name}
@@ -367,36 +390,40 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
               <ExpoIcon name={favorite ? 'heart' : 'heart-outline'} iconName='ion' color={'red'} size={25} />
             </TouchableOpacity>}
           </View>
-          {(editMode) && <View style={tw`p-5`}>
+          {(editMode) && <View style={tw`px-5 pt-4`}>
             <View style={tw`flex flex-row items-center`}>
-            <Text style={tw`text-xl mr-4`} weight='semibold'>Premium</Text>
-            <Switch value={premium} onValueChange={setPremium} disabled={(!editMode || originalPremium === true || originalPremium === false )} />
+              <Text style={tw`text-lg mr-4`} weight='semibold'>Premium</Text>
+              <Switch value={premium} onValueChange={setPremium} disabled={(!editMode || originalPremium === true || originalPremium === false)} />
             </View>
-            <Text>Please note that you cannot change premium status once saved</Text>
+            <Text style={tw`text-xs text-gray-500`}>Please note that you cannot change premium status once saved</Text>
           </View>}
-          <View style={tw`py-5 px-5`}>
-            <Text style={tw`text-2xl`} weight='bold'>Description</Text>
-            <TextInput
-              value={description}
-              multiline
-              numberOfLines={4}
-              onChangeText={setDescription}
-              editable={editMode}
-              placeholder='The description of your workout'
-              placeholderTextColor={'gray'}
-              style={tw`max-w-10/12 py-1 text-${dm ? 'white' : 'black'} ${borderStyle}`}
-            />
-          </View>
-          <View style={tw`py-5 px-5`}>
-            <Text style={tw`text-2xl mb-2`} weight='bold'>Category</Text>
-            <Picker width='12/12' data={workoutCategories.map((w, i) => ({ label: `${w.name} ${w.emoji}`, value: i }))} onChange={function (d): void {
-              setWorkoutCategory(workoutCategories[d.value])
-            }} defaultIndex={workoutCategories.indexOf(workoutCategory)} editable={editMode} />
-          </View>
-
-          <View key={'EXERCISES FOR WORKOUT'} style={tw`px-4 w-12/12`}>
+          {/* @ts-ignore */}
+          <TabSelector tabs={[...tabs]} selected={selectedTab} onTabChange={setSelectedTab} style={tw`mt-6`} />
+         <View style={[{flex: 1}, tw`pb-40`]} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+         {selectedTab === 'Overview' && <View style={{ flex: 1 }}>
+            <View style={tw`py-5 px-5`}>
+              <Text style={tw`text-lg`} weight='semibold'>Overview</Text>
+              <TextInput
+                value={description}
+                multiline
+                numberOfLines={4}
+                onChangeText={setDescription}
+                editable={editMode}
+                placeholder='The description of your workout'
+                placeholderTextColor={'gray'}
+                style={tw`max-w-10/12 py-1 text-${dm ? 'white' : 'black'} ${borderStyle}`}
+              />
+            </View>
+            <View style={tw`py-5 px-5`}>
+              <Text style={tw`text-lg mb-2`} weight='semibold'>Category</Text>
+              <Picker width='12/12' data={pickerData} onChange={function (d): void {
+                setWorkoutCategory(workoutCategories[d.value])
+              }} defaultIndex={workoutCategories.indexOf(workoutCategory)} editable={editMode} />
+            </View>
+          </View>}
+          {selectedTab === 'Exercises' && <View key={'EXERCISES FOR WORKOUT'} style={tw`px-4 pt-6 w-12/12`}>
             <View style={tw`flex-row w-12/12 justify-between items-center`}>
-              <Text style={tw`text-2xl`} weight='bold'>Exercises</Text>
+              <Text style={tw`text-lg`} weight='semibold'>Exercises</Text>
               {editMode && <TouchableOpacity onPress={() => {
                 const screen = getMatchingNavigationScreen('ListExercise', navigator)
                 //@ts-ignore
@@ -406,158 +433,46 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
               </TouchableOpacity>
               }
             </View>
-            {(exercises.length === 0 || !exercises) && <Text style={tw`text-center mt-4`} weight='semibold'>Add exercises to your workout</Text>}
-            {exercises.length > 0 && <Text style={tw`text-center mt-4`}>Please note that if the exercise has a video, it will be present while performing the exercise</Text>}
-            {(canViewDetails || editable) && exerciseDetails.map((e, edIndex) => {
+            {(exercises.length === 0 || !exercises) && <Text style={tw`text-center text-xs text-gray-500 mt-4`} weight='semibold'>Add exercises to your workout</Text>}
+            {(canViewDetails || editable) && exerciseDetails.map((e, i) => {
               let exerciseSelected = exercises.filter(x => x.id === e.exerciseID)
               if (!exerciseSelected[0]) return
               const ex = exerciseSelected[0]
-              // @ts-ignore
-              const imgs: MediaType[] = ex.media ? ex.media : []
-              const images = imgs.filter(x => x.type === 'image')
-              return <TouchableOpacity onPress={() => {
-                const screen = getMatchingNavigationScreen('ExerciseDetail', navigator)
-                //@ts-ignore
-                navigator.navigate(screen, { id: ex.id })
-              }} disabled={editMode} style={tw`py-3 px-4 bg-gray-${dm ? '700' : '300'} my-4 rounded-xl`} key={e.id + `at index ${edIndex}`}>
-                <View style={tw`flex-row justify-between items-center`}>
-                  <Text style={tw`text-lg mb-3`} weight='semibold'>{ex.title}</Text>
-                  <TouchableOpacity
-                    onPress={async () => {
-                      if (editMode && e) {
-                        await DataStore.delete(WorkoutDetails, e.id)
-                      } else {
-                        const screen = getMatchingNavigationScreen('ExerciseDetail', navigator)
-                        //@ts-ignore
-                        navigator.navigate(screen, { id: ex.id })
-                      }
-                    }}
-                    style={[tw`items-center justify-center px-2`]}>
-                    <ExpoIcon name={editMode ? 'trash' : 'chevron-right'} iconName='feather' color={dm ? 'white' : 'black'} size={20} />
-                  </TouchableOpacity>
-                </View>
-                <View style={tw`flex-row items-center`}>
-                  {(images.length > 0) && <Image source={{ uri: images[0].uri }} style={[tw`rounded-xl w-15 h-15`]} />}
-                  <View style={tw`flex-row items-center w-10/12 max-w-10/12 justify-between pl-2`}>
-                    <View style={tw`items-center justify-center`}>
-                      <TextInput
-                        placeholder='x'
-                        placeholderTextColor={'gray'}
-                        value={e.sets?.toString() || ''}
-                        keyboardType='number-pad'
-                        onChangeText={v => {
-                          const newValue = v.replace(/[^0-9]/g, '')
-                          const idx = exerciseDetails.map((x => x.id)).indexOf(e?.id || '')
-                          if (idx !== -1) {
-                            var exerciseCopy = [...exerciseDetails]
-                            exerciseCopy[idx] = { ...exerciseCopy[idx], sets: Number(newValue) || null }
-                            setExerciseDetails(exerciseCopy)
-                          }
-                        }}
-                        style={tw`p-3 text-center font-bold text-${dm ? 'white' : 'black'}`}
-                        editable={editMode}
-                      />
-                      <Text weight='semibold'>Sets</Text>
-                    </View>
-                    <View style={tw`items-center justify-center`}>
-                      <TextInput
-                        placeholder='x'
-                        placeholderTextColor={'gray'}
-                        style={tw`p-3 text-center font-bold text-${dm ? 'white' : 'black'}`}
-                        editable={editMode}
-                        value={e.reps?.toString() || ''}
-                        keyboardType='number-pad'
-                        onChangeText={v => {
-                          const newValue = v.replace(/[^0-9]/g, '')
-                          const idx = exerciseDetails.map((x => x.id)).indexOf(e?.id || '')
-                          if (idx !== -1) {
-                            var exerciseCopy = [...exerciseDetails]
-                            exerciseCopy[idx] = { ...exerciseCopy[idx], reps: Number(newValue) || null }
-                            setExerciseDetails(exerciseCopy)
-                          }
-                        }}
-                      />
-                      <Text weight='semibold'>Reps</Text>
-                    </View>
-                    <View style={tw`items-center justify-center`}>
-                      <TextInput
-                        placeholder='x'
-                        placeholderTextColor={'gray'}
-                        style={tw`p-3 text-center font-bold text-${dm ? 'white' : 'black'}`}
-                        editable={editMode}
-                        value={(editMode ? e.secs?.toString() : toHHMMSS(e.secs || 0)) || ''}
-                        keyboardType='number-pad'
-                        onChangeText={v => {
-                          const newValue = v.replace(/[^0-9]/g, '')
-                          const idx = exerciseDetails.map((x => x.id)).indexOf(e?.id || '')
-                          if (idx !== -1) {
-                            var exerciseCopy = [...exerciseDetails]
-                            exerciseCopy[idx] = { ...exerciseCopy[idx], secs: Number(newValue) || null }
-                            setExerciseDetails(exerciseCopy)
-                          }
-                        }}
-                      />
-                      <Text weight='semibold'>Time {editMode ? '(s)' : ''}</Text>
-                    </View>
-                    <View style={tw`items-center justify-center`}>
-                      <TextInput
-                        placeholder='x'
-                        placeholderTextColor={'gray'}
-                        style={tw`p-3 text-center font-bold text-${dm ? 'white' : 'black'}`}
-                        editable={editMode}
-                        value={(editMode ? e.rest?.toString() : toHHMMSS(e.rest || 0)) || ''}
-                        keyboardType='number-pad'
-                        onChangeText={v => {
-                          const newValue = v.replace(/[^0-9]/g, '')
-                          const idx = exerciseDetails.map((x => x.id)).indexOf(e?.id || '')
-                          if (idx !== -1) {
-                            var exerciseCopy = [...exerciseDetails]
-                            exerciseCopy[idx] = { ...exerciseCopy[idx], rest: Number(newValue) || null }
-                            setExerciseDetails(exerciseCopy)
-                          }
-                        }}
-                      />
-                      <Text weight='semibold'>Rest {editMode ? '(s)' : ''}</Text>
-                    </View>
-                  </View>
-                </View>
-                {(editMode || e.note) && <TextInput
-                  value={e.note || ''}
-                  placeholder='Notes would be here'
-                  placeholderTextColor={'gray'}
-                  style={tw`p-3 text-center font-bold text-${dm ? 'white' : 'black'}`}
-                  editable={editMode} onChangeText={(x) => {
-                    const idx = exerciseDetails.map((x => x.id)).indexOf(e?.id || '')
-                    if (idx !== -1) {
-                      var exerciseCopy = [...exerciseDetails]
-                      exerciseCopy[idx] = { ...exerciseCopy[idx], note: x }
-                      setExerciseDetails(exerciseCopy)
-                    }
-                  }} />}
-              </TouchableOpacity>
+              return <ExerciseTile onDelete={async (uid) => {
+                await DataStore.delete(WorkoutDetails, uid)
+              }} id={e.id} key={e.id + `-${i}`} exercise={ex} exerciseDetails={exerciseDetails} setExerciseDetails={setExerciseDetails} e={e} editMode={editMode} />
             })}
-          </View>
+          </View>}
 
-          {(editable || canViewDetails) && <View key={'EQUIPTMENT FOR WORKOUT'} style={tw`px-4 pt-3 mt-6`}>
-            <Text style={tw`text-2xl`} weight='bold'>Equiptment</Text>
+          {((editable || canViewDetails) && selectedTab === 'Equiptment') && <View key={'EQUIPTMENT FOR WORKOUT'} style={tw`px-4 pt-3 mt-2`}>
+            <Text style={tw`text-lg`} weight='semibold'>You'll Need</Text>
             {(equiptment?.length === 0 || !equiptment) && <View style={tw`flex items-center`}>
               <Text style={tw`text-center my-4 max-w-11/12`} weight='semibold'>Add exercises with equiptment to see them here</Text>
             </View>}
             {equs.map((e, i) => {
               return <View style={tw`flex-row items-center py-2`} key={`equiptment at index ${i}`}>
-                <Image source={{ uri: e.img }} style={{
-                  width: 60,
-                  height: 60,
-                  resizeMode: 'contain',
-                  borderRadius: 60 / 2
-                }} />
-                <Text style={tw`text-lg ml-4`} weight='bold'>{e.name}</Text>
+                <Image source={{ uri: e.img }} style={tw`w-15 h-15 rounded-lg`} />
+                <Text style={tw`ml-2`} weight='regular'>{e.name}</Text>
               </View>
             })}
           </View>}
-        </SafeAreaView>
-        <View style={tw`pb-40`}></View>
-      </ScrollView>
+          {selectedTab === 'Muscles' && <View style={tw`pt-6 px-5`}>
+            <View style={tw`items-center justify-center my-4`}>
+              <Body colors={['#FAA0A0', '#FA5F55', '#FF0000']} data={Object.keys(bodyPartMapping).map(x => {
+                let value = bodyPartMapping[x]
+                if (value > 3) value = 3
+                return { slug: x, intensity: value, color: '' }
+              })} scale={1.5} />
+            </View>
+            <View>
+              {Object.keys(bodyPartMapping).map(x => {
+                return <Text style={tw`mb-2`} key={x}>• {titleCase(x.split('-').join(' '))} (x{bodyPartMapping[x]})</Text>
+              })}
+            </View>
+          </View>}
+         </View>
+        </View>
+      </ScrollViewWithDrag>
       <View style={[
         {
           position: 'absolute',
@@ -588,4 +503,103 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
       </View>
     </View>
   )
+}
+
+import * as ImagePreview from 'expo-video-thumbnails'
+import { useSwipe } from '../../hooks/useSwipe'
+import ScrollViewWithDrag from '../../components/ScrollViewWithDrag'
+import BackgroundGradient from '../../components/BackgroundGradient'
+const ExerciseTile = (props: { id: string, exercise: Exercise; onDelete?: (e: string) => void; editMode: boolean; e: LazyWorkoutDetails; exerciseDetails: LazyWorkoutDetails[]; setExerciseDetails: (e: LazyWorkoutDetails[]) => void; }) => {
+  const { e, exercise, editMode, exerciseDetails, setExerciseDetails } = props;
+  const [image, setImage] = useState<string | null>(null)
+  const [loading, setLoading] = useState<boolean>(true)
+  const settings = [{ name: 'Sets', k: 'sets' }, { name: 'Reps', k: 'reps' }, { name: 'Time', k: 'secs' }, { name: 'Rest', k: 'rest' }]
+  const fetchMedia = (async () => {
+    setLoading(true)
+    let img = null;
+    try {
+      let media = (exercise.media || [{ type: 'image', uri: defaultImage }])?.[0]
+      img = media?.uri || defaultImage
+      if (isStorageUri(img)) img = await Storage.get(img)
+      if (media?.type === 'video') {
+        img = (await ImagePreview.getThumbnailAsync(img)).uri
+      }
+    } catch (error) {
+
+    }
+    setLoading(false)
+    setImage(img)
+  })
+
+  useEffect(() => {
+    fetchMedia()
+  }, [props.exercise.media?.[0]?.uri])
+
+  const dm = useColorScheme() === 'dark'
+  const navigator = useNavigation()
+  return <Swipeable renderRightActions={() => {
+    if (editMode) return <TouchableOpacity onPress={() => {
+      props.onDelete && props.onDelete(e.id)
+    }} style={tw`flex items-center justify-center p-3`}>
+      <ExpoIcon name='x' iconName='feather' size={20} color='gray' />
+      <Text style={tw`text-xs text-gray-500`} weight='semibold'>Delete</Text>
+    </TouchableOpacity>
+  }}>
+    <TouchableOpacity onPress={() => {
+      const screen = getMatchingNavigationScreen('ExerciseDetail', navigator)
+      //@ts-ignore
+      navigator.navigate(screen, { id: exercise.id })
+    }} disabled={editMode} style={tw`py-3`}>
+      {loading && <ActivityIndicator />}
+      {true && <View style={tw`flex-row items-start`}>
+        {image && <Image source={{ uri: image }} style={tw`h-30 w-25 rounded`} />}
+        <View style={tw`ml-2`}>
+          <Text style={tw`ml-2`} weight='semibold'>{exercise.title}</Text>
+          <View style={tw`flex-row max-w-10/12 items-center justify-evenly flex-wrap`}>
+            {settings.map(s => {
+              return <View key={`${e.id} - Setting ${s.name}`} style={tw`flex-row items-center justify-between pr-4 bg-gray-800 rounded-2xl my-2 w-5/12`}>
+                <TextInput
+                  placeholder='x'
+                  placeholderTextColor={'gray'}
+                  style={tw`mr-1 p-3 text-${dm ? 'white' : 'black'}`}
+                  editable={editMode}
+                  // @ts-ignore
+                  value={(editMode ? (e[s.k]?.toString() || '') : (
+                    // @ts-ignore 
+                    ['secs', 'rest'].includes(s.k) ? (toHHMMSS(e[s.k] || 0) || '') : e[s.k]?.toString()
+                  ))}
+                  keyboardType='number-pad'
+                  onChangeText={v => {
+                    const newValue = v.replace(/[^0-9]/g, '')
+                    const idx = exerciseDetails.map((x => x.id)).indexOf(e?.id || '')
+                    if (idx !== -1) {
+                      var exerciseCopy = [...exerciseDetails]
+                      exerciseCopy[idx] = { ...exerciseCopy[idx] }
+                      // @ts-ignore 
+                      exerciseCopy[idx][s.k] = Number(newValue) || null
+                      setExerciseDetails(exerciseCopy)
+                    }
+                  }}
+                />
+                <Text style={tw`text-gray-500 text-xs`} weight='semibold'>{s.name}</Text>
+              </View>
+            })}
+          </View>
+        </View>
+      </View>}
+      {(editMode || e.note) && <TextInput
+        value={e.note || ''}
+        placeholder='Notes would be here'
+        placeholderTextColor={'gray'}
+        style={tw`p-3 text-center font-bold text-${dm ? 'white' : 'black'}`}
+        editable={editMode} onChangeText={(x) => {
+          const idx = exerciseDetails.map((x => x.id)).indexOf(e?.id || '')
+          if (idx !== -1) {
+            var exerciseCopy = [...exerciseDetails]
+            exerciseCopy[idx] = { ...exerciseCopy[idx], note: x }
+            setExerciseDetails(exerciseCopy)
+          }
+        }} />}
+    </TouchableOpacity>
+  </Swipeable>
 }

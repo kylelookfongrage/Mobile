@@ -128,8 +128,6 @@ export const FoodAndMeals = () => {
                 const ingredients = (await x.Ingredients.toArray()) || []
                 const ingredientLabels = ingredients.map(ingr => (ingr.foodContentsLabel || '') + ingr.name).join(',').toLowerCase() || ''
                 const potentialAllergens = userAllergens.filter(al => ingredientLabels.includes(al?.toLowerCase() || 'nothing'))
-                console.log(ingredientLabels)
-                console.log(potentialAllergens)
                 const user = await DataStore.query(User, x.userID)
                 if (!user || !x.media) {
                     return {...defaultMealToReturn, userIsAllergic: potentialAllergens.length > 0}
@@ -208,7 +206,7 @@ export const FoodAndMeals = () => {
     return <SafeAreaView style={[tw`h-12/12`]} edges={['top']} includeBackground>
         <ScrollView contentContainerStyle={[tw`px-4 py-3`]} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchFoodAndMeals} />}>
             <Text style={tw`text-2xl max-w-7/12`} weight='bold'>Search</Text>
-            <View style={tw`w-12/12 mt-6 flex-row items-center py-2.5 px-4 justify-between bg-gray-${dm ? '700' : '300'} rounded-lg`}>
+            <View style={tw`w-12/12 mt-6 flex-row items-center py-2.5 px-4 justify-between bg-gray-${dm ? '700' : '300'} rounded-3xl`}>
                 <View style={tw`flex flex-row items-center`}>
                     <ExpoIcon name='search' iconName='feather' color={'gray'} style={tw`pr-2`} size={25} />
                     <TextInput value={keyword} onChangeText={setKeyword} placeholder='search...' style={tw`w-9/12 text-${dm ? 'white' : 'black'}`} />

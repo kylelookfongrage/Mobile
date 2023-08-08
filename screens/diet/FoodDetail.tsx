@@ -22,6 +22,7 @@ import { BackButton } from '../../components/BackButton';
 import AllergenAlert from '../../components/AllergenAlert';
 import { ShowMoreButton } from '../home/ShowMore';
 import { FavoriteType } from '../../aws/models';
+import { BadgeType, useBadges } from '../../hooks/useBadges';
 
 // export const SummaryFoodConverter: FirestoreDataConverter<FoodProgressProps> = {
 //     toFirestore(post: WithFieldValue<FoodProgressProps>): DocumentData {
@@ -246,6 +247,7 @@ export default function FoodDetail(props: FoodDetailProps) {
     }, [healthLabels])
     const navigator = useNavigation()
     const [errors, setErrors] = React.useState<string[]>([])
+    const {logProgress} = useBadges(false)
     React.useEffect(() => {
         if (errors.length > 0) setUploading(false)
     }, [errors])
@@ -287,7 +289,8 @@ export default function FoodDetail(props: FoodDetailProps) {
             if (progressId && !props.mealId && !currentIngredietId && !aiResult && !props.grocery) {
                 //@ts-ignore
                 if (src === 'api' || src === 'new' || src === undefined || src === 'existing') {
-                    DataStore.save(new FoodProgress({ ...document, progressID: progressId || '', public: src==='new' })).then(x => {
+                    DataStore.save(new FoodProgress({ ...document, progressID: progressId || '', public: src==='new' }))
+                    .then(() => logProgress(BadgeType.numFood)).then(x => {
                         //@ts-ignore
                         navigator.pop()
                     })
@@ -553,7 +556,9 @@ export const Picker = (props: PickerProps) => {
     ]
     const [data, setData] = React.useState<PickerItemData[]>(defaultData)
     React.useEffect(() => {
-        setData(props.data)
+        if (props.data && props.data.length > 0 && props.data[0].label) {
+            setData(props.data)
+        }
     }, [props.data])
     const { width } = props;
     const [selectedTab, setSeletedTab] = React.useState<PickerItemData>(data[props.defaultIndex || 0])
@@ -561,7 +566,7 @@ export const Picker = (props: PickerProps) => {
         if (props.defaultIndex < data.length) {
             setSeletedTab(props.data[props.defaultIndex])
         }
-    }, [props.defaultIndex])
+    }, [data])
     const [showItems, setShowItems] = React.useState<boolean>(false)
     const darkMode = useColorScheme() === 'dark'
     return <View style={tw`flex items-start`}>
@@ -612,7 +617,7 @@ interface NutritionInfoProps {
     onNutrientsChanged: (v: FoodItemData) => void
     editable?: boolean;
     hidden?: boolean;
-    onAddNew: (v: FoodItemData[]) => void;
+    onAddNew?: (v: FoodItemData[]) => void;
     onDelete?: (v: FoodItemData) => void
 }
 
@@ -638,7 +643,7 @@ export const NutritionInfo = (props: NutritionInfoProps) => {
             const dataRemoveHidden = data.findIndex(x => x.name === label.value)
             if (dataRemoveHidden === -1) return;
             data[dataRemoveHidden].hidden = false
-            onAddNew([...data])
+            onAddNew && onAddNew([...data])
         }
     }
     const [newLabel, setNewLabel] = React.useState<{ label: string } | null>(missingLabels.length > 0 ? { label: missingLabels[0].name } : null)
@@ -664,7 +669,7 @@ export const NutritionInfo = (props: NutritionInfoProps) => {
                     onDelete={onDelete}
                 />
             })}
-            {missingLabels.length !== 0 && <View>
+            {(missingLabels.length !== 0 && onAddNew!!) && <View>
                 <Text style={tw`text-lg mt-3`}>New Nutrition</Text>
                 <View style={tw`flex-row w-12/12 justify-evenly py-4 items-start`}>
                     <Picker
@@ -867,7 +872,7 @@ const EdamamFoodToFoodItemData = (data: EdamamNutrientsResponse): FoodItemData[]
 }
 
 
-const NewFoodItemData = (calories: null | number = null, protein: null | number = null, fat: null | number = null, carbs: null | number = null, otherNutrition: any = null): FoodItemData[] => {
+export const NewFoodItemData = (calories: null | number = null, protein: null | number = null, fat: null | number = null, carbs: null | number = null, otherNutrition: any = null): FoodItemData[] => {
     const defaultMeasures = {
         'ENERC_KCAL': {
             box: true,

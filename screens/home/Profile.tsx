@@ -13,6 +13,7 @@ import { useCommonAWSIds } from '../../hooks/useCommonContext';
 import { defaultImage, formatCash, getMatchingNavigationScreen, isStorageUri, substringForLists } from '../../data';
 import { BackButton } from '../../components/BackButton';
 import { ShowMoreButton } from './ShowMore';
+import MenuView from '../../components/MenuView';
 
 
 
@@ -27,7 +28,7 @@ const quickLinks: {name: string, icon: string, screen: string}[] = [
     {name: 'Groceries', icon: 'shopping-cart', screen: 'GroceryList'},
     {name: 'Pantry', icon: 'shopping-bag', screen: 'Pantry'},
     {name: 'Favorites', icon: 'heart', screen: 'Favorites'},
-    {name: 'Allergens', icon: 'alert-circle', screen: 'Allergens'}
+    {name: 'Allergies', icon: 'alert-circle', screen: 'Allergens'}
 
 ]
 
@@ -192,8 +193,8 @@ export default function Profile(props: ProfileProps) {
                         //@ts-ignore
                         navigator.navigate(screen)
                     }} key={link.name} style={tw`justify-center items-center`}> 
-                    <ExpoIcon name={link.icon} iconName='feather' size={20} color='gray' />
-                    <Text style={tw`text-gray-500 mt-2`}>{link.name}</Text>
+                    <ExpoIcon name={link.icon} iconName='feather' size={18} color='gray' />
+                    <Text style={tw`text-gray-500 mt-2 text-xs`}>{link.name}</Text>
                 </TouchableOpacity>
                    })}
                 </View>
@@ -216,17 +217,16 @@ export default function Profile(props: ProfileProps) {
                         //@ts-ignore
                         img = meal.media.filter(x => x.type === 'image')[0].uri
                     }
-                    return <TouchableOpacity
-                        key={`food item ${meal.name} at index ${i}`}
-                        onPress={() => {
-                            const screen = getMatchingNavigationScreen('MealDetail', navigator)
-                            //@ts-ignore
-                            navigator.push(screen, { id: meal.id })
-                        }}
-                        style={[tw`items-start mx-1`]}>
-                        <Image source={{ uri: img || defaultImage }} style={tw`h-20 w-20 rounded-lg mb-1`} resizeMode='cover' />
-                        <Text style={tw`text-xs max-w-20`}>{substringForLists(meal.name)}</Text>
-                    </TouchableOpacity>
+                    return <TouchableOpacity key={`food item ${meal.name} at index ${i}`}
+                    onPress={() => {
+                        const screen = getMatchingNavigationScreen('MealDetail', navigator)
+                        //@ts-ignore
+                        navigator.push(screen, { id: meal.id })
+                    }}
+                    style={[tw`items-start mx-1`]}>
+                    <Image source={{ uri: img || defaultImage }} style={tw`h-20 w-20 rounded-lg mb-1`} resizeMode='cover' />
+                    <Text style={tw`text-xs max-w-20`}>{substringForLists(meal.name)}</Text>
+                </TouchableOpacity>
                 })}
             </ScrollView>
             <View style={tw`flex-row items-center justify-between mb-4 mt-4`}>

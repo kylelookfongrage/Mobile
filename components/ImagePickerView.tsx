@@ -113,7 +113,7 @@ export const ImagePickerView = (props: ImagePickerViewProps) => {
     const styles = StyleSheet.create({
         img: {
             width: Dimensions.get('screen').width,
-            height: props.height || Dimensions.get('screen').height * 0.40,
+            height: props.height || Dimensions.get('screen').height * 0.55,
         }
     })
     const dm = useColorScheme() === 'dark'
@@ -159,15 +159,14 @@ export const ImagePickerView = (props: ImagePickerViewProps) => {
                     {imageSource && imageSource.type === 'video' && <View style={tw``}>
                         <Video
                             source={{ uri: imageSource.uri }}
-                            useNativeControls
                             // @ts-ignore
                             resizeMode={props.resizeMode || 'cover'}
                             style={styles.img}
                         />
                     </View>}
-                    {props.editable === true && <TouchableOpacity style={[tw`p-1 px-4 -mt-16 w-12/12`]} onPress={() => onDelete(imageSource.uri)}>
-                        <View style={tw`bg-gray-${dm ? '700' : '300'} w-2/12 items-center p-2 rounded-lg`}>
-                            <ExpoIcon name='trash' iconName='feather' size={25} color={dm ? 'white' : 'black'} />
+                    {props.editable === true && <TouchableOpacity style={[tw`p-1 px-4 -mt-20 items-end w-12/12`]} onPress={() => onDelete(imageSource.uri)}>
+                        <View style={tw`bg-gray-${dm ? '700' : '300'} w-2/12 -mt-6 items-center p-2 rounded-lg`}>
+                            <ExpoIcon name='trash-bin' iconName='ion' size={25} color={dm ? 'white' : 'black'} />
                         </View>
                     </TouchableOpacity>}
                 </View>

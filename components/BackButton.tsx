@@ -20,17 +20,16 @@ export const BackButton = (props: BackButtonProps) => {
     const insets = useSafeAreaInsets().top
     const dm = useColorScheme() === 'dark';
     const navigator = useNavigation()
-    return <View style={[tw`flex-row items-center justify-between px-4 pb-2`, {paddingTop: insets}]}>
+    return <View style={[tw`flex-row items-center justify-between px-4 pb-2 w-12/12`, {paddingTop: insets, position: 'absolute', top: 0, zIndex: 1}]}>
     <TouchableOpacity
         onPress={() => {
             func && func()
              //@ts-ignore
             navigator.pop()
         }}
-        style={[tw`flex flex-row flex-row items-center justify-center`, {
+        style={[tw`p-2.5 bg-gray-500 rounded-xl`, {
         }]}>
-        <ExpoIcon name='chevron-left' iconName='feather' size={25} color={dm ? 'white' : 'black'} />
-        <Text weight='semibold' style={tw``}>{props.name || 'Back'}</Text>
+        <ExpoIcon name='chevron-left' iconName='feather' size={25} color={'white'} />
     </TouchableOpacity>
     {Right && <Right />}
     </View>

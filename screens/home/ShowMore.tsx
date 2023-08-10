@@ -21,8 +21,9 @@ Report
 
 export const ShowMoreButton = (props: {name: string, desc: string, img: string, id?: string; type?: FavoriteType, userId?: string;}) => {
   const navigator = useNavigation()
+  const dm = useColorScheme() === 'dark'
   return (
-    <TouchableOpacity style={tw`p-3`} onPress={() => {
+    <TouchableOpacity style={tw`p-2.5 rounded-xl bg-gray-${dm ? '700' : '200'}`} onPress={() => {
       //@ts-ignore
       navigator.navigate('ShowMore', {...props})
     }}>

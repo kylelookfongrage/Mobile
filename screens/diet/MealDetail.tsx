@@ -23,6 +23,7 @@ import { BadgeType, useBadges } from '../../hooks/useBadges';
 import TabSelector from '../../components/TabSelector';
 import { useSwipe } from '../../hooks/useSwipe';
 import * as VT from 'expo-video-thumbnails'
+import ScrollViewWithDrag from '../../components/ScrollViewWithDrag';
 
 export const foodCategories: Category[] = [{ name: 'N/A', emoji: '🚫' }, ...Object.values(healthLabelMapping)].map(h => {
     return { name: h.name, emoji: h.emoji }
@@ -63,7 +64,6 @@ export default function MealDetailScreen(props: MealDetailProps) {
     const [uploading, setUploading] = React.useState<boolean>(false)
     const [errors, setErrors] = React.useState<string[]>([])
     const [mealUserId, setMealUserId] = React.useState<string>('')
-    const scrollRef = useRef<ScrollView | null>()
     const [isAIGenerated, setIsAIGenerated] = React.useState<boolean>(false)
     const [editMealMode, setEditMealMode] = React.useState<boolean>(props.editable === true)
     const borderStyle = editMealMode ? `border-b border-gray-500` : ''
@@ -356,12 +356,12 @@ export default function MealDetailScreen(props: MealDetailProps) {
                 </TouchableOpacity>
             }} />
             {/* @ts-ignore */}
-            <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} ref={scrollRef}>
-                <ImagePickerView multiple editable={editMealMode === true} srcs={canViewDetails ? imageSource : imageSource.filter(x => x.type==='image')} onChange={x => {
+            <ScrollViewWithDrag rerenderTopView={[editMealMode, canViewDetails, (imageSource || [])]} TopView={() => <ImagePickerView multiple editable={editMealMode === true} srcs={canViewDetails ? imageSource : imageSource.filter(x => x.type==='image')} onChange={x => {
                     setImageSource(x)
                     setHasChangedPhoto(true)
-                }} type='all' />
-                <View style={[tw`pt-4`, {flex: 1}]}>
+                }} type='all' />} style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+                
+                <View includeBackground style={[tw`pt-4 -mt-9 rounded-t-3xl`, {flex: 1, zIndex: 1}]}>
                     <View style={tw`px-4`}>
                     {errors.length > 0 && <ErrorMessage errors={errors} onDismissTap={() => setErrors([])} />}
                     <View style={tw`flex-row w-12/12 items-center justify-between`}>
@@ -557,7 +557,7 @@ export default function MealDetailScreen(props: MealDetailProps) {
                     {/* FOOD */}
                     </View>
                 </View>
-            </ScrollView>
+            </ScrollViewWithDrag>
             <View style={[
                 {
                     position: 'absolute',

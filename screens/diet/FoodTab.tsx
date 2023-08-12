@@ -197,7 +197,7 @@ export const FoodAndMeals = () => {
     const [selectedOption, setSelectedOption] = React.useState<typeof searchOptions[number]>(searchOptions[0])
 
     React.useEffect(() => {
-        fetchFoodAndMeals()
+        // fetchFoodAndMeals()
     }, [debouncedKeyword, selectedOption])
 
     const color = dm ? 'white' : 'black'

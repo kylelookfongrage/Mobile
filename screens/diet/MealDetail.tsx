@@ -24,6 +24,7 @@ import TabSelector from '../../components/TabSelector';
 import { useSwipe } from '../../hooks/useSwipe';
 import * as VT from 'expo-video-thumbnails'
 import ScrollViewWithDrag from '../../components/ScrollViewWithDrag';
+import Reviews from '../../components/Reviews';
 
 export const foodCategories: Category[] = [{ name: 'N/A', emoji: '🚫' }, ...Object.values(healthLabelMapping)].map(h => {
     return { name: h.name, emoji: h.emoji }
@@ -336,7 +337,7 @@ export default function MealDetailScreen(props: MealDetailProps) {
     const {onTouchStart, onTouchEnd} = useSwipe(changeTab, () => changeTab(false), 6)
     return (
         <View style={{ flex: 1 }} includeBackground>
-            <BackButton Right={() => {
+            <BackButton inplace Right={() => {
                 if (!editMealMode || !id) {
                     return <ShowMoreButton name={name} desc={'@'+author} img={firstImage.length === 0 ? defaultImage : firstImage[0].uri} id={mealId} type={FavoriteType.MEAL} userId={mealUserId} />
                 }
@@ -364,6 +365,7 @@ export default function MealDetailScreen(props: MealDetailProps) {
                 <View includeBackground style={[tw`pt-4 -mt-9 rounded-t-3xl`, {flex: 1, zIndex: 1}]}>
                     <View style={tw`px-4`}>
                     {errors.length > 0 && <ErrorMessage errors={errors} onDismissTap={() => setErrors([])} />}
+                    {/* <Reviews mealId={mealId} /> */}
                     <View style={tw`flex-row w-12/12 items-center justify-between`}>
                         <View style={tw`max-w-8/12 w-8/12`}>
                             <TextInput

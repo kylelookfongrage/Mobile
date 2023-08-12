@@ -23,6 +23,7 @@ import AllergenAlert from '../../components/AllergenAlert';
 import { ShowMoreButton } from '../home/ShowMore';
 import { FavoriteType } from '../../aws/models';
 import { BadgeType, useBadges } from '../../hooks/useBadges';
+import ScrollViewWithDrag from '../../components/ScrollViewWithDrag';
 
 // export const SummaryFoodConverter: FirestoreDataConverter<FoodProgressProps> = {
 //     toFirestore(post: WithFieldValue<FoodProgressProps>): DocumentData {
@@ -364,19 +365,19 @@ export default function FoodDetail(props: FoodDetailProps) {
     const firstImage = imageSource.filter(x => x.type === 'image')
     return (
         <View style={{flex: 1}} includeBackground>
-            <BackButton Right={() => {
+            <BackButton inplace Right={() => {
                 return <ShowMoreButton name={name} desc={'@'+author} img={firstImage.length === 0 ? defaultImage : firstImage[0].uri} id={id} type={FavoriteType.FOOD} userId={authorId || ''} />
             }} />
-            <ScrollView bounces={false} contentContainerStyle={[tw`items-center`]} showsVerticalScrollIndicator={false} >
-                <ImagePickerView
+            <ScrollViewWithDrag rerenderTopView={[editable, imageSource]} TopView={() => <ImagePickerView
                     editable={editable === true}
                     srcs={imageSource}
                     onChange={setImageSource}
-                    type='image' />
-                <View includeBackground style={tw`w-12/12 h-12/12 items-center pb-5`}>
+                    type='image' />} showsVerticalScrollIndicator={false} >
+                
+                <View includeBackground style={[tw`pb-5 px-6 -mt-12 rounded-3xl h-12/12 w-12/12`]}>
                     {errors.length > 0 && <ErrorMessage errors={errors} onDismissTap={() => setErrors([])} />}
                     {/* Title */}
-                    <View style={tw`justify-between flex-row items-center w-12/12 px-4 py-4`}>
+                    <View style={tw`justify-between flex-row items-center py-4`}>
                         <View>
                             <TextInput
                                 style={tw`text-2xl font-bold text-${dm ? 'white' : "black"}`}
@@ -402,7 +403,7 @@ export default function FoodDetail(props: FoodDetailProps) {
                         </View>
                         {userIsAllergic && <AllergenAlert />}
                     </View>
-                    <View style={tw`items-start justify-start w-12/12 px-4 py-4`}>
+                    <View style={tw`items-start justify-start w-12/12 py-4`}>
                         <View style={tw`flex-row items-center justify-between w-12/12`}>
                             <Text weight='bold' style={tw`text-2xl`}>Health Labels</Text>
                             {(healthLabels || []).length != Object.keys(healthLabelMapping).length && <View style={tw`flex-row items-center`}>
@@ -417,7 +418,7 @@ export default function FoodDetail(props: FoodDetailProps) {
                             </View>}
                         </View>
                     </View>
-                    {healthLabels.length !== 0 && <View style={tw`h-15 px-4 mb-3`}>
+                    {healthLabels.length !== 0 && <View style={tw`h-15 mb-3`}>
                         <ScrollView horizontal={true} showsHorizontalScrollIndicator={false}>
                             {healthLabels.map((l, i) => {
                                 if (!Object.keys(healthLabelMapping).includes(l)) return null
@@ -436,7 +437,7 @@ export default function FoodDetail(props: FoodDetailProps) {
                         </ScrollView>
                     </View>}
                     {/* Nutrient Information */}
-                    <View style={tw`w-11/12 border border-2 border-${dm ? "white" : "black"}`}>
+                    <View style={tw`w-12/12 items-center justify-center border border-2 border-${dm ? "white" : "black"}`}>
                         <TouchableOpacity style={tw`flex-row justify-between items-center px-7`} onPress={() => setShowMeasures(!showMeasures)}>
                             <Text style={tw`text-xl py-2`} weight='semibold'>Serving Sizes</Text>
                             <ExpoIcon name={`${showMeasures ? 'chevron-up' : 'chevron-down'}`} iconName='feather' size={25} color={`${dm ? 'white' : 'black'}`} />
@@ -473,7 +474,7 @@ export default function FoodDetail(props: FoodDetailProps) {
                             </View>
                         </View>}
                     </View>
-                    <View style={tw`flex-row justify-between w-12/12 px-4 py-6 mt-4`}>
+                    <View style={tw`flex-row justify-between w-12/12 py-6 mt-4`}>
                         <Text weight='bold' style={tw`text-2xl`}>Nutrition</Text>
                         <View style={tw`flex-row`}>
                             <TextInput
@@ -493,6 +494,7 @@ export default function FoodDetail(props: FoodDetailProps) {
                             }} defaultIndex={measures.findIndex(x => x.label === currentMeasure.label && x.weight == currentMeasure.weight)} data={measures.map((m) => ({ label: m.label, value: m.weight }))} />
                         </View>
                     </View>
+                    <View style={tw`items-center justify-center`}>
                     <NutritionInfo
                         onNutrientsChanged={(x) => console.log(x)}
                         onAddNew={(x) => {
@@ -501,7 +503,8 @@ export default function FoodDetail(props: FoodDetailProps) {
                         editable={editable === true}
                         data={nutritionInfo}
                     />
-                    <View style={tw`px-4 py-6 w-12/12`}>
+                    </View>
+                    <View style={tw`py-6 w-12/12`}>
                         <Text style={tw`text-2xl my-2`} weight='bold'>Ingredients</Text>
                         <TextInput
                             multiline
@@ -513,7 +516,7 @@ export default function FoodDetail(props: FoodDetailProps) {
                     </View>
                 </View>
                 <View style={tw`h-60`} />
-            </ScrollView>
+            </ScrollViewWithDrag>
             {editable && <View style={[
                 {
                     position: 'absolute',
@@ -649,7 +652,7 @@ export const NutritionInfo = (props: NutritionInfoProps) => {
     const [newLabel, setNewLabel] = React.useState<{ label: string } | null>(missingLabels.length > 0 ? { label: missingLabels[0].name } : null)
     const [show, setShow] = React.useState<boolean>(true)
     const dm = useColorScheme() === 'dark'
-    return <View style={tw`w-11/12 rounded border border-2 border-${dm ? 'white' : 'black'} p-3`}>
+    return <View style={tw`w-12/12 rounded border border-2 border-${dm ? 'white' : 'black'} p-3`}>
         <TouchableOpacity style={tw`flex-row justify-between items-center`} onPress={() => setShow(!show)}>
             <Text style={tw`text-xl`} weight='semibold'>Nutrition Facts</Text>
             <ExpoIcon name={`${show ? 'chevron-up' : 'chevron-down'}`} iconName='feather' size={25} color={`${dm ? 'white' : 'black'}`} />

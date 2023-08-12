@@ -64,6 +64,7 @@ import Message from '../screens/workout/Message';
 import { getCommonScreens } from '../components/GetCommonScreens';
 import NewChat from '../screens/workout/NewChat';
 import ChatDetail from '../screens/workout/ChatDetail';
+import Setup from '../screens/onboarding/Setup';
 
 
 function RootNavigator() {
@@ -165,7 +166,7 @@ function RootNavigator() {
       <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />
       <Stack.Screen name="ForgotPassword" component={ForgotPassword} options={{ headerShown: false }} />
       <Stack.Screen name="Registration" options={{ headerShown: false }}>
-        {props => <Bio registration />}
+        {props => <Setup registration />}
       </Stack.Screen>
       <Stack.Screen name="NotFound" component={NotFoundScreen} options={{ title: 'Oops!' }} />
     </Stack.Navigator>

@@ -345,7 +345,7 @@ export default function ExerciseDetail(props: ExerciseDetailProps) {
 
     return (
         <View style={{ flex: 1 }} includeBackground>
-            <BackButton Right={() => {
+            <BackButton inplace Right={() => {
                 if (!editMode) return <ShowMoreButton name={exerciseName} desc={'@' + author} img={firstImage.length === 0 ? defaultImage : firstImage[0].uri} id={exerciseId} type={FavoriteType.EXERCISE} userId={authorId} />
                 return <TouchableOpacity style={tw`px-2`} onPress={async () => {
                     await DataStore.delete(Exercise, exerciseId)

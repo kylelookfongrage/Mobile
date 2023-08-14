@@ -60,12 +60,8 @@ export default function CompletedExerciseDetails(props: { workoutPlayId: string;
                 let sets = await DataStore.query(WorkoutPlayDetail, wpd => wpd.and(e => [
                     e.exerciseID.eq(ex), e.completed.eq(true), e.userID.eq(userId), e.createdAt.ge(sixtyDaysAgo)
                 ]), { sort: x => x.createdAt('ASCENDING') })
-                let img = (exercise?.media || [{ type: 'image', uri: defaultImage }])?.[0]
-                let uri = img?.uri || defaultImage
+                let uri = exercise?.preview || defaultImage
                 if (isStorageUri(uri)) uri = await Storage.get(uri)
-                if (img?.type === 'video') {
-                    uri = (await VT.getThumbnailAsync(uri)).uri
-                }
                 return { ...exercise, id: ex, sets, img: uri, maxWeight: (maxWeight?.[0]?.weight || 0), maxTime: (maxTime?.[0]?.secs || 0), maxReps: (maxReps?.[0]?.reps || 0) }
             }))
             //@ts-ignore
@@ -146,12 +142,12 @@ export default function CompletedExerciseDetails(props: { workoutPlayId: string;
     }
     return (
         <View includeBackground style={[{ flex: 1 }]}>
-            <BackButton />
+            <BackButton inplace />
             {(!workout || !workoutPlay || !workoutPlayDetails || !workout.img || (Object.keys(details).length === 0)) && <View style={[tw`flex items-center justify-center`, { flex: 1 }]}>
                 <ActivityIndicator />
                 <Text style={tw`text-gray-500 mt-2`}>Loading...</Text>
             </View>}
-            {(workout && workoutPlay && workoutPlayDetails && workout.img && (Object.keys(details).length > 0)) && <ScrollViewWithDrag TopView={() => <Image resizeMode='cover' style={[tw`w-12/12`, { height: s.height * 0.45 }]} source={{ uri: workout.img }} />} showsVerticalScrollIndicator={false}>
+            {(workout && workoutPlay && workoutPlayDetails && workout.img && (Object.keys(details).length > 0)) && <ScrollViewWithDrag TopView={() => <Image resizeMode='cover' style={[tw`w-12/12`, { height: s.height * 0.45 }]} source={{ uri: workout.img || "" }} />} showsVerticalScrollIndicator={false}>
                 <BackgroundGradient onTouchEnd={onTouchEnd} onTouchStart={onTouchStart} style={[tw`pt-6 pb-60 -mt-12`, { zIndex: 1, flex: 1 }]}>
                     <Text style={tw`text-xl px-6`} weight='semibold'>{workout.name}</Text>
                     <Text style={tw`px-6 text-gray-500 text-xs mt-2`} weight='semibold'>{moment(workoutPlay.createdAt).format('LL • LT')}</Text>

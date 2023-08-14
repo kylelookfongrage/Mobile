@@ -626,9 +626,7 @@ export const getUsernameAndMedia = async (result: Meal | Workout | Exercise): Pr
     let user = await DataStore.query(User, result.userID)
     let username = user?.username || 'rage'
     //@ts-ignore
-    let media = result.img ? [{ type: 'image', uri: result.img }] : result.media || []
-    //@ts-ignore
-    let img = media.filter(x => (x && x.uri && x.type && x.type === 'image'))?.[0]?.uri || defaultImage
+    let img = (result.preview || result.img || defaultImage);
     if (isStorageUri(img)) {
       img = await Storage.get(img)
     }
@@ -654,6 +652,7 @@ export interface ExerciseDisplay {
     name: string;
     id: string;
     description: string;
+    preview: string;
 }
 
 export interface WorkoutPlayDisplayProps {
@@ -704,18 +703,6 @@ export function calculateBodyFat(sex: 'male' | 'female', unit: 'USC' | 'Metric',
         throw new Error('All measurements must be positive numbers.');
       }
   
-      if (height <= neck || height <= waist || (hip !== undefined && height <= hip)) {
-        throw new Error('Height must be greater than neck, waist, and hip measurements.');
-      }
-  
-      if (waist <= neck || (hip !== undefined && waist <= hip)) {
-        throw new Error('Waist measurement must be greater than neck and hip measurements.');
-      }
-  
-      if (hip !== undefined && hip <= neck) {
-        throw new Error('Hip measurement must be greater than neck measurement.');
-      }
-  
       if (sex === 'male') {
         bfp = 86.010 * logWaistNeck - 70.041 * logHeight + 36.76;
       } else {
@@ -727,14 +714,6 @@ export function calculateBodyFat(sex: 'male' | 'female', unit: 'USC' | 'Metric',
     } else if (unit === 'Metric') {
       if (height <= 0 || waist <= 0 || neck <= 0) {
         throw new Error('All measurements must be positive numbers.');
-      }
-  
-      if (height <= neck || height <= waist) {
-        throw new Error('Height must be greater than neck and waist measurements.');
-      }
-  
-      if (waist <= neck) {
-        throw new Error('Waist measurement must be greater than neck measurement.');
       }
   
       if (sex === 'male') {
@@ -749,3 +728,26 @@ export function calculateBodyFat(sex: 'male' | 'female', unit: 'USC' | 'Metric',
     return bfp;
   }
   
+
+
+  export const validateUsername = async (newUsername: string, currentUsername: string|null): Promise<string | null> => {
+    if (newUsername === '' || !newUsername) return 'You must input a username'
+    if (!newUsername.match(usernameRegex)) {
+        return 'Your username must be between 4 and 20 characters without special characters. Underscores and periods are allowed once'
+    }
+    if (currentUsername === newUsername) return null;
+    const potentialMatches = await DataStore.query(User, u => u.username.eq(newUsername))
+        if (potentialMatches.length > 0) {
+            return 'This username is already taken'
+        } 
+        return null
+}
+
+
+
+export const inchesToFeet = (inches: number): string => {
+    console.log(inches)
+    const remainderInches = Math.round(inches % 12)
+    const totalFeet = Math.round((inches - remainderInches) / 12)
+    return `${totalFeet} ft ${remainderInches} in`
+}

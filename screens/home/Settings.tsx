@@ -46,6 +46,7 @@ export default function Settings() {
                 }))
             }
         } },
+        { title: 'Update Goal', icon: 'bar-chart', screen: 'Setup' },
         { title: subscribed ? 'Subscribe or Remove Ads' : 'Manage Subscription', icon: 'tag', screen: 'Subscription' },
         { title: 'Help', icon: 'file-text', screen: 'Help', payload: { personal: true } },
         { title: 'About', icon: 'info', screen: 'About', payload: { personal: true } }

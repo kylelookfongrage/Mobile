@@ -65,6 +65,7 @@ import { getCommonScreens } from '../components/GetCommonScreens';
 import NewChat from '../screens/workout/NewChat';
 import ChatDetail from '../screens/workout/ChatDetail';
 import Setup from '../screens/onboarding/Setup';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 
 function RootNavigator() {
@@ -102,12 +103,10 @@ function RootNavigator() {
       <Stack.Screen name="Help" component={Help} options={{ headerShown: false }} />
       <Stack.Screen name="About" component={About} options={{ headerShown: false }} />
       <Stack.Screen name="Quiz" component={Quiz} options={{ headerShown: false }} />
+      <Stack.Screen name="Setup" component={Setup} options={{ headerShown: false }} />
       <Stack.Screen name="NewChat" component={NewChat} options={{ headerShown: false, presentation: 'transparentModal', gestureEnabled: true, gestureDirection: 'vertical', fullScreenGestureEnabled: true }} />
       <Stack.Screen name="SelectSprite" component={SelectSprite} options={{ headerShown: false, presentation: 'transparentModal' }} />
-      <Stack.Screen name='UserBio' options={{ headerShown: false }}>
-        {/* @ts-ignore */}
-        {props => <Bio registration={props.route?.params?.registration} />}
-      </Stack.Screen>
+      <Stack.Screen name='UserBio' component={Bio} options={{ headerShown: false }} />
       <Stack.Screen name="FinishedExercise" component={FinishedExercise} options={{ headerShown: false, gestureEnabled: false }} />
       <Stack.Screen name="ShowMore" options={{ headerShown: false, presentation: 'transparentModal' }}>
         {props => <ShowMore
@@ -242,13 +241,13 @@ function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const { setAiResult, setCurrentIngredietId } = useCommonAWSIds()
   const iconsAndColors = {
     'Home': {
-      icon: "activity",
-      label: 'Activity',
-      color: dm ? "red-400" : "red-400"
+      icon: "home",
+      label: 'Home',
+      color: dm ? "red-600" : "red-500"
     },
     'Exercise': {
       icon: "compass",
-      label: 'For You',
+      label: 'Discover',
       color: dm ? "yellow-400" : "yellow-500"
     },
     'Profile': {
@@ -262,8 +261,9 @@ function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
       color: dm ? "teal-600" : "teal-700"
     }
   };
+  const insets = useSafeAreaInsets()
   return (
-    <View includeBackground style={[{ flexDirection: 'row' }, tw`h-23 items-center justify-between w-12/12 border-t border-${dm ? 'gray-600' : 'gray-400'}`]}>
+    <View includeBackground style={[{ flexDirection: 'row', paddingBottom: insets.bottom }, tw`pt-3 items-center justify-between w-12/12`]}>
       {state.routes.map((route, index) => {
         // @ts-ignore
         const { icon, color, label } = (iconsAndColors[route.name]) || { icon: 'home', color: 'red-500', label: 'Home' }
@@ -307,13 +307,15 @@ function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
             style={[{ flex: 1 }, tw`p-2`]}
           >
             <View style={tw`items-center`}>
-              {!isFocused && <ExpoIcon name={icon} iconName='feather' size={22} style={tw`text-${color}`} />}
+              {!isFocused && <ExpoIcon name={icon} iconName='feather' size={22} 
+              // style={tw`text-${color}`}
+              color='gray'
+               />}
               {isFocused && <View style={tw`items-center`}>
                 <Text weight='bold' style={tw`text-center text-${isFocused ? color : 'gray-700'}`}>
                   {/* @ts-ignore */}
                   {label}
                 </Text>
-                <View style={tw`rounded-full h-2 w-2 mt-1 bg-${color}`} />
               </View>
               }
             </View>

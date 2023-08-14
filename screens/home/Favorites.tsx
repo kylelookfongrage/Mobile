@@ -50,7 +50,7 @@ export default function Favorites() {
           image: defaultImage,
           author: user?.username || 'Rage'
         }
-        const firstImage = exercise.media?.filter(x => x?.type === 'image')?.[0]?.uri || defaultImage
+        const firstImage = exercise.preview || defaultImage
         defaultReturnItem['image'] = isStorageUri(firstImage) ? await Storage.get(firstImage) : firstImage
 
         return defaultReturnItem
@@ -85,7 +85,7 @@ export default function Favorites() {
           image: defaultImage,
           author: user?.username || 'Rage'
         }
-        const firstImage = meal.media?.filter(x => x?.type === 'image')?.[0]?.uri || defaultImage
+        const firstImage = meal.preview || defaultImage
         defaultReturnItem['image'] = isStorageUri(firstImage) ? await Storage.get(firstImage) : firstImage
         return defaultReturnItem
       }))

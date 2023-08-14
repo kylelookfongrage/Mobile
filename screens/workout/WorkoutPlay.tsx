@@ -105,6 +105,7 @@ export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
                     name: exerciseWithoutMedia?.title || 'Exercise',
                     description: exerciseWithoutMedia?.description || '',
                     id: exerciseWithoutMedia?.id || x.id,
+                    preview: isStorageUri(exerciseWithoutMedia?.preview || defaultImage) ? await Storage.get(exerciseWithoutMedia?.preview || defaultImage) : exerciseWithoutMedia?.preview || defaultImage
                 }
                 //TODO: Remove media filter so it can be fetched
                 if (exerciseWithoutMedia && exerciseWithoutMedia?.media) {

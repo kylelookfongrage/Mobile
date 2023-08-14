@@ -7,13 +7,14 @@ import { Animated, Dimensions, ScrollView } from "react-native";
 import * as Haptics from 'expo-haptics';
 import useColorScheme from "../hooks/useColorScheme";
 
+
 interface RulerProps {
     onChange?: (v: number) => void;
     min?: number;
     max?: number;
     unit?: string;
     initial?: number;
-    disabled?: boolean
+    disabled?: boolean;
 }
 export const Ruler = (props: RulerProps) => {
     const { onChange, min, max, unit, initial, disabled } = props;
@@ -45,8 +46,8 @@ export const Ruler = (props: RulerProps) => {
 
 
     const dm = useColorScheme() === 'dark'
-    return <View style={{backgroundColor: 'transparent'}}>
-        <View style={tw`items-center justify-center`}>
+    return <View style={[{backgroundColor: 'transparent'}]}>
+        <View style={tw`items-center justify-center mb-4`}>
             <Text style={tw`text-lg font-bold`}>{text}{' '}{unit}</Text>
             <ExpoIcon name='caret-down-outline' iconName='ion' size={25} color={dm ? 'white' : 'black'} />
         </View>
@@ -66,7 +67,7 @@ export const Ruler = (props: RulerProps) => {
             scrollEnabled={!disabled === true}
             showsHorizontalScrollIndicator={false}
             scrollEventThrottle={16}
-            snapToInterval={2 + 6}
+            snapToInterval={8}
             bounces={false}
         >
             <View style={[{
@@ -81,7 +82,7 @@ export const Ruler = (props: RulerProps) => {
                         backgroundColor: tenth ? '#333' : '#999',
                         marginHorizontal: 10
                     }} />
-                    {tenth && <Text>{d}</Text>}
+                    {tenth && <Text style={tw`mt-2 text-red-500`}>{d}</Text>}
                 </View>
 
             })}

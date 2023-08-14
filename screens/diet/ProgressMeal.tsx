@@ -106,7 +106,7 @@ export default function ProgressMeal(props: any) {
                 description: ogMeal.description, steps: ogMeal.steps,
                 premium: ogMeal.premium, category: ogMeal.category, userID: ogMeal.userID,
                 sub: ogMeal.sub, name: ogMeal.name, media: ogMeal.media, isAiGenerated: ogMeal.isAiGenerated,
-                public: false
+                public: false, preview: ogMeal.preview
             }))
             for (var ingr of ingredients) {
                 await DataStore.save(new Ingredient({

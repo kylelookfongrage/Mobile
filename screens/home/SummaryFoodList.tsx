@@ -216,14 +216,6 @@ export default function SummaryFoodList() {
                 </View>
                 {meals.length === 0 && <Text style={tw`text-center my-6`}>There are no meals to display, add one!</Text>}
                 {meals.map((ingr, i) => {
-                    const imgs = ingr.media ? ingr.media.filter(x => x?.type === 'image') : []
-                    let img = defaultImage
-                    if (imgs.length !== 0) {
-                        let firstImage = imgs[0]
-                        if (firstImage) {
-                            img = firstImage.uri || defaultImage
-                        }
-                    }
                     return <Swipeable renderRightActions={() => {
                         return <View style={tw`flex items-center justify-center ml-2`}>
                             <TouchableOpacity onPress={async () => {
@@ -242,7 +234,7 @@ export default function SummaryFoodList() {
                             }}
                             style={tw`w-12/12 my-2 flex-row justify-between items-center ${dm ? 'bg-gray-700' : 'bg-slate-300'} rounded-2xl py-4 px-3`}>
                             <View style={tw`flex-row items-center`}>
-                                <Image source={{ uri: img }} style={[{ height: 60, width: 60, borderRadius: 20 }, tw`items-center justify-center`]} />
+                                <Image source={{ uri: ingr.preview || '' }} style={[{ height: 60, width: 60, borderRadius: 20 }, tw`items-center justify-center`]} />
                                 <View style={tw`ml-2 max-w-9/12`}>
                                     <Text weight='semibold'>{ingr.name}</Text>
                                     <View style={tw`flex-row items-center`}>

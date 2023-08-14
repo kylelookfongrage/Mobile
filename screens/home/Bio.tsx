@@ -9,7 +9,7 @@ import { useCommonAWSIds } from '../../hooks/useCommonContext'
 import { DataStore, Storage } from 'aws-amplify'
 import { Goal, Tier, User } from '../../aws/models'
 import * as ImagePicker from 'expo-image-picker'
-import { defaultImage, isStorageUri, uploadImageAndGetID, usernameRegex } from '../../data'
+import { defaultImage, isStorageUri, uploadImageAndGetID, usernameRegex, validateUsername } from '../../data'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ExpoIcon } from '../../components/ExpoIcon'
 
@@ -74,7 +74,7 @@ export default function Bio(props: {registration?: boolean;}) {
         setUploading(true)
         setUsernameError(null)
         if (!registration) {
-            const error = await validateUsername()
+            const error = await validateUsername(newUsername, username)
             if (error) {
                 setUsernameError(error)
                 setUploading(false)
@@ -97,7 +97,7 @@ export default function Bio(props: {registration?: boolean;}) {
                 setUploading(false)
             }
         } else {
-            const error = await validateUsername()
+            const error = await validateUsername(newUsername, username)
             if (error) {
                 setUsernameError(error)
                 setUploading(false)
@@ -109,19 +109,6 @@ export default function Bio(props: {registration?: boolean;}) {
             setUsername(newUsername)
             navigator.navigate('RegistrationEdit')
         }
-    }
-
-    const validateUsername = async (): Promise<string | null> => {
-        if (newUsername === '') return 'You must input a username'
-        if (!newUsername.match(usernameRegex)) {
-            return 'Your username must be between 4 and 20 characters without special characters. Underscores and periods are allowed once'
-        }
-        if (username === newUsername) return null;
-        const potentialMatches = await DataStore.query(User, u => u.username.eq(newUsername))
-            if (potentialMatches.length > 0) {
-                return 'This username is already taken'
-            } 
-            return null
     }
 
     const uploadProfileImage = async (): Promise<string> => {

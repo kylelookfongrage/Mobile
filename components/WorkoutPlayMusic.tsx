@@ -15,6 +15,7 @@ import { ResizeMode, Video } from 'expo-av'
 import * as VideoThumbnails from 'expo-video-thumbnails';
 import { Equiptment, Exercise, Workout, WorkoutDetails, WorkoutPlayDetail } from '../aws/models'
 import Body from 'react-native-body-highlighter'
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 
 
 const Stack = createNativeStackNavigator()
@@ -105,16 +106,9 @@ function InformationWPlay(props: { exerciseId: string; workoutId: string, workou
                 const ex = await DataStore.query(Exercise, props.exerciseId)
                 if (!ex) return;
                 setExercise(ex)
-                const media = (ex.media || [{ type: 'image', uri: defaultImage }])[0]
-                if (media?.type === 'video') {
-                    let vid = media.uri
-                    if (isStorageUri(vid)) vid = await Storage.get(vid)
-                    setExerciseImg((await VideoThumbnails.getThumbnailAsync(vid)).uri)
-                } else {
-                    let img = media?.uri || defaultImage
-                    if (isStorageUri(img)) img = await Storage.get(img)
-                    setExerciseImg(img)
-                }
+                let preview = ex.preview || defaultImage
+                if (isStorageUri(preview)) preview = await Storage.get(preview)
+                setExerciseImg(preview)
                 const eq = await DataStore.query(Equiptment, e => e.ExerciseEquiptmentDetails.exerciseID.eq(props.exerciseId))
                 const eqWithMedia = await Promise.all(eq.map(async equ => {
                     return { ...equ, img: isStorageUri(equ.img) ? await Storage.get(equ.img) : equ.img }
@@ -191,7 +185,7 @@ function MediaForWorkout(props: { media: MediaType[], paused: boolean; setPaused
                 let z = m.uri
                 if (isStorageUri(z)) z = await Storage.get(z)
                 let p = m.uri
-                if (m.type === 'video') p = (await VideoThumbnails.getThumbnailAsync(z, { time: 0 })).uri
+                if (m.type === 'video') p = (await VideoThumbnails.getThumbnailAsync(z, { time: 0, quality: 0.3 })).uri
                 return { ...m, uri: z, preview: p }
             }))
             setThisMedia(fetchedMedia)
@@ -245,7 +239,7 @@ function MediaForWorkout(props: { media: MediaType[], paused: boolean; setPaused
                 </TouchableOpacity>}
             </Pressable>
             {/* MENU BUTTONS  */}
-            {shouldShowMenu && <View style={[{ position: 'absolute', top: 0, paddingTop: p.top + 2, zIndex: 1 }, tw`items-center flex-row justify-between pb-3 px-6 w-12/12 bg-gray-${dm ? '800' : '300'}`]}>
+            {shouldShowMenu && <Animated.View entering={FadeIn} exiting={FadeOut} style={[{ position: 'absolute', top: 0, paddingTop: p.top + 2, zIndex: 1 }, tw`items-center flex-row justify-between pb-3 px-6 w-12/12 bg-gray-${dm ? '800' : '300'}`]}>
                 <TouchableOpacity onPress={props.onResetPress}>
                     <ExpoIcon name='refresh-ccw' iconName='feather' size={20} color='gray' />
                 </TouchableOpacity>
@@ -257,8 +251,8 @@ function MediaForWorkout(props: { media: MediaType[], paused: boolean; setPaused
                     <Text style={tw`text-center text-lg`} weight='semibold'>{props.remaining}</Text>
                     <Text style={tw`text-xs text-gray-500`}>Sets</Text>
                 </TouchableOpacity>
-            </View>}
-            {(shouldShowMenu && !props.resting && !showSetInfo) && <View style={[{ zIndex: 1 }, tw`mb-4 bg-transparent px-9 flex-row items-center`]}>
+            </Animated.View>}
+            {(shouldShowMenu && !props.resting && !showSetInfo) && <Animated.View entering={FadeIn} exiting={FadeOut} style={[{ zIndex: 1 }, tw`mb-4 bg-transparent px-9 flex-row items-center`]}>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                     {thisMedia.map(m => {
                         const selected = m.uri === selectedMedia.uri
@@ -267,13 +261,13 @@ function MediaForWorkout(props: { media: MediaType[], paused: boolean; setPaused
                             if (!selected) {
                                 setSelectedMedia(m)
                             }
-                        }} key={m.uri + 'media'} style={tw`mr-2 rounded ${selected ? 'p-.5 bg-' + c : ''}`}>
+                        }} key={m.uri + 'media'} style={tw`mr-2 rounded-lg ${selected ? 'p-.5 bg-' + c : ''}`}>
                             <Image source={{ uri: m.preview }} style={tw`h-15 w-15 rounded-lg`} />
                         </TouchableOpacity>
                     })}
                 </ScrollView>
-            </View>}
-            {(shouldShowMenu && !showSetInfo) && <View style={[{ zIndex: 1 }, tw`mb-4 bg-transparent px-9 flex-row justify-between items-center`]}>
+            </Animated.View>}
+            {(shouldShowMenu && !showSetInfo) && <Animated.View entering={FadeIn} exiting={FadeOut} style={[{ zIndex: 1 }, tw`mb-4 bg-transparent px-9 flex-row justify-between items-center`]}>
                 <View style={tw`items-center`}>
                     <Text weight='semibold'>{props.resting ? toHHMMSS(props.restTime) : toHHMMSS(props.time)}</Text>
                     <Text style={tw`text-xs text-gray-500`}>{props.resting ? 'Rest' : 'Set'} Time</Text>
@@ -288,8 +282,8 @@ function MediaForWorkout(props: { media: MediaType[], paused: boolean; setPaused
                     <ExpoIcon name='bar-chart-2' iconName='feather' size={20} color='gray' />
                     <Text style={tw`text-xs text-gray-500`}>Log Set</Text>
                 </TouchableOpacity>
-            </View>}
-            {(shouldShowMenu && !showSetInfo) && <View style={[tw`px-4 mx-9 items-center flex-row justify-evenly py-4 rounded-2xl bg-gray-${dm ? '800' : '300'}`, { zIndex: 1, marginBottom: p.bottom + 15 }]}>
+            </Animated.View>}
+            {(shouldShowMenu && !showSetInfo) && <Animated.View entering={FadeIn} exiting={FadeOut} style={[tw`px-4 mx-9 items-center flex-row justify-evenly py-4 rounded-2xl bg-gray-${dm ? '800' : '300'}`, { zIndex: 1, marginBottom: p.bottom + 15 }]}>
                 <TouchableOpacity onPress={() => {
                     //@ts-ignore
                     navigator.navigate('InformationWPlay')
@@ -318,7 +312,7 @@ function MediaForWorkout(props: { media: MediaType[], paused: boolean; setPaused
                 }}>
                     <ExpoIcon name='align-justify' iconName='feather' size={20} color='gray' />
                 </TouchableOpacity>
-            </View>}
+            </Animated.View>}
             {(shouldShowMenu && showSetInfo) && <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} enabled>
                 <Pressable onPress={() => Keyboard.dismiss()} style={[tw`px-4 pt-6 rounded-lg bg-gray-${dm ? '800' : '300'}`, { zIndex: 1, paddingBottom: p.bottom + 10 }]}>
                 <View style={tw`flex-row items-center justify-between`}>
@@ -374,7 +368,7 @@ const RemainingToDo = (props: { exercises: ExerciseDisplay[], workoutDetails: Wo
                     const selected = props.selectedExercise === wd.exerciseID
                     const e = props.exercises.filter(x => x.id === wd.exerciseID)[0]
                     if (!e) return
-                    let image = e.media[0]
+                    let image = e.preview
                     return <View key={wd.id} style={tw`my-2`}>
                         <TouchableOpacity onPress={() => {
                             if (!selected) {
@@ -383,7 +377,7 @@ const RemainingToDo = (props: { exercises: ExerciseDisplay[], workoutDetails: Wo
                             //@ts-ignore
                             navigator.pop()
                         }} style={tw`flex-row items-center`}>
-                            <ImagePreview media={image} style={tw`h-15 w-15 rounded-2xl`} />
+                            <ImagePreview media={{type: 'image', uri: image}} style={tw`h-15 w-15 rounded-2xl`} />
                             <Text style={tw`ml-2`}>{e.name}</Text>
                         </TouchableOpacity>
                         {selected && i < props.exercises.length - 1 && <Text style={tw`pt-2 text-lg`} weight='semibold'>Remaining</Text>}

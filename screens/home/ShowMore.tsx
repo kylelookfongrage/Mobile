@@ -23,7 +23,7 @@ export const ShowMoreButton = (props: {name: string, desc: string, img: string, 
   const navigator = useNavigation()
   const dm = useColorScheme() === 'dark'
   return (
-    <TouchableOpacity style={tw`p-2 rounded-xl bg-gray-${dm ? '800' : '300'}`} onPress={() => {
+    <TouchableOpacity style={[tw`p-2 rounded-xl bg-gray-${dm ? '800' : '300'}`, {zIndex: 1}]} onPress={() => {
       //@ts-ignore
       navigator.navigate('ShowMore', {...props})
     }}>

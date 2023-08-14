@@ -209,7 +209,7 @@ function CreatorScreen() {
         mp.userID.ne(userId)
       ]))).length
       obj.usage = usages
-      let img = meal.media?.filter(x => x?.type === 'image')?.[0]?.uri || defaultImage
+      let img = meal.preview || defaultImage
       obj.image = isStorageUri(img) ? await Storage.get(img) : img
 
       return obj

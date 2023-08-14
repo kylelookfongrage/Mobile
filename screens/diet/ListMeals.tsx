@@ -76,10 +76,9 @@ export default function ListMeals(props: ListMealsProps) {
         }
         const mealResults: ListMealSearchResults[] = await Promise.all(meals.map(async meal => {
             //@ts-ignore
-            const media: MediaType[] = meal.media || []
             const user = await DataStore.query(User, meal.userID)
             const allergens = user?.allergens || []
-            const picture = media.length > 0 ? media.filter(x => x.type === 'image')[0] : {uri: defaultImage, type: 'image'}
+            const picture = meal.preview || defaultImage
             const ingredients = await meal.Ingredients.toArray()
             const ingredientsSearchKey = ingredients.map(x => `${x.name} ${x.foodContentsLabel}`.toLowerCase()).join(' ')
             const userIsAllergic = allergens.filter(x => ingredientsSearchKey.includes(x || 'nothing')).length > 0
@@ -89,7 +88,7 @@ export default function ListMeals(props: ListMealsProps) {
                 name: meal.name,
                 id: meal.id,
                 userIsAllergic,
-                img: isStorageUri(picture.uri || defaultImage) ? await Storage.get(picture.uri || defaultImage) : (picture.uri || defaultImage),
+                img: isStorageUri(picture) ? await Storage.get(picture) : (picture),
                 author: user?.username || '',
                 calories: ingredients.reduce((prev, curr) => prev+(curr.kcal || 0), 0),
                 protein: ingredients.reduce((prev, curr) => prev+curr.protein, 0),

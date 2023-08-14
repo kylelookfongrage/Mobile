@@ -327,7 +327,7 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
 const {onTouchStart, onTouchEnd} = useSwipe(changeTab, () => changeTab(false), 6)
   return (
     <View style={{ flex: 1 }} includeBackground>
-      <BackButton Right={() => {
+      <BackButton inplace Right={() => {
         if (!editMode || !id) {
           return <ShowMoreButton name={name} desc={'@' + author} id={workoutId || ''} img={firstImage.length === 0 ? defaultImage : firstImage[0].uri} type={FavoriteType.WORKOUT} userId={authorId} />
         }
@@ -518,12 +518,9 @@ const ExerciseTile = (props: { id: string, exercise: Exercise; onDelete?: (e: st
     setLoading(true)
     let img = null;
     try {
-      let media = (exercise.media || [{ type: 'image', uri: defaultImage }])?.[0]
-      img = media?.uri || defaultImage
+      img = exercise.preview || defaultImage
       if (isStorageUri(img)) img = await Storage.get(img)
-      if (media?.type === 'video') {
-        img = (await ImagePreview.getThumbnailAsync(img)).uri
-      }
+      
     } catch (error) {
 
     }

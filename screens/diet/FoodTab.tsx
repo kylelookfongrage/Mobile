@@ -124,7 +124,7 @@ export const FoodAndMeals = () => {
                 limit: 10
             })
             const mealsWithImages: MealDisplay[] = await Promise.all(mealsWithoutImages.map(async x => {
-                const defaultMealToReturn = { ...x, coverImage: defaultImage, username: '' }
+                const defaultMealToReturn = { ...x, coverImage: (x.preview || defaultImage), username: '' }
                 const ingredients = (await x.Ingredients.toArray()) || []
                 const ingredientLabels = ingredients.map(ingr => (ingr.foodContentsLabel || '') + ingr.name).join(',').toLowerCase() || ''
                 const potentialAllergens = userAllergens.filter(al => ingredientLabels.includes(al?.toLowerCase() || 'nothing'))
@@ -133,17 +133,6 @@ export const FoodAndMeals = () => {
                     return {...defaultMealToReturn, userIsAllergic: potentialAllergens.length > 0}
                 }
                 //@ts-ignore
-                let media: MediaType[] = [{ uri: defaultImage, type: 'image' }]
-                try {
-                    //@ts-ignore
-                    media = x.media || []
-                } catch (error) {
-
-                }
-                const images: MediaType[] = media.filter(x => x.type === 'image') || []
-                if (images.length === 0) {
-                    defaultMealToReturn.coverImage = images[0].uri
-                }
                 return { ...x, userIsAllergic: potentialAllergens.length > 0, coverImage: isStorageUri(defaultMealToReturn.coverImage) ? await Storage.get(defaultMealToReturn.coverImage) : defaultMealToReturn.coverImage, username: user.username }
             }))
             setQ1(mealsWithImages)
@@ -182,8 +171,7 @@ export const FoodAndMeals = () => {
                 const user = await DataStore.query(User, ex.userID)
                 const username = user?.username
                 //@ts-ignore
-                const media: MediaType[] = ex.media || []
-                const img = media.filter(x => x.type == 'image')?.[0]?.uri || defaultImage
+                let img = ex.preview || defaultImage
                 return { ...ex, img: isStorageUri(img) ? await Storage.get(img) : img, username: username || '', name: ex.title }
             }))
             setQ2(exercisesWithImages)
@@ -197,7 +185,7 @@ export const FoodAndMeals = () => {
     const [selectedOption, setSelectedOption] = React.useState<typeof searchOptions[number]>(searchOptions[0])
 
     React.useEffect(() => {
-        // fetchFoodAndMeals()
+        fetchFoodAndMeals()
     }, [debouncedKeyword, selectedOption])
 
     const color = dm ? 'white' : 'black'

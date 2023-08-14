@@ -48,8 +48,7 @@ export default function ListExercise(props: ListExerciseProps) {
             const user = await DataStore.query(User, ex.userID)
             const author = user?.username || ''
             //@ts-ignore
-            const media: MediaType[] = ex.media || []
-            const img = media.filter(x => x.type == 'image')?.[0]?.uri
+            const img = ex.preview || defaultImage
             return { id: ex.id, name: ex.title, img: isStorageUri(img) ? await Storage.get(img) : img, author, favorited: false}
 
         }))

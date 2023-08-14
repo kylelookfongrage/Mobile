@@ -82,13 +82,14 @@ export default function Profile(props: ProfileProps) {
         const userMeals = await DataStore.query(Meal, m => m.and(x => [x.userID.eq(queryID), x.name.ne(''), x.public.eq(true), x.preview.ne(null)]), { sort: x => x.createdAt("DESCENDING"), limit: 20 })
         const mealsWithImages = await Promise.all(userMeals.map(async userMeal => {
             //@ts-ignore
-            const img = userMeal.preview || defaultImage
-            return { ...userMeal, userID: profileUsername, media: [{ type: 'image', uri: isStorageUri(img) ? await Storage.get(img) : img }] }
+            let img = userMeal.preview || defaultImage
+            if (isStorageUri(img)) img = await Storage.get(img)
+            return { ...userMeal, userID: profileUsername, preview: img }
         }))
         //@ts-ignore
         setMeals(mealsWithImages)
         if (isCurrentUsersProfile) {
-            const exercisesWithoutImages = await DataStore.query(Exercise, e => e.and(ex => [ex.title.ne(''), ex.userID.eq(queryID), ex.preview.ne(null)]), {
+            const exercisesWithoutImages = await DataStore.query(Exercise, e => e.and(ex => [ex.title.ne(''), ex.userID.eq(queryID)]), {
                 limit: 10,
                 sort: y => y.createdAt('DESCENDING')
               })
@@ -212,11 +213,6 @@ export default function Profile(props: ProfileProps) {
             {meals.length === 0 && <Text style={tw`text-center my-5`}>No meals to display</Text>}
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 {meals.map((meal, i) => {
-                    let img: string | null = null;
-                    if (meal.media && meal.media.length > 0) {
-                        //@ts-ignore
-                        img = meal.media.filter(x => x.type === 'image')[0].uri
-                    }
                     return <TouchableOpacity key={`food item ${meal.name} at index ${i}`}
                     onPress={() => {
                         const screen = getMatchingNavigationScreen('MealDetail', navigator)
@@ -224,7 +220,7 @@ export default function Profile(props: ProfileProps) {
                         navigator.push(screen, { id: meal.id })
                     }}
                     style={[tw`items-start mx-1`]}>
-                    <Image source={{ uri: img || defaultImage }} style={tw`h-20 w-20 rounded-lg mb-1`} resizeMode='cover' />
+                    <Image source={{ uri: meal.preview || '' }} style={tw`h-20 w-20 rounded-lg mb-1`} resizeMode='cover' />
                     <Text style={tw`text-xs max-w-20`}>{substringForLists(meal.name)}</Text>
                 </TouchableOpacity>
                 })}

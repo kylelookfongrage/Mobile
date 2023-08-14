@@ -12,7 +12,7 @@ export default function BackgroundGradient(props: BackgroundGradientProps) {
     if (props.bottom) colors = [colors[1], colors[0]]
   return (
     <LinearGradient 
-    locations={[0,0.05]}
+    locations={[0,0.059]}
     colors={colors} {...props}>
         {props.children && props.children}
     </LinearGradient>

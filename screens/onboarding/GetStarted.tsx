@@ -61,7 +61,7 @@ export default function GetStarted() {
           setSub(sub)
           setUserId(us.id)
           setUsername(us.username)
-          setStatus({pt: us.personalTrainer || false, fp: us.foodProfessional || false})
+          setStatus({pt: us.accepted_content_creator_terms || false, fp: us.accepted_content_creator_terms || false})
         }
 
       } catch {

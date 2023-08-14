@@ -112,15 +112,9 @@ export function useProgressValues(props: useProgressValuesProps) {
                     protein += ingredient.protein * (mealItem.consumedWeight / (mealItem.totalWeight || 1))
                 }
                 const extendedProps = { carbs, calories, fat, protein, mealProgressID: mealItem.id }
-                if (!meal.media || (meal.media && meal.media.length === 0)) {
-                    mealProgresses.push({ ...meal, ...extendedProps, media: [{ type: 'image', uri: defaultImage }] })
-                } else {
-                    const imgs = await Promise.all(meal.media.map(async i => {
-                        let uri = i?.uri || defaultImage
-                        return { ...i, uri: isStorageUri(uri) ? await Storage.get(uri) : uri }
-                    }))
-                    mealProgresses.push({ ...meal, ...extendedProps, media: imgs })
-                }
+                let preview = meal.preview || defaultImage
+                if (isStorageUri(preview)) preview = await Storage.get(preview)
+                mealProgresses.push({ ...meal, ...extendedProps, preview: preview })
             }))
             setMeals(mealProgresses)
         })

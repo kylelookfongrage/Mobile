@@ -52,6 +52,7 @@ export type RootStackParamList = {
   Inbox: undefined;
   Message: {id: string};
   ChatDetail: {id: string};
+  Setup: undefined;
 };
 
 

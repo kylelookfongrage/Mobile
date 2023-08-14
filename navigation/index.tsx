@@ -66,6 +66,7 @@ import NewChat from '../screens/workout/NewChat';
 import ChatDetail from '../screens/workout/ChatDetail';
 import Setup from '../screens/onboarding/Setup';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import OnboardingComplete from '../screens/onboarding/OnboardingComplete';
 
 
 function RootNavigator() {
@@ -103,6 +104,7 @@ function RootNavigator() {
       <Stack.Screen name="Help" component={Help} options={{ headerShown: false }} />
       <Stack.Screen name="About" component={About} options={{ headerShown: false }} />
       <Stack.Screen name="Quiz" component={Quiz} options={{ headerShown: false }} />
+      <Stack.Screen name="OnboardingComplete" component={OnboardingComplete} options={{ headerShown: false }} />
       <Stack.Screen name="Setup" component={Setup} options={{ headerShown: false }} />
       <Stack.Screen name="NewChat" component={NewChat} options={{ headerShown: false, presentation: 'transparentModal', gestureEnabled: true, gestureDirection: 'vertical', fullScreenGestureEnabled: true }} />
       <Stack.Screen name="SelectSprite" component={SelectSprite} options={{ headerShown: false, presentation: 'transparentModal' }} />

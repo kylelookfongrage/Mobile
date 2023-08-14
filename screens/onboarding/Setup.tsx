@@ -144,7 +144,7 @@ export default function Setup(props: { registration?: boolean; }) {
             setUserId(newUser.id)
             setUsername(newUsername)
             setLoading(false)
-            navigator.navigate('Root')
+            navigator.navigate('OnboardingComplete')
         } else if (!props.registration!!) {
             const existingUser = await DataStore.query(User, userId)
             if (existingUser && weight && fat) {
@@ -156,7 +156,7 @@ export default function Setup(props: { registration?: boolean; }) {
                 }))
                 setLoading(false)
                 //@ts-ignore
-                navigator.pop()
+                navigator.navigate('OnboardingComplete')
             }
         }
         setLoading(false)

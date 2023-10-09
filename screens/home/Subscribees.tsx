@@ -1,13 +1,13 @@
 import { Image, ScrollView, TextInput, TouchableOpacity, useColorScheme } from 'react-native'
 import React from 'react'
-import { Text, View } from '../../components/Themed'
+import { Text, View } from '../../components/base/Themed'
 import { useNavigation } from '@react-navigation/native'
 import { User } from '../../aws/models'
 import tw from 'twrnc'
 import { DataStore, Storage } from 'aws-amplify'
 import { defaultImage, getMatchingNavigationScreen, isStorageUri } from '../../data'
-import { ExpoIcon } from '../../components/ExpoIcon'
-import { BackButton } from '../../components/BackButton'
+import { ExpoIcon } from '../../components/base/ExpoIcon'
+import { BackButton } from '../../components/base/BackButton'
 import { useDebounce } from '../../hooks/useDebounce'
 
 interface SubscribeesProps{

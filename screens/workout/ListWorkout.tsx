@@ -1,19 +1,19 @@
 import { ScrollView, Image, TextInput, TouchableOpacity } from 'react-native'
 import React from 'react'
-import { Text, View } from '../../components/Themed'
+import { Text, View } from '../../components/base/Themed'
 import tw from 'twrnc'
-import { ExpoIcon } from '../../components/ExpoIcon'
+import { ExpoIcon } from '../../components/base/ExpoIcon'
 import useColorScheme from '../../hooks/useColorScheme'
 import { useDebounce } from '../../hooks/useDebounce'
 import { useNavigation } from '@react-navigation/native'
-import { BackButton } from '../../components/BackButton'
+import { BackButton } from '../../components/base/BackButton'
 import { defaultImage, getMatchingNavigationScreen, isStorageUri } from '../../data'
 import { DataStore, Storage } from 'aws-amplify'
 import { Exercise, User, Workout } from '../../aws/models'
 import { useCommonAWSIds } from '../../hooks/useCommonContext'
 import { WorkoutDetails } from '../../aws/models'
 import { useExerciseAdditions } from '../../hooks/useExerciseAdditions'
-import { ErrorMessage } from '../../components/ErrorMessage'
+import { ErrorMessage } from '../../components/base/ErrorMessage'
 
 export interface ListWorkoutSearchResultsType {
   name: string; 

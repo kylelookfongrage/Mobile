@@ -1,7 +1,7 @@
 import { Dimensions, Image, RefreshControl, useColorScheme, ActivityIndicator } from 'react-native'
 import React, { useState } from 'react'
-import { Text, View } from '../../components/Themed'
-import { BackButton } from '../../components/BackButton'
+import { Text, View } from '../../components/base/Themed'
+import { BackButton } from '../../components/base/BackButton'
 import tw from 'twrnc'
 import { useCommonAWSIds } from '../../hooks/useCommonContext'
 import { ScrollView, TouchableOpacity } from 'react-native-gesture-handler'
@@ -14,7 +14,7 @@ import { defaultImage, isStorageUri } from '../../data'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { useNavigation } from '@react-navigation/native'
 import { Env } from '../../env'
-import { ExpoIcon } from '../../components/ExpoIcon'
+import { ExpoIcon } from '../../components/base/ExpoIcon'
 import { useProgressValues } from '../../hooks/useProgressValues'
 
 const Stack = createNativeStackNavigator()

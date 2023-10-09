@@ -1,16 +1,16 @@
-import { View, Text } from '../../components/Themed'
+import { View, Text } from '../../components/base/Themed'
 import React, { useEffect, useMemo, useState } from 'react'
 import { Comments, Favorite, Post, User } from '../../aws/models'
 import { useCommonAWSIds } from '../../hooks/useCommonContext';
 import { useNavigation } from '@react-navigation/native';
 import { DataStore, Storage } from 'aws-amplify';
 import { defaultImage, formatCash, getMatchingNavigationScreen, isStorageUri } from '../../data';
-import { BackButton } from '../../components/BackButton';
+import { BackButton } from '../../components/base/BackButton';
 import { ScrollView, TextInput, TouchableOpacity } from 'react-native-gesture-handler';
 import tw from 'twrnc'
-import { ExpoIcon } from '../../components/ExpoIcon';
+import { ExpoIcon } from '../../components/base/ExpoIcon';
 import { KeyboardAvoidingView, Platform, useColorScheme, Image, Keyboard } from 'react-native';
-import { PostMedia } from '../../components/PostMedia';
+import { PostMedia } from '../../components/features/PostMedia';
 import moment from 'moment';
 interface CommentDisplay extends Comments { userDidLike: boolean; numLikes: number }
 interface UserInfo { [k: string]: { username: string; img: string; name: string | null } }

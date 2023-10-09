@@ -1,12 +1,12 @@
 import { useColorScheme, TextInput, TouchableOpacity, FlatList, Image } from 'react-native'
 import React from 'react'
-import { BackButton } from '../../components/BackButton'
+import { BackButton } from '../../components/base/BackButton'
 import { useNavigation } from '@react-navigation/native';
 import { useDebounce } from '../../hooks/useDebounce';
 import { User } from '../../aws/models';
 import tw from 'twrnc'
-import { ExpoIcon } from '../../components/ExpoIcon';
-import { Text, View } from '../../components/Themed';
+import { ExpoIcon } from '../../components/base/ExpoIcon';
+import { Text, View } from '../../components/base/Themed';
 import { DataStore, Storage } from 'aws-amplify';
 import { defaultImage, getMatchingNavigationScreen, isStorageUri } from '../../data';
 

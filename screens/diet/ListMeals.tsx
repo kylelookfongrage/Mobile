@@ -1,8 +1,8 @@
 import { ScrollView, TextInput, TouchableOpacity, useColorScheme, Image } from 'react-native'
 import React from 'react'
-import { Text, View } from '../../components/Themed'
+import { Text, View } from '../../components/base/Themed'
 import { useDebounce } from '../../hooks/useDebounce'
-import { ExpoIcon } from '../../components/ExpoIcon';
+import { ExpoIcon } from '../../components/base/ExpoIcon';
 import tw from 'twrnc'
 import { useNavigation } from '@react-navigation/native';
 import { Ingredient, Meal, PantryItem, User } from '../../aws/models';
@@ -10,8 +10,8 @@ import { DataStore, Storage } from 'aws-amplify';
 import { useCommonAWSIds } from '../../hooks/useCommonContext';
 import { MediaType } from '../../types/Media';
 import { defaultImage, getMatchingNavigationScreen, isStorageUri } from '../../data';
-import { BackButton } from '../../components/BackButton';
-import AllergenAlert from '../../components/AllergenAlert';
+import { BackButton } from '../../components/base/BackButton';
+import AllergenAlert from '../../components/features/AllergenAlert';
 
 export interface ListMealSearchResults {
     name: string;

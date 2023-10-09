@@ -2,12 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { Alert, Dimensions, TouchableOpacity, useColorScheme, View } from 'react-native';
-import { Text } from '../../components/Themed';
+import { Text } from '../../components/base/Themed';
 import tw from 'twrnc'
 import { Coordinates, RunProgress } from '../../aws/models';
 import moment from 'moment';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { ExpoIcon } from '../../components/ExpoIcon';
+import { ExpoIcon } from '../../components/base/ExpoIcon';
 import { useNavigation } from '@react-navigation/native';
 import { defaultRunTypes, getTotalDistance, RunType, toHHMMSS } from '../../data';
 import { DataStore } from 'aws-amplify';

@@ -1,22 +1,23 @@
-import { View, Text } from '../../components/Themed'
+import { View, Text } from '../../components/base/Themed'
 import React, { useEffect, useRef, useState } from 'react'
 import tw from 'twrnc'
 import useColorScheme from '../../hooks/useColorScheme'
 import moment from 'moment';
 import { Goal, Tier, User } from '../../aws/models';
-import { BackButton } from '../../components/BackButton';
+import { BackButton } from '../../components/base/BackButton';
 import { ScrollView, TextInput } from 'react-native-gesture-handler';
 import { Dimensions, FlatList, KeyboardAvoidingView, Platform, TouchableOpacity } from 'react-native';
 import { ProgressBar } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ExpoIcon } from '../../components/ExpoIcon';
+import { ExpoIcon } from '../../components/base/ExpoIcon';
 import { RulerPicker } from 'react-native-ruler-picker';
 import DatePicker from 'react-native-date-picker'
-import { calculateBodyFat, inchesToFeet, validateUsername } from '../../data';
+import { calculateBodyFat, inchesToFeet, caloriesPerDay } from '../../data';
 import * as WebBrowser from 'expo-web-browser'
 import { useCommonAWSIds } from '../../hooks/useCommonContext';
 import { DataStore } from 'aws-amplify';
 import { useNavigation } from '@react-navigation/native';
+import { UserQueries } from '../../types/UserDao';
 
 
 
@@ -37,12 +38,13 @@ interface SetupQuestion {
 }
 
 export default function Setup(props: { registration?: boolean; }) {
+    const {registration} = props;
     const dm = useColorScheme() === 'dark'
     const [name, setName] = useState<string>('')
     const [metric, setMetric] = useState<boolean>(false);
     const [age, setAge] = useState<Date | null>(null);
     const [gender, setGender] = useState<string | null>(null);
-    const [goal, setGoal] = useState<Goal | null>(null);
+    const [goal, setGoal] = useState<string | null>(null);
     const [fitnessHistory, setFitnessHistory] = useState<string>('')
     const [fat, setFat] = useState<number | null>(null)
     const [weight, setWeight] = useState<number | null>(null)
@@ -54,14 +56,15 @@ export default function Setup(props: { registration?: boolean; }) {
     const [goalByDate, setGoalByDate] = useState<Date | null>(null);
     const [newUsername, setNewUsername] = useState<string | null>(null)
     const [height, setHeight] = useState<number>(60)
+    const dao = UserQueries()
     let weightPrefix = metric ? 'kg' : 'lb'
     let measurementPrefix = metric ? 'cm' : 'in'
     const registrationQuestions: SetupQuestion[] = [
         { name: 'Your Name', description: 'Introduce yourself', value: name, setValue: setName, type: 'input', textIcon: 'person-circle' },
-        { name: 'Username', description: 'Let us get to know you!', value: newUsername, setValue: x => setNewUsername(x.toLowerCase()), type: 'input', textIcon: 'at', validation: x => validateUsername(x, null) },
+        { name: 'Username', description: 'Let us get to know you!', value: newUsername, setValue: x => setNewUsername(x.toLowerCase()), type: 'input', textIcon: 'at', validation: x => dao.validateUsername(x, null) },
     ]
     const questions: SetupQuestion[] = [
-        ...(props.registration ? registrationQuestions : []),
+        ...(registration ? registrationQuestions : []),
         {
             name: 'Unit of Measure', description: 'Please indicate if you would like to use the metric systems', value: metric, setValue: setMetric, type: 'select', options: [
                 { name: 'Metric', description: 'cm and kg', value: true }, { name: 'Imperial', description: 'lb and in', value: false }
@@ -78,7 +81,6 @@ export default function Setup(props: { registration?: boolean; }) {
                     return 'There was a problem';
                 }
                 let birthday = moment(age)
-                console.log(birthday.format('LL'))
                 let yearsFromNow = birthday.diff(moment(), 'years')
                 if (Math.abs(yearsFromNow) < 18) return 'You must be at least 18 to use this application'
                 return null
@@ -86,9 +88,9 @@ export default function Setup(props: { registration?: boolean; }) {
         },
         {
             name: 'Goal', description: 'Let us know how you would like to use the app!', value: goal, setValue: setGoal, type: 'select', options: [
-                { name: 'Net Deficit', value: Goal.DEFICIT, description: 'I would like to focus on losing body fat and/or weight, while potentially gaining muscle!' },
-                { name: 'Maintenance', value: Goal.MAINTENANCE, description: 'I would like to stay around the same body weight, while replacing body fat with muscle!' },
-                { name: 'Net Surplus', value: Goal.SURPLUS, description: 'I would like to gain weight by consuming more calories, while potentially gaining muscle!' }
+                { name: 'Net Deficit', value: 'DEFICIT', description: 'I would like to focus on losing body fat and/or weight, while potentially gaining muscle!' },
+                { name: 'Maintenance', value: 'MAINTENANCE', description: 'I would like to stay around the same body weight, while replacing body fat with muscle!' },
+                { name: 'Net Surplus', value: 'SURPLUS', description: 'I would like to gain weight by consuming more calories, while potentially gaining muscle!' }
             ]
         },
         {
@@ -104,13 +106,13 @@ export default function Setup(props: { registration?: boolean; }) {
         { name: 'Weight Goal', description: 'This will give us a quantifiable goal to access your weight progress!', value: weightGoal, setValue: setWeightGoal, type: 'ruler', unit: weightPrefix, min: metric ? 30 : 80, max: metric ? 250 : 300 },
         { name: 'Body Fat', fat: true, description: 'We will track this as progres and calculate your calories.', value: fat, setValue: setFat, type: 'ruler', unit: '%', min: 5, max: 50 },
         { name: 'Body Fat Goal', description: 'This will give us a quantifiable goal to access your body fat progress!', value: fatGoal, setValue: setFatGoal, type: 'ruler', unit: '%', min: 5, max: 50 },
-        { name: 'Goal Target', description: 'When would you like to achieve this goal? This will help us calculate your daily calories!', value: goalByDate, setValue: setGoalByDate, type: 'date', min: new Date() }
+        { name: 'Goal Target', description: 'When would you like to achieve this goal? This will help us calculate your daily calories!', value: goalByDate, setValue: setGoalByDate, type: 'date', min: new Date() },
     ]
     const s = Dimensions.get('screen')
     const [pageNumber, setPageNumber] = useState<number>(0);
     const listRef = useRef<FlatList | null>(null);
     const [shouldCalculateFat, setShouldCalculateFat] = useState<boolean>(false);
-    const { userId, username, setUserId, setUsername, sub } = useCommonAWSIds()
+    const { userId, username, setUserId, setUsername, sub, user, profile, setProfile } = useCommonAWSIds()
 
     useEffect(() => {
         try {
@@ -131,29 +133,38 @@ export default function Setup(props: { registration?: boolean; }) {
     const [loading, setLoading] = useState<boolean>(false)
     const saveProgress = async () => {
         setLoading(true)
+        let document = {
+            activity: fitnessHistory,
+            birthday: moment(age).format('YYYY-MM-DD'),
+            email: user?.email,
+            gender: gender,
+            goal: goal || undefined,
+            goalDate: moment(goalByDate).format('YYYY-MM-DD'),
+            height: height,
+            metric: metric,
+            name: name,
+            startDate: moment().utc().format('YYYY-MM-DD'),
+            startFat: fat,
+            startWeight: weight,
+            fatGoal: fatGoal,
+            //@ts-ignore
+            tdee: caloriesPerDay(gender === 'MALE', moment(age).format('YYYY-MM-DD'), moment().utc().format('YYYY-MM-DD'), moment(goalByDate).format('YYYY-MM-DD'), weight, weightGoal, height, fat, fitnessHistory.toLowerCase(), metric),
+            username: newUsername || profile?.username,
+            weight: weight,
+            weightGoal: weightGoal,
+        }
         if (props.registration && newUsername && weight && fat) {
-            const newUser = await DataStore.save(new User({
-                sub: sub, tier: Tier.FREE, accepted_terms: true,
-                username: newUsername, name: name,
-                weight: weight, fat: 20, goal: goal || Goal.DEFICIT,
-                metric: metric, gender: gender, dob: age ? moment(age).format('YYYY-MM-DD') : null,
-                fitnessBackground: fitnessHistory, height: height, weightDifferenceGoal: weightGoal, fatDifferenceGoal: fatGoal,
-                goalByDate: goalByDate ? moment(goalByDate).format('YYYY-MM-DD') : null
-
-            }))
-            setUserId(newUser.id)
+            //@ts-ignore
+            let res = await dao.save(document)
+            //@ts-ignore
+            setUserId(res?.id)
             setUsername(newUsername)
             setLoading(false)
             navigator.navigate('OnboardingComplete')
         } else if (!props.registration!!) {
             const existingUser = await DataStore.query(User, userId)
-            if (existingUser && weight && fat) {
-                await DataStore.save(User.copyOf(existingUser, x => {
-                    x.weight = weight; x.fat = 20; x.goal = goal || Goal.DEFICIT;
-                    x.metric = metric; x.gender = gender; x.dob = age ? moment(age).format('YYYY-MM-DD') : null;
-                    x.fitnessBackground = fitnessHistory; x.height = height; x.weightDifferenceGoal = weightGoal; x.fatDifferenceGoal = fatGoal;
-                    x.goalByDate = goalByDate ? moment(goalByDate).format('YYYY-MM-DD') : null
-                }))
+            if (existingUser && weight && fat && profile) {
+                await dao.update(profile?.id, document)
                 setLoading(false)
                 //@ts-ignore
                 navigator.navigate('OnboardingComplete')
@@ -163,7 +174,17 @@ export default function Setup(props: { registration?: boolean; }) {
     }
     return (
         <View includeBackground style={{ flex: 1 }}>
-            <BackButton />
+            <BackButton replacePop func={() => {
+                if (pageNumber !== 0) {
+                    setPageNumber(pageNumber - 1)
+                    if (listRef && listRef.current) {
+                        setShouldCalculateFat(false)
+                        listRef.current.scrollToIndex({ animated: true, index: pageNumber - 1 })
+                    }
+                } else {
+                    navigator.goBack()
+                }
+            }} />
             <View style={tw`mx-12 items-center justify-center`}>
                 <Text style={tw`text-center text-gray-500 text-xs mb-2`}>Personalization</Text>
                 <ProgressBar style={{ width: s.width * 0.3 }} color={'red'} progress={(pageNumber) / questions.length} />

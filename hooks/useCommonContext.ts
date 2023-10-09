@@ -1,6 +1,8 @@
 import React from 'react'
 import { GenerateMealResult } from '../data';
 import { Tier } from '../aws/models';
+import { User } from '@supabase/supabase-js';
+import { Database } from '../types/Database';
 
 interface CommonIds {
     sub: string;
@@ -23,6 +25,10 @@ interface CommonIds {
     setHasSubscribedBefore: React.Dispatch<React.SetStateAction<boolean>>;
     status: {pt: boolean, fp: boolean};
     setStatus: React.Dispatch<React.SetStateAction<{pt: boolean, fp: boolean}>>;
+    user: null | User,
+    setUser: (u: User | null) => void;
+    profile: Database['public']['Tables']['user']['Row'] | null,
+    setProfile: (x: Database['public']['Tables']['user']['Row']) => void;
   }
 
 export const CommonContext = React.createContext<CommonIds>({
@@ -45,7 +51,9 @@ export const CommonContext = React.createContext<CommonIds>({
     hasSubscribedBefore: false,
     setHasSubscribedBefore: () => {},
     status: {pt: false, fp: false},
-    setStatus: () => {}
+    setStatus: () => {},
+    user: null, setUser: () => {}, profile: null,
+    setProfile: () => {}
 
 })
 export const useCommonAWSIds = () => React.useContext<CommonIds>(CommonContext)

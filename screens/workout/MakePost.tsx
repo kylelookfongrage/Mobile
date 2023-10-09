@@ -1,11 +1,11 @@
-import { View, Text } from '../../components/Themed'
+import { View, Text } from '../../components/base/Themed'
 import React, { useEffect, useRef, useState } from 'react'
 import tw from 'twrnc'
 import { TouchableOpacity, useColorScheme, Image, KeyboardAvoidingView, Platform, ImageBackground, Dimensions, ActivityIndicator } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ScrollView, TextInput } from 'react-native-gesture-handler'
-import { ExpoIcon } from '../../components/ExpoIcon'
+import { ExpoIcon } from '../../components/base/ExpoIcon'
 import { Coordinates, Exercise, Meal, Media, Post, RunProgress, User, Workout } from '../../aws/models'
 import { useCommonAWSIds } from '../../hooks/useCommonContext'
 import { DataStore, Storage } from 'aws-amplify'
@@ -13,9 +13,9 @@ import { defaultImage, getMatchingNavigationScreen, getUsernameAndMedia, isStora
 import * as ImagePicker from 'expo-image-picker'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { useDebounce } from '../../hooks/useDebounce'
-import RunListComponent from '../../components/RunListComponent'
-import { ErrorMessage } from '../../components/ErrorMessage'
-import { PostMedia } from '../../components/PostMedia'
+import RunListComponent from '../../components/features/RunListComponent'
+import { ErrorMessage } from '../../components/base/ErrorMessage'
+import { PostMedia } from '../../components/features/PostMedia'
 const Stack = createNativeStackNavigator()
 
 export default function MakePost(props: { id?: string, workoutId?: string; mealId?: string; exerciseId?: string; runProgressId?: string; description?: string; media?: string }) {

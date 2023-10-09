@@ -1,6 +1,6 @@
 import { ScrollView, Dimensions, TouchableOpacity, Platform } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Text, View } from '../../components/Themed'
+import { Text, View } from '../../components/base/Themed'
 import React, { useRef } from 'react'
 import * as SplashScreen from 'expo-splash-screen';
 import { Amplify, Auth, DataStore } from 'aws-amplify';
@@ -21,7 +21,21 @@ SplashScreen.preventAutoHideAsync();
 
 export default function GetStarted() {
   const [isReady, setIsReady] = React.useState<boolean>(false)
-  const { setSub, setUserId, setUsername, setStatus, setSignedInWithEmail } = useCommonAWSIds()
+  const { setSub, setUserId, setUsername, setUser, setProfile, setStatus, setSignedInWithEmail } = useCommonAWSIds()
+  const dao = UserQueries() 
+  useAuthListener((e, u) => {
+    setSignedInWithEmail(['apple', 'google'].includes(u?.app_metadata?.provider || ''))
+    dao.fetchProfile(u.id).then(x => {
+      if (x?.id) {
+        setUserId(x.id)
+        setProfile(x)
+      } else {
+        navigator.navigate('Registration')
+      }
+    })
+    setSub(u.id)
+    setUser(u)
+  })
   const width = Dimensions.get('screen').width
   const navigator = useNavigation()
   const x = useSharedValue(0)
@@ -41,37 +55,37 @@ export default function GetStarted() {
       }})
       // await DataStore.clear()
     }
-    prepare().then(_ => setAmplifyReady(true))
+    // prepare().then(_ => setAmplifyReady(true)).then(_ => setIsReady(true))
   }, [])
 
   React.useEffect(() => {
-    async function prepare() {
-      if (!amplifyReady) return;
-      try {
-        const user = await Auth.currentAuthenticatedUser()
-        if (user.attributes.identities) {
-          setSignedInWithEmail(false)
-        } else {
-          setSignedInWithEmail(true)
-        }
-        const sub = user.attributes.sub
-        const potentialMatches = await DataStore.query(User, x => x.sub.eq(sub))
-        if (potentialMatches.length > 0) {
-          const us = potentialMatches[0]
-          setSub(sub)
-          setUserId(us.id)
-          setUsername(us.username)
-          setStatus({pt: us.accepted_content_creator_terms || false, fp: us.accepted_content_creator_terms || false})
-        }
+    // async function prepare() {
+    //   if (!amplifyReady) return;
+    //   try {
+    //     const user = await Auth.currentAuthenticatedUser()
+    //     if (user.attributes.identities) {
+    //       setSignedInWithEmail(false)
+    //     } else {
+    //       setSignedInWithEmail(true)
+    //     }
+    //     const sub = user.attributes.sub
+    //     const potentialMatches = await DataStore.query(User, x => x.sub.eq(sub))
+    //     if (potentialMatches.length > 0) {
+    //       const us = potentialMatches[0]
+    //       setSub(sub)
+    //       setUserId(us.id)
+    //       setUsername(us.username)
+    //       setStatus({pt: us.accepted_content_creator_terms || false, fp: us.accepted_content_creator_terms || false})
+    //     }
 
-      } catch {
-        return;
-      } finally {
-        // Tell the application to render
-        setIsReady(true);
-      }
-    }
-    prepare()
+    //   } catch {
+    //     return;
+    //   } finally {
+    //     // Tell the application to render
+    //     setIsReady(true);
+    //   }
+    // }
+    // prepare()
   }, [amplifyReady])
   React.useCallback(async () => {
     if (isReady) {
@@ -147,6 +161,8 @@ import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native
 import { useNavigation } from '@react-navigation/native';
 import AnimatedLottieView from 'lottie-react-native';
 import awsmobile from '../../constants/aws-config';
+import { useAuthListener } from '../../supabase/auth';
+import { UserQueries } from '../../types/UserDao';
 
 const onboardingScreens: { name: string, description: string, animation: any }[] = [
   { name: 'Workout and Exercise', description: 'Log your workouts with ease! Rage make it very easy to create and keep track of your daily exercise routine', animation: crunches },

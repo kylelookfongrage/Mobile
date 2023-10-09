@@ -1,4 +1,4 @@
-import { View, Text } from '../../components/Themed'
+import { View, Text } from '../../components/base/Themed'
 import React, { useEffect, useState } from 'react'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import tw from 'twrnc'

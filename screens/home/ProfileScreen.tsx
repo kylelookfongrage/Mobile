@@ -1,6 +1,6 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Profile from "./Profile";
-import { getCommonScreens } from "../../components/GetCommonScreens";
+import { getCommonScreens } from "../../components/screens/GetCommonScreens";
 
 
 interface ProfileTabProps {

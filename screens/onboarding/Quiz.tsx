@@ -1,6 +1,6 @@
-import { View, Text } from '../../components/Themed'
+import { View, Text } from '../../components/base/Themed'
 import React, { useEffect, useState } from 'react'
-import { BackButton } from '../../components/BackButton'
+import { BackButton } from '../../components/base/BackButton'
 import { ScrollView, TextInput } from 'react-native-gesture-handler'
 import tw from 'twrnc'
 import { Goal, User } from '../../aws/models'

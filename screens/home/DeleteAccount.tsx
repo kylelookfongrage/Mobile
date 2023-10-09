@@ -1,9 +1,9 @@
 import { ActivityIndicator, Alert, TouchableOpacity, useColorScheme } from 'react-native'
 import React from 'react'
-import { Text, View } from '../../components/Themed'
-import { BackButton } from '../../components/BackButton'
+import { Text, View } from '../../components/base/Themed'
+import { BackButton } from '../../components/base/BackButton'
 import tw from 'twrnc'
-import { ErrorMessage } from '../../components/ErrorMessage'
+import { ErrorMessage } from '../../components/base/ErrorMessage'
 import { Auth, DataStore, Predicates } from 'aws-amplify'
 import { 
   Follower, FoodProgress, Ingredient, Meal, MealProgress, Progress, 

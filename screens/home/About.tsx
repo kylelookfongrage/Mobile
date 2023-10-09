@@ -1,6 +1,6 @@
 import React from 'react'
-import { Text, View } from '../../components/Themed'
-import { BackButton } from '../../components/BackButton'
+import { Text, View } from '../../components/base/Themed'
+import { BackButton } from '../../components/base/BackButton'
 import tw from 'twrnc'
 import { SafeAreaView } from 'react-native-safe-area-context'
 

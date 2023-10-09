@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { View, TouchableOpacity } from 'react-native';
 import ImageViewer from 'react-native-image-zoom-viewer';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ExpoIcon } from '../../components/ExpoIcon';
+import { ExpoIcon } from '../../components/base/ExpoIcon';
 import tw from 'twrnc'
 import useColorScheme from '../../hooks/useColorScheme';
 import { isStorageUri } from '../../data';

@@ -1,9 +1,9 @@
 import { ScrollView, useColorScheme, TouchableOpacity, Image, TextInput } from 'react-native'
 import React from 'react'
-import { Text, View } from '../../components/Themed'
+import { Text, View } from '../../components/base/Themed'
 import { useDebounce } from '../../hooks/useDebounce'
 import tw from 'twrnc'
-import { ExpoIcon } from '../../components/ExpoIcon'
+import { ExpoIcon } from '../../components/base/ExpoIcon'
 import { defaultImage, FetchEdamamParser, getMatchingNavigationScreen, isStorageUri, OpenFoodFactsBarcodeSearch, OpenFoodFactsRequest } from '../../data'
 import { useNavigation } from '@react-navigation/native'
 import Barcode from '@kichiyaki/react-native-barcode-generator'
@@ -11,10 +11,18 @@ import { BarCodeScanner } from 'expo-barcode-scanner'
 import { DataStore, Storage } from 'aws-amplify'
 import { FoodProgress, Ingredient, User } from '../../aws/models'
 import { useCommonAWSIds } from '../../hooks/useCommonContext'
-import { BackButton } from '../../components/BackButton'
+import { BackButton } from '../../components/base/BackButton'
 import { ActivityIndicator } from 'react-native-paper'
 import moment from 'moment'
-import AllergenAlert from '../../components/AllergenAlert'
+import AllergenAlert from '../../components/features/AllergenAlert'
+import SearchBar from '../../components/inputs/SearchBar'
+import Spacer from '../../components/base/Spacer'
+export const categoryMapping = {
+  'generic foods' : '🍎',
+  'generic meals': '🍽',
+  'packaged foods': '🛒',
+  'fast foods': '🍟',
+};
 
 
 interface ListFoodSearchResults {
@@ -51,7 +59,7 @@ interface ListFoodProps {
 
 export default function ListFood(props: ListFoodProps) {
   const navigator = useNavigation()
-  const {userId} = useCommonAWSIds()
+  const {userId, profile} = useCommonAWSIds()
   const dm = useColorScheme() === 'dark'
   const color = dm ? 'white' : 'black'
   const [searchKey, setSearchKey] = React.useState<string>('')
@@ -59,10 +67,44 @@ export default function ListFood(props: ListFoodProps) {
   const searchOptions = ['All', 'My Foods', 'Barcode'] as const 
   const [barcode, setBarcode] = React.useState<string | null>(null);
   const [selectedOption, setSelectedOption] = React.useState<typeof searchOptions[number]>(searchOptions[0])
-  const [userAllergens, setUserAllergens] = React.useState<string[]>([])
+  const userAllergens = profile?.allergens || []
   const [results, setResults] = React.useState<ListFoodSearchResults[]>([])
   const [displaySearchState, setDisplaySearchState] = React.useState('Search for food!')
+  let search = async (term: string | null) => {
+    console.log(term)
+    if (selectedOption == 'All') {
+      if (!term) {
+        setDisplaySearchState('Search for food!')
+        return;
+      }
+      setDisplaySearchState('Searching....')
+      let res = await FetchEdamamParser({
+        ingr: term
+      })
+      if (res.hints) {
+        if (res.hints.length > 0) {
+          if (res?.error) {
+            setDisplaySearchState('No matches found')
+            return;
+          }
+          let edamamResults = res.hints.map((y) => ({
+            name: y.food.label,
+            image: y.food.image,
+            category: y.food.category,
+            id: y.food.foodId,
+            edamamId: y.food.foodId,
+            fromEdamam: true,
+            calories: y.food.nutrients.ENERC_KCAL,
+            measures: y.measures,
+            foodContentsLabel: y.food.foodContentsLabel || ''
+          }))
+          //@ts-ignore
+          setResults(edamamResults)
+      }
+    }
+  }}
   React.useEffect(() => {
+    return;
     setResults([])
     if (selectedOption === 'All') {
       if (!debouncedSearchTerm) {
@@ -150,7 +192,10 @@ export default function ListFood(props: ListFoodProps) {
     }
 
   }, [debouncedSearchTerm, selectedOption])
+
+
   React.useEffect(() => {
+    return;
     if (barcode) {
       FetchEdamamParser({
         upc: barcode
@@ -180,16 +225,7 @@ export default function ListFood(props: ListFoodProps) {
     }
   }, [barcode])
   console.log(displaySearchState)
-  React.useEffect(() => {
-    const prepare = async () => {
-      const user = await DataStore.query(User, userId)
-      if (user) {
-        //@ts-ignore
-        setUserAllergens(user.allergens || [])
-      }
-    }
-    prepare()
-  }, [])
+  
 
   React.useLayoutEffect(() => {
     setSearchKey('')
@@ -208,16 +244,9 @@ export default function ListFood(props: ListFoodProps) {
   return (
     <View style={{flex: 1}} includeBackground>
        <BackButton />
+       <Spacer />
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[tw`px-4`]}>
-        <View style={tw`flex flex-row items-center py-3 px-5 mt-6 w-12/12 bg-${dm ? 'gray-600' : 'gray-300'} rounded-xl`}>
-          <ExpoIcon name='search' iconName='feather' color='gray' size={25} />
-          <TextInput
-            placeholder='food name...'
-            placeholderTextColor={'gray'}
-            style={tw`w-9/12 py-2 px-3 text-${dm ? 'white' : 'black'}`}
-            value={searchKey} onChangeText={setSearchKey}
-          />
-        </View>
+        <SearchBar onSearch={search} />
         <View style={tw`flex-row justify-between py-4 px-5`}>
             {searchOptions.map((o, i) => {
               const selected = selectedOption === o
@@ -337,13 +366,4 @@ const BarcodeScannerView = (props: BarcodeScannerViewProps) => {
       </View>
   </View>
 
-}
-
-
-
-export const categoryMapping = {
-  'generic foods' : '🍎',
-  'generic meals': '🍽',
-  'packaged foods': '🛒',
-  'fast foods': '🍟',
 }

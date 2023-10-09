@@ -1,9 +1,9 @@
 import { ScrollView, TextInput, Image, TouchableOpacity } from 'react-native'
 import React from 'react'
-import { Text, View } from '../../components/Themed'
+import { Text, View } from '../../components/base/Themed'
 import * as ImagePicker from 'expo-image-picker';
 import tw from 'twrnc'
-import { ExpoIcon } from '../../components/ExpoIcon'
+import { ExpoIcon } from '../../components/base/ExpoIcon'
 import useColorScheme from '../../hooks/useColorScheme'
 import { useNavigation } from '@react-navigation/native';
 import { Equiptment, ExerciseEquiptmentDetail } from '../../aws/models';
@@ -11,10 +11,10 @@ import { DataStore, Predicates, Storage } from 'aws-amplify';
 import { useCommonAWSIds } from '../../hooks/useCommonContext';
 import { defaultImage, isStorageUri, uploadImageAndGetID } from '../../data';
 import { ActivityIndicator } from 'react-native-paper';
-import { BackButton } from '../../components/BackButton';
+import { BackButton } from '../../components/base/BackButton';
 import { useDebounce } from '../../hooks/useDebounce';
 
-export default function EquiptmentSearch(props: { exerciseId: string }) {
+export default function EquiptmentSearch(props: { exerciseId?: string }) {
     const dm = useColorScheme() === 'dark'
     const { sub, userId } = useCommonAWSIds()
     const [searchKey, setSearchKey] = React.useState('')

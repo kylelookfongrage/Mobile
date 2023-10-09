@@ -1,12 +1,12 @@
 import { useNavigation } from "@react-navigation/native"
 import React from "react"
 import { Dimensions, useColorScheme, View, TouchableOpacity, ActivityIndicator } from "react-native"
-import { Text } from "../../components/Themed"
+import { Text } from "../../components/base/Themed"
 import tw from 'twrnc'
 import { Ingredient, Meal, MealProgress } from "../../aws/models"
 import { DataStore } from "aws-amplify"
 import { ScrollView } from "react-native-gesture-handler"
-import { ExpoIcon } from "../../components/ExpoIcon"
+import { ExpoIcon } from "../../components/base/ExpoIcon"
 
 interface NutritionDisplay {
     protein: number; carbs: number; fat: number; calories: number

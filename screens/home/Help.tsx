@@ -1,9 +1,9 @@
 import { ScrollView } from 'react-native'
 import React from 'react'
-import { Text, View } from '../../components/Themed'
-import { BackButton } from '../../components/BackButton'
+import { Text, View } from '../../components/base/Themed'
+import { BackButton } from '../../components/base/BackButton'
 import tw from 'twrnc'
-import { Expand } from '../../components/Expand'
+import { Expand } from '../../components/base/Expand'
 
 export default function Help() {
   return (

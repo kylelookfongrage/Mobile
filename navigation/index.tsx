@@ -3,7 +3,7 @@ import { BottomTabBarProps, createBottomTabNavigator } from '@react-navigation/b
 import { NavigationContainer, DefaultTheme, DarkTheme, useNavigation } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import * as React from 'react';
-import { Text, View } from '../components/Themed';
+import { Text, View } from '../components/base/Themed';
 import { ColorSchemeName, Pressable, TouchableOpacity } from 'react-native';
 import tw from 'twrnc';
 
@@ -13,7 +13,7 @@ import NotFoundScreen from '../screens/NotFoundScreen';
 import TabOneScreen from '../screens/TabOneScreen';
 import { RootStackParamList, RootTabParamList, RootTabScreenProps } from '../types';
 import LinkingConfiguration from './LinkingConfiguration';
-import { ExpoIcon } from '../components/ExpoIcon';
+import { ExpoIcon } from '../components/base/ExpoIcon';
 import WorkoutPlayScreen from '../screens/workout/WorkoutPlay';
 import WorkoutTab from '../screens/workout/WorkoutTab';
 import FoodTab from '../screens/diet/FoodTab';
@@ -61,7 +61,7 @@ import SelectSprite from '../screens/workout/SelectSprite';
 import MakePost from '../screens/workout/MakePost';
 import Inbox from '../screens/workout/Inbox';
 import Message from '../screens/workout/Message';
-import { getCommonScreens } from '../components/GetCommonScreens';
+import { getCommonScreens } from '../components/screens/GetCommonScreens';
 import NewChat from '../screens/workout/NewChat';
 import ChatDetail from '../screens/workout/ChatDetail';
 import Setup from '../screens/onboarding/Setup';
@@ -241,6 +241,7 @@ function BottomTabNavigator() {
 function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const dm = useColorScheme() === 'dark'
   const { setAiResult, setCurrentIngredietId } = useCommonAWSIds()
+
   const iconsAndColors = {
     'Home': {
       icon: "home",
@@ -251,6 +252,12 @@ function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
       icon: "compass",
       label: 'Discover',
       color: dm ? "yellow-400" : "yellow-500"
+    },
+    'Add' : {
+      icon: 'plus-circle',
+      label: '',
+      color: dm ? 'white' : 'black',
+      onPress: () => {}
     },
     'Profile': {
       icon: "user",

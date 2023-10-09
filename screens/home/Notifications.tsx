@@ -1,11 +1,11 @@
 import { ScrollView, TouchableOpacity, View } from 'react-native'
 import React from 'react'
-import { Text } from '../../components/Themed'
-import { ExpoIcon } from '../../components/ExpoIcon'
+import { Text } from '../../components/base/Themed'
+import { ExpoIcon } from '../../components/base/ExpoIcon'
 import tw from 'twrnc'
 import { useNavigation } from '@react-navigation/native'
 import useColorScheme from '../../hooks/useColorScheme'
-import { BackButton } from '../../components/BackButton'
+import { BackButton } from '../../components/base/BackButton'
 
 
 interface NotificationOptions {

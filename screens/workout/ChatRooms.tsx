@@ -1,4 +1,4 @@
-import { View, Text } from '../../components/Themed'
+import { View, Text } from '../../components/base/Themed'
 import React, { useState } from 'react'
 import { ChatMessages, ChatRoom, User } from '../../aws/models'
 import { DataStore, Storage } from 'aws-amplify'

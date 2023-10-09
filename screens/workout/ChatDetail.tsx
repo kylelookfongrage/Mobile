@@ -1,13 +1,13 @@
-import { View, Text } from '../../components/Themed'
+import { View, Text } from '../../components/base/Themed'
 import React, { useEffect, useState } from 'react'
-import { BackButton } from '../../components/BackButton'
+import { BackButton } from '../../components/base/BackButton'
 import tw from 'twrnc'
 import { ChatRoom, User } from '../../aws/models';
 import { DataStore, Storage } from 'aws-amplify';
 import { defaultImage, getMatchingNavigationScreen, isStorageUri } from '../../data';
 import { ScrollView, TouchableOpacity } from 'react-native-gesture-handler';
 import { Image } from 'react-native';
-import { ExpoIcon } from '../../components/ExpoIcon';
+import { ExpoIcon } from '../../components/base/ExpoIcon';
 import { useNavigation } from '@react-navigation/native';
 import { useCommonAWSIds } from '../../hooks/useCommonContext';
 

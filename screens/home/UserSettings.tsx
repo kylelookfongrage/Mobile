@@ -1,6 +1,6 @@
 import { SafeAreaView, View } from 'react-native'
 import React from 'react'
-import { Text } from '../../components/Themed'
+import { Text } from '../../components/base/Themed'
 import tw from 'twrnc'
 
 export default function UserSettings() {

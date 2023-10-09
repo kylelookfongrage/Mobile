@@ -1,21 +1,25 @@
-import { View, TouchableOpacity, ScrollView, Image, TextInput, ActivityIndicator, RefreshControl } from 'react-native'
-import React from 'react'
+import { TouchableOpacity, ScrollView, Image, TextInput, ActivityIndicator, RefreshControl } from 'react-native'
+import React, { useState } from 'react'
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { Text, SafeAreaView } from '../../components/Themed';
+import { Text, SafeAreaView, View } from '../../components/base/Themed';
 import tw from 'twrnc'
-import { FloatingActionButton } from '../../components/FAB';
+import { FloatingActionButton } from '../../components/base/FAB';
 import { useNavigation } from '@react-navigation/native';
-import { ExpoIcon } from '../../components/ExpoIcon';
+import { ExpoIcon } from '../../components/base/ExpoIcon';
 import useColorScheme from '../../hooks/useColorScheme';
-import { defaultImage, getMatchingNavigationScreen, isStorageUri, substringForLists } from '../../data';
+import { defaultImage, getMatchingNavigationScreen, isStorageUri, substringForLists, titleCase } from '../../data';
 import { DataStore, Storage } from 'aws-amplify';
 import { Exercise, Follower, FoodProgress, Ingredient, Meal, User, Workout } from '../../aws/models';
 import { MediaType } from '../../types/Media';
 import { useDebounce } from '../../hooks/useDebounce';
 import { useCommonAWSIds } from '../../hooks/useCommonContext';
-import { getCommonScreens } from '../../components/GetCommonScreens';
+import { getCommonScreens } from '../../components/screens/GetCommonScreens';
 import GenerateMeal from './GenerateMeal';
-import AllergenAlert from '../../components/AllergenAlert';
+import AllergenAlert from '../../components/features/AllergenAlert';
+import SearchBar from '../../components/inputs/SearchBar';
+import Spacer from '../../components/base/Spacer';
+import { supabase } from '../../supabase';
+import SupabaseImage from '../../components/base/SupabaseImage';
 
 
 
@@ -59,267 +63,86 @@ export default function FoodTab() {
     )
 }
 
-interface MealDisplay extends Meal {
-    coverImage: string;
-    username: string;
-    userIsAllergic?: boolean;
-}
+const searchOptions = ['Profiles', 'Meals', 'Food', 'Workouts', 'Exercises'] as const
 
-interface UserDisplay {
-    id: string;
-    username: string;
-    subCount: number;
-    following: boolean;
-    picture: string;
-}
-
-interface FoodDisplay extends FoodProgress {
-    username: string;
-    userIsAllergic?: boolean;
-}
-
-interface ExerciseDisplay extends Exercise {
-    username: string;
+interface ISearchResult {
+    author: string;
+    created_at: string;
+    identifier: string;
+    image: string;
     name: string;
-    img: string;
-}
-
-interface WorkoutDisplay extends Workout {
+    pfp: string;
+    search_by: string;
+    type: 'WORKOUT' | 'MEAL' | 'EXERCISE' | 'FOOD' | 'PLAN' | 'USER';
+    user_id: string;
     username: string;
-    coverImage: string;
-    useCount: number;
 }
 
 export const FoodAndMeals = () => {
     const navigator = useNavigation()
     const dm = useColorScheme() === 'dark'
     const { userId } = useCommonAWSIds()
-    const [users, setUsers] = React.useState<UserDisplay[]>([])
-    const [q1, setQ1] = React.useState<MealDisplay[] | WorkoutDisplay[]>([])
-    const [q2, setQ2] = React.useState<FoodDisplay[] | ExerciseDisplay[]>([])
-    const [loading, setLoading] = React.useState<boolean>(false)
+    let [results, setResults] = useState<ISearchResult[]>([])
+    const [selectedOptions, setSelectedOptions] = React.useState<typeof searchOptions[number][]>([])
+    const search = async (keyword: string) => {
+        console.log(keyword)
+        const { data, error } = await supabase.rpc('fn_search', { keyword })
+        if (error || !data) return;
+        setResults(data)
 
-    const [keyword, setKeyword] = React.useState<string>('')
-    const debouncedKeyword = useDebounce(keyword, 500)
-    const [refreshing, setRefreshing] = React.useState<boolean>(false)
-    const fetchFoodAndMeals = async () => {
-        const searchTerm = debouncedKeyword
-        setLoading(true)
-        const usersWithoutImages = await DataStore.query(User, u => u.and(x => [searchTerm ? x.username.contains(searchTerm.toLowerCase()) : x.username.ne('')]), {
-            sort: x => x.Followers('ASCENDING'),
-            limit: 10
-        })
-        const usersWithImages: UserDisplay[] = await Promise.all(usersWithoutImages.map(async x => {
-            const potentialFollowing = (await DataStore.query(Follower, f => f.and(y => [y.userID.eq(x.id), y.subscribedFrom.eq(userId)]))).length > 0
-            const followers = (await x.Followers.toArray()).length
-            let img = x.picture || defaultImage
-            return { id: x.id, username: x.username, subCount: followers, following: potentialFollowing, picture: isStorageUri(img) ? await Storage.get(img) : img }
-
-        }))
-        setUsers(usersWithImages)
-        if (selectedOption === 'Meals & Food') {
-            const userAllergens = (await DataStore.query(User, userId))?.allergens || []
-            const mealsWithoutImages = await DataStore.query(Meal, m => m.and(x => [searchTerm ? x.name.contains(searchTerm) : x.name.ne(''), x.public.eq(true)]), {
-                sort: x => x.createdAt('DESCENDING').MealProgresses('DESCENDING'),
-                limit: 10
-            })
-            const mealsWithImages: MealDisplay[] = await Promise.all(mealsWithoutImages.map(async x => {
-                const defaultMealToReturn = { ...x, coverImage: (x.preview || defaultImage), username: '' }
-                const ingredients = (await x.Ingredients.toArray()) || []
-                const ingredientLabels = ingredients.map(ingr => (ingr.foodContentsLabel || '') + ingr.name).join(',').toLowerCase() || ''
-                const potentialAllergens = userAllergens.filter(al => ingredientLabels.includes(al?.toLowerCase() || 'nothing'))
-                const user = await DataStore.query(User, x.userID)
-                if (!user || !x.media) {
-                    return {...defaultMealToReturn, userIsAllergic: potentialAllergens.length > 0}
-                }
-                //@ts-ignore
-                return { ...x, userIsAllergic: potentialAllergens.length > 0, coverImage: isStorageUri(defaultMealToReturn.coverImage) ? await Storage.get(defaultMealToReturn.coverImage) : defaultMealToReturn.coverImage, username: user.username }
-            }))
-            setQ1(mealsWithImages)
-
-            const foodWithoutImages = await DataStore.query(FoodProgress, x => x.and(food => [searchTerm ? food.name.contains(searchTerm) : food.name.ne(''), food.userID.ne(''), food.public.eq(true)]), { limit: 10, sort: x => x.createdAt('DESCENDING') })
-            const foodWithImages: FoodDisplay[] = await Promise.all(foodWithoutImages.map(async f => {
-                let username = 'Edamam Nutrition'
-                const allergenSearchString = f.name + f.foodContentsLabel
-                const potentialAllergens = userAllergens.filter(al => allergenSearchString.toLowerCase()?.includes(al?.toLowerCase() || 'nothing'))
-                if (!f.edamamId) {
-                    const user = await DataStore.query(User, f.userID || '')
-                    username = user?.username || 'Edamam Nutrition'
-                }
-                return { ...f, userIsAllergic: potentialAllergens.length > 0, img: isStorageUri(f.img || defaultImage) ? await Storage.get(f.img || defaultImage) : f.img, username }
-            }))
-            setQ2(foodWithImages)
-        } else if (selectedOption === 'Workouts & Exercises') {
-            const ws = await DataStore.query(Workout, wo => wo.and(x => [debouncedKeyword ? x.name.contains(debouncedKeyword) : x.name.ne(''), x.WorkoutDetails.sets.gt(1)]), {
-                sort: x => x.createdAt('DESCENDING'), limit: 10
-            })
-            // graphqlOperation()
-            const wsWithImages: WorkoutDisplay[] = await Promise.all(ws.map(async wo => {
-                const user = await DataStore.query(User, wo.userID)
-                const username = user?.username
-                const useCount = (await wo.WorkoutPlayDetails.toArray()).length
-                let img = wo.img || defaultImage
-                return { ...wo, coverImage: isStorageUri(img) ? await Storage.get(img) : img, username: username || '', useCount }
-            }))
-            setQ1(wsWithImages.sort((a, b) => (b.useCount || 1) - (a.useCount || 0)))
-
-            const exercisesWithoutImages = await DataStore.query(Exercise, e => e.and(ex => [debouncedKeyword ? ex.title.contains(debouncedKeyword) : ex.title.ne('')]), {
-                limit: 10,
-                sort: y => y.createdAt('DESCENDING').WorkoutPlayDetails('DESCENDING')
-            })
-            const exercisesWithImages: ExerciseDisplay[] = await Promise.all(exercisesWithoutImages.map(async ex => {
-                const user = await DataStore.query(User, ex.userID)
-                const username = user?.username
-                //@ts-ignore
-                let img = ex.preview || defaultImage
-                return { ...ex, img: isStorageUri(img) ? await Storage.get(img) : img, username: username || '', name: ex.title }
-            }))
-            setQ2(exercisesWithImages)
-        }
-
-        setLoading(false)
-        setRefreshing(false)
     }
 
-    const searchOptions = ['Meals & Food', 'Workouts & Exercises'] as const
-    const [selectedOption, setSelectedOption] = React.useState<typeof searchOptions[number]>(searchOptions[0])
-
-    React.useEffect(() => {
-        fetchFoodAndMeals()
-    }, [debouncedKeyword, selectedOption])
-
-    const color = dm ? 'white' : 'black'
 
     //@ts-ignore
-    return <SafeAreaView style={[tw`h-12/12`]} edges={['top']} includeBackground>
-        <ScrollView contentContainerStyle={[tw`px-4 py-3`]} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchFoodAndMeals} />}>
-            <Text style={tw`text-2xl max-w-7/12`} weight='bold'>Search</Text>
-            <View style={tw`w-12/12 mt-6 flex-row items-center py-2.5 px-4 justify-between bg-gray-${dm ? '700' : '300'} rounded-3xl`}>
-                <View style={tw`flex flex-row items-center`}>
-                    <ExpoIcon name='search' iconName='feather' color={'gray'} style={tw`pr-2`} size={25} />
-                    <TextInput value={keyword} onChangeText={setKeyword} placeholder='search...' style={tw`w-9/12 text-${dm ? 'white' : 'black'}`} />
-                </View>
-                <TouchableOpacity style={tw`p-2`} onPress={() => {setKeyword('')}}>
-                    <ExpoIcon name='x' iconName='feather' color={'gray'} style={tw``} size={20} />
-                </TouchableOpacity>
-            </View>
-            <View style={tw`flex-row justify-between py-4`}>
-                {searchOptions.map((o, i) => {
-                    const selected = selectedOption === o
-                    return <TouchableOpacity
-                        key={`Search option ${o} at idx ${i}`}
-                        style={tw`items-center py-2 px-5 ${selected ? 'border-b border-' + color : ''}`}
-                        onPress={() => setSelectedOption(o)}>
-                        <Text
-                            weight={selected ? 'semibold' : 'regular'}>{o}</Text>
-                    </TouchableOpacity>
-                })}
-            </View>
-            <View style={tw`flex-row items-center justify-between mt-9`}>
-                <Text style={tw`text-lg`} weight='semibold'>Users</Text>
-                <TouchableOpacity onPress={() => {
-                    const screen = getMatchingNavigationScreen('ListUser', navigator)
-                    //@ts-ignore
-                    navigator.navigate(screen, { foodProfessionals: true })
-                }}>
-                    <Text>See All</Text>
-                </TouchableOpacity>
-            </View>
-            {users.length === 0 && <Text style={tw`text-center my-5`}>No users to display</Text>}
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={tw`pt-4`} contentContainerStyle={tw`flex-row items-center justify-center`}>
-                {users.map((u) => {
-                    return <TouchableOpacity key={u.id} style={tw`items-center mr-2`} onPress={() => {
-                        //@ts-ignore
-                        navigator.navigate('FTUser', { id: u.id })
-                    }}>
-                        <Image source={{ uri: u.picture || defaultImage }} style={tw`w-17 h-17 rounded-full`} />
-                        <Text style={tw`max-w-23 text-center text-xs mt-2 text-red-500`} weight='regular'>@{substringForLists(u.username, 15)}</Text>
-                    </TouchableOpacity>
-                })}
-            </ScrollView>
-            <View style={tw`flex-row items-center justify-between mt-9`}>
-                <Text style={tw`text-lg`} weight='semibold'>{selectedOption === 'Meals & Food' ? 'Meals' : 'Workouts'}</Text>
-                <TouchableOpacity onPress={() => {
-                    if (selectedOption === 'Meals & Food') {
-                        const screen = getMatchingNavigationScreen('ListMeal', navigator)
-                        //@ts-ignore
-                        navigator.navigate(screen)
-                    } else if (selectedOption === 'Workouts & Exercises') {
-                        const screen = getMatchingNavigationScreen('ListWorkout', navigator)
-                        //@ts-ignore
-                        navigator.navigate(screen)
+    return <SafeAreaView style={[tw`px-3`, { flex: 1 }]} edges={['top']} includeBackground>
+        <Spacer />
+        <Text h2>Search</Text>
+        <Spacer />
+        <SearchBar full onSearch={search} />
+        <Spacer />
+        <ScrollView style={{ minHeight: 35, maxHeight: 35 }} horizontal showsHorizontalScrollIndicator={false}>
+            {searchOptions.map(x => {
+                const selected = selectedOptions.includes(x)
+                return <TouchableOpacity onPress={() => {
+                    if (selected) {
+                        setSelectedOptions([...selectedOptions].filter(z => z !== x))
                     }
-                }}>
-                    <Text>See All</Text>
+                    else {
+                        setSelectedOptions([...selectedOptions, x])
+                    }
+                }} key={`Search Option` + x} style={{ ...tw`py-2 px-3 mx-1 ${selected ? 'rounded-full bg-red-600 text-white' : ''}` }}>
+                    <Text>{x}</Text>
                 </TouchableOpacity>
-            </View>
-            {q1.length === 0 && <Text style={tw`text-center my-5`}>No {selectedOption === 'Meals & Food' ? 'meals' : 'workouts'} to display</Text>}
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={tw`pt-4`}>
-                {q1.map((m, i) => {
-                    return <TouchableOpacity
-                        onPress={() => {
-                            if (selectedOption === 'Meals & Food') {
-                                const screen = getMatchingNavigationScreen('MealDetail', navigator)
-                                //@ts-ignore
-                                navigator.navigate(screen, { id: m.id })
-                            } else if (selectedOption === 'Workouts & Exercises') {
-                                const screen = getMatchingNavigationScreen('WorkoutDetail', navigator)
-                                //@ts-ignore
-                                navigator.navigate(screen, { id: m.id })
-                            }
-                        }}
-                        key={`meal ${m.id} at index ${i}`} style={tw`mx-1 flex-col items-start`}>
-                        <Image style={tw`w-20 h-20 rounded-lg`} source={{ uri: m.coverImage || defaultImage }} />
-                        <View style={tw`pt-2`}>
-                            <Text style={tw`max-w-22 text-xs`}>{substringForLists(m.name)}</Text>
-                            <Text style={tw`text-red-500 max-w-25 text-xs`}>@{substringForLists(m.username)}</Text>
-                            {/* @ts-ignore */}
-                            {m.userIsAllergic && <AllergenAlert size={15} style={tw`text-center mt-2`} />}
+            })}
+        </ScrollView>
+        <Spacer divider/>
+        <ScrollView contentContainerStyle={[tw``]} showsVerticalScrollIndicator={false}>
+            {results.map((x, i) => {
+                return <TouchableOpacity key={`Search Result ${x.identifier} - ${i}`} onPress={() => {
+                    let screenName = 'FoodDetail'
+                    let id = x.identifier
+                    if (x.type === 'EXERCISE') screenName='ExerciseDetail'
+                    if (x.type === 'MEAL') screenName='MealDetail'
+                    if (x.type === 'WORKOUT') screenName='WorkoutDetail'
+                    if (x.type === 'USER') {
+                        screenName='User'
+                        id=x.user_id
+                    }
+                    let s = getMatchingNavigationScreen(screenName, navigator)
+                    navigator.navigate(s, {id, src:'backend'})
+                }}>
+                    <View card style={tw`flex-row items-center justify-between p-2 my-1 rounded-xl`}>
+                        <View style={tw`flex-row items-center`}>
+                            <SupabaseImage style='h-13 w-13 mr-2 rounded-lg' uri={x.image || defaultImage} />
+                            <View>
+                                <Text weight='semibold'>{x.name}</Text>
+                                <Text xs style={tw`text-red-500`}>@{x.username}</Text>
+                            </View>
                         </View>
-                    </TouchableOpacity>
-                })}
-            </ScrollView>
-            <View style={tw`flex-row items-center justify-between mt-9`}>
-                <Text style={tw`text-lg`} weight='semibold'>{selectedOption === 'Meals & Food' ? 'Food' : 'Exercises'}</Text>
-                <TouchableOpacity onPress={() => {
-                    if (selectedOption === 'Meals & Food') {
-                        const screen = getMatchingNavigationScreen('ListFood', navigator)
-                        //@ts-ignore
-                        navigator.navigate(screen)
-                    } else if (selectedOption === 'Workouts & Exercises') {
-                        const screen = getMatchingNavigationScreen('ListExercise', navigator)
-                        //@ts-ignore
-                        navigator.navigate(screen)
-                    }
-                }}>
-                    <Text>See All</Text>
+                        <Text xs style={tw`text-gray-500`}>{titleCase(x.type)} - {x.identifier}</Text>
+                    </View>
                 </TouchableOpacity>
-            </View>
-            {q2.length === 0 && <Text style={tw`text-center my-5`}>No {selectedOption === 'Meals & Food' ? 'food' : 'exercises'} to display</Text>}
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={tw`pt-4`}>
-                {q2.map((m, i) => {
-                    return <TouchableOpacity
-                        onPress={() => {
-                            if (selectedOption === 'Meals & Food') {
-                                const screen = getMatchingNavigationScreen('FoodDetail', navigator)
-                                //@ts-ignore
-                                navigator.navigate(screen, { id: m.id, src: 'existing', editable: true })
-                            } else if (selectedOption === 'Workouts & Exercises') {
-                                const screen = getMatchingNavigationScreen('ExerciseDetail', navigator)
-                                //@ts-ignore
-                                navigator.navigate(screen, { id: m.id })
-                            }
-                        }}
-                        key={`meal ${m.id} at index ${i}`} style={tw`mx-1 flex-col`}>
-                        <Image style={tw`w-20 h-20 rounded-lg mb-2`} source={{ uri: m.img || defaultImage }} />
-                        <Text style={tw`max-w-22 text-xs`}>{substringForLists(m.name)}</Text>
-                        <Text style={tw`text-red-500 text-xs max-w-25`}>@{substringForLists(m.username)}</Text>
-                        {/* @ts-ignore */}
-                        {m.userIsAllergic && <AllergenAlert size={15} style={tw`text-center`} />}
-                    </TouchableOpacity>
-                })}
-            </ScrollView>
-            <View style={tw`pb-40`} />
+            })}
         </ScrollView>
         <FloatingActionButton options={[
             {

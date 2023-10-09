@@ -1,17 +1,22 @@
 import { ScrollView, TextInput, TouchableOpacity, Image, useColorScheme } from 'react-native'
 import React from 'react'
-import { Text, View } from '../../components/Themed'
+import { Text, View } from '../../components/base/Themed'
 import { useDebounce } from '../../hooks/useDebounce'
 import tw from 'twrnc'
-import { ExpoIcon } from '../../components/ExpoIcon'
+import { ExpoIcon } from '../../components/base/ExpoIcon'
 import { useNavigation } from '@react-navigation/native'
-import { VideoThumbail } from '../../components/VideoThumbnail'
+import { VideoThumbail } from '../../components/base/VideoThumbnail'
 import { defaultImage, getMatchingNavigationScreen, isStorageUri } from '../../data'
 import { DataStore, Predicates, Storage } from 'aws-amplify'
 import { Exercise, LazyExercise, User } from '../../aws/models'
 import { MediaType } from '../../types/Media'
-import { BackButton } from '../../components/BackButton'
+import { BackButton } from '../../components/base/BackButton'
 import { useCommonAWSIds } from '../../hooks/useCommonContext'
+import SearchBar from '../../components/inputs/SearchBar'
+import { ExerciseDao } from '../../types/ExerciseDao'
+import { Tables } from '../../supabase/dao'
+import SupabaseImage from '../../components/base/SupabaseImage'
+import Spacer from '../../components/base/Spacer'
 
 export interface ListExerciseSearchResultsType {
     name: string;
@@ -35,47 +40,30 @@ export default function ListExercise(props: ListExerciseProps) {
     const navigator = useNavigation()
     const [searchKey, setSearchKey] = React.useState<string>()
     const debouncedSearchTerm = useDebounce(searchKey, 500);
-    const searchOptions = ['All', 'My Exercises'] as const
+    const searchOptions = ['All', 'My Exercises', 'Favorites'] as const
     const [selectedOption, setSelectedOption] = React.useState<typeof searchOptions[number]>(searchOptions[0])
-    const [results, setResults] = React.useState<ListExerciseSearchResultsType[]>([])
+    const [results, setResults] = React.useState<Tables['exercise']['Row'][]>([])
+    let dao = ExerciseDao()
 
-    const fetchExerciseResults = async () => {
-        const exercisesWithoutImages = await DataStore.query(Exercise, x => x.and(ex => [
-            debouncedSearchTerm ? ex.title.contains(debouncedSearchTerm) : ex.title.ne(''),
-            selectedOption === 'My Exercises' ? ex.userID.eq(userId) : (props.userId ? ex.userID.eq(props.userId) : ex.userID.ne(''))
-        ]),  { limit: 40 })
-        const exercisesWithImages: ListExerciseSearchResultsType[] = await Promise.all(exercisesWithoutImages.map(async ex => {
-            const user = await DataStore.query(User, ex.userID)
-            const author = user?.username || ''
-            //@ts-ignore
-            const img = ex.preview || defaultImage
-            return { id: ex.id, name: ex.title, img: isStorageUri(img) ? await Storage.get(img) : img, author, favorited: false}
-
-        }))
-        setResults(exercisesWithImages)
+    const fetchExerciseResults = async (keyword: string) => {
+        let res = await dao.search({keyword, selectString: `
+            *, author: user_id(username)
+        `})
+        if (!res) return;
+        setResults(res)
     }
 
     React.useEffect(() => {
-        fetchExerciseResults()
+        // fetchExerciseResults()
     }, [debouncedSearchTerm, selectedOption])
 
     React.useEffect(() => { }, [selectedOption])
     return (
         <View style={{ flex: 1 }} includeBackground>
             <BackButton name='Exercises' />
-            <ScrollView
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={[tw`px-3 pb-20`]}>
-                <View style={tw`flex flex-row items-center py-3 px-5 mt-6 w-12/12 bg-${dm ? 'gray-600' : 'gray-300'} rounded-xl`}>
-                    <ExpoIcon name='search' iconName='feather' color='gray' size={25} />
-                    <TextInput
-                        placeholder='Name'
-                        placeholderTextColor={dm ? 'white' : 'gray'}
-                        style={tw`w-9/12 py-2 px-3 text-${dm ? 'white' : 'black'}`}
-                        value={searchKey} onChangeText={setSearchKey}
-                    />
-                </View>
-                <View style={tw`flex-row justify-around py-4 px-5`}>
+            <SearchBar onSearch={fetchExerciseResults} />
+            <Spacer sm/>
+            <View style={tw`flex-row justify-around py-4 px-5`}>
                     {searchOptions.map((o, i) => {
                         if (props.userId && o !== 'All') return;
                         const selected = selectedOption === o
@@ -88,9 +76,15 @@ export default function ListExercise(props: ListExerciseProps) {
                         </TouchableOpacity>
                     })}
                 </View>
+                <Spacer sm />
+            <ScrollView
+                keyboardDismissMode='interactive'
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={[tw`px-3 pb-20`]}>
                 {results.length === 0 && <View style={tw`w-12/12 justify-center items-center mt-9`}><Text>No results to display</Text></View>}
                 {results.map((r, idx) => {
-                    return <TouchableOpacity
+                    return <View card key={`search result at index ${idx}`} style={{...tw`mb-2`}}>
+                        <TouchableOpacity
                         onPress={() => {
                             const screen = getMatchingNavigationScreen('ExerciseDetail', navigator)
                             if (screen !== null) {
@@ -98,18 +92,16 @@ export default function ListExercise(props: ListExerciseProps) {
                                 navigator.navigate(screen, { workoutId: props.workoutId, id: r.id })
                             }
                         }}
-                        key={`search result at index ${idx}`}
-                        style={[tw`my-2 max-w-11/12 flex-row items-center justify-between rounded-lg py-4 px-4 mx-4 bg-${dm ? 'gray-700' : 'gray-400/20'}`,
-                        ]}
-                    >
+                        style={[tw`flex-row items-center justify-between rounded-lg py-4 px-4 mx-2`]}>
                         <View style={tw`flex-row items-center max-w-8/12`}>
-                            <Image source={{ uri: r.img || defaultImage }} style={tw`h-15 w-15 rounded mr-2`} />
+                            <SupabaseImage uri={r.preview || defaultImage} style={`h-15 w-15 rounded mr-2`} />
                             <View>
                                 <Text style={tw``} weight='semibold'>{r.name}</Text>
-                                <Text style={tw`text-red-500 text-xs`}>@{r.author}</Text>
+                                <Text style={tw`text-red-500 text-xs`}>@{r.author?.username || 'rage'}</Text>
                             </View>
                         </View>
                     </TouchableOpacity>
+                    </View>
                 })}
             </ScrollView>
         </View>

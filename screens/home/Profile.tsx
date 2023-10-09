@@ -1,9 +1,9 @@
 import { ScrollView, TouchableOpacity, Dimensions, Image, RefreshControl } from 'react-native'
 import React from 'react'
-import { Text, View } from '../../components/Themed'
+import { Text, View } from '../../components/base/Themed'
 import tw from 'twrnc'
 import useColorScheme from '../../hooks/useColorScheme';
-import { ExpoIcon } from '../../components/ExpoIcon';
+import { ExpoIcon } from '../../components/base/ExpoIcon';
 import { useNavigation } from '@react-navigation/native';
 import { MediaType } from '../../types/Media';
 import * as WebBrowser from 'expo-web-browser'
@@ -11,9 +11,8 @@ import { DataStore, Storage } from 'aws-amplify';
 import { Exercise, FavoriteType, Follower, Goal, Meal, User, Workout } from '../../aws/models';
 import { useCommonAWSIds } from '../../hooks/useCommonContext';
 import { defaultImage, formatCash, getMatchingNavigationScreen, isStorageUri, substringForLists } from '../../data';
-import { BackButton } from '../../components/BackButton';
+import { BackButton } from '../../components/base/BackButton';
 import { ShowMoreButton } from './ShowMore';
-import MenuView from '../../components/MenuView';
 
 
 

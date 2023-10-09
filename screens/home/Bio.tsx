@@ -1,6 +1,6 @@
-import { Text, View } from '../../components/Themed'
+import { Text, View } from '../../components/base/Themed'
 import React, { useEffect, useLayoutEffect, useState } from 'react'
-import { BackButton } from '../../components/BackButton'
+import { BackButton } from '../../components/base/BackButton'
 import { Keyboard, Pressable, ScrollView, TextInput, TouchableOpacity, useColorScheme } from 'react-native'
 import tw from 'twrnc'
 import { ActivityIndicator, Avatar } from 'react-native-paper'
@@ -11,7 +11,7 @@ import { Goal, Tier, User } from '../../aws/models'
 import * as ImagePicker from 'expo-image-picker'
 import { defaultImage, isStorageUri, uploadImageAndGetID, usernameRegex, validateUsername } from '../../data'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { ExpoIcon } from '../../components/ExpoIcon'
+import { ExpoIcon } from '../../components/base/ExpoIcon'
 
 type TextInputProps = TextInput['props'];
 interface TextInputWithLeftProps extends TextInputProps{

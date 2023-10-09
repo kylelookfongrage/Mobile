@@ -1,6 +1,6 @@
-import { View, Text } from '../../components/Themed'
+import { View, Text } from '../../components/base/Themed'
 import React, { useEffect, useRef, useState } from 'react'
-import { BackButton } from '../../components/BackButton'
+import { BackButton } from '../../components/base/BackButton'
 import tw from 'twrnc';
 import * as VT from 'expo-video-thumbnails'
 import { Exercise, Workout, WorkoutDetails, WorkoutPlay, WorkoutPlayDetail } from '../../aws/models';
@@ -9,15 +9,15 @@ import { DataStore, Storage } from 'aws-amplify';
 import { useNavigation } from '@react-navigation/native';
 import { ChartMapping, ExerciseDisplay, defaultImage, getFormattedDate, isStorageUri, toHHMMSS } from '../../data';
 import { FlatList, ScrollView } from 'react-native-gesture-handler';
-import TabSelector from '../../components/TabSelector';
+import TabSelector from '../../components/base/TabSelector';
 import { useSwipe } from '../../hooks/useSwipe';
-import { ExpoIcon } from '../../components/ExpoIcon';
+import { ExpoIcon } from '../../components/base/ExpoIcon';
 import Body from 'react-native-body-highlighter'
 import moment from 'moment';
 import { useCommonAWSIds } from '../../hooks/useCommonContext';
-import ScrollViewWithDrag from '../../components/ScrollViewWithDrag';
+import ScrollViewWithDrag from '../../components/screens/ScrollViewWithDrag';
 import { LineChart } from 'react-native-chart-kit';
-import BackgroundGradient from '../../components/BackgroundGradient';
+import BackgroundGradient from '../../components/screens/BackgroundGradient';
 
 export default function CompletedExerciseDetails(props: { workoutPlayId: string; }) {
     const [workout, setWorkout] = useState<Workout | null>(null);

@@ -1,12 +1,12 @@
 import { ActivityIndicator, TextInput, StyleSheet, TouchableOpacity, useColorScheme } from 'react-native'
 import React from 'react'
-import { Text, View } from '../../components/Themed'
+import { Text, View } from '../../components/base/Themed'
 import { Auth } from 'aws-amplify'
-import { BackButton } from '../../components/BackButton'
+import { BackButton } from '../../components/base/BackButton'
 import tw from 'twrnc'
-import { ExpoIcon } from '../../components/ExpoIcon'
+import { ExpoIcon } from '../../components/base/ExpoIcon'
 import { CodeField, Cursor, useBlurOnFulfill, useClearByFocusCell } from 'react-native-confirmation-code-field'
-import { ErrorMessage } from '../../components/ErrorMessage'
+import { ErrorMessage } from '../../components/base/ErrorMessage'
 import { useNavigation } from '@react-navigation/native'
 
 export default function UpdateEmail() {

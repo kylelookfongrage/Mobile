@@ -1,12 +1,12 @@
 import { TouchableOpacity, useColorScheme } from 'react-native'
 import React from 'react'
-import { Text, View } from '../../components/Themed'
-import { BackButton } from '../../components/BackButton'
+import { Text, View } from '../../components/base/Themed'
+import { BackButton } from '../../components/base/BackButton'
 import { useNavigation } from '@react-navigation/native'
 import { AppSetting } from './Settings'
 import { Auth } from 'aws-amplify'
 import tw from 'twrnc'
-import { ExpoIcon } from '../../components/ExpoIcon'
+import { ExpoIcon } from '../../components/base/ExpoIcon'
 import { useCommonAWSIds } from '../../hooks/useCommonContext'
 
 export default function Account() {

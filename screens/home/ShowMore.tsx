@@ -1,7 +1,7 @@
-import { View, Text } from '../../components/Themed'
+import { View, Text } from '../../components/base/Themed'
 import React, { useState } from 'react'
 import { ScrollView, TouchableOpacity, Swipeable } from 'react-native-gesture-handler'
-import { ExpoIcon } from '../../components/ExpoIcon'
+import { ExpoIcon } from '../../components/base/ExpoIcon'
 import tw from 'twrnc'
 import { useNavigation } from '@react-navigation/native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -23,7 +23,7 @@ export const ShowMoreButton = (props: {name: string, desc: string, img: string, 
   const navigator = useNavigation()
   const dm = useColorScheme() === 'dark'
   return (
-    <TouchableOpacity style={[tw`p-2 rounded-xl bg-gray-${dm ? '800' : '300'}`, {zIndex: 1}]} onPress={() => {
+    <TouchableOpacity style={[tw`p-2 rounded-xl bg-gray-${dm ? '500' : '300'}`, {zIndex: 1}]} onPress={() => {
       //@ts-ignore
       navigator.navigate('ShowMore', {...props})
     }}>

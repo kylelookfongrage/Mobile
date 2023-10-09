@@ -1,59 +1,48 @@
 import { ScrollView, TouchableOpacity, Image, Animated, Easing } from 'react-native'
 import React from 'react'
-import { Text, View } from '../../components/Themed'
+import { Text, View } from '../../components/base/Themed'
 import { SafeAreaView } from 'react-native-safe-area-context';
 import tw from 'twrnc'
-import { ExpoIcon } from '../../components/ExpoIcon';
+import { ExpoIcon } from '../../components/base/ExpoIcon';
 import useColorScheme from '../../hooks/useColorScheme';
 import { AnimatedCircularProgress } from 'react-native-circular-progress';
-import { FloatingActionButton } from '../../components/FAB';
+import { FloatingActionButton } from '../../components/base/FAB';
 import { useNavigation } from '@react-navigation/native';
 import { useDateContext } from './Calendar';
 import { getTdee } from './Profile';
 import { DataStore } from 'aws-amplify';
 import { Progress, User } from '../../aws/models';
 import { useCommonAWSIds } from '../../hooks/useCommonContext';
-import { getMatchingNavigationScreen } from '../../data';
+import { getMacrosFromIngredients, getMatchingNavigationScreen, titleCase } from '../../data';
 import * as Haptics from 'expo-haptics'
 import { useProgressValues } from '../../hooks/useProgressValues';
-import RunListComponent from '../../components/RunListComponent';
+import RunListComponent from '../../components/features/RunListComponent';
 import AnimatedLottieView from 'lottie-react-native';
 import drinkWater from '../../assets/animations/drinkwater.json'
 import moment from 'moment';
-import ThisAdHelpsKeepFree from '../../components/ThisAdHelpsKeepFree';
+import ThisAdHelpsKeepFree from '../../components/features/ThisAdHelpsKeepFree';
 import { BadgeType, useBadges } from '../../hooks/useBadges';
+import { ProgressDao } from '../../types/ProgressDao';
+import { useRealtime } from 'react-supabase';
 
 
 export const SummaryScreen = () => {
 
   const dateContext = useDateContext()
-  const { sub, userId, progressId, setProgressId } = useCommonAWSIds()
+  const { sub, userId, progressId, setProgressId, profile } = useCommonAWSIds()
   const { formattedDate, AWSDate, today, setDate } = { formattedDate: dateContext.formattedDate, AWSDate: dateContext.AWSDate, today: dateContext.date, setDate: dateContext.setDate }
-  const { food, meals, workouts, fat, weight, goal, water, runs } = useProgressValues({ foodAndMeals: true, activitiesAndWorkouts: true, metrics: true })
-  const totalCalories = getTdee(goal, weight, fat)
+  const { food, meals, workouts, fat, goal, water, runs } = useProgressValues({})
+  const totalCalories = profile?.tdee || 2000;
   const dm = useColorScheme() === 'dark'
   const navigator = useNavigation()
   const {logProgress} = useBadges(false)
-
-  React.useEffect(() => {
-    DataStore.query(Progress, p => p.and(x => [x.userID.eq(userId), x.date.eq(AWSDate)])).then(p => {
-      DataStore.query(User, userId).then((u) => {
-        if (u) {
-          const ux = u
-          if (p.length === 0) {
-            const newProgress = new Progress({ sub: sub.toString(), weight: ux.weight, fat: ux.fat, picture: '', date: AWSDate, userID: ux.id })
-            DataStore.save(newProgress).then(x => setProgressId(x.id)).then(x => logProgress(BadgeType.progress))
-          } else {
-            setProgressId(p[0].id)
-          }
-        }
-      })
-    })
-  }, [AWSDate])
-
-  const caloriesFromFoodAndMeals = food.reduce((prev, c) => prev + c.kcal, 0) + meals.reduce((prev, curr) => prev + curr.calories, 0)
-  const proteinFromFoodAndMeals = food.reduce((prev, c) => prev + c.protein, 0) + meals.reduce((prev, curr) => prev + curr.protein, 0)
-  const carbsFromFoodAndMeals = food.reduce((prev, c) => prev + c.carbs, 0) + meals.reduce((prev, curr) => prev + curr.carbs, 0)
+  const dao = ProgressDao()
+  const [food_progress, meal_progress] = [dao.foodProgress, dao.mealProgress]
+  let weight = dao.today?.weight || profile?.weight || 100
+  let ingredients = meal_progress.map(x => (x.meal)).flatMap(x => x.meal_ingredients)
+  const caloriesFromFoodAndMeals = food_progress.reduce((prev, c) => prev + (c.calories || 0), 0) + ingredients.reduce((prev, curr) => prev + (curr.calories || 0), 0)
+  const proteinFromFoodAndMeals = food_progress.reduce((prev, c) => prev + (c.protein || 0), 0) + ingredients.reduce((prev, curr) => prev + (curr.protein || 0), 0)
+  const carbsFromFoodAndMeals = food_progress.reduce((prev, c) => prev + (c.carbs || 0), 0) + ingredients.reduce((prev, curr) => prev + (curr.carbs || 0), 0)
 
   React.useEffect(() => {
     if (totalCalories) {
@@ -67,7 +56,7 @@ export const SummaryScreen = () => {
 
   React.useEffect(() => {
     if (weight) {
-      const progress = water > waterGoal ? 1 : water / waterGoal
+      const progress = (dao.today?.water || 0) > waterGoal ? 1 : (dao.today?.water || 0) / waterGoal
       Animated.timing(waterRef.current, {
         toValue: progress,
         duration: 1000,
@@ -76,7 +65,7 @@ export const SummaryScreen = () => {
       }).start();
 
     }
-  }, [water, weight])
+  }, [dao.today?.water || 0, weight])
 
   const lastRun = runs[runs.length - 1]
   const daysToDisplay = [0, 1, 2, 3, 4, 5, 6].map(x => moment(today).startOf('week').add(x, 'days'))
@@ -118,7 +107,8 @@ export const SummaryScreen = () => {
             const screen = getMatchingNavigationScreen('SummaryFoodList', navigator)
             //@ts-ignore
             navigator.navigate(screen)
-          }} style={tw`bg-${dm ? 'gray-700/40' : 'gray-500/20'} mb-4 p-5 rounded-lg items-center justify-between`}>
+          }}>
+          <View card style={tw`mb-4 p-5 rounded-lg items-center justify-between`}>
             <Text style={tw`text-lg mb-2`} weight='semibold'>Macronutrients</Text>
             <AnimatedCircularProgress
               size={150}
@@ -156,63 +146,59 @@ export const SummaryScreen = () => {
                 <Text style={tw`text-gray-500`}>Carbs</Text>
               </View>
             </View>
-          </TouchableOpacity>
+          </View>
 
-          <View style={tw`w-12/12 max-h-1.5/12 bg-gray-${dm ? '700/40' : '500/20'} px-6 rounded-lg items-center justify-between flex-row my-4`}>
+          </TouchableOpacity>
+          <View card style={tw`w-12/12 max-h-1.5/12 px-6 rounded-lg items-center justify-between flex-row my-4`}>
             <View style={tw``}>
               <Text weight='semibold' style={tw`mt-2 text-lg`}>Water Intake</Text>
-              <Text style={tw`text-gray-500 text-xs mb-4`}>{water.toFixed()} of {waterGoal.toFixed()} fl oz</Text>
+              <Text style={tw`text-gray-500 text-xs mb-4`}>{(dao.today?.water ||0).toFixed()} of {waterGoal.toFixed()} fl oz</Text>
             </View>
             <View style={tw`flex-row items-center`}>
               <AnimatedLottieView progress={waterRef.current} autoPlay={false} style={tw`h-35 -mr-3`} source={drinkWater} />
 
-              <View style={tw`items-center justify-around`}>
+              <View style={tw`items-center justify-evenly`}>
                 <TouchableOpacity style={tw`px-4 py-2 rounded-lg`} onPress={async () => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-                  const originalProgress = await DataStore.query(Progress, progressId)
-                  if (!originalProgress) return;
-                  await DataStore.save(Progress.copyOf(originalProgress, x => {
-                    x.water = (x.water || 0) + 10
-                  }))
+                  await dao.updateProgress('water', (dao.today?.water || 0) + 10)
+                  
                 }}>
                   <Text weight='bold' style={tw`text-lg`}>+</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={tw`px-4 py-2 rounded-lg`} onPress={async () => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-                  const originalProgress = await DataStore.query(Progress, progressId)
-                  if (!originalProgress) return;
-                  await DataStore.save(Progress.copyOf(originalProgress, x => {
-                    if (x.water && x.water > 9)
-                      x.water = (x.water || 0) - 10
-                  }))
+                  await dao.updateProgress('water', (dao.today?.water || 0) > 9 ? (dao.today?.water || 0) - 10 : 0)
+                  
                 }}>
                   <Text weight='bold' style={tw`text-gray-500 text-lg`}>-</Text>
                 </TouchableOpacity>
               </View>
             </View>
           </View>
-          <TouchableOpacity onPress={() => {
+         <TouchableOpacity onPress={() => {
             //@ts-ignore
             navigator.navigate('SummaryEdit', {progressId: progressId})
-          }} style={tw`w-12/12 bg-gray-${dm ? '700/40' : '500/20'} rounded-lg p-4 mt-4 mb-6`}>
+          }} style={{}}>
+         <View card style={tw`w-12/12 rounded-lg p-4 mt-4 mb-6`}>
             <Text style={tw`text-lg text-center`} weight='semibold'>Personal Information</Text>
             <View style={tw`mt-4 flex-row items-center justify-around`}>
               <View>
               <Text style={tw`text-xs text-gray-500`}>Weight</Text>
-              <Text style={tw`text-lg`} weight='semibold'>{weight} {<Text style={tw`text-red-500 text-sm`}>lbs</Text>}</Text>
+              <Text style={tw`text-lg`} weight='semibold'>{dao.today?.weight || '-'} {<Text style={tw`text-red-500 text-sm`}>lbs</Text>}</Text>
               </View>
               <View style={[tw`h-15 bg-gray-${dm ? '600' : '400'}`, { width: 1 }]} />
               <View>
               <Text style={tw`text-xs text-gray-500`}>Body Fat</Text>
-              <Text style={tw`text-lg`} weight='semibold'>{fat} {<Text style={tw`text-red-500 text-sm`}>%</Text>}</Text>
+              <Text style={tw`text-lg`} weight='semibold'>{dao.today?.fat || '-'} {<Text style={tw`text-red-500 text-sm`}>%</Text>}</Text>
               </View>
               <View style={[tw`h-15 bg-gray-${dm ? '600' : '400'}`, { width: 1 }]} />
               <View style={tw`bg-transparent`}>
               <Text style={tw`text-xs text-gray-500`}>Goal</Text>
-              <Text style={tw`text-lg text-center`} weight='semibold'>{goal.toString()}</Text>
+              <Text style={tw`text-lg text-center`} weight='semibold'>{titleCase(profile?.goal || '-')}</Text>
               </View>
             </View>
-          </TouchableOpacity>
+          </View>
+         </TouchableOpacity>
           <View style={tw`flex-row items-center justify-between w-12/12 mt-2`}>
             <Text style={tw`text-lg`} weight='semibold'>Latest {lastRun?.runType || 'Run'} Activity</Text>
             <TouchableOpacity style={tw`p-3`} onPress={() => {

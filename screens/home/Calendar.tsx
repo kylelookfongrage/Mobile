@@ -1,12 +1,12 @@
 import { CalendarList } from 'react-native-calendars'
 import React from 'react'
-import { View } from '../../components/Themed'
+import { View } from '../../components/base/Themed'
 import { useNavigation } from '@react-navigation/native'
 import useColorScheme from '../../hooks/useColorScheme'
 import moment, { Moment } from 'moment'
-import { BackButton } from '../../components/BackButton'
+import { BackButton } from '../../components/base/BackButton'
 import tw from 'twrnc'
-import ThisAdHelpsKeepFree from '../../components/ThisAdHelpsKeepFree'
+import ThisAdHelpsKeepFree from '../../components/features/ThisAdHelpsKeepFree'
 
 interface DateContextType {
     date: Moment;

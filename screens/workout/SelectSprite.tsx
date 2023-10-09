@@ -1,6 +1,6 @@
 import { ActivityIndicator, ScrollView, TouchableOpacity, useColorScheme } from 'react-native'
 import React, { useEffect, useState } from 'react'
-import {View, Text} from '../../components/Themed'
+import {View, Text} from '../../components/base/Themed'
 import tw from 'twrnc'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'

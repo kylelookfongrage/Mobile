@@ -1,17 +1,17 @@
-import { View, Text } from '../../components/Themed'
+import { View, Text } from '../../components/base/Themed'
 import React, { useState } from 'react'
-import { BackButton } from '../../components/BackButton'
+import { BackButton } from '../../components/base/BackButton'
 import { ScrollView, TextInput } from 'react-native-gesture-handler'
 import { FavoriteType, ReportsOfTerms } from '../../aws/models';
 import tw from 'twrnc'
 import { ReportReasons } from '../../aws/models';
 import { defaultImage, titleCase } from '../../data';
 import { ActivityIndicator, Image, Keyboard, Pressable, TouchableOpacity, useColorScheme } from 'react-native';
-import { ExpoIcon } from '../../components/ExpoIcon';
+import { ExpoIcon } from '../../components/base/ExpoIcon';
 import { DataStore, Storage } from 'aws-amplify';
 import { useCommonAWSIds } from '../../hooks/useCommonContext';
 import { useNavigation } from '@react-navigation/native';
-import { ErrorMessage } from '../../components/ErrorMessage';
+import { ErrorMessage } from '../../components/base/ErrorMessage';
 import { BadgeType, useBadges } from '../../hooks/useBadges';
 
 export default function Report(props: {name: string, desc: string, img: string, id: string; type: FavoriteType, userId: string;}) {

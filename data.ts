@@ -313,7 +313,6 @@ import { Coordinates, Exercise, LazyWorkoutDetails, LazyWorkoutPlayDetail, Meal,
 import { Env } from './env';
 //@ts-ignore
 import { Ingredient } from './src/models';
-import { MediaType } from './types/Media';
 
 export const uploadImageAndGetID = async (imageSource: MediaType): Promise<string> => {
     if (isStorageUri(imageSource.uri)) {
@@ -333,13 +332,13 @@ export const uploadImageAndGetID = async (imageSource: MediaType): Promise<strin
 export const uploadMedias = async (imageSources: MediaType[]): Promise<MediaType[]> => {
     let medias: MediaType[] = await Promise.all(imageSources.map(async (x) => {
         if (isStorageUri(x.uri)) {
-            return {uri: x.uri, type: x.type}
-        } 
-        if (x.uri === defaultImage) {
-            return {uri: defaultImage, type: 'image'}
+            return { uri: x.uri, type: x.type }
         }
-        return {uri: await uploadImageAndGetID(x), type: x.type}
-      }));
+        if (x.uri === defaultImage) {
+            return { uri: defaultImage, type: 'image' }
+        }
+        return { uri: await uploadImageAndGetID(x), type: x.type }
+    }));
     return medias
 }
 
@@ -354,28 +353,28 @@ export const isStorageUri = (id: string): boolean => {
 
 export const defaultImage = Env.DEFAULT_IMAGE_URI || 'https://i.ibb.co/mq3pDpG/Icon-Bigicon-Big.png" alt="Icon-Bigicon-Big'
 
-export function toHHMMSS(duration: number) {
-    
+export function toHHMMSS(duration: number, seperator: string = ':') {
+
     // Hours, minutes and seconds
     const hrs = ~~(duration / 3600);
     const mins = ~~((duration % 3600) / 60);
     const secs = ~~duration % 60;
-  
+
     // Output like "1:01" or "4:03:59" or "123:03:59"
     let ret = "";
     if (hrs > 0) {
-      ret += "" + hrs + ":"
+        ret += "" + hrs + seperator
     }
-    ret += "" + (mins < 10 ? "0" : "") + mins + ":" + (secs < 10 ? "0" : "") + secs;
+    ret += "" + (mins < 10 ? "0" : "") + mins + seperator + (secs < 10 ? "0" : "") + secs;
     return ret;
-  }
-  
+}
+
 
 
 export const titleCase = (str: string) => {
     var sentence = str.toLowerCase().split(" ");
-    for(var i = 0; i< sentence.length; i++){
-       sentence[i] = sentence[i][0].toUpperCase() + sentence[i].slice(1);
+    for (var i = 0; i < sentence.length; i++) {
+        sentence[i] = sentence[i][0].toUpperCase() + sentence[i].slice(1);
     }
     return sentence.join(' ')
 }
@@ -393,7 +392,7 @@ export const getMatchingNavigationScreen = (key: string, navigator: any): string
 
 
 //@ts-ignore
-export const fractionStrToDecimal = (str: string): number => str.split('/').reduce((p, c) => p / c);
+export const fractionStrToDecimal = (str: string, places=2): number => Number(Number(str.split('/').reduce((p, c) => p / c)).toFixed(places));
 
 
 export const getIngredientsAndSteps = (res: string): GenerateMealResult => {
@@ -410,7 +409,7 @@ export const getIngredientsAndSteps = (res: string): GenerateMealResult => {
         const splitByFirst = ingr.slice(1)
         if (!splitByFirst) return;
         qtyUnitAndFood = splitByFirst.split(' ')
-        
+
         if ([' ', '.', '-'].filter(x => qtyUnitAndFood[0].includes(x)).length > 0) {
             qtyUnitAndFood.shift()
         }
@@ -567,7 +566,7 @@ export const defaultRunTypes: RunType[] = [
 
 
 
-export const formatCash = (n:number) => {
+export const formatCash = (n: number) => {
     if (n < 1e3) return n;
     if (n >= 1e3 && n < 1e6) return +(n / 1e3).toFixed(1) + "K";
     if (n >= 1e6 && n < 1e9) return +(n / 1e6).toFixed(1) + "M";
@@ -576,8 +575,8 @@ export const formatCash = (n:number) => {
 };
 
 
-export const substringForLists = (str: string, amt:number=20) => (str.length > amt ? str.substring(0, amt) + '...' : str)
- 
+export const substringForLists = (str: string, amt: number = 20) => (str.length > amt ? str.substring(0, amt) + '...' : str)
+
 
 
 import timer from './assets/animations/timer.json'
@@ -590,25 +589,21 @@ import sleepy_sleep from './assets/animations/sleepy_sleep.json'
 import squirrel_sleep from './assets/animations/squirrel-sleeping.json'
 
 export const animationMapping = [
-    {name: 'Dog Run', animation: timer},
-    {name: 'Squirrel Sleep', animation: squirrel_sleep},
-    {name: 'Pigeon Wait', animation: pigeon_wait},
-    {name: 'Sloth Sleep', animation: sloth_sleep},
-    {name: 'Sloth Sleep (2)', animation: sloth_sleeping},
-    {name: 'Bear Sleep', animation: bear_sleep},
-    {name: 'Meditation', animation: meditation},
-    {name: 'Moon Sleep', animation: sleepy_sleep},
+    { name: 'Dog Run', animation: timer },
+    { name: 'Squirrel Sleep', animation: squirrel_sleep },
+    { name: 'Pigeon Wait', animation: pigeon_wait },
+    { name: 'Sloth Sleep', animation: sloth_sleep },
+    { name: 'Sloth Sleep (2)', animation: sloth_sleeping },
+    { name: 'Bear Sleep', animation: bear_sleep },
+    { name: 'Meditation', animation: meditation },
+    { name: 'Moon Sleep', animation: sleepy_sleep },
 ]
-
-
-
-export const usernameRegex = /^(?=[a-zA-Z0-9._]{4,20}$)(?!.*[_.]{2})[^_.].*[^_.]$/
 
 
 
 export enum postMediaType {
     none, media, meal, workout, exercise, run
-  }
+}
 
 
 export interface PostMediaSearchDisplay {
@@ -618,7 +613,7 @@ export interface PostMediaSearchDisplay {
     author?: string;
     coordinates?: string;
     totalTime?: number;
-  }
+}
 
 
 
@@ -628,7 +623,7 @@ export const getUsernameAndMedia = async (result: Meal | Workout | Exercise): Pr
     //@ts-ignore
     let img = (result.preview || result.img || defaultImage);
     if (isStorageUri(img)) {
-      img = await Storage.get(img)
+        img = await Storage.get(img)
     }
     //@ts-ignore
     return { id: result.id, author: username, name: result.name || result.title || 'rage', img }
@@ -637,15 +632,15 @@ export const getUsernameAndMedia = async (result: Meal | Workout | Exercise): Pr
 export interface ChartMapping { date: string; reps: number; weight: number; secs: number };
 
 export function getFormattedDate(date: Date) {
-      
+
     var month = (1 + date.getMonth()).toString();
     month = month.length > 1 ? month : '0' + month;
-  
+
     var day = date.getDate().toString();
     day = day.length > 1 ? day : '0' + day;
-    
+
     return month + '/' + day
-  }
+}
 
 export interface ExerciseDisplay {
     media: MediaType[];
@@ -674,13 +669,13 @@ export interface WorkoutPlayDisplayProps {
     selectedWorkoutPlayDetail: WorkoutPlayDetail | undefined;
     setSelectedWorkoutPlayDetail: React.Dispatch<React.SetStateAction<LazyWorkoutPlayDetail | undefined>>;
     forwardBackwardPress: (b?: boolean) => void;
-} 
+}
 
 
 
 export enum WorkoutMode {
-    default='DEFAULT',
-    player='PLAYER'
+    default = 'DEFAULT',
+    player = 'PLAYER'
 }
 
 
@@ -690,57 +685,57 @@ export enum WorkoutMode {
 export function calculateBodyFat(sex: 'male' | 'female', unit: 'USC' | 'Metric', waist: number, neck: number, height: number, hip?: number): number {
     const logWaistNeck = Math.log10(waist - neck);
     const logHeight = Math.log10(height);
-  
+
     let bfp: number;
-  
+
     if (unit === 'USC') {
-      if (sex === 'female' && typeof hip !== 'number') {
-        throw new Error('Hip measurement is required for females in USC units.');
-      }
-      const logWaistHipNeck = Math.log10(waist + (hip || 0) - neck);
-  
-      if (height <= 0 || waist <= 0 || neck <= 0 || (hip !== undefined && hip <= 0)) {
-        throw new Error('All measurements must be positive numbers.');
-      }
-  
-      if (sex === 'male') {
-        bfp = 86.010 * logWaistNeck - 70.041 * logHeight + 36.76;
-      } else {
-        if (waist + (hip || 0) - neck <= 0) {
-          throw new Error('Invalid measurements: waist + hip - neck must be greater than zero for females in USC units.');
+        if (sex === 'female' && typeof hip !== 'number') {
+            throw new Error('Hip measurement is required for females in USC units.');
         }
-        bfp = 163.205 * logWaistHipNeck - 97.684 * logHeight - 78.387;
-      }
+        const logWaistHipNeck = Math.log10(waist + (hip || 0) - neck);
+
+        if (height <= 0 || waist <= 0 || neck <= 0 || (hip !== undefined && hip <= 0)) {
+            throw new Error('All measurements must be positive numbers.');
+        }
+
+        if (sex === 'male') {
+            bfp = 86.010 * logWaistNeck - 70.041 * logHeight + 36.76;
+        } else {
+            if (waist + (hip || 0) - neck <= 0) {
+                throw new Error('Invalid measurements: waist + hip - neck must be greater than zero for females in USC units.');
+            }
+            bfp = 163.205 * logWaistHipNeck - 97.684 * logHeight - 78.387;
+        }
     } else if (unit === 'Metric') {
-      if (height <= 0 || waist <= 0 || neck <= 0) {
-        throw new Error('All measurements must be positive numbers.');
-      }
-  
-      if (sex === 'male') {
-        bfp = 495 / (1.0324 - 0.19077 * logWaistNeck + 0.15456 * logHeight) - 450;
-      } else {
-        bfp = 495 / (1.29579 - 0.35004 * logWaistNeck + 0.22100 * logHeight) - 450;
-      }
+        if (height <= 0 || waist <= 0 || neck <= 0) {
+            throw new Error('All measurements must be positive numbers.');
+        }
+
+        if (sex === 'male') {
+            bfp = 495 / (1.0324 - 0.19077 * logWaistNeck + 0.15456 * logHeight) - 450;
+        } else {
+            bfp = 495 / (1.29579 - 0.35004 * logWaistNeck + 0.22100 * logHeight) - 450;
+        }
     } else {
-      throw new Error('Invalid unit. Please use either "USC" or "Metric".');
+        throw new Error('Invalid unit. Please use either "USC" or "Metric".');
     }
-  
+
     return bfp;
-  }
-  
+}
 
 
-  export const validateUsername = async (newUsername: string, currentUsername: string|null): Promise<string | null> => {
+export const usernameRegex = /^(?=[a-zA-Z0-9._]{4,20}$)(?!.*[_.]{2})[^_.].*[^_.]$/
+export const validateUsername = async (newUsername: string, currentUsername: string | null): Promise<string | null> => {
     if (newUsername === '' || !newUsername) return 'You must input a username'
     if (!newUsername.match(usernameRegex)) {
         return 'Your username must be between 4 and 20 characters without special characters. Underscores and periods are allowed once'
     }
     if (currentUsername === newUsername) return null;
     const potentialMatches = await DataStore.query(User, u => u.username.eq(newUsername))
-        if (potentialMatches.length > 0) {
-            return 'This username is already taken'
-        } 
-        return null
+    if (potentialMatches.length > 0) {
+        return 'This username is already taken'
+    }
+    return null
 }
 
 
@@ -751,3 +746,193 @@ export const inchesToFeet = (inches: number): string => {
     const totalFeet = Math.round((inches - remainderInches) / 12)
     return `${totalFeet} ft ${remainderInches} in`
 }
+
+
+
+import moment from 'moment';
+import { IngredientAdditions } from './hooks/useMultipartForm';
+
+function calculateTDEE(male: boolean, weight: number, height: number, age: number, activity: 'sedentary' | 'light' | 'average' | 'active', metric: boolean = false): number {
+    const heightMultiplier = metric ? 1 : 2.54; // Convert inches to cm if not using metric units
+    const weightMultiplier = metric ? 1 : 0.453592; // Convert pounds to kg if not using metric units
+  
+    const heightInCm = height * heightMultiplier;
+    const weightInKg = weight * weightMultiplier;
+  
+    const bmr = male
+      ? 10 * weightInKg + 6.25 * heightInCm - 5 * age + 5
+      : 10 * weightInKg + 6.25 * heightInCm - 5 * age - 161;
+  
+    const activityMultipliers = {
+      sedentary: 1.2,
+      light: 1.375,
+      average: 1.55,
+      active: 1.725,
+    };
+  
+    const tdee = bmr * activityMultipliers[activity];
+    return tdee;
+  }
+  
+export function caloriesPerDay(
+    male: boolean,
+    dateOfBirth: string,
+    startDate: string,
+    endDate: string,
+    startWeight: number,
+    endWeight: number,
+    height: number,
+    bodyFat: number,
+    activity: 'sedentary' | 'light' | 'average' | 'active',
+    metric: boolean = false
+  ): number {
+    const daysDifference = moment(endDate, 'YYYY-MM-DD').diff(moment(startDate, 'YYYY-MM-DD'), 'days');
+    const weightChange = startWeight - endWeight; // Positive for weight gain, negative for weight loss
+  
+    const caloriesPerUnitChange = metric ? 7700 : 3500; // 7700 calories per kg (metric) or 3500 calories per pound (imperial)
+  
+    const totalCaloriesNeeded = caloriesPerUnitChange * weightChange;
+  
+    const age = moment().diff(moment(dateOfBirth, 'YYYY-MM-DD'), 'years');
+    const tdee = calculateTDEE(male, startWeight, height, age, activity, metric);
+  
+    const leanMass = startWeight * (1 - bodyFat / 100);
+    const adjustedTDEE = tdee + (leanMass - startWeight) * 20;
+  
+    const dailyCalories = (totalCaloriesNeeded / daysDifference) + adjustedTDEE;
+  
+    return dailyCalories;
+  }
+  
+
+  export interface MediaType {
+    uri: string;
+    type: string;
+    supabaseID?: string;
+    metadata?: any;
+}
+
+
+interface ValidationObject {
+    name: string;
+    value: any,
+    options: {
+        required?: boolean;
+        validate?: (v: ValidationObject['value']) => boolean;
+        errorMessage?: string;
+        contains?: {
+            text: string;
+            alias?: string;
+        };
+        cannotContain?: {
+            text: string;
+            alias?: string;
+        }
+    }
+}
+export const validate = function (textFieldValuesAndOptions: ValidationObject[]) {
+    /* 
+      validate: Will validate the text field based on the options provided
+      params: {
+        textFieldValuesAndOptions: a JSON object with the values and their respective requirements
+      }
+      returns: either true or a JSON object with keys of error responses
+    */
+    const errors: string[] = [];
+    textFieldValuesAndOptions.forEach((k) => {
+      const textField = k;
+      const name = textField.name;
+      const value = textField.value;
+      const options = textField.options;
+  
+      //these are available options for each {required, contains, cannotContain}
+      if (options.required) {
+        const requriedErrorMessage = `${name} is required`;
+        if (value === null || value === undefined || value == '' || value.length === 0) {
+          errors.push(requriedErrorMessage);
+        }
+      }
+  
+      //these are available options for each {required, contains: {text}, cannotContain: {text}}
+      if (options.contains) {
+        const containsRequirement = options.contains.text;
+        const alias = options.contains.alias
+        const requriedErrorMessage = `${name} must contain ${alias || containsRequirement}`;
+        if (!value.includes(containsRequirement))
+          errors.push(requriedErrorMessage);
+      }
+  
+      //these are available options for each {required, contains: {text}, cannotContain: {text}}
+      if (options.cannotContain) {
+        const cannotContainsRequirement = options.cannotContain.text;
+        const requriedErrorMessage = `${name} must NOT contain ${cannotContainsRequirement}`;
+        if (value.includes(cannotContainsRequirement))
+          errors.push(requriedErrorMessage);
+      }
+
+      if (options.validate) {
+        let validationInput = options.validate(value)
+        if (!validationInput) {
+            errors.push(options.errorMessage || 'Something went wrong')
+        }
+      }
+
+
+    });
+  
+    if (Object.keys(errors).length === 0) {
+      return true;
+    } else {
+      return errors;
+    }
+  };
+  
+
+
+
+export const getMacrosFromIngredients = (ingrs: IngredientAdditions[]): { protein: number, carbs: number; calories: number; fat: number, otherNutrition: { [k: string]: { value: number; } } } => {
+    let protein: number = 0;
+    let calories: number = 0;
+    var carbs: number = 0;
+    var fat: number = 0;
+    let otherNutrition: { [k: string]: { value: number } } = {}
+    ingrs.forEach((i) => {
+        calories += Number(i.calories)
+        protein += Number(i.protein)
+        carbs += Number(i.carbs)
+        fat += Number(i.fat)
+        try {
+            if (i.otherNutrition) {
+                Object.keys(i.otherNutrition).forEach(k => {
+                    const potential = otherNutrition[k]?.['value']
+                    //@ts-ignore
+                    const value = i.otherNutrition[k]
+                    if (value.hidden) return;
+                    if (potential) {
+                        otherNutrition[k]['value'] = (potential || 0) + (Number(value.value) || 0)
+                    } else {
+                        otherNutrition[k] = {
+                            value: (Number(value.value) || 0)
+                        }
+                    }
+                })
+            }
+        } catch (error) {
+            console.log(error)
+        }
+    })
+    return { protein, carbs, calories, fat, otherNutrition }
+
+}
+
+
+
+export function pad(pad: string, str: string, padLeft=false): string {
+    if (typeof str === 'undefined') 
+      return pad;
+    if (padLeft) {
+      return (pad + str).slice(-pad.length);
+    } else {
+      return (str + pad).substring(0, pad.length);
+    }
+  }

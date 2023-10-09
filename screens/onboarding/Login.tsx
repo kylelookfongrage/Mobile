@@ -1,14 +1,13 @@
-import { ScrollView, TextInput, TouchableOpacity, View, Platform, StyleSheet, ActivityIndicator, Image } from 'react-native'
+import { ScrollView, TextInput, TouchableOpacity, Platform, StyleSheet, ActivityIndicator, Image, Dimensions } from 'react-native'
 import React from 'react'
-import { SafeAreaView } from 'react-native-safe-area-context'
-import { Text, useThemeColor } from '../../components/Themed'
+import { Text, SafeAreaView, View } from '../../components/base/Themed'
 import tw from 'twrnc'
-import { ExpoIcon } from '../../components/ExpoIcon'
+import { ExpoIcon } from '../../components/base/ExpoIcon'
 import useColorScheme from '../../hooks/useColorScheme'
 import { useNavigation } from '@react-navigation/native'
 import * as Google from 'expo-auth-session/providers/google'
 import { Auth, DataStore, Hub } from 'aws-amplify'
-import { ErrorMessage } from '../../components/ErrorMessage'
+import { ErrorMessage } from '../../components/base/ErrorMessage'
 //@ts-ignore
 import * as AppleAuthentication from 'expo-apple-authentication';
 import jwt_decode from 'jwt-decode'
@@ -24,6 +23,9 @@ import { Tier, User } from '../../aws/models'
 import { ZenObservable } from 'zen-observable-ts'
 import { sleep } from '../../data'
 import { Checkbox } from 'react-native-paper'
+import { useAppleLogin, useAuthListener, useGoogleSignIn } from '../../supabase/auth'
+import Spacer from '../../components/base/Spacer'
+import { UserQueries } from '../../types/UserDao'
 
 
 export default function Login() {
@@ -35,11 +37,12 @@ export default function Login() {
   const [showConfirmPassword, setShowConfirmPassword] = React.useState<boolean>(false)
   const [errors, setErrors] = React.useState<string[]>([])
   const [shouldShowValidateCode, setShouldShowValidateCode] = React.useState<boolean>(false)
-  const { setSignedInWithEmail, setSub, setUserId, setUsername, setStatus } = useCommonAWSIds()
+  const { setSignedInWithEmail, setSub, setUserId, setUsername, setStatus, setProfile } = useCommonAWSIds()
   const [uploading, setUploading] = React.useState(false)
   const dm = useColorScheme() === 'dark'
   const navigator = useNavigation()
   const [user, setUser] = React.useState<any>(null);
+  const dao = UserQueries()
 
   const checkForUser = async () => {
     setUploading(true)
@@ -81,75 +84,31 @@ export default function Login() {
     return () => subscripton.unsubscribe()
   }, [user])
 
-  React.useEffect(() => {
-    if (!loginMode) return;
-    if (!email) return
-    setUploading(true)
-    Auth.resendSignUp(email).catch(x => {
-      setErrors(['There was a problem, please try again'])
-      setShouldShowValidateCode(false)
-    })
-    setUploading(false)
-  }, [shouldShowValidateCode])
+  // React.useEffect(() => {
+  //   if (!loginMode) return;
+  //   if (!email) return
+  //   setUploading(true)
+  //   Auth.resendSignUp(email).catch(x => {
+  //     setErrors(['There was a problem, please try again'])
+  //     setShouldShowValidateCode(false)
+  //   })
+  //   setUploading(false)
+  // }, [shouldShowValidateCode])
 
-  React.useEffect(() => {
-    const listener = async (data: any) => {
-      console.log(data)
-      switch (data.payload.event) {
-        case 'signIn':
-          await checkForUser()
-          break;
-        case 'signIn_failure':
-          if (data.payload.data.message.includes('Incorrect')) {
-            setErrors(['Please check your credentials and try again'])
-          } else if (data.payload.data.message.includes('confirmed')) {
-            setShouldShowValidateCode(true)
-          } else {
-            setErrors([data.payload.data.message || 'There was a problem please try again'])
-          }
-          break;
-        case 'signUp':
-          setShouldShowValidateCode(true)
-          break;
-        case 'signUp_failure':
-          setErrors([data.payload.data.message || 'There was a problem please try again'])
-        case 'confirmSignUp':
-          await checkForUser()
-          break;
-        case 'forgotPassword':
-          console.log('password recovery initiated');
-          break;
-        case 'forgotPassword_failure':
-          console.log('password recovery failed');
-          break;
-        case 'forgotPasswordSubmit':
-          console.log('password confirmation successful');
-          break;
-        case 'forgotPasswordSubmit_failure':
-          console.log('password confirmation failed');
-          break;
-        case 'parsingCallbackUrl':
-          console.log('Cognito Hosted UI OAuth url parsing initiated');
-          break;
-        case 'signOut':
-          setSub('')
-          setUserId('')
-          setUsername('')
-          break;
-        case 'autoSignIn':
-          await checkForUser()
+  useAuthListener((e, u) => {
+    setSignedInWithEmail(['apple', 'google'].includes(u?.app_metadata?.provider || ''))
+    dao.fetchProfile(u.id).then(x => {
+      if (x?.id) {
+        setUserId(x.id)
+        setProfile(x)
+      } else {
+        navigator.navigate('Registration')
       }
-      setUploading(false)
-    };
+    })
+    setSub(u.id)
+    setUser(u)
+  })
 
-    Hub.listen('auth', listener);
-
-  }, [])
-  React.useEffect(() => {
-    if (uploading) {
-      setErrors([])
-    }
-  }, [uploading])
 
   const onCreateAccountOrLoginPress = async () => {
     setUploading(true)
@@ -160,7 +119,7 @@ export default function Login() {
           setErrors(['You must fill out all of the information'])
           return
         }
-        Auth.signIn(email, password).catch(x => { return })
+        // login
       } else {
         if (!password || !email || !confirmPassword) {
           setUploading(false)
@@ -173,16 +132,7 @@ export default function Login() {
           return
         }
         if (password === confirmPassword) {
-          Auth.signUp({
-            username: email,
-            password: password,
-            attributes: {
-              email: email, name: email
-            },
-            autoSignIn: { // optional - enables auto sign in after user is confirmed
-              enabled: true,
-            },
-          }).catch(x => { return })
+          // sign up
         } else {
           setErrors(['Your confirm password does not match'])
           return
@@ -194,19 +144,7 @@ export default function Login() {
 
   }
 
-  const onGoogleButtonPress = async () => {
-    setUploading(true)
-    try {
-      //@ts-ignore
-      await Auth.federatedSignIn({ provider: 'Google' })
-    } catch (error) {
-      //@ts-ignore
-      setErrors([error.toString()])
-      setUploading(false)
-    }
-    setUploading(false)
-
-  }
+  
   const [validateCode, setValidateCode] = React.useState<string>('')
   const [acceptedTerms, setAcceptedTerms] = React.useState<boolean>(false)
   const ref = useBlurOnFulfill({ value: validateCode, cellCount: 6 });
@@ -305,7 +243,7 @@ export default function Login() {
     </SafeAreaView>
   }
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1 }}>
+    <SafeAreaView includeBackground style={{ flex: 1 }}>
       <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} contentContainerStyle={[tw`px-6`]}>
         <View style={tw`mt-9`}>
           {errors.length !== 0 && <ErrorMessage errors={errors} onDismissTap={() => setErrors([])} />}
@@ -313,14 +251,13 @@ export default function Login() {
             <Text style={tw`text-2xl max-w-7/12 mt-4 mb-6`} weight='semibold'>{loginMode ? 'Log in to Rage' : 'Create your free account'}</Text>
           </View>
         </View>
-        <Text>Email</Text>
-        <View style={tw`w-12/12 mt-2 flex-row items-center py-3 px-4 justify-between bg-gray-${dm ? '700' : '300'} rounded-lg`}>
+        <Spacer />
+        <View style={tw`w-12/12 flex-row items-center py-3 px-4 justify-between bg-gray-${dm ? '700' : '300'} rounded-lg`}>
           <TextInput value={email} onChangeText={setEmail} placeholder='email' keyboardType='email-address' style={tw`w-11/12 text-${dm ? 'white' : 'black'}`} />
           <ExpoIcon name='at-sign' iconName='feather' color={dm ? 'white' : 'gray'} size={20} />
         </View>
-
-        <Text style={tw`mt-4`}>Password</Text>
-        <View style={tw`w-12/12 mt-2 flex-row items-center py-3 px-4 justify-between bg-gray-${dm ? '700' : '300'} rounded-lg`}>
+        <Spacer />
+        <View style={tw`w-12/12 flex-row items-center py-3 px-4 justify-between bg-gray-${dm ? '700' : '300'} rounded-lg`}>
           <TextInput value={password} onChangeText={setPassword} secureTextEntry={!showPassword} placeholder='password' style={tw`w-11/12 text-${dm ? 'white' : 'black'}`} />
           <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
             <ExpoIcon name={showPassword ? 'lock' : 'unlock'} iconName='feather' color={dm ? 'white' : 'gray'} size={20} />
@@ -334,9 +271,9 @@ export default function Login() {
             <Text style={tw`text-red-700`}>Forgot password?</Text>
           </TouchableOpacity>
         </View>}
+        <Spacer />
         {!loginMode && <View>
-          <Text style={tw`mt-4`}>Confirm Password</Text>
-          <View style={tw`w-12/12 my-2 flex-row items-center py-3 px-4 justify-between bg-gray-${dm ? '700' : '300'} rounded-lg`}>
+          <View style={tw`w-12/12 flex-row items-center py-3 px-4 justify-between bg-gray-${dm ? '700' : '300'} rounded-lg`}>
             <TextInput value={confirmPassword} onChangeText={setConfirmPassword} secureTextEntry={!showConfirmPassword} placeholder='confirm password' style={tw`w-11/12 text-${dm ? 'white' : 'black'}`} />
             <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
               <ExpoIcon name={showConfirmPassword ? 'lock' : 'unlock'} iconName='feather' color={dm ? 'white' : 'gray'} size={20} />
@@ -346,7 +283,7 @@ export default function Login() {
             <Checkbox.Android status={acceptedTerms ? 'checked' : 'unchecked'} color='red' uncheckedColor='gray' onPress={() => {
                 setAcceptedTerms(!acceptedTerms)
             }} />   
-            <Text style={tw`max-w-10/12 text-gray-500`}>Accept the {<Text style={tw`text-red-500`} weight='semibold'>Terms and Conditions</Text>} and {<Text style={tw`text-red-500`} weight='semibold'>Privacy Policy</Text>}</Text>
+            <Text style={tw`max-w-10/12 text-gray-500 text-xs`}>Accept the {<Text style={tw`text-red-500`} weight='semibold'>Terms and Conditions</Text>} and {<Text style={tw`text-red-500`} weight='semibold'>Privacy Policy</Text>}</Text>
         </View>
         </View>}
         <TouchableOpacity
@@ -354,7 +291,7 @@ export default function Login() {
           onPress={() => {
             onCreateAccountOrLoginPress()
           }}
-          style={tw`items-center rounded-lg bg-red-700 py-3`}>
+          style={tw`items-center rounded-lg bg-red-600 py-3`}>
           {!uploading && <Text style={tw`text-white`}>{loginMode ? 'Log in' : 'Create Account'}</Text>}
           {uploading && <ActivityIndicator />}
         </TouchableOpacity>
@@ -363,39 +300,51 @@ export default function Login() {
           <Text>or</Text>
           <View style={tw`h-0.5 w-5/12 bg-gray-700/60`} />
         </View>
-        {['ios', 'macos'].includes(Platform.OS) && <AppleAuthentication.AppleAuthenticationButton
-          buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
-          buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
-          cornerRadius={5}
-          style={tw`w-12/12 h-12 rounded-xl border border-${dm ? 'white' : 'black'}`}
-          onPress={async () => {
-            setUploading(true)
-            try {
-              //@ts-ignore
-              await Auth.federatedSignIn({provider: 'SignInWithApple'})
-            } catch (error) {
-              //@ts-ignore
-              setErrors([error.toString()])
-              setUploading(false)
-            }
-            setUploading(false)
-          }}
-        />}
-        <TouchableOpacity onPress={onGoogleButtonPress} style={tw`w-12/12 mt-3 flex-row items-center border border-${dm ? 'white' : 'gray-500'} rounded-xl py-3 px-4`}>
-          <ExpoIcon name='logo-google' iconName='ion' size={25} color={dm ? 'white' : 'black'} />
-          <Text style={tw`ml-6`}>Continue with Google</Text>
-        </TouchableOpacity>
+       <View style={tw`items-center justify-center`}>
+       <SignInButton email register={!loginMode} emailPress={() => {
+          setLoginMode(!loginMode)
+        }}/>
+        {['ios', 'macos'].includes(Platform.OS) && <SignInButton apple />}
+        <SignInButton google/>
+       </View>
         <Text style={tw`text-xs text-center text-gray-500 mx-6 mt-3`}>By signing in with Apple or Google, you are also agreeing to the Privacy Policy and Terms and Conditions</Text>
         <View style={tw`pb-40`} />
       </ScrollView>
-      <TouchableOpacity
-        onPress={() => setLoginMode(!loginMode)}
-        style={[tw`items-center flex-row w-12/12 pb-15 pt-3 bg-${dm ? 'black' : 'gray-200'} justify-center`, {
-          position: 'absolute', bottom: 0
-        }]}>
-        <Text>{loginMode ? "Don't have an account? " : 'Already have an account? '}</Text>
-        <Text style={tw`text-red-700`} weight='bold'>{loginMode ? 'Register' : 'Log in'}</Text>
-      </TouchableOpacity>
     </SafeAreaView>
   )
+}
+
+
+
+
+export const SignInButton = (props: { apple?: boolean; google?: boolean; email?: boolean, emailPress?: () => void; register?: boolean; }) => {
+  const { loginWithGoogle } = useGoogleSignIn()
+  const { signInWithApple } = useAppleLogin()
+  const s = Dimensions.get('screen')
+  let name = 'Email'
+  let bg = 'red-600'
+  let icon = 'mail'
+  let iconColor = 'white'
+  let textColor = 'white'
+
+  let onPress = props.email ? props.emailPress : () => {}
+  if (props.apple) {
+      bg = 'black'
+      name = 'Apple'
+      icon = 'logo-apple'
+      onPress = signInWithApple
+  }
+  if (props.google) {
+      bg = 'sky-600'
+      name = 'Google'
+      icon = 'logo-google'
+      onPress = loginWithGoogle
+  }
+  return <TouchableOpacity onPress={onPress} style={[tw`flex-row px-4 items-center justify-between rounded-xl my-2 bg-${bg}`, { width: s.width * 0.80, height: 50 }]}>
+      <ExpoIcon iconName={'ion'} name={icon} size={20} color={iconColor} />
+      <View>
+          <Text weight='semibold' style={tw`text-center text-${textColor} font-semibold`}>{props.email ? (props.register ? 'Login' : 'Sign Up') : 'Continue'} With {name}</Text>
+      </View>
+      <Text> </Text>
+  </TouchableOpacity>
 }

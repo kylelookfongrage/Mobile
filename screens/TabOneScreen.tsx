@@ -1,5 +1,5 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { getCommonScreens } from '../components/GetCommonScreens';
+import { getCommonScreens } from '../components/screens/GetCommonScreens';
 import { RootTabScreenProps } from '../types';
 import Calendar from './home/Calendar';
 import Notifications from './home/Notifications';

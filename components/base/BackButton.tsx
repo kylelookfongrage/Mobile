@@ -31,9 +31,10 @@ export const BackButton = (props: BackButtonProps) => {
                 navigator.goBack()
             }
         }}
-        style={[tw`p-2 bg-gray-${dm ? '500' : '300'} flex-row items-center rounded-full`, {
-        }]}>
-        <ExpoIcon name='chevron-left' iconName='feather' size={25} color={dm ? 'white' : 'black'} />
+        >
+            <View card style={[tw`p-2 flex-row items-center rounded-lg`, {}]}>
+                <ExpoIcon name='chevron-left' iconName='feather' size={25} style={tw`mr-.5`} color={'gray'} />
+            </View>
     </TouchableOpacity>
     {props.name && <Text style={tw`ml-2`} weight='semibold'>{props.name}</Text>}
     </View>

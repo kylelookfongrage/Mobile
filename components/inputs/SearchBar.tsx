@@ -15,7 +15,7 @@ export default function SearchBar(props: {onSearch?: (v: string) => void; full?:
         }
     }, [debouncedKeyword])
     return (
-        <View style={tw`${props.full ? 'w-12/12' : 'w-11/12'} self-center mx-2 flex-row items-center py-2 px-4 justify-between bg-gray-${dm ? '800' : '300'} rounded-3xl`}>
+        <View card style={tw`${props.full ? 'w-12/12' : 'w-11/12'} self-center mx-2 flex-row items-center py-2 px-4 justify-between rounded-3xl`}>
             <View style={tw`flex flex-row items-center`}>
                 <ExpoIcon name='search' iconName='feather' color={'gray'} style={tw`pr-2`} size={25} />
                 <TextInput value={keyword} onChangeText={setKeyword} placeholder='search...' style={tw`w-9/12 text-${dm ? 'white' : 'black'}`} />

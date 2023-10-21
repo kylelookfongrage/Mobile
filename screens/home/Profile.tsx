@@ -1,5 +1,5 @@
 import { ScrollView, TouchableOpacity, Dimensions, Image, RefreshControl } from 'react-native'
-import React from 'react'
+import React, { useState } from 'react'
 import { Text, View } from '../../components/base/Themed'
 import tw from 'twrnc'
 import useColorScheme from '../../hooks/useColorScheme';
@@ -12,7 +12,12 @@ import { Exercise, FavoriteType, Follower, Goal, Meal, User, Workout } from '../
 import { useCommonAWSIds } from '../../hooks/useCommonContext';
 import { defaultImage, formatCash, getMatchingNavigationScreen, isStorageUri, substringForLists } from '../../data';
 import { BackButton } from '../../components/base/BackButton';
-import { ShowMoreButton } from './ShowMore';
+import { ShowMoreButton, ShowMoreDialogue } from './ShowMore';
+import { UserQueries } from '../../types/UserDao';
+import SupabaseImage from '../../components/base/SupabaseImage';
+import { Tables } from '../../supabase/dao';
+import Spacer from '../../components/base/Spacer';
+import ManageButton from '../../components/features/ManageButton';
 
 
 
@@ -36,67 +41,48 @@ interface ProfileExercise extends Exercise {
 }
 export default function Profile(props: ProfileProps) {
     const { id } = props
-    const { userId, username } = useCommonAWSIds()
+    const { userId, username, profile } = useCommonAWSIds()
     const [pic, setPic] = React.useState<MediaType[]>([])
-    const [workouts, setWorkouts] = React.useState<Workout[]>([])
-    const [exercises, setExercises] = React.useState<ProfileExercise[]>([])
-    const [meals, setMeals] = React.useState<Meal[]>([])
+    const [img, setImg] = useState<string | null>(null)
+    const [workouts, setWorkouts] = React.useState<Tables['workout']['Row'][]>([])
+    const [exercises, setExercises] = React.useState<Tables['exercise']['Row'][]>([])
+    const [meals, setMeals] = React.useState<Tables['meal']['Row'][]>([])
     const [bio, setBio] = React.useState<string | null | undefined>('')
     const [profileLink, setProfileLink] = React.useState<string>('')
     const isCurrentUsersProfile = id === userId || !id
     const navigator = useNavigation()
+    let dao = UserQueries()
 
     React.useEffect(() => {
         fetchUserInfo()
 
     }, [])
     const fetchUserInfo = async () => {
-        const queryID = props.id || userId
+        const queryID = props.id || profile?.id
         if (!queryID) return
-        let profileUsername = username
-        const user = await DataStore.query(User, queryID)
+        const user = await dao.fetchProfile(queryID)
         if (user) {
-            const picture = user.picture || defaultImage
-            profileUsername = user.username + ' '
-            setProfileName(profileUsername)
+            console.log(user)
+            setProfileName(user.username)
             setBio(user.bio)
+            setImg(user.pfp)
             setName(user.name)
             if (user.links?.[0]) {
                 setProfileLink(user.links?.[0])
             }
-            // setProfileLink(user.lin)
-            setFollowers((await user.Followers.toArray()).length)
-            setPic([{ type: 'image', uri: isStorageUri(picture) ? await Storage.get(picture) : picture }])
-            const userPotentialFollowing = (await DataStore.query(Follower, f=>f.and(fav => [fav.subscribedFrom.eq(userId), fav.userID.eq(queryID)]))).length > 0
-            setIsFollowing(userPotentialFollowing)
-        }
-        const potentialFollowing = await DataStore.query(Follower, f => f.subscribedFrom.eq(queryID))
-        setFollowing(potentialFollowing.length)
-        const userWorkouts = await DataStore.query(Workout, x => x.and(w => [w.userID.eq(queryID), w.name.ne(''), w.img.ne('')]), { sort: x => x.createdAt("DESCENDING"), limit: 20 })
-        const workoutsWithImages = await Promise.all(userWorkouts.map(async wo => {
-            let img = wo.img || defaultImage
-            return { ...wo, userID: profileUsername, img: isStorageUri(img) ? await Storage.get(img) : img }
-        }))
-        setWorkouts(workoutsWithImages)
-        const userMeals = await DataStore.query(Meal, m => m.and(x => [x.userID.eq(queryID), x.name.ne(''), x.public.eq(true), x.preview.ne(null)]), { sort: x => x.createdAt("DESCENDING"), limit: 20 })
-        const mealsWithImages = await Promise.all(userMeals.map(async userMeal => {
-            //@ts-ignore
-            let img = userMeal.preview || defaultImage
-            if (isStorageUri(img)) img = await Storage.get(img)
-            return { ...userMeal, userID: profileUsername, preview: img }
-        }))
-        //@ts-ignore
-        setMeals(mealsWithImages)
-        if (isCurrentUsersProfile) {
-            const exercisesWithoutImages = await DataStore.query(Exercise, e => e.and(ex => [ex.title.ne(''), ex.userID.eq(queryID)]), {
-                limit: 10,
-                sort: y => y.createdAt('DESCENDING')
-              })
-              const exercisesWithImages: ProfileExercise[] = await Promise.all(exercisesWithoutImages.map(async ex => {
-                const img = ex.preview || defaultImage
-                return { ...ex, img: isStorageUri(img) ? await Storage.get(img) : img }
-              }))
-              setExercises(exercisesWithImages)
+            let res = await dao.fetch_subscribers(user.id)
+            if (res) {
+                setFollowers(res.subscribers)
+                setFollowing(res.subscribees)
+            }
+            if (profile?.id && user.id !== profile.id) {
+                let f = await dao.isFollowing(profile.id, user.id)
+                if (f) setIsFollowing(true)
+            }
+            let children = await dao.fetch_user_children(user.id, ['food'])
+            setWorkouts(children.workout)
+            setMeals(children.meal)
+            setExercises(children.exercise)
         }
         setRefreshing(false)
     }
@@ -111,13 +97,13 @@ export default function Profile(props: ProfileProps) {
     const [showBio, setShowBio] = React.useState<boolean>(false)
 
     const onFollowingPress = async () => {
-        if (!id) return;
+        if (!id || !profile?.id) return;
         if (isFollowing) {
-            await DataStore.delete(Follower, x => x.and(y => [y.subscribedFrom.eq(userId), y.userID.eq(id)]))
+            await dao.onFollowPress(profile.id, id, true)
             setFollowers(followers - 1)
             setIsFollowing(false)
         } else {
-            await DataStore.save(new Follower({ subscribedFrom: userId, userID: id }))
+            await dao.onFollowPress(profile.id, id, false)
             setFollowers(followers + 1)
             setIsFollowing(true)
         }
@@ -125,7 +111,7 @@ export default function Profile(props: ProfileProps) {
 
     return <View style={{ flex: 1 }} includeBackground>
         {id && <BackButton Right={() => {
-            return <ShowMoreButton name={name || ''} desc={'@' +profileName} img={pic[0]?.uri || defaultImage} id={props.id || ''} />
+            return <ShowMoreDialogue user_id={id} />
         }} />}
         <ScrollView contentContainerStyle={[tw`w-12/12 px-4 mt-6 pb-40`]} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchUserInfo} />}>
             {!id && <TouchableOpacity style={tw`justify-end w-12/12 mt-9 items-end`} onPress={() => {
@@ -137,7 +123,7 @@ export default function Profile(props: ProfileProps) {
                 <TouchableOpacity onPress={() => {
                         navigator.navigate('Image', { uris: [pic.length > 0 ? pic[0].uri : defaultImage] })
                     }}>
-                    {pic.length > 0 && <Image source={{ uri: pic[0].uri }} style={tw`w-20 h-20 rounded-full`} />}
+                   <SupabaseImage uri={img || defaultImage} style={tw`w-20 h-20 rounded-full`} />
                 </TouchableOpacity>
                 <View style={tw`flex-row w-9/12 justify-around items-center`}>
                 <TouchableOpacity onPress={() => {
@@ -176,9 +162,12 @@ export default function Profile(props: ProfileProps) {
             }}>
                     <Text style={tw`text-red-500`} weight='semibold'>{profileLink}</Text>
                 </TouchableOpacity>}
-            {!isCurrentUsersProfile && <TouchableOpacity onPress={onFollowingPress} style={tw`bg-red-${dm ? '700' : '300'} items-center justify-center p-3 mx-6 rounded-xl mt-3 mb-6`}>
-                <Text>{isFollowing ? 'Unfollow' : 'Follow'}</Text>
-            </TouchableOpacity>}
+                {!isCurrentUsersProfile && <Spacer />}
+            {!isCurrentUsersProfile && <TouchableOpacity onPress={onFollowingPress}>
+                <View card={isFollowing} style={tw`${isFollowing ? '' : 'bg-red-600'} items-center justify-center p-3 mx-12 rounded-xl mt-3`}>
+                <Text weight='bold'>{isFollowing ? 'Unfollow' : 'Follow'}</Text>
+            </View>
+                </TouchableOpacity>}
             {isCurrentUsersProfile && <View>
                 <TouchableOpacity onPress={() => {
                     navigator.navigate('UserBio')
@@ -199,16 +188,13 @@ export default function Profile(props: ProfileProps) {
                    })}
                 </View>
             </View>}
-            <View style={tw`flex-row items-center justify-between mb-4 mt-4`}>
-                <Text style={tw`text-lg`} weight="semibold">Meals</Text>
-                <TouchableOpacity onPress={() => {
-                    const screen = getMatchingNavigationScreen('ListMeal', navigator)
-                    //@ts-ignore
-                    navigator.navigate(screen, {userId: props.id || userId})
-                }}>
-                    <Text>See All</Text>
-                </TouchableOpacity>
-            </View>
+            <Spacer lg/>
+            <ManageButton title='Meals' buttonText='See All' onPress={() => {
+                const screen = getMatchingNavigationScreen('ListMeal', navigator)
+                //@ts-ignore
+                navigator.navigate(screen, {userId: props.id || userId})
+            }} />
+            <Spacer />
             {meals.length === 0 && <Text style={tw`text-center my-5`}>No meals to display</Text>}
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 {meals.map((meal, i) => {
@@ -219,21 +205,18 @@ export default function Profile(props: ProfileProps) {
                         navigator.push(screen, { id: meal.id })
                     }}
                     style={[tw`items-start mx-1`]}>
-                    <Image source={{ uri: meal.preview || '' }} style={tw`h-20 w-20 rounded-lg mb-1`} resizeMode='cover' />
-                    <Text style={tw`text-xs max-w-20`}>{substringForLists(meal.name)}</Text>
+                    <SupabaseImage uri={meal.preview || defaultImage} style={tw`h-20 w-20 rounded-lg mb-1`} resizeMode='cover' />
+                    <Text style={tw`text-xs max-w-20`} weight='semibold'>{substringForLists(meal.name || '')}</Text>
                 </TouchableOpacity>
                 })}
             </ScrollView>
-            <View style={tw`flex-row items-center justify-between mb-4 mt-4`}>
-                <Text style={tw`text-lg`} weight="semibold">Workouts</Text>
-                <TouchableOpacity onPress={() => {
-                    const screen = getMatchingNavigationScreen('ListWorkout', navigator)
-                    //@ts-ignore
-                    navigator.navigate(screen, {userId: props.id || userId})
-                }}>
-                    <Text>See All</Text>
-                </TouchableOpacity>
-            </View>
+            <Spacer />
+            <ManageButton title='Workouts' buttonText='See All' onPress={() => {
+                const screen = getMatchingNavigationScreen('ListWorkout', navigator)
+                //@ts-ignore
+                navigator.navigate(screen, {userId: props.id || userId})
+            }} />
+            <Spacer />
             {workouts.length === 0 && <Text style={tw`text-center my-5`}>No workouts to display</Text>}
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 {workouts.map((workout, i) => {
@@ -245,36 +228,33 @@ export default function Profile(props: ProfileProps) {
                             navigator.navigate(screen, { id: workout.id })
                         }}
                         style={[tw`items-start px-1`]}>
-                        <Image source={{ uri: workout.img || defaultImage }} style={tw`h-20 w-20 rounded-lg`} resizeMode='cover' />
-                        <Text style={tw`text-xs max-w-20`}>{substringForLists(workout.name)}</Text>
+                        <SupabaseImage uri={workout.image || defaultImage} style={tw`h-20 w-20 rounded-lg`} resizeMode='cover' />
+                        <Text style={tw`text-xs max-w-20`} weight='semibold'>{substringForLists(workout.name)}</Text>
                         {/* <Text>{r.calories} kcal</Text> */}
                     </TouchableOpacity>
                 })}
             </ScrollView>
             {isCurrentUsersProfile && <View style={{flex: 1}}>
-            <View style={tw`flex-row items-center justify-between mb-4 mt-4`}>
-                <Text style={tw`text-lg`} weight="semibold">Exercises</Text>
-                <TouchableOpacity onPress={() => {
-                    const screen = getMatchingNavigationScreen('ListExercise', navigator)
-                    //@ts-ignore
-                    navigator.navigate(screen, {userId: props.id || userId})
-                }}>
-                    <Text>See All</Text>
-                </TouchableOpacity>
-            </View>
+            <Spacer />
+            <ManageButton title='Exercises' buttonText='See All' onPress={() => {
+                const screen = getMatchingNavigationScreen('ListExercise', navigator)
+                //@ts-ignore
+                navigator.navigate(screen, {userId: props.id || userId})
+            }} />
+            <Spacer />
                 {exercises.length === 0 && <Text style={tw`text-center my-5`}>No exercises to display</Text>}
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 {exercises.map((exercise, i) => {
                     return <TouchableOpacity
-                        key={`workout ${exercise.title} at index ${i}`}
+                        key={`workout ${exercise.name} at index ${i}`}
                         onPress={() => {
                             const screen = getMatchingNavigationScreen('ExerciseDetail', navigator)
                             //@ts-ignore
                             navigator.navigate(screen, { id: exercise.id })
                         }}
                         style={[tw`items-start px-1`]}>
-                        <Image source={{ uri: exercise.img || defaultImage }} style={tw`h-20 w-20 rounded-lg`} resizeMode='cover' />
-                        <Text style={tw`text-xs max-w-20`}>{substringForLists(exercise.title)}</Text>
+                        <SupabaseImage uri={exercise.preview || defaultImage} style={tw`h-20 w-20 rounded-lg`} resizeMode='cover' />
+                        <Text style={tw`text-xs max-w-20`} weight='semibold'>{substringForLists(exercise.name || '')}</Text>
                         {/* <Text>{r.calories} kcal</Text> */}
                     </TouchableOpacity>
                 })}

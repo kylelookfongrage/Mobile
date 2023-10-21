@@ -1556,6 +1556,7 @@ export interface Database {
           weight: number | null
           workout_id: number | null
           workout_play_id: number | null
+          workout_detail_id: number | null
         }
         Insert: {
           completed?: boolean | null
@@ -1569,6 +1570,7 @@ export interface Database {
           weight?: number | null
           workout_id?: number | null
           workout_play_id?: number | null
+          workout_detail_id?: number | null
         }
         Update: {
           completed?: boolean | null
@@ -1582,6 +1584,7 @@ export interface Database {
           weight?: number | null
           workout_id?: number | null
           workout_play_id?: number | null
+          workout_detail_id?: number | null
         }
         Relationships: [
           {

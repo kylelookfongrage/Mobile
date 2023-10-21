@@ -629,7 +629,7 @@ export const getUsernameAndMedia = async (result: Meal | Workout | Exercise): Pr
     return { id: result.id, author: username, name: result.name || result.title || 'rage', img }
 }
 
-export interface ChartMapping { date: string; reps: number; weight: number; secs: number };
+export interface ChartMapping { date: string; reps: number; weight: number; secs: number; metric?: boolean; };
 
 export function getFormattedDate(date: Date) {
 
@@ -643,7 +643,7 @@ export function getFormattedDate(date: Date) {
 }
 
 export interface ExerciseDisplay {
-    media: MediaType[];
+    video: string;
     name: string;
     id: string;
     description: string;
@@ -651,23 +651,23 @@ export interface ExerciseDisplay {
 }
 
 export interface WorkoutPlayDisplayProps {
-    currentExercise: ExerciseDisplay;
-    exercises: ExerciseDisplay[];
+    currentExercise: Tables['exercise']['Row'];
+    exercises: Tables['exercise']['Row'][];
     shouldShowMore: boolean;
     setShouldShowMore: React.Dispatch<React.SetStateAction<boolean>>;
-    selectedWorkoutDetail: LazyWorkoutDetails;
-    setSelectedWorkoutDetail: React.Dispatch<React.SetStateAction<LazyWorkoutDetails | undefined>>;
+    selectedWorkoutDetail: Tables['workout_details']['Row'];
+    setSelectedWorkoutDetail: React.Dispatch<React.SetStateAction<Tables['workout_details']['Row'] | undefined>>;
     paused: boolean;
     setPaused: React.Dispatch<React.SetStateAction<boolean>>;
     totalTime: number;
     onResetPress: () => void;
-    workoutPlayDetails: LazyWorkoutPlayDetail[];
+    workoutPlayDetails: Tables['workout_play_details']['Insert'][];
     onNewSetPress: () => void;
     onFinishPress: () => void;
     animation: any;
-    workoutDetails: WorkoutDetails[];
-    selectedWorkoutPlayDetail: WorkoutPlayDetail | undefined;
-    setSelectedWorkoutPlayDetail: React.Dispatch<React.SetStateAction<LazyWorkoutPlayDetail | undefined>>;
+    workoutDetails: Tables['workout_details']['Row'][];
+    selectedWorkoutPlayDetail: Tables['workout_play_details']['Insert'] | undefined;
+    setSelectedWorkoutPlayDetail: React.Dispatch<React.SetStateAction<Tables['workout_play_details']['Insert'] | undefined>>;
     forwardBackwardPress: (b?: boolean) => void;
 }
 
@@ -675,7 +675,7 @@ export interface WorkoutPlayDisplayProps {
 
 export enum WorkoutMode {
     default = 'DEFAULT',
-    player = 'PLAYER'
+    player = 'MUSIC'
 }
 
 
@@ -751,6 +751,7 @@ export const inchesToFeet = (inches: number): string => {
 
 import moment from 'moment';
 import { IngredientAdditions } from './hooks/useMultipartForm';
+import { Tables } from './supabase/dao';
 
 function calculateTDEE(male: boolean, weight: number, height: number, age: number, activity: 'sedentary' | 'light' | 'average' | 'active', metric: boolean = false): number {
     const heightMultiplier = metric ? 1 : 2.54; // Convert inches to cm if not using metric units

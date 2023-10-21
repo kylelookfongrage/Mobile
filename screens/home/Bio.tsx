@@ -12,6 +12,9 @@ import * as ImagePicker from 'expo-image-picker'
 import { defaultImage, isStorageUri, uploadImageAndGetID, usernameRegex, validateUsername } from '../../data'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ExpoIcon } from '../../components/base/ExpoIcon'
+import { UserQueries } from '../../types/UserDao'
+import { useStorage } from '../../supabase/storage'
+import SaveButton from '../../components/base/SaveButton'
 
 type TextInputProps = TextInput['props'];
 interface TextInputWithLeftProps extends TextInputProps{
@@ -20,7 +23,7 @@ interface TextInputWithLeftProps extends TextInputProps{
 
 const TextInputWithLeft = (props: TextInputWithLeftProps) => {
     const dm = useColorScheme() === 'dark'
-    return <View style={tw`w-12/12 bg-gray-${dm ? '700' : '400'}/50 px-4 py-3 rounded-xl items-center flex-row`}>
+    return <View card style={tw`w-12/12 px-4 py-3 rounded-xl items-center flex-row`}>
         {props.icon && <ExpoIcon style={tw`mr-2`} name={props.icon} iconName='feather' size={25} color='gray' />}
         <TextInput {...props} style={tw`text-${dm ? 'white' : 'black'} max-w-10/12 w-10/12`}/>
     </View>
@@ -28,74 +31,37 @@ const TextInputWithLeft = (props: TextInputWithLeftProps) => {
 
 export default function Bio(props: {registration?: boolean;}) {
     const {registration} = props;
-    const { userId, username, setUsername, sub, setUserId } = useCommonAWSIds()
-    const [newUsername, setNewUsername] = React.useState<string>(username)
+    const { userId, username, setUsername, sub, setUserId, profile, setProfile } = useCommonAWSIds()
+    const [newUsername, setNewUsername] = React.useState<string>(profile?.username || '')
     const dm = useColorScheme() === 'dark'
     const navigator = useNavigation()
     const [uploading, setUploading] = useState<boolean>(false)
-    const [bio, setBio] = useState<string>('')
-    const [links, setLinks] = useState<string[]>()
-    const [name, setName] = useState<string|null|undefined>('')
-    const [newLink, setNewLink] = useState<string>('')
-    const [pic, setPic] = React.useState<string>('')
+    const [bio, setBio] = useState<string>(profile?.bio || '')
+    const [name, setName] = useState<string|null|undefined>(profile?.name || '')
+    const [newLink, setNewLink] = useState<string>(profile?.links?.[0] || '')
+    const [pic, setPic] = React.useState<string>(profile?.pfp || '')
     const [usernameError, setUsernameError] = useState<string | null>(null)
-    useLayoutEffect(() => {
-        const prepare = async () => {
-            if (!userId || registration) return;
-            if (userId && registration) {
-                const user = await DataStore.query(User, userId)
-                if (!user?.weight || !user.fat) {
-                    navigator.navigate('About')
-                } else {
-                    navigator.navigate('Root')
-                }
-            }
-        }
-        prepare()
-    }, [])
-    useEffect(() => {
-        const prepare = async () => {
-            if (!registration) {
-                const user = await DataStore.query(User, userId)
-            if (user) {
-                setBio(user.bio || '')
-                setName(user.name)
-                //@ts-ignore
-                setLinks(user.links || [])
-                setNewLink(user.links?.[0] || '')
-                //@ts-ignore
-                setPic(user.picture)
-            }
-            } 
-        }
-        prepare()
-    }, [])
+    let dao = UserQueries()
+    
+    
     const onFinishPress = async () => {
         setUploading(true)
         setUsernameError(null)
         if (!registration) {
-            const error = await validateUsername(newUsername, username)
+            if (!profile) return;
+            const error = await dao.validateUsername(newUsername, profile?.username)
             if (error) {
                 setUsernameError(error)
                 setUploading(false)
                 return;
             }
             setUsername(newUsername)
-            const picture = await uploadProfileImage()
-            const user = await DataStore.query(User, userId)
-            if (user) {
-                await DataStore.save(User.copyOf(user, x => {
-                    x.bio=bio || '';
-                    x.links=[newLink];
-                    x.name=name;
-                    x.username=newUsername;
-                    x.picture=picture;
-                }))
-                //@ts-ignore
+            let res = await dao.update_profile({name: name || '', username: newUsername || profile?.username || '', bio, links: [newLink], pfp: pic}, profile)
+            if (res) {
+                setProfile(res)
                 navigator.pop()
-            } else {
-                setUploading(false)
             }
+            
         } else {
             const error = await validateUsername(newUsername, username)
             if (error) {
@@ -125,12 +91,12 @@ export default function Bio(props: {registration?: boolean;}) {
     const padding = useSafeAreaInsets()
   return (
     <View includeBackground style={{flex: 1, paddingTop: !registration ? 0 : padding.top }}>
-        {!registration && <BackButton />}
-        <ScrollView contentContainerStyle={tw`px-6 mt-2`}>
+        {!registration && <BackButton name='Account Information' />}
+        <ScrollView contentContainerStyle={tw`px-6 mt-2`} showsVerticalScrollIndicator={false}>
             <Pressable onPress={() => {
                 Keyboard.dismiss()
             }}>
-            <Text style={tw`text-xl mb-4`} weight='semibold'>Account Information</Text>
+            {registration && <Text style={tw`text-xl mb-4`} weight='semibold'>Account Information</Text>}
             <ProfilePicture uri={pic} onChange={setPic} />
             <Text style={tw`my-4`} weight='semibold'>Name</Text>
             <TextInputWithLeft value={name || ''} icon={'user'} onChangeText={setName} placeholder='Your Name' placeholderTextColor={'gray'} />
@@ -144,22 +110,8 @@ export default function Bio(props: {registration?: boolean;}) {
             </Pressable>
             <View style={tw`pb-90`} />
         </ScrollView>
-        <View style={[
-                {
-                    position: 'absolute',
-                    bottom: 20,
-                    flex: 1
-                },
-                tw`w-12/12`
-            ]}>
-                {/* Add Food Button */}
-                <View style={tw`py-5 w-12/12 items-center px-7 flex-row justify-center`}>
-                    <TouchableOpacity disabled={uploading === true} onPress={onFinishPress} style={tw`bg-${dm ? 'red-600' : "red-500"} mr-2 px-9 h-12 justify-center rounded-full`}>
-                        {!uploading && <Text numberOfLines={1} style={tw`text-center text-white`} weight='semibold'>Finish</Text>}
-                        {uploading && <ActivityIndicator />}
-                    </TouchableOpacity>
-                </View>
-            </View>
+        <SaveButton uploading={uploading} onSave={onFinishPress} safeArea />
+        
     </View>
   )
 }
@@ -173,6 +125,7 @@ interface ProfilePicProps{
 export const ProfilePicture = (props: ProfilePicProps) => {
     const {uri, onChange} = props
     const [img, setImg] = React.useState<string | null>(null)
+    let s = useStorage()
     const currentMediaPermissions = ImagePicker.useMediaLibraryPermissions()
     const onChangeImagePress = async () => {
         const fetchImage = async () => {
@@ -212,7 +165,8 @@ export const ProfilePicture = (props: ProfilePicProps) => {
     React.useEffect(() => {
         const prepare = async () => {
             let img = uri || defaultImage
-            setImg(isStorageUri(img) ? await Storage.get(img) : img)
+            let newUrl = isStorageUri(img) ? s.constructUrl(img)?.data?.publicUrl : img
+            if (newUrl) setImg(newUrl)
         }
         prepare()
     }, [uri])

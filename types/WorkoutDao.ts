@@ -6,7 +6,7 @@ import { useStorage } from "../supabase/storage";
 export function WorkoutDao(){
     const dao = useDao()
     const storage = useStorage()
-    const find = async (id: Tables['exercise']['Row']['id']) => (await dao.find('workout', id))
+    const find = async (id: Tables['workout']['Row']['id']) => (await dao.find('workout', id))
     type TWorkoutDetails = Tables['workout_details']['Row'] & {
         exercise: Tables['exercise']['Row'] & {
             exercise_equiptment: {
@@ -55,5 +55,57 @@ export function WorkoutDao(){
         return await supabase.from('workout_details').insert(ingrs).select()
     }
 
-    return {find, save, search, saveWorkoutDetails, find_eqipment}
+    const find_workout_play = async (id: Tables['workout_play']['Row']['id']): Promise<[Tables['workout_play']['Row'] | null, Tables['workout_play_details']['Row'][] | null]> => {
+        let res = await supabase.from('workout_play').select('*').filter('id', 'eq', id).maybeSingle()
+        let workoutPlay = res.data || null
+        let r2 = await supabase.from('workout_play_details').select('*').filter('workout_play_id', 'eq', id)
+        let details = (r2?.data) || null
+        return [workoutPlay, details]
+    }
+
+    type TWorkoutDetailWithExercise = Tables['workout_details']['Row'] & {exercise: Tables['exercise']['Row'] | null}
+    type TWorkoutWithDetails = Tables['workout']['Row'] & {workout_details: TWorkoutDetailWithExercise[]}
+    const find_workout_with_details = async (id: Tables['workout']['Row']['id']): Promise<TWorkoutWithDetails> => {
+        let res = await supabase.from('workout').select('*, workout_details(*, exercise(*))').filter('id', 'eq', id).maybeSingle()
+        return (res.data) || null
+    }
+
+    const find_exercises = async (id: Tables['workout']['Row']['id']): Promise<Tables['exercise']['Row'] | null> => {
+        let res = await supabase.from('workout_details').select('exercise(*)').filter('workout_id', 'eq', id)
+        //@ts-ignore
+        return res.data?.flatMap(x => x.exercise) || null
+    }
+
+    const completeWorkout = async (workoutPlay: Tables['workout_play']['Insert'], workoutPlayDetails: Tables['workout_play_details']['Insert'][]) => {
+        let res = workoutPlay.id ? await dao.update('workout_play', workoutPlay.id, workoutPlay) : await dao.save('workout_play', workoutPlay)
+        if (res && res.id) {
+            await supabase.from('workout_play_details').upsert(workoutPlayDetails.map(x => ({...x, workout_play_id: res?.id})))
+        }
+        return res;
+    }
+
+    const remove = async (id: Tables['workout']['Row']['id']) => {await dao.remove('workout', id)}
+
+    return {find, save, search, saveWorkoutDetails, find_eqipment, find_workout_play, find_workout_with_details, find_exercises, completeWorkout, remove}
+}
+
+export interface WorkoutPlayDisplayProps {
+    currentExercise: Tables['exercise']['Row'];
+    exercises: Tables['exercise']['Row'][];
+    shouldShowMore: boolean;
+    setShouldShowMore: React.Dispatch<React.SetStateAction<boolean>>;
+    selectedWorkoutDetail: Tables['workout_details']['Row'];
+    setSelectedWorkoutDetail: React.Dispatch<React.SetStateAction<Tables['workout_details']['Row'] | undefined>>;
+    paused: boolean;
+    setPaused: React.Dispatch<React.SetStateAction<boolean>>;
+    totalTime: number;
+    onResetPress: () => void;
+    workoutPlayDetails: Tables['workout_play_details']['Insert'][];
+    onNewSetPress: () => void;
+    onFinishPress: () => void;
+    animation: any;
+    workoutDetails: Tables['workout_details']['Row'][];
+    selectedWorkoutPlayDetail: Tables['workout_play_details']['Insert'] | undefined;
+    setSelectedWorkoutPlayDetail: React.Dispatch<React.SetStateAction<Tables['workout_play_details']['Insert'] | undefined>>;
+    forwardBackwardPress: (b?: boolean) => void;
 }

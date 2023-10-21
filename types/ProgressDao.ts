@@ -18,7 +18,8 @@ export function ProgressDao(listen=true){
         }
     }
     const [mealProgress, setMealProgress] = useState<TMealProgress[]>([])
-    const [workoutProgress, setWorkoutProgress] = useState<Tables['workout_play']['Row'][]>([])
+    type TWorkoutPlay = Tables['workout_play']['Row'] & {workout: (Tables['workout']['Row'] & {user: Tables['user']['Row'] | null}) | null}
+    const [workoutProgress, setWorkoutProgress] = useState<TWorkoutPlay[]>([])
     const [runProgress, setRunProgress] = useState<Tables['run_progress']['Row'][]>([])
 
     useEffect(() => {
@@ -34,8 +35,9 @@ export function ProgressDao(listen=true){
         if (mealFetch.data) { //@ts-ignore
             setMealProgress(mealFetch.data)
         }
+        let workoutRes = await supabase.from('workout_play').select('*, workout(*, user(*))').filter('date', 'eq', today.date)
+        if (workoutRes.data) {setWorkoutProgress(workoutRes.data)}
     }
-
     const saveProgress = async <T extends keyof Tables>(table: T, payload: Tables[T]['Insert']): Promise<Tables[T]['Insert'] | null> => {
         if (!today) return null;
         let res = await dao.save(table, {...payload, progress_id: today.id})
@@ -43,9 +45,13 @@ export function ProgressDao(listen=true){
         return (res || null)
     }
 
+    const log = async () => {
+        await updateProgress('points', (today?.points || 0) + 1)
+    }
+
     const deleteProgress = async <T extends keyof Tables>(id: Tables[T]['Row']['id'], table: T) => {
         await dao.remove(table, id)
-        await updateProgress('points', (today?.points || 1) - 1)
+        await log()
     }
 
     const updateProgress = async <C extends keyof Tables['progress']['Update'], V extends Tables['progress']['Update'][C]>(column: C, value: V) => {
@@ -109,5 +115,5 @@ export function ProgressDao(listen=true){
         }
     }
 
-    return {today, fetchProgressForToday, saveProgress, updateProgress, deleteProgress, foodProgress, mealProgress, runProgress, workoutProgress}
+    return {today, fetchProgressForToday, saveProgress, updateProgress, deleteProgress, foodProgress, mealProgress, runProgress, workoutProgress, log}
 }

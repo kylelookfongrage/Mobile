@@ -9,7 +9,7 @@ import { useCommonAWSIds } from '../../hooks/useCommonContext'
 import { defaultImage, getMatchingNavigationScreen, toHHMMSS, validate, MediaType } from '../../data'
 import { ErrorMessage } from '../../components/base/ErrorMessage'
 import { BackButton } from '../../components/base/BackButton'
-import { ShowMoreButton } from '../home/ShowMore'
+import { DeleteButton, EditModeButton, ShareButton, ShowMoreButton, ShowMoreDialogue, ShowUserButton } from '../home/ShowMore'
 //@ts-ignore
 import { v4 as uuidv4 } from 'uuid';
 import ScrollViewWithDrag from '../../components/screens/ScrollViewWithDrag'
@@ -30,6 +30,8 @@ import Overlay from '../../components/screens/Overlay'
 import StepperInput from '../../components/inputs/StepperInput'
 import TimeInput, { valueToSeconds } from '../../components/inputs/TimeInput'
 import { WorkoutDao } from '../../types/WorkoutDao'
+import SwipeWithDelete from '../../components/base/SwipeWithDelete'
+import Colors from '../../constants/Colors'
 
 
 
@@ -87,7 +89,9 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
   let multiPartForm = useMultiPartForm()
   let [uuid, setUuid] = useState<string>(uuidv4())
   let associatedExercises = multiPartForm['data']['workouts'][uuid] || []
-  let associatedEquiptment = [...new Set(associatedExercises.flatMap(x => x.equiptment))]
+  let allEquipment = associatedExercises.flatMap(x => x.equiptment)
+  let associatedEquiptment = [...new Map(allEquipment.map(item =>
+    [item['id'], item])).values()];
   let [copiedExercises, setCopiedExercises] = useState<WorkoutAdditions[]>([])
   let aEx = useMemo(() => {
     return associatedExercises.map(x => ({ ...x, id: ((x.tempId || '') + x.index?.toString()) })).sort((a, b) => (a.index || 0) - (b.index || 0))
@@ -102,16 +106,12 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
   const navigator = useNavigation()
   const [name, setName] = React.useState<string>('')
   const [author, setAuthor] = React.useState<string>('')
-  const [canViewDetails, setCanViewDetails] = React.useState<boolean>(props.editable === true)
+  let canViewDetails = props.editable || screen.editMode || form.user_id === profile?.id || subscribed || !form.price
   const [img, setImg] = React.useState<MediaType[]>([])
   const dm = useColorScheme() === 'dark'
   const [authorId, setAuthorId] = React.useState<string>('')
   const [editMode, setEditMode] = React.useState<boolean>(false)
-  React.useEffect(() => {
-    if (subscribed) {
-      setCanViewDetails(true)
-    }
-  }, [subscribed])
+  
 
   // let bodyPartMapping: { [k: string]: number } = {}
   // associatedExercises.forEach((e) => {
@@ -134,7 +134,7 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
         if (e !== true) throw Error(e[0] || 'Ensure all values are filled out')
         let res = await dao.save({...form, image: form.image || defaultImage})
         if (res?.id) {
-          await dao.saveWorkoutDetails(res.id, associatedExercises)
+          await dao.saveWorkoutDetails(res.id, copiedExercises.length > 0 ? copiedExercises : associatedExercises)
           WorkoutForm.dispatch({type: FormReducer.Set, payload: res})
           setScreen('uploading', false)
           setScreen('editMode', false)
@@ -155,13 +155,21 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
     setScreen('sorted', true)
     setCopiedExercises(items.map(((x, i) => ({...x, index: i}))))
   }, [])
+  const deleteWorkout = async () => {
+    if (!props.id) return;
+    await dao.remove(Number(props.id))
+    navigator.pop()
+  }
   return (
     <View style={{ flex: 1 }} includeBackground>
       <BackButton inplace Right={() => {
-        if (!screen.editMode || !id) {
-          return <ShowMoreButton name={name} desc={'@' + author} id={workoutId || ''} img={firstImage.length === 0 ? defaultImage : firstImage[0].uri} type={'WORKOUT'} userId={authorId} />
-        }
-        return <View />;
+        if (screen.editMode || !id || !Number(id)) return <View />
+        return <ShowMoreDialogue workout_id={Number(id)} options={[
+            EditModeButton(screen.editMode, () => setScreen('editMode', !screen.editMode)),
+            DeleteButton('Workout', deleteWorkout),
+            ShowUserButton(form.user_id, navigator),
+            ShareButton({workout_id: Number(id)})
+        ]} />
       }} />
       <ScrollViewWithDrag keyboardDismissMode='interactive' rerenderTopView={[screen.editMode, form.image]} showsVerticalScrollIndicator={false} TopView={() => <ImagePickerView editable={screen.editMode} srcs={form.image ? [{ type: 'image', uri: form.image }] : []} onChange={x => {
         if (x[0]) { setForm('image', x[0].uri) }
@@ -211,6 +219,7 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
               setScreen('newSets', null)
               setScreen('newTime', null)
               setScreen('newRest', null)
+              setScreen('sorted', false)
               setScreen('selectedExercise', null)
             }} />
             <Spacer xs />
@@ -247,12 +256,15 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
             </View>
             <Spacer lg />
           </Overlay>
-          <ScrollView horizontal style={{ flex: 1, width: screen.s.width, height: screen.s.height * 0.12 * (associatedExercises.length) }} scrollEnabled={false}>
-            <SortableList scrollEnabled={screen.editMode} initialNumToRender={associatedExercises.length} itemProps={{ margins: { marginBottom: 9 } }} scale={1.1} onOrderChange={onOrderChange} data={aEx} renderItem={(info) => {
+          <ScrollView horizontal contentContainerStyle={{alignItems: 'center', justifyContent : 'center',}} style={{ flex: 1, width: screen.s.width, height: screen.s.height * 0.09 * (associatedExercises.length) }} scrollEnabled={false}>
+            <SortableList contentContainerStyle={{backgroundColor: dm ? Colors.dark.background : Colors.light.background}} scrollEnabled={screen.editMode} initialNumToRender={associatedExercises.length} scale={1.1} onOrderChange={onOrderChange} data={aEx} renderItem={(info) => {
               const { index } = info
               //@ts-ignore
               let item = info.item as WorkoutAdditions
-              return <View includeBackground style={{ ...tw`items-center self-center justify-center`, width: screen.s.width * 0.86, height: screen.s.height * 0.10 }} key={item.tempId || `3178${index}`}>
+              return <SwipeWithDelete includeBackground key={(item.tempId || '') + `3178${index}`} onDelete={() => {
+                multiPartForm.upsert('workouts', uuid, associatedExercises.filter((x, i) => i !== index))
+              }}>
+                <View includeBackground style={{ ...tw`items-center self-center justify-center`, width: screen.s.width * 0.87, height: screen.s.height * 0.09 }}>
                 <TouchableOpacity onPress={() => {
                   if (screen.sorted) {
                     multiPartForm.upsert('workouts', uuid, copiedExercises)
@@ -264,11 +276,11 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
                   setScreen('newTime', toHHMMSS(item.time || 0, ''))
                   setScreen('newRest', toHHMMSS(item.rest || 0, ''))
                 }}>
-                  <View card style={{ ...tw`px-4 py-4 rounded-lg flex-row items-center`, width: screen.s.width * 0.86, height: screen.s.height * 0.10 }}>
-                    <SupabaseImage uri={item.img} style='h-12 w-12 rounded-lg' />
+                  <View card style={{ ...tw`px-4 py-1 rounded-lg flex-row items-center`, width: screen.s.width * 0.86, height: screen.s.height * 0.08 }}>
+                    <SupabaseImage uri={item.img} style='h-10 w-10 rounded-lg' />
                     <Spacer horizontal sm />
                     <View>
-                      <Text weight='semibold'>{item.name}</Text>
+                      <Text weight='semibold' style={tw`max-w-11/12`}>{item.name} - {item.exercise_id}</Text>
                       <Spacer xs />
                       <View style={{ ...tw`flex-row items-center justify-between w-10/12` }}>
                         <Text style={tw`text-gray-500`} xs>Sets: {item.reps || 0} x {item.sets || 1}</Text>
@@ -279,6 +291,7 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
                   </View>
                 </TouchableOpacity>
               </View>
+              </SwipeWithDelete>
             }} />
           </ScrollView>
         </View>
@@ -290,13 +303,14 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
 
        
       </ScrollViewWithDrag>
-      <SaveButton favoriteId={form.id} favoriteType='workout' onSave={() => {
+      <SaveButton title={screen.editMode ? 'Save Workout' : (canViewDetails ? 'Start Workout' : 'Purchase Workout')} favoriteId={form.originalWorkout || form.id} favoriteType='workout' onSave={() => {
         if (screen.editMode) {
           onWorkoutSave()
-        } else if (canViewDetails) {
+        } else if (canViewDetails && form.id) {
           //@ts-ignore
-          // navigator.navigate('WorkoutPlay', { workoutId: workoutId })
+          navigator.navigate('WorkoutPlay', { workoutId: form.id })
         } else {
+          console.log('here')
           // navigator.navigate('Subscription')
         }
       }} />

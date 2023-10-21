@@ -41,6 +41,8 @@ const triggerAudio = async (ref: React.MutableRefObject<null>) => {
   ref.current.playAsync();
 };
 
+
+type TVideoProps = OriginalVideo['props'] & {indicatorTopMargin?: number}
 export const Video = ({ ...props }) => {
   const ref = useRef<OriginalVideo | null>(null);
   const [status, setStatus] = useState({});
@@ -135,7 +137,7 @@ export const Video = ({ ...props }) => {
             },
           ]}
         >
-          <View style={tw`items-center justify-center self-center mb-30`}>
+          <View style={tw`items-center justify-center self-center mb-${props.indicatorMarginTop || '30'}`}>
             <Pressable
               onPress={
                 playbackInstanceInfo.state === "Buffering" ? null : togglePlay

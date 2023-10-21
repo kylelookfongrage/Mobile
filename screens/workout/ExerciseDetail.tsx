@@ -15,7 +15,7 @@ import { useCommonAWSIds } from '../../hooks/useCommonContext';
 import { ZenObservable } from 'zen-observable-ts';
 import { BackButton } from '../../components/base/BackButton';
 import { useExerciseAdditions } from '../../hooks/useExerciseAdditions';
-import { ShowMoreButton } from '../home/ShowMore';
+import { DeleteButton, EditModeButton, ShareButton, ShowMoreButton, ShowMoreDialogue, ShowUserButton } from '../home/ShowMore';
 import Body from 'react-native-body-highlighter'
 import TabSelector from '../../components/base/TabSelector';
 import moment from 'moment';
@@ -39,6 +39,7 @@ import TitleInput from '../../components/inputs/TitleInput';
 import UsernameDisplay from '../../components/features/UsernameDisplay';
 import ManageButton from '../../components/features/ManageButton';
 import { useMultiPartForm } from '../../hooks/useMultipartForm';
+import ExerciseProgress from '../../components/features/ExerciseProgress';
 
 
 export interface ExerciseDetailProps {
@@ -140,8 +141,6 @@ export default function ExerciseDetail(props: ExerciseDetailProps) {
         slug: x, intensity: 1, color: ''
     }))
 
-    const tabs = ['Muscles', 'Procedure', 'Equiptment', 'Progress']
-    const [tab, setTab] = useState<typeof tabs[number]>(tabs[0])
     const [exerciseProgress, setExerciseProgress] = useState<{ [k: string]: ChartMapping }>({})
     const [chartTitle, setChartTitle] = useState<string>('')
     const [chartSuffix, setChartSuffix] = useState<string>('')
@@ -211,11 +210,21 @@ export default function ExerciseDetail(props: ExerciseDetailProps) {
     })
 
     const sortedChartLabels = sortedChart.filter((x, i) => i < 8).map(x => getFormattedDate(new Date(x.date)))
+    const deleteExercise = async () => {
+
+    }
     return (
         <View style={{ flex: 1 }} includeBackground>
             <ScrollViewWithDrag rerenderTopView={[video, screenForm.editMode]} TopView={() => {
                 return <View>
                     <BackButton inplace Right={() => {
+                        if (screenForm.editMode || !id || !Number(id)) return <View />
+                        return <ShowMoreDialogue exercise_id={Number(id)} options={[
+                            EditModeButton(screenForm.editMode, () => setScreen('editMode', !screenForm.editMode)),
+                            DeleteButton('Exercise', deleteExercise),
+                            ShowUserButton(form.user_id, navigator),
+                            ShareButton({exercise_id: Number(id)})
+                        ]} />
                         if (!screenForm.editMode) return <ShowMoreButton name={exerciseName} desc={'@' + author} img={firstImage.length === 0 ? defaultImage : firstImage[0].uri} id={exerciseId} type={FavoriteType.EXERCISE} userId={authorId} />
                         return <View />
                         }} />
@@ -292,72 +301,12 @@ export default function ExerciseDetail(props: ExerciseDetailProps) {
                     {equiptment.map(equ => {
                         return <EquiptmentTile item={equ} key={`equiptment: ${equ.id}`} />
                     })}
-                    <Spacer divider />
-                    {(!editMode && props.id) && <Text h3>Progress</Text>}
-                    {(!editMode && props.id && chartTitle == '') && <Text style={tw`my-3 text-gray-500 text-center`} weight='semibold'>No progress to display</Text>}
-                    {(!editMode && props.id && chartTitle != '') && <View>
-                        <View style={tw`flex-row items-center justify-between`}>
-                            <Text style={tw`text-lg`} weight='semibold'>Your {chartTitle} Progress</Text>
-                            <View style={tw`flex-row items-center justify-evenly`}>
-                                {['Weight', 'Reps', 'Time'].map(x => {
-                                    if (chartTitle === x) return <View key={x} />
-                                    return <Text onPress={() => {
-                                        setChartTitle(x)
-                                        if (x === 'Weight') setChartSuffix('lbs')
-                                        if (x === 'Reps') setChartSuffix('')
-                                        if (x === 'Time' && sortedChart[0]) setChartSuffix(sortedChart[0].secs > 60 ? 'm' : 's')
-                                    }} key={x} style={tw`mx-4 text-red-500`}>{x}</Text>
-                                })}
-                            </View>
-                        </View>
-                        <View style={tw`items-center justify-center p-6 rounded-xl bg-gray-${dm ? '800/30' : '300'} my-4`}>
-                            {/* @ts-ignore */}
-                            <LineChart chartConfig={chartConfig} yAxisSuffix={chartSuffix} data={{
-                                labels: sortedChartLabels,
-                                datasets: [
-                                    {
-                                        data: sortedChart.filter((x, i) => i < 8).map(x => {
-                                            if (chartTitle === 'Weight') return Math.round(x.weight)
-                                            if (chartTitle === 'Reps') return Math.round(x.reps)
-                                            return Math.round(chartSuffix === 'm' ? x.secs / 60 : x.secs)
-                                        })
-                                    }
-                                ]
-
-                            }}
-                                width={Dimensions.get("window").width - 25} // from react-native
-                                height={220}
-                                style={tw``}
-                                withInnerLines={false}
-                                withOuterLines={false}
-                                bezier />
-                        </View>
-                        <Text style={tw`text-xs text-gray-500 text-center mx-12 pb-2`}>This chart shows your progress for the 8 most recent days you have performed this exercise</Text>
-                        <Text style={tw`text-lg`} weight='semibold'>Past 60 Days</Text>
-                        {sortedChart.map(x => {
-                            return <View key={x.date} style={tw`my-1 border-b border-gray-${dm ? '800' : '300'} p-3`}>
-                                <Text>{moment(new Date(x.date)).format('LL')}</Text>
-                                <View style={tw`flex-row items-center justify-evenly mt-3`}>
-                                    <View style={tw`items-center justify-center`}>
-                                        <Text weight='semibold'>{x.weight}</Text>
-                                        <Text style={tw`text-xs text-gray-500`}>Max Weight</Text>
-                                    </View>
-                                    <View style={tw`items-center justify-center`}>
-                                        <Text weight='semibold'>{x.reps}</Text>
-                                        <Text style={tw`text-xs text-gray-500`}>Max Reps</Text>
-                                    </View>
-                                    <View style={tw`items-center justify-center`}>
-                                        <Text weight='semibold'>{toHHMMSS(x.secs)}</Text>
-                                        <Text style={tw`text-xs text-gray-500`}>Max Time</Text>
-                                    </View>
-                                </View>
-                            </View>
-                        })}
-                    </View>}
+                    <Spacer divider lg />
+                    {!screenForm.editMode && <ExerciseProgress exerciseId={Number(props.id)} />}
                 </View>
                 <View style={tw`h-40`} />
             </ScrollViewWithDrag>
-            <SaveButton title={props.workoutId ? 'Add to Workout' : 'Save Exercise'} uploading={screenForm.uploading} onSave={saveExercise} favoriteId={123} favoriteType='exercise' />
+            <SaveButton title={props.workoutId ? 'Add to Workout' : 'Save Exercise'} uploading={screenForm.uploading} onSave={saveExercise} favoriteId={form.id} favoriteType='exercise' />
         </View>
     )
 }

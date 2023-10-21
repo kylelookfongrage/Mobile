@@ -13,7 +13,7 @@ import { getTdee } from './Profile';
 import { DataStore } from 'aws-amplify';
 import { Progress, User } from '../../aws/models';
 import { useCommonAWSIds } from '../../hooks/useCommonContext';
-import { getMacrosFromIngredients, getMatchingNavigationScreen, titleCase } from '../../data';
+import { defaultImage, getMacrosFromIngredients, getMatchingNavigationScreen, titleCase } from '../../data';
 import * as Haptics from 'expo-haptics'
 import { useProgressValues } from '../../hooks/useProgressValues';
 import RunListComponent from '../../components/features/RunListComponent';
@@ -24,6 +24,8 @@ import ThisAdHelpsKeepFree from '../../components/features/ThisAdHelpsKeepFree';
 import { BadgeType, useBadges } from '../../hooks/useBadges';
 import { ProgressDao } from '../../types/ProgressDao';
 import { useRealtime } from 'react-supabase';
+import SupabaseImage from '../../components/base/SupabaseImage';
+import SwipeWithDelete from '../../components/base/SwipeWithDelete';
 
 
 export const SummaryScreen = () => {
@@ -37,7 +39,7 @@ export const SummaryScreen = () => {
   const navigator = useNavigation()
   const {logProgress} = useBadges(false)
   const dao = ProgressDao()
-  const [food_progress, meal_progress] = [dao.foodProgress, dao.mealProgress]
+  const [food_progress, meal_progress, workout_progress] = [dao.foodProgress, dao.mealProgress, dao.workoutProgress]
   let weight = dao.today?.weight || profile?.weight || 100
   let ingredients = meal_progress.map(x => (x.meal)).flatMap(x => x.meal_ingredients)
   const caloriesFromFoodAndMeals = food_progress.reduce((prev, c) => prev + (c.calories || 0), 0) + ingredients.reduce((prev, curr) => prev + (curr.calories || 0), 0)
@@ -74,10 +76,10 @@ export const SummaryScreen = () => {
       <SafeAreaView edges={['top']} style={[{ flex: 1 }, tw`h-12/12`]} >
         <View style={tw`px-4`}>
           <View style={tw`flex-row items-center justify-between`}>
-            <Text weight='bold' style={tw`text-2xl max-w-9/12`}>Summary</Text>
+            <Text h2>Summary</Text>
             {/* @ts-ignore */}
             <TouchableOpacity style={tw`p-3`} onPress={() => navigator.navigate('Calendar')}>
-              <ExpoIcon iconName='feather' name='calendar' size={25} color={dm ? 'white' : 'black'} />
+              <ExpoIcon iconName='feather' name='calendar' size={25} color={dm ? 'gray' : 'gray'} />
             </TouchableOpacity>
           </View>
           <TouchableOpacity onPress={() => {
@@ -91,15 +93,15 @@ export const SummaryScreen = () => {
           <View style={[tw`flex-row items-center justify-between w-12/12 mb-3`]}>
             {daysToDisplay.map(day => {
               const isSelected = day.isSame(today, 'date')
-              let selectedColorTint = '500'
-              if (!isSelected) {
-                if (!dm) selectedColorTint = '300'
-              }
+              let selectedColorTint = '800'
+              if (!isSelected && !dm) selectedColorTint = '300'
+              if (isSelected) selectedColorTint='600'
               return <TouchableOpacity key={day.format('LL')}
-                onPress={() => setDate(day)}
-                style={tw`h-${isSelected ? '30' : '20'} w-12 bg-${isSelected ? 'red' : 'gray'}-${selectedColorTint} rounded-full items-center justify-center`}>
-                <Text weight='bold' style={tw`text-lg ${(dm || isSelected) ? 'text-white' : ''}`}>{day.format('DD')}</Text>
+                onPress={() => setDate(day)}>
+                  <View card={!isSelected} style={tw`h-${isSelected ? '30' : '20'} w-12 ${isSelected ? 'bg-red-'+selectedColorTint : ''} rounded-full items-center justify-center`}>
+                  <Text weight='bold' style={tw`text-lg ${(dm || isSelected) ? 'text-white' : ''}`}>{day.format('DD')}</Text>
                 <Text weight='semibold' style={tw`text-xs ${(dm || isSelected) ? 'text-white' : ''}`}>{day.format('dd')}</Text>
+                  </View>
               </TouchableOpacity>
             })}
           </View>
@@ -224,21 +226,26 @@ export const SummaryScreen = () => {
               <Text style={tw`text-red-500`} weight='semibold'>Search Workouts</Text>
             </TouchableOpacity>
           </View>
-          {workouts.length === 0 && <Text style={tw`text-center my-6`}>There are no workouts to display</Text>}
-          {workouts.map((w, i) => {
-            return <TouchableOpacity
+          {workout_progress.length === 0 && <Text style={tw`text-center my-6`}>There are no workouts to display</Text>}
+          {workout_progress.map((w, i) => {
+            return <SwipeWithDelete onDelete={async() => {
+              await dao.deleteProgress(w.id, 'workout_play')
+            }} key={`workout ${w.id} at i ${i}`} >
+                <TouchableOpacity
               onPress={() => {
                 const screen = getMatchingNavigationScreen('CompletedExerciseDetails', navigator)
                 //@ts-ignore
                 navigator.navigate(screen, { workoutPlayId: w.id })
-              }}
-              key={`workout ${w.id} at i ${i}`} style={tw`w-12/12 flex-row items-center p-4 mb-2 items-center ${dm ? 'bg-gray-700' : 'border border-black'} rounded-3xl`}>
-              <Image source={{ uri: w.picture }} style={{ width: 40, height: 40, borderRadius: 10 }} />
+              }}>
+              <View card style={tw`w-12/12 flex-row items-center p-4 mb-2 items-center rounded-xl`}>
+              <SupabaseImage uri={w.workout?.image || defaultImage} style={`h-12 w-12 rounded-lg`} />
               <View style={tw`ml-2`}>
-                <Text style={tw``}weight='semibold'>{w.name}</Text>
-                <Text style={tw`text-gray-400 text-xs`}>by {<Text style={tw`text-xs text-red-500`}>{w.author}</Text>}</Text>
+                <Text style={tw``}weight='semibold'>{w.workout?.name || 'Workout'}</Text>
+                <Text style={tw`text-gray-400 text-xs`}>by {<Text style={tw`text-xs text-red-500`}>@{w.workout?.user?.username}</Text>}</Text>
+              </View>
               </View>
             </TouchableOpacity>
+            </SwipeWithDelete>
           })}
           <View style={tw`pb-10`} />
           <ThisAdHelpsKeepFree />

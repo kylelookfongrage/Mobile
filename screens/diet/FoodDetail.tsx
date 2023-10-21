@@ -16,7 +16,7 @@ import { useCommonAWSIds } from '../../hooks/useCommonContext';
 import { ErrorMessage } from '../../components/base/ErrorMessage';
 import { BackButton } from '../../components/base/BackButton';
 import AllergenAlert from '../../components/features/AllergenAlert';
-import { ShowMoreButton } from '../home/ShowMore';
+import { DeleteButton, EditModeButton, ShareButton, ShowMoreButton, ShowMoreDialogue, ShowUserButton } from '../home/ShowMore';
 import { FavoriteType } from '../../aws/models';
 import ScrollViewWithDrag from '../../components/screens/ScrollViewWithDrag';
 import { FoodDao } from '../../types/FoodDao';
@@ -132,32 +132,32 @@ export default function FoodDetail(props: FoodDetailProps) {
                 ]
             })
             form.setForm('healthLabels', v.healthLabels || [])
-                form.setForm('weight', v.totalWeight)
-                if (props.measures) {
-                    let measures: { [k: string]: number } = {}
-                    props.measures?.forEach((m) => {
-                        measures[m.label] = m.weight
-                        if (m.qualified) {
-                            m.qualified.forEach((q) => {
-                                (q.qualifiers || []).forEach((qual) => {
-                                    measures[qual.label] = q.weight
-                                })
+            form.setForm('weight', v.totalWeight)
+            if (props.measures) {
+                let measures: { [k: string]: number } = {}
+                props.measures?.forEach((m) => {
+                    measures[m.label] = m.weight
+                    if (m.qualified) {
+                        m.qualified.forEach((q) => {
+                            (q.qualifiers || []).forEach((qual) => {
+                                measures[qual.label] = q.weight
                             })
-                        }
-                    })
-                    form.setForm('servingSizes', measures)
-                }
+                        })
+                    }
+                })
+                form.setForm('servingSizes', measures)
+            }
 
-                // get the nutrient values for calories, fat, sat fat, trans fat, cholesterol, sodium, carbs, fiber sugar, protein, then all of the other ones
-                setNutritionInfo(EdamamFoodToFoodItemData(v))
-        } else if (props.id && (props.src === 'edit' || props.src==='backend')) {
+            // get the nutrient values for calories, fat, sat fat, trans fat, cholesterol, sodium, carbs, fiber sugar, protein, then all of the other ones
+            setNutritionInfo(EdamamFoodToFoodItemData(v))
+        } else if (props.id && (props.src === 'edit' || props.src === 'backend')) {
             if (props.mealId) {
                 let potentialData = multiPartForm.data['meals'][props.mealId]?.filter(x => x.tempId == props.id)?.[0]
                 if (potentialData) {
                     console.log('setting nutrition info')
                     let newNutritionInfo = NewFoodItemData(potentialData.calories, potentialData.protein, potentialData.fat, potentialData.carbs, potentialData.otherNutrition)
                     setNutritionInfo(newNutritionInfo)
-                    form.dispatch({type: FormReducer.Set, payload: {...potentialData, image: potentialData.img}})
+                    form.dispatch({ type: FormReducer.Set, payload: { ...potentialData, image: potentialData.img } })
                 }
             } else if (props.grocery) {
 
@@ -168,7 +168,7 @@ export default function FoodDetail(props: FoodDetailProps) {
                 if (!potentialData) return;
                 let newNutritionInfo = NewFoodItemData(potentialData.calories, potentialData.protein, potentialData.fat, potentialData.carbs, potentialData.otherNutrition)
                 setNutritionInfo(newNutritionInfo)
-                form.dispatch({type: FormReducer.Set, payload: {...potentialData, image: potentialData.image || defaultImage}})
+                form.dispatch({ type: FormReducer.Set, payload: { ...potentialData, image: potentialData.image || defaultImage } })
             }
         }
     }, [])
@@ -185,7 +185,7 @@ export default function FoodDetail(props: FoodDetailProps) {
                 ]
             }).then((v) => {
                 // set the health labels if there
-                
+
             }).catch((e) => console.log(`Error: ${e}`))
         } else if (props.src === 'edit') {
             if (props.mealId) {
@@ -194,7 +194,7 @@ export default function FoodDetail(props: FoodDetailProps) {
                     console.log('setting nutrition info')
                     let newNutritionInfo = NewFoodItemData(potentialData.calories, potentialData.protein, potentialData.fat, potentialData.carbs, potentialData.otherNutrition)
                     setNutritionInfo(newNutritionInfo)
-                    form.dispatch({type: FormReducer.Set, payload: {...potentialData, image: potentialData.img}})
+                    form.dispatch({ type: FormReducer.Set, payload: { ...potentialData, image: potentialData.img } })
                 }
             }
         }
@@ -274,7 +274,7 @@ export default function FoodDetail(props: FoodDetailProps) {
         let sum = nutritionInfo.reduce((prev, curr) => prev + (Number(curr.value) || 0), 0)
         if (sum === 0) return;
         console.log('setting nutrition info pt 2')
-        console.log({weight: form.state.weight, quantity: form.state.quantity, ss: form.state.servingSize})
+        console.log({ weight: form.state.weight, quantity: form.state.quantity, ss: form.state.servingSize })
         if (!Number.isNaN(Number(form.state.quantity)) && Number(form.state.quantity) > 0 && form.state.weight && form.state.servingSize) {
             //@ts-ignore
             const newWeight = form.state.servingSizes?.[form.state.servingSize] as number
@@ -310,15 +310,15 @@ export default function FoodDetail(props: FoodDetailProps) {
                 return Number(nutritionInfo.filter(x => x.name.toLowerCase() == name)[0].value)
             })
             if (props.src === 'new') { // new food
-                let res = await dao.save({...form.state, calories, carbs, protein, fat, otherNutrition, user_id: undefined}, props.img === form.state.image)
+                let res = await dao.save({ ...form.state, calories, carbs, protein, fat, otherNutrition, user_id: undefined }, props.img === form.state.image)
                 if (res) {
-                    form.dispatch({type: FormReducer.Set, payload: res})
+                    form.dispatch({ type: FormReducer.Set, payload: res })
                 }
             } else if (props.src === 'api') { // food from edamam
                 if (props.mealId) { // add to meal
                     console.log('adding to meal')
-                    let existingIngredients = [...(multiPartForm.data.meals[props.mealId] || [])] 
-                    existingIngredients.push(formToIngredient({...form.state}, {calories, protein, carbs, fat, otherNutrition, tempId: props.id || ''}))
+                    let existingIngredients = [...(multiPartForm.data.meals[props.mealId] || [])]
+                    existingIngredients.push(formToIngredient({ ...form.state }, { calories, protein, carbs, fat, otherNutrition, tempId: props.id || '' }))
                     multiPartForm.upsert('meals', props.mealId, existingIngredients)
                     navigator.pop()
                 } else if (props.grocery) { // add to grocery list
@@ -329,11 +329,11 @@ export default function FoodDetail(props: FoodDetailProps) {
 
             } else if (props.src === 'edit') {
                 if (props.mealId) { // update meal ingredient
-                    let existingIngredients = [...(multiPartForm.data.meals[props.mealId] || [])] 
+                    let existingIngredients = [...(multiPartForm.data.meals[props.mealId] || [])]
                     console.log(existingIngredients)
                     existingIngredients = existingIngredients.map(x => {
                         if (x.tempId === props.id) {
-                            return formToIngredient({...form.state, id:(Number(props.id) || undefined) }, {calories, protein, carbs, fat, otherNutrition, tempId: props.id || ''})
+                            return formToIngredient({ ...form.state, id: (Number(props.id) || undefined) }, { calories, protein, carbs, fat, otherNutrition, tempId: props.id || '' })
                         }
                         return x
                     })
@@ -351,7 +351,7 @@ export default function FoodDetail(props: FoodDetailProps) {
                 } else if (props.mealId) { // add to meal ingredients
 
                 } else { // add to progress
-                    let p = {...form}
+                    let p = { ...form }
                     await pdao.saveProgress('food_progress', {
                         calories, carbs, protein, fat, otherNutrition, food_id: form.state.id || null, progress_id: '',
                         user_id: profile?.id, quantity: form.state.quantity, serving: form.state.servingSize, servingSizes: form.state.servingSizes,
@@ -380,18 +380,26 @@ export default function FoodDetail(props: FoodDetailProps) {
 
     const userIsAllergic = userAllergens.filter(x => `${form.state.name} ${form.state.ingredients}`.toLowerCase().includes(x || 'nothing')).length > 0
     let saveButtonTitle = 'Log Food'
-    if (props.src === 'new' || props.src === 'edit') saveButtonTitle = 'Save Food'
+    if (screenState.state.editMode) saveButtonTitle = 'Save Food'
     if (props.grocery) saveButtonTitle = 'Save to List'
     if (props.mealId) saveButtonTitle = 'Save to Meal'
-    if (props.mealId && props.src==='edit') saveButtonTitle='Update Ingredient'
+    if (props.mealId && props.src === 'edit') saveButtonTitle = 'Update Ingredient'
+    const deleteFood = async () => {
+
+    }
     return (
         <View style={{ flex: 1 }} includeBackground>
             <ScrollViewWithDrag
-                rerenderTopView={[screenState.state.editMode==true, form.state.image]}
+                rerenderTopView={[screenState.state.editMode == true, form.state.image]}
                 TopView={() => <View>
                     <BackButton inplace Right={() => {
                         if (screenState.state.editMode) return <View />;
-                        return <ShowMoreButton name={form.state.name} desc={'@' + author} img={form.state.image || defaultImage} id={id} type={FavoriteType.FOOD} userId={authorId || ''} />
+                        return <ShowMoreDialogue food_id={Number(id)} options={[
+                            EditModeButton(screenState.state.editMode ? true : false, () => screenState.setForm('editMode', !screenState.state.editMode)),
+                            DeleteButton('Food', deleteFood),
+                            ShowUserButton(form.state.user_id, navigator),
+                            ShareButton({ food_id: Number(id) })
+                        ]} />
                     }} />
                     <ImagePickerView
                         editable={screenState.state.editMode ? true : false}
@@ -561,7 +569,7 @@ export default function FoodDetail(props: FoodDetailProps) {
                 // hidden={props.src==='backend' && props.mealId ? true : false}
                 uploading={screenState.state.uploading}
                 favoriteType='food'
-                favoriteId={123}
+                favoriteId={form.state.id}
                 onSave={onAddPress}
                 title={saveButtonTitle} />
         </View>

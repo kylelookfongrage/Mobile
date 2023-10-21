@@ -159,13 +159,16 @@ export default function Setup(props: { registration?: boolean; }) {
             //@ts-ignore
             setUserId(res?.id)
             setUsername(newUsername)
+            if (res)
+            setProfile(res)
             setLoading(false)
             navigator.navigate('OnboardingComplete')
         } else if (!props.registration!!) {
             const existingUser = await DataStore.query(User, userId)
             if (existingUser && weight && fat && profile) {
-                await dao.update(profile?.id, document)
+                let res = await dao.update(profile?.id, document)
                 setLoading(false)
+                if (res) setProfile(res)
                 //@ts-ignore
                 navigator.navigate('OnboardingComplete')
             }

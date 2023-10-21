@@ -26,6 +26,7 @@ import {Env} from './env'
 import moment, { Moment } from 'moment';
 import {Colors} from 'react-native-ui-lib';
 import tw from 'twrnc'
+//@ts-ignore
 Colors.loadDesignTokens({primaryColor: tw`bg-red-600`.backgroundColor});
 
 

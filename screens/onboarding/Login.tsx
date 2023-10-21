@@ -57,33 +57,6 @@ export default function Login() {
     setUploading(false)
   }
 
-  React.useEffect(() => {
-    if (!user) return;
-    setUploading(true)
-    const currentSub = user.attributes.sub
-    setSub(currentSub)
-    if (user.attributes.identities) {
-      setSignedInWithEmail(false)
-    } else {
-      setSignedInWithEmail(true)
-    }
-    const subscripton = DataStore.observeQuery(User, u => u.sub.eq(currentSub)).subscribe(ss => {
-      const { items, isSynced } = ss;
-      if (isSynced) {
-        const us = items
-        if (us[0]) {
-          setUserId(us[0].id)
-          setUsername(us[0].username)
-          setStatus({pt: us[0].personalTrainer || false, fp: us[0].foodProfessional || false})
-        } else {
-          navigator.navigate('Registration')
-        }
-      }
-    })
-    setUploading(false)
-    return () => subscripton.unsubscribe()
-  }, [user])
-
   // React.useEffect(() => {
   //   if (!loginMode) return;
   //   if (!email) return

@@ -8,10 +8,12 @@ import { Auth } from 'aws-amplify'
 import tw from 'twrnc'
 import { ExpoIcon } from '../../components/base/ExpoIcon'
 import { useCommonAWSIds } from '../../hooks/useCommonContext'
+import { useSignOut } from '../../supabase/auth'
 
 export default function Account() {
     const navigator = useNavigation()
-    const {setUserId, signedInWithEmail, setUsername, setSub, setSubscribed, setHasSubscribedBefore, setStatus, setSignedInWithEmail} = useCommonAWSIds()
+    const {setUserId, signedInWithEmail, setUsername, setSub, setSubscribed, setHasSubscribedBefore, setStatus, setSignedInWithEmail, setUser, setProfile} = useCommonAWSIds()
+    let a = useSignOut()
     const dm = useColorScheme() === 'dark'
     const emailSettings = signedInWithEmail ?  [{ title: 'Change Password', icon: 'lock', screen: 'ChangePassword' },
     { title: 'Update Email Address', icon: 'mail', screen: 'UpdateEmail' },] : []
@@ -39,14 +41,17 @@ export default function Account() {
                 </TouchableOpacity>
             })}
                 <TouchableOpacity onPress={async () => {
-                    await Auth.signOut()
+                    await a.signOut()
                     setUserId('');
                     setUsername('')
+                    setUser(null)
+                    setProfile(null)
                     setSub('') 
                     setSubscribed(false)
                     setHasSubscribedBefore(false) 
                     setStatus({pt: false, fp: false}) 
                     setSignedInWithEmail(false)
+                    // navigator.navigate('GetStarted')
                 }} style={tw`mt-9 items-center justify-center mx-6 bg-red-${dm ? '700' : '500'} p-3 rounded-lg`}>
                     <Text>Sign Out</Text>
                 </TouchableOpacity>

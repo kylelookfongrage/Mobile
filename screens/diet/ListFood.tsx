@@ -246,7 +246,7 @@ export default function ListFood(props: ListFoodProps) {
        <BackButton />
        <Spacer />
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[tw`px-4`]}>
-        <SearchBar onSearch={search} />
+        <SearchBar full onSearch={search} />
         <View style={tw`flex-row justify-between py-4 px-5`}>
             {searchOptions.map((o, i) => {
               const selected = selectedOption === o

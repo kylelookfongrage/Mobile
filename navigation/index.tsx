@@ -71,8 +71,8 @@ import OnboardingComplete from '../screens/onboarding/OnboardingComplete';
 
 function RootNavigator() {
   const commonContext = useCommonAWSIds()
-  const { userId } = commonContext
-  if (userId) {
+  const { profile } = commonContext
+  if (profile?.id) {
     return <Stack.Navigator initialRouteName={'Root'}>
       <Stack.Screen name="Root" component={BottomTabNavigator} options={{ headerShown: false }} />
       <Stack.Screen name="NotFound" component={NotFoundScreen} options={{ title: 'Oops!' }} />
@@ -251,7 +251,7 @@ function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
     'Exercise': {
       icon: "compass",
       label: 'Discover',
-      color: dm ? "yellow-400" : "yellow-500"
+      color: dm ? "red-600" : "red-500"
     },
     'Add' : {
       icon: 'plus-circle',
@@ -262,12 +262,12 @@ function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
     'Profile': {
       icon: "user",
       label: 'Profile',
-      color: dm ? "white" : "gray-400"
+      color: dm ? "red-600" : "red-500"
     },
     'Food': {
       icon: "search",
       label: 'Search',
-      color: dm ? "teal-600" : "teal-700"
+      color: dm ? "red-600" : "red-500"
     }
   };
   const insets = useSafeAreaInsets()

@@ -8,15 +8,17 @@ import tw from 'twrnc'
 import useColorScheme from '../../hooks/useColorScheme';
 import { isStorageUri } from '../../data';
 import { Storage } from 'aws-amplify';
+import { useStorage } from '../../supabase/storage';
 
 export default function ImageDetailView(props: {uris: string[]; defaultIndex: number | undefined}) {
     const {uris, defaultIndex} = props;
     let [imgs, setImgs] = useState<string[]>([])
+    let s = useStorage()
 
     const getImages = useCallback(async () => {
       let newImages = await Promise.all(uris.map(async x => {
         if (isStorageUri(x)) {
-          return await Storage.get(x)
+          return s.constructUrl(x)?.data?.publicUrl || x
         }
         return x
       }))

@@ -36,6 +36,7 @@ interface ImagePickerViewProps {
     multiple?: boolean;
     snapTo?: number
     height?: number;
+    indicatorMarginTop?: number;
 }
 export const ImagePickerView = (props: ImagePickerViewProps) => {
     let mediaType = ImagePicker.MediaTypeOptions.All
@@ -168,6 +169,7 @@ export const ImagePickerView = (props: ImagePickerViewProps) => {
                     </TouchableOpacity>}
                     {imageSource && imageSource.type === 'video' && <View style={tw``}>
                         <Video
+                            indicatorMarginTop={props.indicatorMarginTop}
                             source={{ uri: imageSource.uri }}
                             // @ts-ignore
                             resizeMode={props.resizeMode || 'cover'}

@@ -6,7 +6,8 @@ import { useStorage } from "../supabase/storage";
 export function MealDao() {
     const dao = useDao()
     const storage = useStorage()
-    const find = async (id: Tables['meal']['Row']['id']) => (await dao.find('meal', id))
+    const find = async (id: Tables['meal']['Row']['id']) => (await dao.find('meal', id));
+    const remove = async (id: Tables['meal']['Row']['id']) => {await dao.remove('meal', id)}
     const save = async (meal: Tables['meal']['Insert'], originalVideo?: string | undefined, originalPreview?: string | undefined): Promise<Tables['meal']['Row'] | null> => {
         let copiedDocument = { ...meal }
         let { preview, video } = await storage.uploadWithPreview(meal.video, meal.preview, originalVideo, originalPreview)
@@ -61,5 +62,5 @@ export function MealDao() {
         return res?.data || null;
     }
 
-    return { find, save, saveIngredients, getIngredientFromIngredientAddition, getIngredients }
+    return { find, save, saveIngredients, getIngredientFromIngredientAddition, getIngredients, remove }
 }

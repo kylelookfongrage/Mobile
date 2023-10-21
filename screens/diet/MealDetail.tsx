@@ -20,7 +20,7 @@ import { useCommonAWSIds } from '../../hooks/useCommonContext';
 import { BackButton } from '../../components/base/BackButton';
 import { useDateContext } from '../home/Calendar';
 import AllergenAlert from '../../components/features/AllergenAlert';
-import { ShowMoreButton } from '../home/ShowMore';
+import { DeleteButton, EditModeButton, ShareButton, ShowMoreButton, ShowMoreDialogue, ShowUserButton } from '../home/ShowMore';
 import { BadgeType, useBadges } from '../../hooks/useBadges';
 import * as VT from 'expo-video-thumbnails'
 import ScrollViewWithDrag from '../../components/screens/ScrollViewWithDrag';
@@ -73,10 +73,10 @@ export default function MealDetailScreen(props: MealDetailProps) {
         if (props.id && Number(props.id)) {
             let res = await dao.find(Number(props.id))
             if (!res) return null;
-            setImageSource(res.video ? [{type: 'video', uri: res.video, supabaseID: res.video}] : [{type: 'image', uri: res.preview || defaultImage, supabaseID: res.preview || undefined}])
+            setImageSource(res.video ? [{ type: 'video', uri: res.video, supabaseID: res.video }] : [{ type: 'image', uri: res.preview || defaultImage, supabaseID: res.preview || undefined }])
             let fetchedIngredients = await dao.getIngredients(Number(props.id))
             let ing: IngredientAdditions[] = fetchedIngredients.map(z => {
-                let copy = {...z}
+                let copy = { ...z }
                 delete copy['food']
                 return {
                     ...copy,
@@ -86,7 +86,6 @@ export default function MealDetailScreen(props: MealDetailProps) {
                     servingSizes: z.food.servingSizes || {}
                 }
             })
-            console.log(ing)
             ingrs.upsert('meals', uuid, ing)
             return res;
         }
@@ -118,6 +117,12 @@ export default function MealDetailScreen(props: MealDetailProps) {
     const dao = MealDao()
     useOnLeaveScreen(() => ingrs.remove('meals', uuid))
 
+    const deleteMeal = async () => {
+        if (!props.id || !Number(props.id)) return;
+        await dao.remove(Number(props.id))
+        navigator.pop()
+    }
+
 
     const saveMeal = async () => {
         if (screen.editMode) { // updating or creating
@@ -135,7 +140,7 @@ export default function MealDetailScreen(props: MealDetailProps) {
                 setScreen('uploading', true)
                 try {
                     let res = await dao.save(form)
-                    if (res && res?.id) { 
+                    if (res && res?.id) {
                         MealForm.dispatch({ type: FormReducer.Set, payload: res })
                         let savedIngredients = await dao.saveIngredients(res, ingredients)
                         if (!savedIngredients) {
@@ -154,15 +159,15 @@ export default function MealDetailScreen(props: MealDetailProps) {
             } else { // add to progress
                 let meal_id = form.id
                 if (ingrs.data.edited[uuid] === true) { // make new meal & ingredients, linking old meal to new, then log progress
-                    let copy = {...form}
+                    let copy = { ...form }
                     delete copy['id']
-                    let res = await dao.save({...copy, public: false, price: 0})
+                    let res = await dao.save({ ...copy, public: false, price: 0 })
                     if (res && res.id) {
                         await dao.saveIngredients(res, ingredients)
-                        meal_id=res.id
+                        meal_id = res.id
                     }
                 }
-                await pdao.saveProgress('meal_progress', {meal_id, progress_id: null})
+                await pdao.saveProgress('meal_progress', { meal_id, progress_id: null })
                 navigator.pop()
             }
 
@@ -177,29 +182,22 @@ export default function MealDetailScreen(props: MealDetailProps) {
 
     return (
         <View style={{ flex: 1 }} includeBackground>
-            <BackButton inplace Right={() => {
-                if (!screen.editMode || !id) {
-                    return <ShowMoreButton name={name} desc={'@' + author} img={firstImage.length === 0 ? defaultImage : firstImage[0].uri} id={mealId} type={FavoriteType.MEAL} userId={form.user_id || profile?.id} />
-                }
-                return <TouchableOpacity onPress={() => {
-                    Alert.alert("Are you sure you want to delete this meal?", "You cannot undo this action later, and all progress associated with this meal will be deleted.", [
-                        {
-                            text: 'Yes', onPress: async () => {
-                                if (!mealId) return
-                                await DataStore.delete(Meal, mealId)
-                                //@ts-ignore
-                                navigator.pop()
-                            }
-                        }, { text: 'Cancel' }
-                    ])
-                }}>
-                    <Text style={tw`text-red-500`} weight='semibold'>Delete Meal</Text>
-                </TouchableOpacity>
-            }} />
+
             {/* @ts-ignore */}
-            <ScrollViewWithDrag rerenderTopView={[screen.editMode, (imageSource || [])]} TopView={() => <ImagePickerView editable={screen.editMode} srcs={canViewDetails ? imageSource : imageSource.filter(x => x.type === 'image')} onChange={x => {
-                setImageSource(x)
-            }} type='all' />} style={{ flex: 1, }} showsVerticalScrollIndicator={false}>
+            <ScrollViewWithDrag rerenderTopView={[screen.editMode, (imageSource || [])]} TopView={() => <View>
+                <BackButton inplace Right={() => {
+                    if (screen.editMode || !id || !Number(id)) return <View />
+                    return <ShowMoreDialogue meal_id={Number(id)} options={[
+                        EditModeButton(screen.editMode, () => setScreen('editMode', !screen.editMode)),
+                        DeleteButton('Meal', deleteMeal),
+                        ShowUserButton(form.user_id, navigator),
+                        ShareButton({meal_id: Number(id)})
+                    ]} />
+                }} />
+                <ImagePickerView editable={screen.editMode} srcs={canViewDetails ? imageSource : imageSource.filter(x => x.type === 'image')} onChange={x => {
+                    setImageSource(x)
+                }} type='all' />
+            </View>} style={{ flex: 1, }} showsVerticalScrollIndicator={false}>
 
                 <View style={[tw`pt-4 px-6 pb-60`]}>
                     <ErrorMessage errors={screen.errors} onDismissTap={() => setScreen('errors', [])} />
@@ -229,7 +227,7 @@ export default function MealDetailScreen(props: MealDetailProps) {
                         <MacronutrientBar protein weight={protein || 0} totalEnergy={calories || 1} />
                         <MacronutrientBar carbs weight={carbs || 0} totalEnergy={calories || 1} />
                         <MacronutrientBar fat weight={fat || 0} totalEnergy={calories || 1} />
-                       
+
                         <Spacer divider />
                     </View>
                     <ManageButton title='Ingredients' buttonText='Add New' hidden={!screen.editMode} onPress={() => {
@@ -249,7 +247,7 @@ export default function MealDetailScreen(props: MealDetailProps) {
                             <TouchableOpacity onPress={() => {
                                 const s = getMatchingNavigationScreen('FoodDetail', navigator)
                                 //@ts-ignore
-                                navigator.navigate(s, {id: ingr.tempId, mealId: uuid, src: 'edit'})
+                                navigator.navigate(s, { id: ingr.tempId, mealId: uuid, src: 'edit' })
                             }}>
                                 <View card style={{ ...tw`px-4 py-2 flex-row items-center rounded-xl mb-2` }}>
                                     {ingr.img && <SupabaseImage uri={ingr.img} style='h-15 w-15 rounded-lg' />}
@@ -308,7 +306,7 @@ export default function MealDetailScreen(props: MealDetailProps) {
             <Overlay visible={screen.showLogProgress} onDismiss={() => setScreen('showLogProgress', false)}>
 
             </Overlay>
-            <SaveButton favoriteId={form.id} title={screen.editMode ? 'Save Meal' :  (canViewDetails ? (false ? 'Save to Plan' : 'Log Meal') : 'Purchase Meal')} favoriteType='meal' uploading={screen.uploading} onSave={saveMeal} />
+            <SaveButton favoriteId={form.id} title={screen.editMode ? 'Save Meal' : (canViewDetails ? (false ? 'Save to Plan' : 'Log Meal') : 'Purchase Meal')} favoriteType='meal' uploading={screen.uploading} onSave={saveMeal} />
         </View>
     )
 }

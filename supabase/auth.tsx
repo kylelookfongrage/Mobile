@@ -71,12 +71,12 @@ export const useGoogleSignIn = () => {
     const loginWithGoogle = async () => {
         const { data } = await supabase.auth.signInWithOAuth({
             provider: 'google', options: {
-                redirectTo: 'host.exp.Exponent://google-auth?',
+                redirectTo: 'ragepersonalhealth://login',
             }
         })
         let url = data.url
         if (url) {
-            const result = await WebBrowser.openAuthSessionAsync(url, 'host.exp.Exponent', { showInRecents: true })
+            const result = await WebBrowser.openAuthSessionAsync(url, 'ragepersonalhealth://login', { showInRecents: true })
             //@ts-ignore
             let params = extractParamsFromUrl(result?.url)
             if (params?.access_token && params.refresh_token) {
@@ -104,6 +104,13 @@ export const useGoogleSignIn = () => {
     return { loginWithGoogle }
 
 };
+
+export function useSignOut(){
+  const signOut = async () => {
+    await supabase.auth.signOut()
+  }
+  return {signOut}
+}
 
 
 export function useEmailSignIn(){

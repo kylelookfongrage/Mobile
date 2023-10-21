@@ -139,7 +139,7 @@ export const FoodAndMeals = () => {
                                 <Text xs style={tw`text-red-500`}>@{x.username}</Text>
                             </View>
                         </View>
-                        <Text xs style={tw`text-gray-500`}>{titleCase(x.type)} - {x.identifier}</Text>
+                        <Text xs style={tw`text-gray-500`}>{titleCase(x.type)}</Text>
                     </View>
                 </TouchableOpacity>
             })}
@@ -175,8 +175,8 @@ export const FoodAndMeals = () => {
                     navigator.navigate('FTWorkoutDetail', { id: null, editable: true })
                 }
             },
-        ]} initialIcon={'plus'} bgColor='teal-500' openIcon={() => {
-            return <ExpoIcon name='close' iconName='ion' color='black' size={23} />
+        ]} initialIcon={'plus'} bgColor='red-600' openIcon={() => {
+            return <ExpoIcon name='close' iconName='ion' color='white' size={23} />
         }} />
     </SafeAreaView>
 }

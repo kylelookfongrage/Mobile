@@ -10,6 +10,7 @@ import { useProgressValues } from '../../hooks/useProgressValues'
 import { WorkoutMode } from '../../data'
 import { DataStore } from 'aws-amplify'
 import { User } from '../../aws/models'
+import { UserQueries } from '../../types/UserDao'
 
 export interface AppSetting {
     title: string;
@@ -24,9 +25,10 @@ export interface AppSetting {
 }
 
 export default function Settings() {
-    const { status, subscribed, userId } = useCommonAWSIds()
+    const { status, subscribed, userId, profile } = useCommonAWSIds()
     const navigator = useNavigation()
-    const {selectedWorkoutMode} = useProgressValues({metrics: true})
+    const [selectedWorkoutMode, setSelectedWorkoutMode] = useState<string | null>(null)
+    let dao = UserQueries()
     React.useEffect(() => {
         setSettings([...settings].map(z => {
             if (z.title === 'Default Workout Mode') {
@@ -38,13 +40,10 @@ export default function Settings() {
     const s: AppSetting[] = [
         { title: 'Manage Account', icon: 'unlock', screen: 'Account' },
         { title: 'Content Creator Hub', icon: 'briefcase', screen: 'Apply' },
-        {title: 'Default Workout Mode', icon: 'grid', switch: true, switchValue: false, onSwitch: async (b) => {
-            const ogUser = await DataStore.query(User, userId)
-            if (ogUser){
-                await DataStore.save(User.copyOf(ogUser, x=>{
-                    x.workoutMode=(b === false ? WorkoutMode.player : WorkoutMode.default)
-                }))
-            }
+        {title: 'Default Workout Mode', icon: 'grid', switch: (!profile?.workoutMode || profile.workoutMode === 'DEFAULT'), switchValue: false, onSwitch: async (b) => {
+            if (!profile) return;
+            await dao.update(profile.id, {workoutMode: b ? 'DEFAULT' : 'MUSIC'})
+            setSelectedWorkoutMode(b ? 'DEFAULT' : 'MUSIC')
         } },
         { title: 'Update Goal', icon: 'bar-chart', screen: 'Setup' },
         { title: subscribed ? 'Subscribe or Remove Ads' : 'Manage Subscription', icon: 'tag', screen: 'Subscription' },

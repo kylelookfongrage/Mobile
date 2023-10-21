@@ -24,6 +24,7 @@ export default function GetStarted() {
   const { setSub, setUserId, setUsername, setUser, setProfile, setStatus, setSignedInWithEmail } = useCommonAWSIds()
   const dao = UserQueries() 
   useAuthListener((e, u) => {
+    if (!u) return;
     setSignedInWithEmail(['apple', 'google'].includes(u?.app_metadata?.provider || ''))
     dao.fetchProfile(u.id).then(x => {
       if (x?.id) {
@@ -45,51 +46,11 @@ export default function GetStarted() {
       x.value = event.contentOffset.x
     }
   })
-  const [amplifyReady, setAmplifyReady] = React.useState<boolean>(false)
-  React.useEffect(() => {
-    const prepare = async () => {
-      const config = await getAWSConfig()
-      Amplify.configure({...config, Analytics: {disabled: true}, Auth: {
-        region: 'us-east-1',
-        identityPoolRegion: 'us-east-1'
-      }})
-      // await DataStore.clear()
-    }
-    // prepare().then(_ => setAmplifyReady(true)).then(_ => setIsReady(true))
-  }, [])
+  
 
-  React.useEffect(() => {
-    // async function prepare() {
-    //   if (!amplifyReady) return;
-    //   try {
-    //     const user = await Auth.currentAuthenticatedUser()
-    //     if (user.attributes.identities) {
-    //       setSignedInWithEmail(false)
-    //     } else {
-    //       setSignedInWithEmail(true)
-    //     }
-    //     const sub = user.attributes.sub
-    //     const potentialMatches = await DataStore.query(User, x => x.sub.eq(sub))
-    //     if (potentialMatches.length > 0) {
-    //       const us = potentialMatches[0]
-    //       setSub(sub)
-    //       setUserId(us.id)
-    //       setUsername(us.username)
-    //       setStatus({pt: us.accepted_content_creator_terms || false, fp: us.accepted_content_creator_terms || false})
-    //     }
 
-    //   } catch {
-    //     return;
-    //   } finally {
-    //     // Tell the application to render
-    //     setIsReady(true);
-    //   }
-    // }
-    // prepare()
-  }, [amplifyReady])
   React.useCallback(async () => {
-    if (isReady) {
-      await SplashScreen.hideAsync();
+    await SplashScreen.hideAsync();
       if (Platform.OS === 'ios') {
         const { granted } = await getTrackingPermissionsAsync();
         console.log(granted === true)
@@ -102,9 +63,7 @@ export default function GetStarted() {
         const { status } = await AdsConsent.showForm();
         console.log(consentInfo)
       }
-    }
   }, [])
-  if (!isReady) return null;
 
   return (
     <View includeBackground style={[tw``, { flex: 1 }]}>

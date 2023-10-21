@@ -1,5 +1,5 @@
 import { Switch, TouchableOpacity } from 'react-native'
-import React, { useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import { Text, View } from '../../components/base/Themed'
 import tw from 'twrnc'
 import { useNavigation } from '@react-navigation/native'
@@ -27,35 +27,28 @@ export interface AppSetting {
 export default function Settings() {
     const { status, subscribed, userId, profile } = useCommonAWSIds()
     const navigator = useNavigation()
-    const [selectedWorkoutMode, setSelectedWorkoutMode] = useState<string | null>(null)
     let dao = UserQueries()
-    React.useEffect(() => {
-        setSettings([...settings].map(z => {
-            if (z.title === 'Default Workout Mode') {
-                return {...z, switchValue: !selectedWorkoutMode || (selectedWorkoutMode === WorkoutMode.default)}
-            }
-            return z
-        }))
-    }, [selectedWorkoutMode])
-    const s: AppSetting[] = [
-        { title: 'Manage Account', icon: 'unlock', screen: 'Account' },
-        { title: 'Content Creator Hub', icon: 'briefcase', screen: 'Apply' },
-        {title: 'Default Workout Mode', icon: 'grid', switch: (!profile?.workoutMode || profile.workoutMode === 'DEFAULT'), switchValue: false, onSwitch: async (b) => {
-            if (!profile) return;
-            await dao.update(profile.id, {workoutMode: b ? 'DEFAULT' : 'MUSIC'})
-            setSelectedWorkoutMode(b ? 'DEFAULT' : 'MUSIC')
-        } },
-        { title: 'Update Goal', icon: 'bar-chart', screen: 'Setup' },
-        { title: subscribed ? 'Subscribe or Remove Ads' : 'Manage Subscription', icon: 'tag', screen: 'Subscription' },
-        { title: 'Help', icon: 'file-text', screen: 'Help', payload: { personal: true } },
-        { title: 'About', icon: 'info', screen: 'About', payload: { personal: true } }
-    ]
-    const [settings, setSettings] = useState<AppSetting[]>(s)
+    let settings = useMemo(() => {
+        console.log(profile?.workoutMode)
+        return [
+            { title: 'Manage Account', icon: 'unlock', screen: 'Account' },
+            { title: 'Content Creator Hub', icon: 'briefcase', screen: 'Apply' },
+            {title: 'Video Workout Mode', icon: 'grid', switch: true, switchValue: (profile?.workoutMode === 'MUSIC')  ? true : false, onSwitch: async (b) => {
+                if (!profile) return;
+                await dao.update(profile.id, {workoutMode: b ? 'MUSIC' : 'DEFAULT'})
+            } },
+            { title: 'Update Goal', icon: 'bar-chart', screen: 'Setup' },
+            { title: subscribed ? 'Subscribe or Remove Ads' : 'Manage Subscription', icon: 'tag', screen: 'Subscription' },
+            { title: 'Help', icon: 'file-text', screen: 'Help', payload: { personal: true } },
+            { title: 'About', icon: 'info', screen: 'About', payload: { personal: true } }
+        ]
+    }, [profile])
     return (
         <View style={{flex: 1}} includeBackground>
             <BackButton name='Settings' />
             <View style={tw`w-12/12 px-4 mt-4`}>
                 {settings.map((setting, i) => {
+                    if (setting.switch) console.log(setting)
                     return <TouchableOpacity
                         onPress={() => {
                             if (setting.screen) {
@@ -70,7 +63,7 @@ export default function Settings() {
                         </View>
                         {setting.switch && <Switch trackColor={{
                             true: 'red'
-                        }} value={setting.switchValue || false} onValueChange={(x) => {
+                        }} value={setting.switchValue} onValueChange={(x) => {
                             setting.onSwitch && setting.onSwitch(x)
                         }} />}
                         {!setting.switch && <ExpoIcon name='chevron-right' iconName={'feather'} size={15} color='gray' />}

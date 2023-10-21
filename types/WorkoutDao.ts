@@ -22,11 +22,21 @@ export function WorkoutDao(){
         `).filter('workout_id', 'eq', id)
         return res?.data || []
     }
-    const search = async (keyword: string | undefined) => {
-        // console.log('searching for ' + keyword)
-        if (!keyword) return (await supabase.from('workout').select('*').range(0, 50))?.data || null
-        let res = await supabase.from('workout').select('*').filter('name', 'ilike', `%${keyword}%`).range(0, 50)
-        return res?.data || null
+    const search = async (options: { keyword?: string | null; belongsTo?: string; favorited?: boolean; selectString?: string; user_id?: string }): Promise<Tables['workout']['Row'][] | null> => {
+        let { keyword, belongsTo, favorited, selectString, user_id } = options
+        let str = selectString
+        if (favorited && user_id) {
+            str = str + ", favorites!inner(user_id)"
+        }
+        console.log(str)
+        let q = supabase.from('workout').select(str || '*')
+        if (keyword) q = q.filter('name', 'ilike', `%${keyword}%`)
+        if (belongsTo) q = q.filter('user_id', 'eq', belongsTo)
+        if (favorited && user_id) q = q.filter('favorites.user_id', 'eq', user_id)
+        let data = await q.range(0, 50)
+        console.log(data)
+        //@ts-ignore
+        return data?.data || null
     }
     const save = async (workout: Tables['workout']['Insert']): Promise<Tables['workout']['Insert'] | null> => {
         let copiedDocument = {...workout}

@@ -227,6 +227,7 @@ export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
             workout_detail_id: selectedWorkoutPlayDetail.workout_detail_id,
             user_id: selectedWorkoutPlayDetail.user_id,
             workout_play_id: selectedWorkoutPlayDetail.workout_play_id,
+            id: -workoutPlayDetails.length - 1
         }
         setWorkoutPlayDetails([...workoutPlayDetails, newSet])
         setSelectedWorkoutPlayDetail(newSet)

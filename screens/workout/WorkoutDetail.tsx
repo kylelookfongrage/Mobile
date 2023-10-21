@@ -280,7 +280,7 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
                     <SupabaseImage uri={item.img} style='h-10 w-10 rounded-lg' />
                     <Spacer horizontal sm />
                     <View>
-                      <Text weight='semibold' style={tw`max-w-11/12`}>{item.name} - {item.exercise_id}</Text>
+                      <Text weight='semibold' style={tw`max-w-11/12`}>{item.name}</Text>
                       <Spacer xs />
                       <View style={{ ...tw`flex-row items-center justify-between w-10/12` }}>
                         <Text style={tw`text-gray-500`} xs>Sets: {item.reps || 0} x {item.sets || 1}</Text>

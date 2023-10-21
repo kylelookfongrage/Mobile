@@ -9,16 +9,15 @@ import Spacer from '../base/Spacer';
 import { ScrollView, TouchableOpacity, useColorScheme } from 'react-native';
 import tw from 'twrnc'
 
-export type TSearch = keyof Tables;
-export default function SearchScreen<T extends string[]>(
+export default function SearchScreen<T extends string[], K extends keyof Tables>(
     props: {
-        onSearch?: (keyword: string | null | undefined, options: T[number]) => Promise<Tables[TSearch]['Row'][] | null>;
+        onSearch?: (keyword: string, options: T[number]) => Promise<Tables[K]['Row'][] | null>;
         searchOptions: T;
-        excludeOptions: T;
-        table: TSearch;
+        excludeOptions?: T;
+        table: K;
         name?: string;
         Item: ((props: {
-            item: Tables[TSearch]['Row'], index: number;
+            item: Tables[K]['Row'], index: number;
         }) => React.ReactElement<any>)
     }) {
     const { Item } = props
@@ -27,17 +26,18 @@ export default function SearchScreen<T extends string[]>(
     const dm = useColorScheme() === 'dark'
     const color = dm ? 'white' : 'black'
     const [selectedOption, setSelectedOption] = useState<typeof searchOptions[number]>(props.searchOptions[0])
-    let [results, setResults] = useState<Tables[TSearch]['Row'][]>([])
+    let [results, setResults] = useState<Tables[K]['Row'][]>([])
     useAsync(async () => {
         if (props.onSearch) {
             let res = await props.onSearch(searchKey, selectedOption)
-            if (res && res.length > 0) {
+            if (res) {
                 setResults(res)
             }
         }
     }, [selectedOption, searchKey])
     return <View style={{ flex: 1 }} includeBackground>
-        <BackButton name='Exercises' />
+        <BackButton name={props.name} />
+        <Spacer />
         <SearchBar onSearch={x => setSearchKey(x)} />
         <Spacer />
         <View style={tw`flex-row justify-around`}>
@@ -60,7 +60,7 @@ export default function SearchScreen<T extends string[]>(
             contentContainerStyle={[tw`px-3 pb-20`]}>
             {results.length === 0 && <View style={tw`w-12/12 justify-center items-center mt-9`}><Text>No results to display</Text></View>}
             {results.map((r, idx) => {
-                return <Item index={idx} item={r} />
+                return <Item key={`search result at index ${idx}`} index={idx} item={r} />
             })}
         </ScrollView>
     </View>

@@ -117,7 +117,7 @@ export default function Profile(props: ProfileProps) {
             {!id && <TouchableOpacity style={tw`justify-end w-12/12 mt-9 items-end`} onPress={() => {
                 navigator.navigate('Settings')
             }}>
-                <ExpoIcon name='settings' iconName='feather' size={25} color={dm ? 'white' : 'black'} />
+                <ExpoIcon name='settings' iconName='feather' size={25} color={'gray'} />
             </TouchableOpacity>}
             <View style={tw`flex-row items-center`}>
                 <TouchableOpacity onPress={() => {

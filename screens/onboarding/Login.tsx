@@ -87,23 +87,8 @@ export default function Login() {
     setUploading(true)
     try {
       if (loginMode) {
-        if (!password || !email) {
-          setUploading(false)
-          setErrors(['You must fill out all of the information'])
-          return
-        }
-        // login
+        
       } else {
-        if (!password || !email || !confirmPassword) {
-          setUploading(false)
-          setErrors(['You must fill out all of the information'])
-          return
-        }
-        if (!acceptedTerms) {
-          setUploading(false)
-          setErrors(['You must accept the terms and conditions, as well as the privacy policy'])
-          return
-        }
         if (password === confirmPassword) {
           // sign up
         } else {
@@ -155,7 +140,7 @@ export default function Login() {
     }
     setUploading(false)
   }
-
+  let disabledButton = uploading || !password || !email || (loginMode === false && !confirmPassword) || (loginMode === false && !acceptedTerms)
   if (shouldShowValidateCode) {
     return <SafeAreaView style={tw`px-6`}>
       <TouchableOpacity
@@ -225,12 +210,12 @@ export default function Login() {
           </View>
         </View>
         <Spacer />
-        <View style={tw`w-12/12 flex-row items-center py-3 px-4 justify-between bg-gray-${dm ? '700' : '300'} rounded-lg`}>
+        <View card style={tw`w-12/12 flex-row items-center py-3 px-4 justify-between rounded-lg`}>
           <TextInput value={email} onChangeText={setEmail} placeholder='email' keyboardType='email-address' style={tw`w-11/12 text-${dm ? 'white' : 'black'}`} />
           <ExpoIcon name='at-sign' iconName='feather' color={dm ? 'white' : 'gray'} size={20} />
         </View>
         <Spacer />
-        <View style={tw`w-12/12 flex-row items-center py-3 px-4 justify-between bg-gray-${dm ? '700' : '300'} rounded-lg`}>
+        <View card style={tw`w-12/12 flex-row items-center py-3 px-4 justify-between rounded-lg`}>
           <TextInput value={password} onChangeText={setPassword} secureTextEntry={!showPassword} placeholder='password' style={tw`w-11/12 text-${dm ? 'white' : 'black'}`} />
           <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
             <ExpoIcon name={showPassword ? 'lock' : 'unlock'} iconName='feather' color={dm ? 'white' : 'gray'} size={20} />
@@ -246,7 +231,7 @@ export default function Login() {
         </View>}
         <Spacer />
         {!loginMode && <View>
-          <View style={tw`w-12/12 flex-row items-center py-3 px-4 justify-between bg-gray-${dm ? '700' : '300'} rounded-lg`}>
+          <View card style={tw`w-12/12 flex-row items-center py-3 px-4 justify-between rounded-lg`}>
             <TextInput value={confirmPassword} onChangeText={setConfirmPassword} secureTextEntry={!showConfirmPassword} placeholder='confirm password' style={tw`w-11/12 text-${dm ? 'white' : 'black'}`} />
             <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
               <ExpoIcon name={showConfirmPassword ? 'lock' : 'unlock'} iconName='feather' color={dm ? 'white' : 'gray'} size={20} />
@@ -260,12 +245,12 @@ export default function Login() {
         </View>
         </View>}
         <TouchableOpacity
-          disabled={uploading}
+          disabled={disabledButton}
           onPress={() => {
             onCreateAccountOrLoginPress()
           }}
-          style={tw`items-center rounded-lg bg-red-600 py-3`}>
-          {!uploading && <Text style={tw`text-white`}>{loginMode ? 'Log in' : 'Create Account'}</Text>}
+          style={tw`items-center rounded-lg bg-red-600${disabledButton ? '/50' : ""} py-3`}>
+          {!uploading && <Text style={tw`text-white`} weight='bold'>{loginMode ? 'Log in' : 'Create Account'}</Text>}
           {uploading && <ActivityIndicator />}
         </TouchableOpacity>
         <View style={tw`flex-row items-center justify-between mt-9 mb-4`}>

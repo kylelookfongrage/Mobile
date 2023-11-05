@@ -381,37 +381,104 @@ export interface Database {
           }
         ]
       }
+      feed: {
+        Row: {
+          created_at: string
+          id: number
+          liked: boolean
+          post_id: number
+          subscription_id: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          liked?: boolean
+          post_id: number
+          subscription_id?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          liked?: boolean
+          post_id?: number
+          subscription_id?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feed_post_id_fkey"
+            columns: ["post_id"]
+            referencedRelation: "post"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feed_subscription_id_fkey"
+            columns: ["subscription_id"]
+            referencedRelation: "subscription"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feed_user_id_fkey"
+            columns: ["user_id"]
+            referencedRelation: "user"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       fitness_plan: {
         Row: {
           ai: boolean | null
+          calories: number | null
+          carb_limit: number | null
+          carb_percent: number | null
           created_at: string
           description: string | null
+          fat_limit: number | null
+          fat_percent: number | null
           id: number
           image: string | null
           name: string | null
           originalPlan: number | null
+          protein_limit: number | null
+          protein_percent: number | null
           tags: string[] | null
           user_id: string | null
         }
         Insert: {
           ai?: boolean | null
+          calories?: number | null
+          carb_limit?: number | null
+          carb_percent?: number | null
           created_at?: string
           description?: string | null
+          fat_limit?: number | null
+          fat_percent?: number | null
           id?: number
           image?: string | null
           name?: string | null
           originalPlan?: number | null
+          protein_limit?: number | null
+          protein_percent?: number | null
           tags?: string[] | null
           user_id?: string | null
         }
         Update: {
           ai?: boolean | null
+          calories?: number | null
+          carb_limit?: number | null
+          carb_percent?: number | null
           created_at?: string
           description?: string | null
+          fat_limit?: number | null
+          fat_percent?: number | null
           id?: number
           image?: string | null
           name?: string | null
           originalPlan?: number | null
+          protein_limit?: number | null
+          protein_percent?: number | null
           tags?: string[] | null
           user_id?: string | null
         }
@@ -427,7 +494,7 @@ export interface Database {
       fitness_plan_details: {
         Row: {
           created_at: string
-          day_of_week: string | null
+          day_of_week: number | null
           fitness_plan_id: number | null
           id: number
           meal_id: number | null
@@ -435,7 +502,7 @@ export interface Database {
         }
         Insert: {
           created_at?: string
-          day_of_week?: string | null
+          day_of_week?: number | null
           fitness_plan_id?: number | null
           id?: number
           meal_id?: number | null
@@ -443,7 +510,7 @@ export interface Database {
         }
         Update: {
           created_at?: string
-          day_of_week?: string | null
+          day_of_week?: number | null
           fitness_plan_id?: number | null
           id?: number
           meal_id?: number | null
@@ -613,7 +680,7 @@ export interface Database {
           quantity?: number | null
           serving?: string | null
           servingSizes?: Json
-          user_id?: string
+          user_id: string
           weight?: number | null
         }
         Update: {
@@ -917,6 +984,7 @@ export interface Database {
           draft: boolean | null
           exercise_id: number | null
           id: number
+          likes: number | null
           meal_id: number | null
           media: Json[] | null
           plan_id: number | null
@@ -931,6 +999,7 @@ export interface Database {
           draft?: boolean | null
           exercise_id?: number | null
           id?: number
+          likes?: number | null
           meal_id?: number | null
           media?: Json[] | null
           plan_id?: number | null
@@ -945,6 +1014,7 @@ export interface Database {
           draft?: boolean | null
           exercise_id?: number | null
           id?: number
+          likes?: number | null
           meal_id?: number | null
           media?: Json[] | null
           plan_id?: number | null
@@ -1018,7 +1088,7 @@ export interface Database {
           neck?: number | null
           points?: number | null
           right?: string | null
-          user_id?: string
+          user_id: string
           waist?: number | null
           water?: number | null
           weight?: number | null
@@ -1160,10 +1230,10 @@ export interface Database {
         Row: {
           created_at: string
           description: string | null
-          from: string | null
           id: number
           meal_id: number | null
           plan_id: number | null
+          reviewed_by: string | null
           stars: number | null
           user_id: string | null
           workout_id: number | null
@@ -1171,10 +1241,10 @@ export interface Database {
         Insert: {
           created_at?: string
           description?: string | null
-          from?: string | null
           id?: number
           meal_id?: number | null
           plan_id?: number | null
+          reviewed_by?: string | null
           stars?: number | null
           user_id?: string | null
           workout_id?: number | null
@@ -1182,21 +1252,15 @@ export interface Database {
         Update: {
           created_at?: string
           description?: string | null
-          from?: string | null
           id?: number
           meal_id?: number | null
           plan_id?: number | null
+          reviewed_by?: string | null
           stars?: number | null
           user_id?: string | null
           workout_id?: number | null
         }
         Relationships: [
-          {
-            foreignKeyName: "review_from_fkey"
-            columns: ["from"]
-            referencedRelation: "user"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "review_meal_id_fkey"
             columns: ["meal_id"]
@@ -1207,6 +1271,12 @@ export interface Database {
             foreignKeyName: "review_plan_id_fkey"
             columns: ["plan_id"]
             referencedRelation: "fitness_plan"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            referencedRelation: "user"
             referencedColumns: ["id"]
           },
           {
@@ -1232,6 +1302,7 @@ export interface Database {
           progress_id: string | null
           time: number | null
           type: string | null
+          user_id: string | null
         }
         Insert: {
           coordinates?: Json[] | null
@@ -1241,6 +1312,7 @@ export interface Database {
           progress_id?: string | null
           time?: number | null
           type?: string | null
+          user_id?: string | null
         }
         Update: {
           coordinates?: Json[] | null
@@ -1250,12 +1322,19 @@ export interface Database {
           progress_id?: string | null
           time?: number | null
           type?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
             foreignKeyName: "run_progress_progress_id_fkey"
             columns: ["progress_id"]
             referencedRelation: "progress"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "run_progress_user_id_fkey"
+            columns: ["user_id"]
+            referencedRelation: "user"
             referencedColumns: ["id"]
           }
         ]
@@ -1274,7 +1353,7 @@ export interface Database {
           end_date?: string | null
           id?: number
           start_date?: string | null
-          subscribed_from?: string
+          subscribed_from: string
           user_id: string
         }
         Update: {
@@ -1302,6 +1381,7 @@ export interface Database {
       }
       user: {
         Row: {
+          _user: string | null
           activity: string | null
           allergens: string[] | null
           bio: string | null
@@ -1309,6 +1389,7 @@ export interface Database {
           carbLimit: number | null
           created_at: string
           email: string | null
+          emailVerified: boolean | null
           fatGoal: number | null
           fatLimit: number | null
           gender: string | null
@@ -1337,6 +1418,7 @@ export interface Database {
           workoutMode: string | null
         }
         Insert: {
+          _user?: string | null
           activity?: string | null
           allergens?: string[] | null
           bio?: string | null
@@ -1344,6 +1426,7 @@ export interface Database {
           carbLimit?: number | null
           created_at?: string
           email?: string | null
+          emailVerified?: boolean | null
           fatGoal?: number | null
           fatLimit?: number | null
           gender?: string | null
@@ -1372,6 +1455,7 @@ export interface Database {
           workoutMode?: string | null
         }
         Update: {
+          _user?: string | null
           activity?: string | null
           allergens?: string[] | null
           bio?: string | null
@@ -1379,6 +1463,7 @@ export interface Database {
           carbLimit?: number | null
           created_at?: string
           email?: string | null
+          emailVerified?: boolean | null
           fatGoal?: number | null
           fatLimit?: number | null
           gender?: string | null
@@ -1406,7 +1491,14 @@ export interface Database {
           workoutDays?: number[] | null
           workoutMode?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user__user_fkey"
+            columns: ["_user"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       workout: {
         Row: {
@@ -1549,42 +1641,45 @@ export interface Database {
           created_at: string
           exercise_id: number | null
           id: number
+          metric: boolean | null
           reps: number | null
           rest: number | null
           time: number | null
           user_id: string | null
           weight: number | null
+          workout_detail_id: number | null
           workout_id: number | null
           workout_play_id: number | null
-          workout_detail_id: number | null
         }
         Insert: {
           completed?: boolean | null
           created_at?: string
           exercise_id?: number | null
           id?: number
+          metric?: boolean | null
           reps?: number | null
           rest?: number | null
           time?: number | null
           user_id?: string | null
           weight?: number | null
+          workout_detail_id?: number | null
           workout_id?: number | null
           workout_play_id?: number | null
-          workout_detail_id?: number | null
         }
         Update: {
           completed?: boolean | null
           created_at?: string
           exercise_id?: number | null
           id?: number
+          metric?: boolean | null
           reps?: number | null
           rest?: number | null
           time?: number | null
           user_id?: string | null
           weight?: number | null
+          workout_detail_id?: number | null
           workout_id?: number | null
           workout_play_id?: number | null
-          workout_detail_id?: number | null
         }
         Relationships: [
           {
@@ -1597,6 +1692,12 @@ export interface Database {
             foreignKeyName: "workout_play_details_user_id_fkey"
             columns: ["user_id"]
             referencedRelation: "user"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workout_play_details_workout_detail_id_fkey"
+            columns: ["workout_detail_id"]
+            referencedRelation: "workout_details"
             referencedColumns: ["id"]
           },
           {
@@ -1615,6 +1716,30 @@ export interface Database {
       }
     }
     Views: {
+      _vw_search: {
+        Row: {
+          author: string | null
+          created_at: string | null
+          identifier: number | null
+          image: string | null
+          pfp: string | null
+          price: number | null
+          result: string | null
+          search_by: unknown | null
+          type: string | null
+          user_id: string | null
+          username: string | null
+        }
+        Relationships: []
+      }
+      _vw_subscriptions: {
+        Row: {
+          followers: number | null
+          following: number | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
       vw_search: {
         Row: {
           author: string | null
@@ -1641,6 +1766,29 @@ export interface Database {
       }
     }
     Functions: {
+      fn_feed: {
+        Args: {
+          query_id: string
+        }
+        Returns: {
+          post_id: number
+          description: string
+          media: Json[]
+          workout_id: number
+          exercise_id: number
+          run_id: number
+          meal_id: number
+          plan_id: number
+          user_id: string
+          username: string
+          name: string
+          pfp: string
+          created_at: string
+          likes: number
+          liked: boolean
+          feed_id: number
+        }[]
+      }
       fn_get_subscription_count: {
         Args: {
           query_id: string

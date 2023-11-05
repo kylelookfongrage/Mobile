@@ -10,7 +10,7 @@ import * as Linking from 'expo-linking';
 import { RootStackParamList } from '../types';
 
 const linking: LinkingOptions<RootStackParamList> = {
-  prefixes: [Linking.createURL('/')],
+  prefixes: [Linking.createURL('/'), 'ragepersonalhealth://'],
   config: {
     screens: {
       Root: {
@@ -28,7 +28,11 @@ const linking: LinkingOptions<RootStackParamList> = {
         },
       },
       Modal: 'modal',
-      NotFound: '*',
+      NotFound: '404',
+      Login: '*',
+      UpdateEmail: {
+        path: 'email'
+      }
     },
   },
 };

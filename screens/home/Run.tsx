@@ -1,19 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import * as Location from 'expo-location';
-import { Alert, Dimensions, TouchableOpacity, useColorScheme, View } from 'react-native';
-import { Text } from '../../components/base/Themed';
+import { Alert, Dimensions, TouchableOpacity, useColorScheme } from 'react-native';
+import { Text, View } from '../../components/base/Themed';
 import tw from 'twrnc'
-import { Coordinates, RunProgress } from '../../aws/models';
 import moment from 'moment';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ExpoIcon } from '../../components/base/ExpoIcon';
 import { useNavigation } from '@react-navigation/native';
 import { defaultRunTypes, getTotalDistance, RunType, toHHMMSS } from '../../data';
-import { DataStore } from 'aws-amplify';
 import { useDateContext } from './Calendar';
 import { useCommonAWSIds } from '../../hooks/useCommonContext';
-import { BadgeType, useBadges } from '../../hooks/useBadges';
+import { useBadges } from '../../hooks/useBadges';
+import SaveButton from '../../components/base/SaveButton';
+import { ProgressDao } from '../../types/ProgressDao';
 
 
 
@@ -23,8 +23,8 @@ const Stack = createNativeStackNavigator()
 const RunTracker = (props: { id?: string }) => {
     const { id } = props;
     const { AWSDate } = useDateContext()
-    const { userId, progressId } = useCommonAWSIds()
-    const [coordinates, setCoordinates] = useState<Coordinates[]>([]);
+    const { profile } = useCommonAWSIds()
+    const [coordinates, setCoordinates] = useState<{lat: number, long: number}[]>([]);
     const mapRef = useRef<MapView | null>(null)
     const [currentlocation, setcurrentlocation] = useState<Location.LocationObject | null>(null)
     const [runType, setRunType] = useState<RunType>(defaultRunTypes[0])
@@ -97,18 +97,18 @@ const RunTracker = (props: { id?: string }) => {
 
     useEffect(() => {
         if (id) {
-            DataStore.query(RunProgress, id).then(x => {
-                console.log('setting coords - 3')
-                if (x) {
-                    setTotalTime(x.totalTime || 0)
-                    setOriginalTime(x.totalTime || 0)
-                    setDate(moment(x.date || '2023-01-01').format('LL'))
-                    setRunType(defaultRunTypes.filter(y => y.name === x.runType)[0] || defaultRunTypes[0])
-                    //@ts-ignore
-                    setCoordinates(x.coordinates || [])
-                    setReady(true)
-                }
-            })
+            // DataStore.query(RunProgress, id).then(x => {
+            //     console.log('setting coords - 3')
+            //     if (x) {
+            //         setTotalTime(x.totalTime || 0)
+            //         setOriginalTime(x.totalTime || 0)
+            //         setDate(moment(x.date || '2023-01-01').format('LL'))
+            //         setRunType(defaultRunTypes.filter(y => y.name === x.runType)[0] || defaultRunTypes[0])
+            //         //@ts-ignore
+            //         setCoordinates(x.coordinates || [])
+            //         setReady(true)
+            //     }
+            // })
         } else {
             setReady(true)
         }
@@ -117,22 +117,30 @@ const RunTracker = (props: { id?: string }) => {
 
     const navigator = useNavigation()
     const {logProgress} = useBadges()
+    let dao = ProgressDao(false)
 
     async function onSavePress() {
         setPaused(true)
-        if (id) {
-            const og = await DataStore.query(RunProgress, id)
-            if (og) {
-                await DataStore.save(RunProgress.copyOf(og, x => {
-                    x.totalTime = totalTime;
-                    x.runType = runType.name;
-                    x.coordinates = coordinates;
-                }))
-            }
-        } else {
-            await DataStore.save(new RunProgress({ date: AWSDate, userID: userId, totalTime: totalTime, coordinates: coordinates, runType: runType.name, progressID: progressId }))
-            logProgress(BadgeType.runs)
-        }
+        dao.saveProgress('run_progress', {
+            user_id: profile?.id,
+            time: totalTime,
+            date: AWSDate,
+            coordinates,
+            type: runType.name
+        })
+        // if (id) {
+        //     const og = await DataStore.query(RunProgress, id)
+        //     if (og) {
+        //         await DataStore.save(RunProgress.copyOf(og, x => {
+        //             x.totalTime = totalTime;
+        //             x.runType = runType.name;
+        //             x.coordinates = coordinates;
+        //         }))
+        //     }
+        // } else {
+        //     await DataStore.save(new RunProgress({ date: AWSDate, userID: userId, totalTime: totalTime, coordinates: coordinates, runType: runType.name, progressID: progressId }))
+        //     logProgress(BadgeType.runs)
+        // }
         navigator.navigate('FinishedExercise')
     }
 
@@ -195,13 +203,13 @@ const RunTracker = (props: { id?: string }) => {
 export default RunTracker;
 
 
-function RunDetailsView(props: { coordinates: Coordinates[], date: string; setRunType: (p: any) => void; runType: RunType, onSavePress: () => void; time: number, paused: boolean, setPaused: (p: boolean) => void, onResetPressed: () => void; }) {
+function RunDetailsView(props: { coordinates: {lat: number, long: number}[], date: string; setRunType: (p: any) => void; runType: RunType, onSavePress: () => void; time: number, paused: boolean, setPaused: (p: boolean) => void, onResetPressed: () => void; }) {
     const { coordinates, date, setRunType, runType, time } = props;
     const totalDistanceInMiles = getTotalDistance(coordinates)
     const dm = useColorScheme() === 'dark'
     const navigator = useNavigation()
     const height = Dimensions.get('screen').height
-    return <View style={[{ marginTop: height * 0.30, height: height * 0.70 }, tw`bg-${dm ? 'gray-800' : 'gray-100'} rounded-t-3xl p-6`]}>
+    return <View includeBackground style={[{ marginTop: height * 0.30, height: height * 0.70 }, tw`rounded-t-3xl p-6`]}>
         <View style={tw`justify-between h-12/12 pb-12`}>
             <View>
                 <View style={tw`flex-row justify-between`}>
@@ -217,19 +225,23 @@ function RunDetailsView(props: { coordinates: Coordinates[], date: string; setRu
                     </TouchableOpacity>
                 </View>
                 <View style={tw`flex-row justify-center mt-6`}>
-                    <TouchableOpacity style={[{ width: Dimensions.get('screen').width * 0.15, height: Dimensions.get('screen').width * 0.15 }, tw`items-center justify-center bg-gray-500/50 rounded-lg mx-2`]} onPress={() => props.setPaused(!props.paused)}>
+                    <TouchableOpacity onPress={() => props.setPaused(!props.paused)}>
+                    <View card style={[{ width: Dimensions.get('screen').width * 0.15, height: Dimensions.get('screen').width * 0.15 }, tw`items-center justify-center rounded-lg mx-2`]}>
                         <ExpoIcon name={props.paused ? 'play' : 'pause'} iconName='feather' size={25} color='white' />
+                    </View>
                     </TouchableOpacity>
-                    <TouchableOpacity style={[{ width: Dimensions.get('screen').width * 0.15, height: Dimensions.get('screen').width * 0.15 }, tw`items-center justify-center bg-gray-500/50 rounded-lg mx-2`]} onPress={() => props.onResetPressed()}>
+                    <TouchableOpacity onPress={() => props.onResetPressed()}>
+                    <View card style={[{ width: Dimensions.get('screen').width * 0.15, height: Dimensions.get('screen').width * 0.15 }, tw`items-center justify-center rounded-lg mx-2`]}>
                         <ExpoIcon name={'refresh-ccw'} iconName='feather' size={25} color='white' />
+                    </View>
                     </TouchableOpacity>
                 </View>
                 <View style={tw`flex-row items-center justify-between my-6`}>
-                    <View style={[{ width: Dimensions.get('screen').width * 0.40, height: Dimensions.get('screen').height * 0.15 }, tw`p-3 bg-gray-500/25 rounded-xl items-center`]}>
+                    <View card style={[{ width: Dimensions.get('screen').width * 0.40, height: Dimensions.get('screen').height * 0.15 }, tw`p-3 rounded-xl items-center`]}>
                         <Text style={tw`text-xs`}>Time</Text>
                         <Text style={tw`text-center my-7 text-3xl`} weight='bold'>{toHHMMSS(time)}</Text>
                     </View>
-                    <View style={[{ width: Dimensions.get('screen').width * 0.40, height: Dimensions.get('screen').height * 0.15 }, tw`p-3 bg-gray-500/25 rounded-xl items-center`]}>
+                    <View card style={[{ width: Dimensions.get('screen').width * 0.40, height: Dimensions.get('screen').height * 0.15 }, tw`p-3 rounded-xl items-center`]}>
                         <Text style={tw`text-xs`}>Total Miles</Text>
                         <Text style={tw`text-center my-7 text-3xl`} weight='bold'>{totalDistanceInMiles}{<Text style={tw`text-xs`}>mi.</Text>}</Text>
                     </View>
@@ -238,18 +250,13 @@ function RunDetailsView(props: { coordinates: Coordinates[], date: string; setRu
                 <View style={tw`flex-row items-center justify-around`}>
                     {defaultRunTypes.map(opt => {
                         const selected = opt.name === runType.name
-                        return <TouchableOpacity style={tw`p-3 ${selected ? 'bg-red-500/20' : 'bg-gray-500/20'} rounded-lg`} key={opt.name} onPress={() => setRunType(opt)}>
+                        return <TouchableOpacity style={tw`p-3 ${selected ? 'bg-red-500/80' : 'bg-gray-500/20'} rounded`} key={opt.name} onPress={() => setRunType(opt)}>
                             <Text>{opt.emoji}</Text>
                         </TouchableOpacity>
                     })}
                 </View>
             </View>
-            <TouchableOpacity style={tw`rounded-xl items-center justify-center p-4 mx-12 bg-red-${dm ? '500' : '300'}`} onPress={() => {
-                //@ts-ignore
-                props.onSavePress()
-            }}>
-                <Text style={tw`text-center text-white`} weight='semibold'>Save Run</Text>
-            </TouchableOpacity>
+            <SaveButton safeArea onSave={props.onSavePress} />
         </View>
     </View>
 }

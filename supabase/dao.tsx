@@ -86,7 +86,8 @@ export function useDao<T>(predicate: Predicate | null = null, fetch: boolean=fal
 
     const update = async <T extends keyof Tables, K extends Tables[T]['Update']>(table: T, id: Tables[T]['Update']['id'], document: K): Promise<Tables[T]['Row'] | null> => {
         try {
-            const res = await supabase.from(table).update(document).filter('id', 'eq', id).select()
+            const res = await supabase.from(table).update(document).filter('id', 'eq', id).select('*')
+            console.log(res)
             if (res.error) {
                 throw Error(res.error.message)
             }

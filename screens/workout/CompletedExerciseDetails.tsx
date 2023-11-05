@@ -1,30 +1,22 @@
 import { View, Text } from '../../components/base/Themed'
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { BackButton } from '../../components/base/BackButton'
 import tw from 'twrnc';
-import * as VT from 'expo-video-thumbnails'
-import { Exercise, Workout, WorkoutDetails, WorkoutPlay, WorkoutPlayDetail } from '../../aws/models';
-import { ActivityIndicator, Alert, Dimensions, Image, TouchableOpacity, useColorScheme } from 'react-native';
-import { DataStore, Storage } from 'aws-amplify';
+import { ActivityIndicator, Dimensions, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { ChartMapping, ExerciseDisplay, defaultImage, getFormattedDate, getMatchingNavigationScreen, isStorageUri, toHHMMSS } from '../../data';
-import { FlatList, ScrollView } from 'react-native-gesture-handler';
+import { defaultImage, toHHMMSS } from '../../data';
+import { ScrollView } from 'react-native-gesture-handler';
 import TabSelector from '../../components/base/TabSelector';
-import { useSwipe } from '../../hooks/useSwipe';
 import { ExpoIcon } from '../../components/base/ExpoIcon';
 import Body from 'react-native-body-highlighter'
 import moment from 'moment';
-import { useCommonAWSIds } from '../../hooks/useCommonContext';
 import ScrollViewWithDrag from '../../components/screens/ScrollViewWithDrag';
-import { LineChart } from 'react-native-chart-kit';
-import BackgroundGradient from '../../components/screens/BackgroundGradient';
 import { Tables } from '../../supabase/dao';
 import ExerciseProgress from '../../components/features/ExerciseProgress';
 import SupabaseImage from '../../components/base/SupabaseImage';
 import useAsync from '../../hooks/useAsync';
 import { WorkoutDao } from '../../types/WorkoutDao';
 import Achievement from '../../components/base/Achievement';
-import Spacer from '../../components/base/Spacer';
 import SaveButton from '../../components/base/SaveButton';
 
 export default function CompletedExerciseDetails(props: { workoutPlayId: string; }) {
@@ -67,16 +59,7 @@ export default function CompletedExerciseDetails(props: { workoutPlayId: string;
     const s = Dimensions.get('screen')
     const tabs = ['Summary', 'Workout Details', 'My Progress'] as const
     const [tab, setTab] = useState<typeof tabs[number]>(tabs[0])
-    const changeTab = (forward: boolean = true) => {
-        const currentTab = tabs.findIndex(x => x == tab)
-        if (currentTab === -1) {
-            setTab(tabs[0])
-        } else {
-            let newTab = tabs[currentTab + (forward ? 1 : -1)]
-            if (newTab) setTab(newTab)
-        }
-    }
-    const { onTouchStart, onTouchEnd } = useSwipe(changeTab, () => changeTab(false), 6)
+    
     let bodyPartMapping: { [k: string]: number } = {}
     exercises.forEach((e) => {
         if (!e) return;
@@ -95,13 +78,16 @@ export default function CompletedExerciseDetails(props: { workoutPlayId: string;
     }
     return (
         <View includeBackground style={[{ flex: 1 }]}>
-            <BackButton inplace />
             {(!workout || !workoutPlay || !workoutPlayDetails || (Object.keys(details).length === 0)) && <View style={[tw`flex items-center justify-center`, { flex: 1 }]}>
+            <BackButton inplace />
                 <ActivityIndicator />
                 <Text style={tw`text-gray-500 mt-2`}>Loading...</Text>
             </View>}
-            {(workout && workoutPlay && workoutPlayDetails && (Object.keys(details).length > 0)) && <ScrollViewWithDrag rerenderTopView={[workout.image]} TopView={() => <SupabaseImage resizeMode='cover' style={[tw`w-12/12`, { height: s.height * 0.45 }]} uri={workout.image || defaultImage} />} showsVerticalScrollIndicator={false}>
-                <View onTouchEnd={onTouchEnd} onTouchStart={onTouchStart} style={[tw`pt-20 pb-60 -mt-12`, { zIndex: 1, flex: 1 }]}>
+            {(workout && workoutPlay && workoutPlayDetails && (Object.keys(details).length > 0)) && <ScrollViewWithDrag rerenderTopView={[workout.image]} TopView={() => <View>
+                <BackButton inplace />
+                <SupabaseImage resizeMode='cover' style={[tw`w-12/12`, { height: s.height * 0.45 }]} uri={workout.image || defaultImage} />
+            </View>} showsVerticalScrollIndicator={false}>
+                <View style={[tw`pt-20 pb-60 -mt-12`, { zIndex: 1, flex: 1 }]}>
                     <Text style={tw`text-xl px-6`} weight='semibold'>{workout.name}</Text>
                     <Text style={tw`px-6 text-gray-500 text-xs mt-2`} weight='semibold'>{moment(workoutPlay.created_at).format('LL • LT')}</Text>
                     {/* @ts-ignore */}
@@ -123,7 +109,7 @@ export default function CompletedExerciseDetails(props: { workoutPlayId: string;
                                 </View>
                             </View>
                             {Object.keys(details).map(d => {
-                                let deets = details[d]
+                                let deets = details[d].sort((a,b) => a.id-b.id)
                                 let exerciseId = deets?.[0]?.exercise_id
                                 if (!exerciseId) return <View key={d} />
                                 let exercise = exercises.find(e => (e && e.id === exerciseId))
@@ -142,7 +128,7 @@ export default function CompletedExerciseDetails(props: { workoutPlayId: string;
                                             return <View key={x.id}>
                                                 <View style={tw`flex-row items-center my-1`}>
                                                     <ExpoIcon name={x.completed ? 'check-circle' : 'circle'} size={15} color={x.completed ? 'green' : 'gray'} iconName='feather' />
-                                                    <Text style={tw`ml-2 text-gray-500`}>{toHHMMSS(x.time || 0)} • {x.reps || 0} x {x.weight || 0}lbs</Text>
+                                                    <Text style={tw`ml-2 text-gray-500`}>{toHHMMSS(x.time || 0)} • {x.reps || 0} x {x.weight || 0}{x.metric ? 'kgs' : 'lbs'}</Text>
                                                 </View>
                                                 {/* @ts-ignore */}
                                                 {(isMaxReps || isMaxTime || isMaxWeight) && <Achievement weight='semibold'>

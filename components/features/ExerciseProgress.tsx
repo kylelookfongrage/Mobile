@@ -22,6 +22,7 @@ export default function ExerciseProgress(props: {
     const { profile } = useCommonAWSIds()
     let [chartMapping, setChartMapping] = useState<{ [k: string]: ChartMapping }>({})
     const [chartTitle, setChartTitle] = useState<string>('Weight')
+    const [metric, setMetric] = useState<boolean>(false)
     const [chartSuffix, setChartSuffix] = useState<string>(profile?.metric ? 'kgs' : 'lbs')
     const chartConfig = {
         backgroundGradientFrom: tw`bg-gray-800`.backgroundColor,
@@ -46,7 +47,11 @@ export default function ExerciseProgress(props: {
     const sortedChartLabels = sortedChart.filter((x, i) => i < 8).map(x => getFormattedDate(new Date(x.date)))
     useAsync(async () => {
         let sets = await dao.exercise_progress(props.exerciseId, profile?.id)
-        if (sets) setChartMapping(sets)
+        if (sets) setChartMapping(sets[0])
+        if (sets && sets[1] ===true) {
+            setMetric(true)
+            if (chartSuffix==='lbs') setChartSuffix('kgs')
+        }
     }, [])
     if (chartTitle === '' || sortedChartLabels.length === 0 || sortedChart.length === 0) return <View>
         <Text h3>Progress</Text>
@@ -61,7 +66,7 @@ export default function ExerciseProgress(props: {
                         if (chartTitle === x) return <View key={x} />
                         return <Text onPress={() => {
                             setChartTitle(x)
-                            if (x === 'Weight') setChartSuffix(profile?.metric ? 'kgs' : "lbs")
+                            if (x === 'Weight') setChartSuffix(metric ? 'kgs' : "lbs")
                             if (x === 'Reps') setChartSuffix('')
                             if (x === 'Time' && sortedChart[0]) setChartSuffix('m')
                         }} key={x} style={tw`mx-4 text-red-600`} weight='semibold'>{x}</Text>

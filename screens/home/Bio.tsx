@@ -1,15 +1,13 @@
 import { Text, View } from '../../components/base/Themed'
-import React, { useEffect, useLayoutEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { BackButton } from '../../components/base/BackButton'
 import { Keyboard, Pressable, ScrollView, TextInput, TouchableOpacity, useColorScheme } from 'react-native'
 import tw from 'twrnc'
-import { ActivityIndicator, Avatar } from 'react-native-paper'
+import { Avatar } from 'react-native-paper'
 import { useNavigation } from '@react-navigation/native'
 import { useCommonAWSIds } from '../../hooks/useCommonContext'
-import { DataStore, Storage } from 'aws-amplify'
-import { Goal, Tier, User } from '../../aws/models'
 import * as ImagePicker from 'expo-image-picker'
-import { defaultImage, isStorageUri, uploadImageAndGetID, usernameRegex, validateUsername } from '../../data'
+import { defaultImage, isStorageUri } from '../../data'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ExpoIcon } from '../../components/base/ExpoIcon'
 import { UserQueries } from '../../types/UserDao'
@@ -62,32 +60,10 @@ export default function Bio(props: {registration?: boolean;}) {
                 navigator.pop()
             }
             
-        } else {
-            const error = await validateUsername(newUsername, username)
-            if (error) {
-                setUsernameError(error)
-                setUploading(false)
-                return;
-            }
-            const picture = await uploadProfileImage()
-            const newUser = await DataStore.save(new User({sub: sub, picture, tier: Tier.FREE, accepted_terms: true, username: newUsername, bio: bio, links: [newLink], name: name, weight: 90, fat: 20, goal: Goal.DEFICIT}))
-            setUserId(newUser.id)
-            setUsername(newUsername)
-            navigator.navigate('RegistrationEdit')
-        }
+        } 
     }
 
-    const uploadProfileImage = async (): Promise<string> => {
-        let mediaToUpload = pic
-        if (!pic) {
-            setPic(defaultImage)
-            mediaToUpload = defaultImage
-        }
-        if (!isStorageUri(mediaToUpload) && mediaToUpload !== defaultImage) {
-            mediaToUpload = await uploadImageAndGetID({ type: 'image', uri: pic })
-        }
-        return mediaToUpload;
-    }
+    
     const padding = useSafeAreaInsets()
   return (
     <View includeBackground style={{flex: 1, paddingTop: !registration ? 0 : padding.top }}>

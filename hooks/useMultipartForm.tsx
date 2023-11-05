@@ -37,6 +37,12 @@ export type WorkoutAdditions = {
     tempId?: string
 } & Tables['workout_details']['Insert'];
 
+
+export type PlanAdditions = {
+    name: string;
+    image: string;
+} & Tables['fitness_plan_details']['Insert']
+
 interface formContext {
     data: {
         meals: {
@@ -44,6 +50,9 @@ interface formContext {
         }
         workouts: {
             [k: string] : WorkoutAdditions[]
+        }
+        plans: {
+            [k: string] : PlanAdditions[]
         }
         edited: {
             [k: string] : boolean;
@@ -54,13 +63,14 @@ interface formContext {
 }
 
 
-let MultiPartFormContext = createContext<formContext>({data: {meals: {}, workouts: {}, edited: {}}, upsert: () => {}, remove: () => {}})
+let MultiPartFormContext = createContext<formContext>({data: {meals: {}, workouts: {}, plans: {}, edited: {}}, upsert: () => {}, remove: () => {}})
 
 export const useMultiPartForm = () => useContext<formContext>(MultiPartFormContext);
 
 export const Provider = (props: any) => {
-    let form = useForm<formContext['data']>({meals: {}, workouts: {}, edited: {}})
+    let form = useForm<formContext['data']>({meals: {}, workouts: {}, edited: {}, plans: {}})
     let upsert = <K extends keyof formContext['data'], T extends keyof formContext['data'][K]>(type: K, uuid: string, ingredients: formContext['data'][K][T]) => {
+        console.log('upserting: ' + uuid)
         //@ts-ignore
         form.setForm(type, {...form.state.meals, [uuid] : ingredients})
         let hasProperty = form.state?.edited?.[uuid] !== undefined
@@ -68,12 +78,14 @@ export const Provider = (props: any) => {
     }
     let remove = (type: keyof formContext['data'], uuid: string) => {
         try {
-            let copy = {...form.state}
-            delete copy[type][uuid]
-            if (copy['edited'][uuid]) {
-                delete copy['edited'][uuid]
+            let _copy = {...form.state[type]}
+            delete _copy[uuid]
+            let copy = {...form.state['edited']}
+            if (copy[uuid]) {
+                delete copy[uuid]
             }
-            form.dispatch({type: FormReducer.Set, payload: copy})
+            form.dispatch({type: FormReducer.Field, payload: _copy, field: type})
+            form.dispatch({type: FormReducer.Field, payload: copy, field: 'edited'})
         } catch (error) {
             
         }

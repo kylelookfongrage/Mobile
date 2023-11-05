@@ -20,7 +20,6 @@ import React, { useEffect, useState } from 'react';
 import { DateContext } from './screens/home/Calendar';
 import { CommonContext } from './hooks/useCommonContext';
 import { Provider as MultiPartFormProvider } from './hooks/useMultipartForm';
-import { Amplify } from 'aws-amplify'
 import { registerRootComponent } from 'expo';
 import {Env} from './env'
 import moment, { Moment } from 'moment';
@@ -50,27 +49,27 @@ function App() {
   const [status, setStatus] = React.useState<{fp: boolean; pt: boolean}>({fp: false, pt: false})
   const [workouts, setWorkouts] = React.useState<WorkoutAddition[]>([])
 
-    useEffect(() => {
-        if (!user) return;
-        console.log('Making Subscription for User table with ID: ' + user.id)
-        let subscription = supabase.channel('userDao').on('postgres_changes', {
-          table: 'user', 
-          event: 'UPDATE', 
-          schema: 'public', 
-          filter: `id=eq.${user.id}`}, (x) => {
-            if (x['new']) { //@ts-ignore
-              setProfile(x['new'])
-            }
-        }).subscribe(c => {
-          console.log(c + ': User table with ID: ' + user.id)
-      })
-        return () => {
-          if (subscription) {
-            console.log('UNSUBSCRIBING FOR USER')
-            subscription.unsubscribe()
-          }
-        }
-    }, [user])
+    // useEffect(() => {
+    //     if (!user) return;
+    //     console.log('Making Subscription for User table with ID: ' + user.id)
+    //     let subscription = supabase.channel('userDao').on('postgres_changes', {
+    //       table: 'user', 
+    //       event: 'UPDATE', 
+    //       schema: 'public', 
+    //       filter: `id=eq.${user.id}`}, (x) => {
+    //         if (x['new']) { //@ts-ignore
+    //           setProfile(x['new'])
+    //         }
+    //     }).subscribe(c => {
+    //       console.log(c + ': User table with ID: ' + user.id)
+    //   })
+    //     return () => {
+    //       if (subscription) {
+    //         console.log('UNSUBSCRIBING FOR USER')
+    //         subscription.unsubscribe()
+    //       }
+    //     }
+    // }, [user])
 
   React.useEffect(() => {
     if (!user?.id) return;
@@ -124,7 +123,7 @@ function App() {
         <DateContext.Provider value={{date, setDate, formattedDate, AWSDate}}>
         <ExerciseAdditionsContext.Provider value={{workouts, setWorkouts}}>
         <MultiPartFormProvider>
-        <Navigation colorScheme={colorScheme} />
+        <Navigation colorScheme={colorScheme}  />
             <StatusBar />
         </MultiPartFormProvider>
         </ExerciseAdditionsContext.Provider>
@@ -138,14 +137,10 @@ registerRootComponent(App);
 
 
 import { GenerateMealResult } from './data';
-import { Tier } from './aws/models';
 import Purchases from 'react-native-purchases';
 import { Platform } from 'react-native';
 import { ExerciseAdditionsContext, WorkoutAddition } from './hooks/useExerciseAdditions';
 import { User } from '@supabase/supabase-js';
 import { Tables } from './supabase/dao';
-import { UserQueries } from './types/UserDao';
-import { useAuthListener } from './supabase/auth';
-import { useNavigation } from '@react-navigation/native';
 import { supabase } from './supabase';
 export default App;

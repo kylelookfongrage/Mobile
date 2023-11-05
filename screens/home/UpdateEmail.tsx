@@ -1,5 +1,5 @@
 import { ActivityIndicator, TextInput, StyleSheet, TouchableOpacity, useColorScheme } from 'react-native'
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Text, View } from '../../components/base/Themed'
 import { Auth } from 'aws-amplify'
 import { BackButton } from '../../components/base/BackButton'
@@ -8,78 +8,92 @@ import { ExpoIcon } from '../../components/base/ExpoIcon'
 import { CodeField, Cursor, useBlurOnFulfill, useClearByFocusCell } from 'react-native-confirmation-code-field'
 import { ErrorMessage } from '../../components/base/ErrorMessage'
 import { useNavigation } from '@react-navigation/native'
+import SaveButton from '../../components/base/SaveButton'
+import { supabase } from '../../supabase'
+import { makeRedirectUri } from "expo-auth-session";
+import * as QueryParams from "expo-auth-session/build/QueryParams";
+import * as Linking from "expo-linking";
+import { useCommonAWSIds } from '../../hooks/useCommonContext'
+import Spacer from '../../components/base/Spacer'
+import { UserQueries } from '../../types/UserDao'
+
+
+const redirectTo = makeRedirectUri({scheme: 'ragepersonalhealth'}) + 'email';
+console.log(redirectTo)
+
+const createSessionFromUrl = async (url: string, cb?: () => void | undefined=undefined) => {
+  const { params, errorCode } = QueryParams.getQueryParams(url);
+
+  if (errorCode) throw new Error(errorCode);
+  const { access_token, refresh_token } = params;
+
+  if (!access_token) return;
+
+  const { data, error } = await supabase.auth.setSession({
+    access_token,
+    refresh_token,
+  });
+  if (error) throw error;
+  if (cb) {
+    cb()
+  }
+  return data.session;
+};
 
 export default function UpdateEmail() {
   const dm = useColorScheme() === 'dark'
   const [newEmail, setNewEmail] = React.useState<string>('')
   const navigator = useNavigation()
-  
-  const [showVerificationCode, setShowVerificaionCode] = React.useState<boolean>(false)
+  let {user, profile, setProfile} = useCommonAWSIds()
+  console.log(profile?.email)
   const [uploading, setUploading] = React.useState<boolean>(false)
+  const [oldEmail, setOldEmail] = useState<string>('')
   const [errors, setErrors] = React.useState<string[]>([])
+  const [message, setMessage] = useState<string>('')
+  const url = Linking.useURL();
+  const [session, setSession] = useState(null)
+  let dao = UserQueries()
+
+  useEffect(() => {
+    if (!url || session) return;
+    createSessionFromUrl(url, () => {
+      if (!profile) return;
+      dao.update_profile({email: newEmail}, profile).then(() => {
+        setProfile({...profile, email: newEmail})
+        setUploading(false)
+        alert('Your email has been changed!')
+        navigator.pop()
+      })
+    }).then(x => setSession(x)).then()
+  }, [url])
+
   async function onPressConfirm() {
+    setMessage('')
+    if (oldEmail !== profile?.email?.toLowerCase()) {
+      setErrors(['Your current email is not correct'])
+      return;
+    }
     if (newEmail.length === 0 || !newEmail.includes('@')) {
       setErrors(['Your must input an email'])
       return;
     }
+    if (newEmail.toLowerCase() === profile?.email?.toLowerCase()) {
+      setErrors(['You already have this username in place'])
+      return;
+    }
+    try {
+      await supabase.auth.updateUser({email: newEmail}, {emailRedirectTo: redirectTo})
+      setMessage('We have sent an email to your new email address, please confirm to solidify the change.')
+      // navigator.pop()
+    } catch (error) {
+      setErrors([error.toString()])
+    }
     setErrors([])
     setUploading(true)
-    if (!showVerificationCode) {
-      try{
-        const user = await Auth.currentAuthenticatedUser({bypassCache: true});
-        await Auth.updateUserAttributes(user, {
-          email: newEmail
-        })
-        setShowVerificaionCode(true)
-        setUploading(false)
-        return;
-      }catch (e) {
-        //@ts-ignore
-        setErrors([e.message || 'There was a problem'])
-        setUploading(false)
-        return;
-      }
-    } else {
-      try{
-        await Auth.verifyCurrentUserAttributeSubmit('email', validateCode)
-        alert('Your email has been validated!')
-        setUploading(false)
-        //@ts-ignore
-        navigator.pop()
-      }catch (e) {
-        setUploading(false)
-        //@ts-ignore
-        setErrors([e.message || 'There was a problem, please check your validation code and internet connection'])
-      }
-  
-    }
+   
   }
 
-  const [validateCode, setValidateCode] = React.useState<string>('')
-  const ref = useBlurOnFulfill({ value: validateCode, cellCount: 6 });
-  const [props, getCellOnLayoutHandler] = useClearByFocusCell({
-    value: validateCode, setValue: setValidateCode
-  });
-
-  const styles = StyleSheet.create({
-    root: { flex: 1, padding: 20 },
-    title: { textAlign: 'center', fontSize: 30 },
-    codeFieldRoot: { marginTop: 20 },
-    cell: {
-      width: 50,
-      height: 50,
-      lineHeight: 38,
-      borderRadius: 10,
-      fontSize: 24,
-      borderWidth: 2,
-      borderColor: dm ? '#880808' : '#F88379',
-      color: 'gray',
-      textAlign: 'center',
-    },
-    focusCell: {
-      borderColor: dm ? '#ffffff' : '#000',
-    },
-  });
+  
 
   return (
     <View style={{flex: 1}} includeBackground>
@@ -89,41 +103,22 @@ export default function UpdateEmail() {
             <ErrorMessage errors={errors} onDismissTap={() => setErrors([])} />
           </View>}
         <Text style={tw`text-lg`} weight='bold'>Update Email Address</Text>
-        <Text style={tw`pr-9 mb-9`}>Please note that if you update your email, you will have to verify a code to fully update your email address.</Text>
-        {!showVerificationCode && <View>
-          <Text>New Email</Text>
-          <View style={tw`w-12/12 mt-2 flex-row items-center py-3 px-4 justify-between bg-gray-${dm ? '700' : '300'} rounded-lg`}>
-            <TextInput editable={!showVerificationCode} value={newEmail} onChangeText={setNewEmail} placeholder='email' keyboardType='email-address' style={tw`w-11/12 text-${dm ? 'white' : 'black'}`} />
+        <Spacer />
+        <Text style={tw`text-center text-gray-500`} weight='semibold'>{message}</Text>
+        <Spacer />
+        <Text>Old Email</Text>
+          <View card style={tw`w-12/12 mt-2 flex-row items-center py-3 px-4 justify-between rounded-lg`}>
+            <TextInput value={oldEmail} onChangeText={setOldEmail} placeholder='email' keyboardType='email-address' style={tw`w-11/12 text-${dm ? 'white' : 'black'}`} />
             <ExpoIcon name='at-sign' iconName='feather' color={dm ? 'white' : 'gray'} size={25} />
           </View>
-        </View>}
-        {showVerificationCode && <View>
-          <Text>Confirm Code sent to {newEmail}</Text>
-          <CodeField
-            ref={ref}
-            {...props}
-            // Use `caretHidden={false}` when users can't paste a text value, because context menu doesn't appear
-            cellCount={6}
-            value={validateCode}
-            onChangeText={setValidateCode}
-            rootStyle={styles.codeFieldRoot}
-            keyboardType="number-pad"
-            textContentType="oneTimeCode"
-            renderCell={({ index, symbol, isFocused }) => (
-              <Text
-                key={index}
-                style={[styles.cell, isFocused && styles.focusCell, index <= validateCode.length - 1 && tw`text-${dm ? 'white' : 'black'}`]}
-                onLayout={getCellOnLayoutHandler(index)}>
-                {symbol || (isFocused ? <Cursor /> : null)}
-              </Text>
-            )}
-          />
-        </View>}
-        <TouchableOpacity disabled={uploading} onPress={onPressConfirm} style={tw`mt-9 items-center justify-center bg-red-${dm ? '700' : '500'} p-3 rounded-lg`}>
-          {uploading && <ActivityIndicator />}
-          {!uploading && <Text>{showVerificationCode ? 'Confirm Code' : 'Change Email'}</Text>}
-        </TouchableOpacity>
+        <Spacer />
+        <Text>New Email</Text>
+          <View card style={tw`w-12/12 mt-2 flex-row items-center py-3 px-4 justify-between rounded-lg`}>
+            <TextInput value={newEmail} onChangeText={setNewEmail} placeholder='email' keyboardType='email-address' style={tw`w-11/12 text-${dm ? 'white' : 'black'}`} />
+            <ExpoIcon name='at-sign' iconName='feather' color={dm ? 'white' : 'gray'} size={25} />
+          </View>
       </View>
+      <SaveButton safeArea uploading={uploading} onSave={onPressConfirm} title='Change Email' />
     </View>
   )
 }

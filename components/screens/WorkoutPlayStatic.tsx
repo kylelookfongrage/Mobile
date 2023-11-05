@@ -1,9 +1,8 @@
-import { useColorScheme, Image, Dimensions, ScrollView, TouchableOpacity, ActivityIndicator, TextInput } from 'react-native'
+import { useColorScheme, Dimensions, ScrollView, TouchableOpacity, ActivityIndicator, TextInput } from 'react-native'
 import React, { useRef } from 'react'
 import tw from 'twrnc'
 import { View, Text } from '../base/Themed'
 import { defaultImage, isStorageUri, toHHMMSS } from '../../data'
-import { ImagePickerView } from '../inputs/ImagePickerView'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { ExpoIcon } from '../base/ExpoIcon'
 import AnimatedLottieView from 'lottie-react-native'
@@ -58,8 +57,9 @@ export default function WorkoutPlayStatic(props: WorkoutPlayDisplayProps) {
                         <Text style={tw``}>{(currentExercise?.description?.length || 0) > 100 ? (shouldShowMore ? currentExercise.description : (currentExercise.description || '').substring(0, 100)) : currentExercise.description}
                             <Text style={tw`ml-4 text-gray-500`} weight='semibold' onPress={() => setShouldShowMore(!shouldShowMore)}>  {((currentExercise.description || '').length > 100) ? (shouldShowMore ? 'Hide' : 'Show More') : ''}</Text>
                         </Text>
+                        <Spacer />
                         {selectedWorkoutDetail.note && <Text>Note: {selectedWorkoutDetail.note}</Text>}
-
+                        
                         <View card style={tw`items-center w-12/12 items-center justify-center mt-3 mb-6 p-3 pb-6 rounded-xl`}>
                             <Text style={tw`text-4xl my-4`} weight='regular'>{toHHMMSS(totalTime)}</Text>
                             <View style={tw`flex flex-row items-center justify-center`}>
@@ -105,7 +105,7 @@ export default function WorkoutPlayStatic(props: WorkoutPlayDisplayProps) {
                                                 <Text style={tw`mt-2`} weight='semibold'>Reps</Text>
                                             </View>
                                             <View style={tw`items-center`}>
-                                                <TextInput keyboardType='number-pad' placeholder='lbs' style={tw`py-4 px-12 rounded-xl text-${dm ? 'white' : 'black'} bg-gray-${dm ? '800/60' : '300'}`} value={set.weight?.toString() || ''} onChangeText={(v) => {
+                                                <TextInput keyboardType='number-pad' placeholder={set.metric ? 'kgs' : 'lbs'} style={tw`py-4 px-12 rounded-xl text-${dm ? 'white' : 'black'} bg-gray-${dm ? '800/60' : '300'}`} value={set.weight?.toString() || ''} onChangeText={(v) => {
                                                     const newValue = v.replace(/[^0-9]/g, '')
                                                     setSelectedWorkoutPlayDetail({ ...set, weight: Number(newValue) || null })
 

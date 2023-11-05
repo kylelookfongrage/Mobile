@@ -7,7 +7,6 @@ import { ExpoIcon } from '../../components/base/ExpoIcon';
 import tw from 'twrnc'
 import useColorScheme from '../../hooks/useColorScheme';
 import { isStorageUri } from '../../data';
-import { Storage } from 'aws-amplify';
 import { useStorage } from '../../supabase/storage';
 
 export default function ImageDetailView(props: {uris: string[]; defaultIndex: number | undefined}) {

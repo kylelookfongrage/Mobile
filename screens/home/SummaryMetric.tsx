@@ -1,39 +1,29 @@
 import { View, Text } from '../../components/base/Themed'
 import React, { useState } from 'react'
 import { useNavigation } from '@react-navigation/native'
-import { useProgressValues } from '../../hooks/useProgressValues'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ScrollView, TouchableOpacity, useColorScheme } from 'react-native'
 import tw from 'twrnc'
 import { Ruler } from '../../components/inputs/Ruler'
-import { DataStore } from 'aws-amplify'
-import { Progress, User } from '../../aws/models'
 import { useCommonAWSIds } from '../../hooks/useCommonContext'
-import { BadgeType, useBadges } from '../../hooks/useBadges'
+import { useBadges } from '../../hooks/useBadges'
+import { ProgressDao } from '../../types/ProgressDao'
 
 export default function SummaryMetric(props: {weight?: boolean}) {
   const navigator = useNavigation()
-  const {weight, fat} = useProgressValues({metrics: true}) 
-  const {userId, progressId} = useCommonAWSIds() 
+  let dao = ProgressDao(false)
+  const {profile, progressId} = useCommonAWSIds() 
   const [newValue, setNewValue] = useState<number>(0)
   const {logProgress} = useBadges()
   const padding = useSafeAreaInsets()
   const dm = useColorScheme() === 'dark'
-  return <View style={[tw`bg-gray-${dm ? '800' : '200'}/95 px-6`, {paddingTop: padding.top, flex: 1}]}>
+  let min = props.weight ? 70 : 3
+  return <View card style={[tw`px-6`, {paddingTop: padding.top, flex: 1}]}>
     <ScrollView>
     <Text style={tw`text-xl mb-12 mt-12`} weight='bold'>{props.weight ? 'Body Weight' : 'Body Fat'}</Text>
-    <Ruler initial={props.weight ? weight : fat} unit={props.weight ? 'lbs' : '%'} onChange={setNewValue} min={props.weight ? 70 : 3} max={props.weight ? 300 : 60} />
-    {newValue !== (props.weight ? weight : fat) && <TouchableOpacity onPress={async () => {
-        const user = await DataStore.query(User, userId)
-        const progress = await DataStore.query(Progress, progressId)
-        if (!user || !progress){
-            alert('There was a problem, please check your connection')
-            return;
-        }
-        await DataStore.save(Progress.copyOf(progress, x => {
-            (props.weight ?  x.weight=newValue : x.fat=newValue)
-        }))
-        // await logProgress(props.weight ? user.weight - )
+    <Ruler initial={props.weight ? (dao.today?.weight || profile?.weight || min) : (dao.today?.fat || profile?.startFat || min)} unit={props.weight ? 'lbs' : '%'} onChange={setNewValue} min={min} max={props.weight ? 300 : 60} />
+    {newValue !== (props.weight ? (dao.today?.weight) : (dao.today?.fat)) && <TouchableOpacity onPress={async () => {
+        await dao.updateProgress(props.weight ? 'weight' : 'fat', newValue)
         //@ts-ignore
         navigator.pop()
     }} style={tw`bg-${dm ? 'red-600' : "red-500"} mr-2 px-5 mx-20 mt-12 h-12 justify-center items-center rounded-full`}>

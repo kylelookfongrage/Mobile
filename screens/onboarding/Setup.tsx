@@ -18,6 +18,7 @@ import { useCommonAWSIds } from '../../hooks/useCommonContext';
 import { DataStore } from 'aws-amplify';
 import { useNavigation } from '@react-navigation/native';
 import { UserQueries } from '../../types/UserDao';
+import Colors from '../../constants/Colors';
 
 
 
@@ -55,8 +56,8 @@ export default function Setup(props: { registration?: boolean; }) {
     const [weightGoal, setWeightGoal] = useState<number | null>(null)
     const [goalByDate, setGoalByDate] = useState<Date | null>(null);
     const [newUsername, setNewUsername] = useState<string | null>(null)
-    const [height, setHeight] = useState<number>(60)
-    const dao = UserQueries()
+    const [height, setHeight] = useState<number>(30)
+    const dao = UserQueries(false)
     let weightPrefix = metric ? 'kg' : 'lb'
     let measurementPrefix = metric ? 'cm' : 'in'
     const registrationQuestions: SetupQuestion[] = [
@@ -113,6 +114,7 @@ export default function Setup(props: { registration?: boolean; }) {
     const listRef = useRef<FlatList | null>(null);
     const [shouldCalculateFat, setShouldCalculateFat] = useState<boolean>(false);
     const { userId, username, setUserId, setUsername, sub, user, profile, setProfile } = useCommonAWSIds()
+    let c = dm ? Colors.dark : Colors.light
 
     useEffect(() => {
         try {
@@ -163,15 +165,12 @@ export default function Setup(props: { registration?: boolean; }) {
             setProfile(res)
             setLoading(false)
             navigator.navigate('OnboardingComplete')
-        } else if (!props.registration!!) {
-            const existingUser = await DataStore.query(User, userId)
-            if (existingUser && weight && fat && profile) {
-                let res = await dao.update(profile?.id, document)
-                setLoading(false)
-                if (res) setProfile(res)
-                //@ts-ignore
-                navigator.navigate('OnboardingComplete')
-            }
+        } else if (!props.registration!! && profile?.id) {
+            let new_doc = {...document} //@ts-ignore
+            delete new_doc['name']
+            delete new_doc['username']
+             await dao.update(profile.id, new_doc) //@ts-ignore
+            navigator.pop()
         }
         setLoading(false)
     }
@@ -201,7 +200,7 @@ export default function Setup(props: { registration?: boolean; }) {
                         <Text style={tw`text-gray-500 text-center mx-9 mt-3 mb-6`}>{q.description}</Text>
                         {errorMessage && <Text style={tw`-mt-3 text-center text-xs text-red-500 px-6 mb-3`}>{errorMessage}</Text>}
                         {q.type === 'input' && <View style={tw`items-center justify-center`}>
-                            <View style={tw`flex-row items-center px-6 rounded-3xl bg-gray-${dm ? '800' : '300'}`}>
+                            <View card style={tw`flex-row items-center px-6 rounded-3xl`}>
                                 {q.textIcon && <ExpoIcon name={q.textIcon} iconName='ion' size={25} color='gray' />}
                                 <TextInput style={tw`h-20 text-lg pl-5 pb-6 pt-3 font-semibold rounded-3xl text-${dm ? 'white' : 'black'} w-8/12`} value={q.value} onChangeText={q.setValue} placeholderTextColor={'gray'} placeholder={q.name} />
 
@@ -210,19 +209,21 @@ export default function Setup(props: { registration?: boolean; }) {
                         {(q.type === 'select' && (q.options || [])?.length > 0) && <View style={tw`px-6`}>
                             {q.options?.map((x) => {
                                 const selected = x.value === q.value
-                                let color = `bg-gray-${dm ? '800' : '300'}`
+                                let color = ``
                                 if (selected) {
                                     color = `bg-red-${dm ? '600/80' : '500'}`
                                 }
                                 return <TouchableOpacity onPress={() => {
                                     q.setValue(x.value)
-                                }} key={`Question ${index}, option ${x.name}`} style={tw`px-6 ${x.description ? 'py-4' : 'py-6'} my-2 flex-row items-center ${color} rounded-2xl`}>
+                                }} key={`Question ${index}, option ${x.name}`}>
+                                    <View card={!selected} style={tw`px-6 ${x.description ? 'py-4' : 'py-6'} my-2 flex-row items-center ${color} rounded-2xl`}>
                                     {x.icon && <View style={tw`mr-4`}>
                                         <ExpoIcon name={x.icon} iconName='ion' size={25} color={selected ? 'white' : "gray"} />
                                     </View>}
                                     <View>
                                         <Text style={tw`${selected ? 'text-white' : ''}`} weight='semibold'>{x.name}</Text>
                                         {x.description && <Text style={tw`text-${selected ? 'white' : 'gray-500'} text-xs`}>{x.description}</Text>}
+                                    </View>
                                     </View>
                                 </TouchableOpacity>
                             })}
@@ -274,9 +275,28 @@ export default function Setup(props: { registration?: boolean; }) {
                             </View>}
                             {!shouldCalculateFat && <View style={tw`mt-6`}>
                                 {(isHeight && !metric) && <View style={tw`-mb-9`}>
-                                    <Text style={tw`text-center text-3xl`} weight='bold'>{inchesToFeet(height)}</Text>
+                                    <Text style={tw`text-center text-3xl`} weight='bold'>{inchesToFeet(height, q.min)}</Text>
                                     </View>}
-                                <RulerPicker height={s.height * 0.25} indicatorHeight={100} fractionDigits={0} indicatorColor='red' valueTextStyle={(isHeight && !metric) ? {fontSize: 0, color: 'transparent'} : tw`text-${dm ? 'white' : 'black'}`} shortStepColor='darkgray' unitTextStyle={(isHeight && !metric) ? {fontSize: 0, color: 'transparent'} : tw`text-gray-500 text-xl`} unit={q.unit} min={(q.min || 0)} decelerationRate={'fast'} max={q.max || 0} onValueChangeEnd={x => q.setValue(Number(x))} />
+                                <RulerPicker 
+                                    height={s.height * 0.25} 
+                                    indicatorHeight={100} 
+                                    fractionDigits={0} 
+                                    indicatorColor='red' 
+                                    valueTextStyle={(isHeight && !metric) ? 
+                                        {fontSize: 0, color: 'transparent'} : 
+                                        tw`text-${dm ? 'white' : 'black'}`
+                                    } 
+                                    shortStepColor='darkgray' 
+                                    unitTextStyle={(isHeight && !metric) ? 
+                                        {fontSize: 0, color: 'transparent'} :
+                                        tw`text-gray-500 text-xl`
+                                    } 
+                                    unit={q.unit} 
+                                    min={(q.min || 0)} 
+                                    decelerationRate={'fast'}
+                                    max={q.max || 0} 
+                                    onValueChange={isHeight ? x => q.setValue(Number(x)) : undefined}
+                                    onValueChangeEnd={isHeight ? undefined : x => q.setValue(Number(x))} />
                             </View>}
                         </View>}
                     </View>

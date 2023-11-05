@@ -2,18 +2,14 @@ import { useColorScheme, Image, Dimensions, ScrollView, TouchableOpacity, Activi
 import React, { useEffect, useRef, useState } from 'react'
 import tw from 'twrnc'
 import { View, Text } from '../base/Themed'
-import { defaultImage, ExerciseDisplay, isStorageUri, toHHMMSS, WorkoutPlayDisplayProps } from '../../data'
-import { ImagePickerView } from '../inputs/ImagePickerView'
+import { defaultImage, isStorageUri, toHHMMSS, WorkoutPlayDisplayProps } from '../../data'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ExpoIcon } from '../base/ExpoIcon'
 import AnimatedLottieView from 'lottie-react-native'
 import { useNavigation } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { MediaType } from '../../types/Media'
-import { DataStore, Storage } from 'aws-amplify'
 import { ResizeMode, Video } from 'expo-av'
-import * as VideoThumbnails from 'expo-video-thumbnails';
-import { Equiptment, Exercise, Workout, WorkoutDetails, WorkoutPlayDetail } from '../../aws/models'
 import Body from 'react-native-body-highlighter'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 import { Tables } from '../../supabase/dao'
@@ -31,8 +27,6 @@ export default function WorkoutPlayMusic(props: WorkoutPlayDisplayProps) {
     const {
         currentExercise,
         exercises,
-        shouldShowMore,
-        setShouldShowMore,
         selectedWorkoutDetail,
         setSelectedWorkoutDetail,
         paused,
@@ -40,7 +34,6 @@ export default function WorkoutPlayMusic(props: WorkoutPlayDisplayProps) {
         totalTime,
         onResetPress,
         workoutPlayDetails,
-        onNewSetPress,
         onFinishPress,
         selectedWorkoutPlayDetail,
         setSelectedWorkoutPlayDetail,
@@ -48,7 +41,7 @@ export default function WorkoutPlayMusic(props: WorkoutPlayDisplayProps) {
         workoutDetails,
         forwardBackwardPress
     } = props;
-    const navigator = useNavigation();
+    console.log(props.workoutPlayDetails)
     if (!selectedWorkoutPlayDetail) {
         return <View includeBackground style={{ flex: 1 }}>
             <SafeAreaView>
@@ -69,7 +62,7 @@ export default function WorkoutPlayMusic(props: WorkoutPlayDisplayProps) {
                 setSelectedWorkoutPlayDetail={setSelectedWorkoutPlayDetail}
                 resting={
                     selectedWorkoutPlayDetail.completed ? (
-                        (selectedWorkoutPlayDetail.rest || 0) < (selectedWorkoutDetail.rest || 0)
+                        (selectedWorkoutPlayDetail.rest || 0) < (selectedWorkoutDetail.rest || 0) && !paused
                     ) : false
                 }
                 restTime={selectedWorkoutPlayDetail.rest || 0}
@@ -201,7 +194,6 @@ function MediaForWorkout(props: { media: MediaType[], paused: boolean; setPaused
             <ActivityIndicator />
         </SafeAreaView>
     </View>;
-
     return (
         <View includeBackground style={{ flex: 1 }}>
             <Pressable style={{ flex: 1 }} onPress={() => {
@@ -316,7 +308,7 @@ function MediaForWorkout(props: { media: MediaType[], paused: boolean; setPaused
                                     <Text style={tw`mt-2`} weight='semibold'>Reps</Text>
                                 </View>
                                 <View style={tw`items-center`}>
-                                    <TextInput keyboardType='number-pad' placeholder='lbs' style={tw`py-5 px-9 rounded-xl text-${dm ? 'white' : 'black'} bg-gray-${dm ? '800/20' : '300/20'}`} value={props.selectedWorkoutPlayDetail.weight?.toString() || ''} onChangeText={(v) => {
+                                    <TextInput keyboardType='number-pad' placeholder={props?.selectedWorkoutPlayDetail?.metric ? 'kgs' : 'lbs'} style={tw`py-5 px-9 rounded-xl text-${dm ? 'white' : 'black'} bg-gray-${dm ? '800/20' : '300/20'}`} value={props.selectedWorkoutPlayDetail.weight?.toString() || ''} onChangeText={(v) => {
                                         const newValue = v.replace(/[^0-9]/g, '')
                                         props.setSelectedWorkoutPlayDetail({ ...props.selectedWorkoutPlayDetail, weight: Number(newValue) || null })
 

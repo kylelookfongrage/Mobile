@@ -1,23 +1,14 @@
-import { ScrollView, Image, TextInput, TouchableOpacity } from 'react-native'
 import React from 'react'
 import { Text, View } from '../../components/base/Themed'
 import tw from 'twrnc'
-import { ExpoIcon } from '../../components/base/ExpoIcon'
-import useColorScheme from '../../hooks/useColorScheme'
-import { useDebounce } from '../../hooks/useDebounce'
 import { useNavigation } from '@react-navigation/native'
-import { BackButton } from '../../components/base/BackButton'
-import { defaultImage, getMatchingNavigationScreen, isStorageUri } from '../../data'
-import { DataStore, Storage } from 'aws-amplify'
-import { Exercise, User, Workout } from '../../aws/models'
+import { getMatchingNavigationScreen } from '../../data'
 import { useCommonAWSIds } from '../../hooks/useCommonContext'
-import { WorkoutDetails } from '../../aws/models'
-import { useExerciseAdditions } from '../../hooks/useExerciseAdditions'
-import { ErrorMessage } from '../../components/base/ErrorMessage'
 import { SearchDao } from '../../types/SearchDao'
 import SearchScreen from '../../components/screens/SearchScreen'
 import SearchResult from '../../components/base/SearchResult'
 import { Tables } from '../../supabase/dao'
+import { supabase } from '../../supabase'
 
 export interface ListWorkoutSearchResultsType {
   name: string;
@@ -34,27 +25,34 @@ export interface ListWorkoutSearchResultsType {
 interface ListWorkoutProps {
   exerciseId?: string;
   userId?: string;
+  fromExerciseId?: number;
+  planId?: string;
+  dow?: number
 }
 export default function ListWorkout(props: ListWorkoutProps) {
-  const { exerciseId } = props;
   const { profile } = useCommonAWSIds()
   const navigator = useNavigation()
   let dao = SearchDao()
   const searchOptions = ['All Workouts', 'My Workouts', 'Favorites']
   const fetchWorkouts = async (keyword: string, option: string) => {
-    let res = await dao.search('workout', {
-      keyword, keywordColumn: 'name', selectString: `
-        *, author: user_id(username)`,
-      belongsTo: option === 'My Workouts' ? profile?.id : props.userId,
-      favorited: option === 'Favorites', user_id: profile?.id
-    })
-    return res;
+    if (!props.fromExerciseId) {
+      let res = await dao.search('workout', {
+        keyword, keywordColumn: 'name', selectString: `
+          *, author: user_id(username)`,
+        belongsTo: option === 'My Workouts' ? profile?.id : props.userId,
+        favorited: option === 'Favorites', user_id: profile?.id
+      })
+      return res;
+    } else {
+      let res = await supabase.from('workout').select('*, author:user_id(username), workout_details!inner(*)').filter('workout_details.exercise_id', 'eq', props.fromExerciseId)
+      return res.data
+    }
   }
-  return <SearchScreen name='Workouts' onSearch={fetchWorkouts} searchOptions={searchOptions} excludeOptions={[props.userId ? "My Workouts" : 'null']} table='workout' Item={p => {
+  return <SearchScreen name='Workouts' onSearch={fetchWorkouts} searchOptions={searchOptions} excludeOptions={props.fromExerciseId ? searchOptions : [props.userId ? "My Workouts" : 'null']} table='workout' Item={p => {
     return <WorkoutSearchResult item={p.item} idx={p.index} onPress={(id) => {
       let screen = getMatchingNavigationScreen('WorkoutDetail', navigator)
       if (!screen) return; //@ts-ignore
-      navigator.navigate(screen, { id })
+      navigator.navigate(screen, { id, dow: props.dow, planId: props.planId })
     }} />
   }} />
 }

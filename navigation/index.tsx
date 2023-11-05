@@ -54,9 +54,7 @@ import Bio from '../screens/home/Bio';
 import ShowMore from '../screens/home/ShowMore';
 import Profile from '../screens/home/Profile';
 import Report from '../screens/home/Report';
-import SummaryEdit from '../screens/home/SummaryEdit';
 import SummaryMetric from '../screens/home/SummaryMetric';
-import Quiz from '../screens/onboarding/Quiz';
 import SelectSprite from '../screens/workout/SelectSprite';
 import MakePost from '../screens/workout/MakePost';
 import Inbox from '../screens/workout/Inbox';
@@ -103,7 +101,6 @@ function RootNavigator() {
       <Stack.Screen name="Subscription" component={Subscription} options={{ headerShown: false }} />
       <Stack.Screen name="Help" component={Help} options={{ headerShown: false }} />
       <Stack.Screen name="About" component={About} options={{ headerShown: false }} />
-      <Stack.Screen name="Quiz" component={Quiz} options={{ headerShown: false }} />
       <Stack.Screen name="OnboardingComplete" component={OnboardingComplete} options={{ headerShown: false }} />
       <Stack.Screen name="Setup" component={Setup} options={{ headerShown: false }} />
       <Stack.Screen name="NewChat" component={NewChat} options={{ headerShown: false, presentation: 'transparentModal', gestureEnabled: true, gestureDirection: 'vertical', fullScreenGestureEnabled: true }} />
@@ -129,10 +126,6 @@ function RootNavigator() {
           name={props.route?.params?.name} type={props.route?.params?.type} id={props.route?.params?.id}
           // @ts-ignore
           desc={props.route?.params?.desc} img={props.route?.params?.img} userId={props.route?.params?.userId} />}
-      </Stack.Screen>
-      <Stack.Screen name={'SummaryEdit'} options={{ headerShown: false }}>
-        {/* @ts-ignore */}
-        {props => <SummaryEdit {...props} progressId={props.route?.params?.progressId} />}
       </Stack.Screen>
       <Stack.Screen name={'RegistrationEdit'} options={{ headerShown: false }}>
         {/* @ts-ignore */}
@@ -272,7 +265,7 @@ function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   };
   const insets = useSafeAreaInsets()
   return (
-    <View includeBackground style={[{ flexDirection: 'row', paddingBottom: insets.bottom }, tw`pt-3 items-center justify-between w-12/12`]}>
+    <View includeBackground style={[{ flexDirection: 'row', paddingBottom: insets.bottom}, tw`pt-3 items-center justify-between w-12/12`]}>
       {state.routes.map((route, index) => {
         // @ts-ignore
         const { icon, color, label } = (iconsAndColors[route.name]) || { icon: 'home', color: 'red-500', label: 'Home' }
@@ -321,7 +314,7 @@ function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
               color='gray'
                />}
               {isFocused && <View style={tw`items-center`}>
-                <Text weight='bold' style={tw`text-center text-${isFocused ? color : 'gray-700'}`}>
+                <Text weight='semibold' style={tw`text-center text-${isFocused ? color : 'gray-700'}`}>
                   {/* @ts-ignore */}
                   {label}
                 </Text>

@@ -1,4 +1,4 @@
-import { ScrollView, TouchableOpacity, Dimensions, Image, RefreshControl } from 'react-native'
+import { ScrollView, TouchableOpacity, RefreshControl } from 'react-native'
 import React, { useState } from 'react'
 import { Text, View } from '../../components/base/Themed'
 import tw from 'twrnc'
@@ -7,12 +7,10 @@ import { ExpoIcon } from '../../components/base/ExpoIcon';
 import { useNavigation } from '@react-navigation/native';
 import { MediaType } from '../../types/Media';
 import * as WebBrowser from 'expo-web-browser'
-import { DataStore, Storage } from 'aws-amplify';
-import { Exercise, FavoriteType, Follower, Goal, Meal, User, Workout } from '../../aws/models';
 import { useCommonAWSIds } from '../../hooks/useCommonContext';
-import { defaultImage, formatCash, getMatchingNavigationScreen, isStorageUri, substringForLists } from '../../data';
+import { defaultImage, formatCash, getMatchingNavigationScreen, substringForLists } from '../../data';
 import { BackButton } from '../../components/base/BackButton';
-import { ShowMoreButton, ShowMoreDialogue } from './ShowMore';
+import { ShowMoreDialogue } from './ShowMore';
 import { UserQueries } from '../../types/UserDao';
 import SupabaseImage from '../../components/base/SupabaseImage';
 import { Tables } from '../../supabase/dao';
@@ -29,16 +27,13 @@ interface ProfileProps {
 }
 
 const quickLinks: {name: string, icon: string, screen: string}[] = [
-    {name: 'Groceries', icon: 'shopping-cart', screen: 'GroceryList'},
-    {name: 'Pantry', icon: 'shopping-bag', screen: 'Pantry'},
-    {name: 'Favorites', icon: 'heart', screen: 'Favorites'},
-    {name: 'Allergies', icon: 'alert-circle', screen: 'Allergens'}
+    {name: 'My Pantry', icon: 'shopping-bag', screen: 'Pantry'},
+    {name: 'My Gym', icon: 'shopping-bag', screen: 'Pantry'},
+    {name: 'My Allergies', icon: 'alert-circle', screen: 'Allergens'},
+    // {name: 'Favorites', icon: 'heart', screen: 'Favorites'},
 
 ]
 
-interface ProfileExercise extends Exercise {
-    img: string;
-}
 export default function Profile(props: ProfileProps) {
     const { id } = props
     const { userId, username, profile } = useCommonAWSIds()
@@ -46,6 +41,7 @@ export default function Profile(props: ProfileProps) {
     const [img, setImg] = useState<string | null>(null)
     const [workouts, setWorkouts] = React.useState<Tables['workout']['Row'][]>([])
     const [exercises, setExercises] = React.useState<Tables['exercise']['Row'][]>([])
+    const [food, setFood] = React.useState<Tables['food']['Row'][]>([])
     const [meals, setMeals] = React.useState<Tables['meal']['Row'][]>([])
     const [bio, setBio] = React.useState<string | null | undefined>('')
     const [profileLink, setProfileLink] = React.useState<string>('')
@@ -79,10 +75,11 @@ export default function Profile(props: ProfileProps) {
                 let f = await dao.isFollowing(profile.id, user.id)
                 if (f) setIsFollowing(true)
             }
-            let children = await dao.fetch_user_children(user.id, ['food'])
+            let children = await dao.fetch_user_children(user.id, [])
             setWorkouts(children.workout)
             setMeals(children.meal)
             setExercises(children.exercise)
+            setFood(children.food)
         }
         setRefreshing(false)
     }
@@ -174,19 +171,6 @@ export default function Profile(props: ProfileProps) {
                 }}>
                     <Text style={tw`text-center my-3 text-gray-500`} weight='bold'>Edit Account Info</Text>
                     </TouchableOpacity>
-                <Text style={tw`text-xl`} weight='bold'>Quick Links</Text>
-                <View style={tw`flex-row items-center justify-around px-3 py-4`}>
-                   {quickLinks.map(link => {
-                    return <TouchableOpacity onPress={() => {
-                        const screen = getMatchingNavigationScreen(link.screen, navigator)
-                        //@ts-ignore
-                        navigator.navigate(screen)
-                    }} key={link.name} style={tw`justify-center items-center`}> 
-                    <ExpoIcon name={link.icon} iconName='feather' size={18} color='gray' />
-                    <Text style={tw`text-gray-500 mt-2 text-xs`}>{link.name}</Text>
-                </TouchableOpacity>
-                   })}
-                </View>
             </View>}
             <Spacer lg/>
             <ManageButton title='Meals' buttonText='See All' onPress={() => {
@@ -255,6 +239,30 @@ export default function Profile(props: ProfileProps) {
                         style={[tw`items-start px-1`]}>
                         <SupabaseImage uri={exercise.preview || defaultImage} style={tw`h-20 w-20 rounded-lg`} resizeMode='cover' />
                         <Text style={tw`text-xs max-w-20`} weight='semibold'>{substringForLists(exercise.name || '')}</Text>
+                        {/* <Text>{r.calories} kcal</Text> */}
+                    </TouchableOpacity>
+                })}
+                </ScrollView>
+                <Spacer />
+            <ManageButton title='Food' buttonText='See All' onPress={() => {
+                const screen = getMatchingNavigationScreen('ListFood', navigator)
+                //@ts-ignore
+                navigator.navigate(screen, {userId: props.id || userId})
+            }} />
+            <Spacer />
+            {food.length === 0 && <Text style={tw`text-center my-5`}>No food to display</Text>}
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {food.map((f, i) => {
+                    return <TouchableOpacity
+                        key={`workout ${f.name} at index ${i}`}
+                        onPress={() => {
+                            const screen = getMatchingNavigationScreen('FoodDetail', navigator)
+                            //@ts-ignore
+                            navigator.navigate(screen, { id: f.id, src: 'backend' })
+                        }}
+                        style={[tw`items-start px-1`]}>
+                        <SupabaseImage uri={f.image || defaultImage} style={tw`h-20 w-20 rounded-lg`} resizeMode='cover' />
+                        <Text style={tw`text-xs max-w-20`} weight='semibold'>{substringForLists(f.name || '')}</Text>
                         {/* <Text>{r.calories} kcal</Text> */}
                     </TouchableOpacity>
                 })}

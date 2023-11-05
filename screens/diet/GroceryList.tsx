@@ -2,9 +2,7 @@ import { ScrollView, Image, useColorScheme, ActivityIndicator, Alert } from 'rea
 import React from 'react'
 import { Text, View } from '../../components/base/Themed'
 import { BackButton } from '../../components/base/BackButton'
-import { Ingredient, PantryItem } from '../../aws/models'
 import { useCommonAWSIds } from '../../hooks/useCommonContext'
-import { DataStore, Storage } from 'aws-amplify'
 import { defaultImage, getMatchingNavigationScreen, isStorageUri } from '../../data'
 import tw from 'twrnc'
 import { ExpoIcon } from '../../components/base/ExpoIcon'
@@ -14,15 +12,12 @@ import { Swipeable, TouchableOpacity } from 'react-native-gesture-handler'
 
 export default function GroceryList() {
     const { userId } = useCommonAWSIds()
-    const [items, setItems] = React.useState<PantryItem[]>([])
+    const [items, setItems] = React.useState<any[]>([])
     const navigator = useNavigation()
     const dm = useColorScheme() === 'dark'
     const [uploading, setUploading] = React.useState<boolean>(false)
     React.useEffect(() => {
-        const subscription = DataStore.observeQuery(PantryItem, x => x.and(pi => [pi.userID.eq(userId), pi.purchased.ne(true)])).subscribe(ss =>{
-            setItems(ss.items)
-        })
-        return () => subscription.unsubscribe()
+        
     }, [])
 
     async function onCheckoutPress(){
@@ -30,11 +25,7 @@ export default function GroceryList() {
         for (var item of items) {
             console.log(item)
             if (item.inCart) {
-                const og = await DataStore.query(PantryItem, item.id)
-                if (!og) return;
-                await DataStore.save(PantryItem.copyOf(og, x => {
-                    x.purchased=true;
-                }))
+                
             }
         }
         setUploading(false)
@@ -69,19 +60,19 @@ export default function GroceryList() {
                 {items.map((item, idx) => {
                     return <PantryItemView key={item.id} item={item} 
                     onDeletePress={async (id) => {
-                        await DataStore.delete(PantryItem, id)
+                        // await DataStore.delete(PantryItem, id)
                     }}
                     onItemPress={(id) => {
                         const screen = getMatchingNavigationScreen('FoodDetail', navigator)
                         //@ts-ignore
                         navigator.navigate(screen, {id, editable: false, src: 'backend', grocery: true})
                     }} onCheckPress={async (id) => {
-                        const og = await DataStore.query(PantryItem, id)
-                        if (og) {
-                            await DataStore.save(PantryItem.copyOf(og, x => {
-                                x.inCart = x.inCart ? false : true;
-                            }))
-                        }
+                        // const og = await DataStore.query(PantryItem, id)
+                        // if (og) {
+                        //     await DataStore.save(PantryItem.copyOf(og, x => {
+                        //         x.inCart = x.inCart ? false : true;
+                        //     }))
+                        // }
                     }} />
                 })}
                 <View style={tw`h-40`} />
@@ -114,20 +105,20 @@ export default function GroceryList() {
 }
 
 
-export function PantryItemView(props: {item: PantryItem, onItemPress?: (id: string) => void, onCheckPress?: (id: string) => void, onDeletePress?: (id: string) => void}) {
+export function PantryItemView(props: {item: any, onItemPress?: (id: string) => void, onCheckPress?: (id: string) => void, onDeletePress?: (id: string) => void}) {
     const { item } = props;
     const {ingredientID, inCart} = item
     const completed = inCart
-    const [ingredient, setIngredient] = React.useState<Ingredient | undefined>(undefined)
+    const [ingredient, setIngredient] = React.useState<any | undefined>(undefined)
     const dm = useColorScheme() === 'dark'
     React.useEffect(() => {
-        DataStore.query(Ingredient, ingredientID).then(async x => {
-            if (x) {
-                if (isStorageUri(x.img || defaultImage)) {
-                    setIngredient({ ...x, img: await Storage.get(x.img || defaultImage) })
-                } else setIngredient(x)
-            }
-        })
+        // DataStore.query(Ingredient, ingredientID).then(async x => {
+        //     if (x) {
+        //         if (isStorageUri(x.img || defaultImage)) {
+        //             setIngredient({ ...x, img: await Storage.get(x.img || defaultImage) })
+        //         } else setIngredient(x)
+        //     }
+        // })
     }, [props.item])
     if (!ingredient) return null;
     return <Swipeable renderRightActions={(progress, dragX) => {

@@ -1,22 +1,14 @@
-import { ScrollView, TextInput, TouchableOpacity, useColorScheme, Image } from 'react-native'
+import { useColorScheme } from 'react-native'
 import React from 'react'
 import { Text, View } from '../../components/base/Themed'
-import { useDebounce } from '../../hooks/useDebounce'
-import { ExpoIcon } from '../../components/base/ExpoIcon';
 import tw from 'twrnc'
 import { useNavigation } from '@react-navigation/native';
-import { Ingredient, Meal, PantryItem, User } from '../../aws/models';
-import { DataStore, Storage } from 'aws-amplify';
 import { useCommonAWSIds } from '../../hooks/useCommonContext';
-import { MediaType } from '../../types/Media';
-import { defaultImage, getMatchingNavigationScreen, isStorageUri } from '../../data';
-import { BackButton } from '../../components/base/BackButton';
-import AllergenAlert from '../../components/features/AllergenAlert';
+import { getMatchingNavigationScreen } from '../../data';
 import { SearchDao } from '../../types/SearchDao';
 import { Tables } from '../../supabase/dao';
 import SearchScreen from '../../components/screens/SearchScreen';
 import SearchResult from '../../components/base/SearchResult';
-import Spacer from '../../components/base/Spacer';
 
 export interface ListMealSearchResults {
     name: string;
@@ -36,6 +28,8 @@ interface ListMealsProps {
     progressId?: string;
     grocery?: string;
     userId?: string;
+    planId?: string;
+    dow?: number
 }
 
 export default function ListMeals(props: ListMealsProps) {
@@ -90,7 +84,7 @@ export default function ListMeals(props: ListMealsProps) {
         return <MealSearchResult item={p.item} idx={p.index} onPress={(id) => {
             const screen = getMatchingNavigationScreen('MealDetail', navigator)
             //@ts-ignore
-            navigator.navigate(screen, { id: id, grocery: props.grocery })
+            navigator.navigate(screen, { id: id, grocery: props.grocery, dow: props.dow, planId: props.planId })
         }} />
     }}>
 

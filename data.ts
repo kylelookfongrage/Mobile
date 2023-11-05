@@ -306,13 +306,11 @@ export const OpenFoodFactsBarcodeSearch = async (barcode: string) => {
 
 
 
-import { DataStore, Storage } from 'aws-amplify';
+import { Storage } from 'aws-amplify';
 //@ts-ignore
 import { v4 as uuidv4 } from 'uuid';
-import { Coordinates, Exercise, LazyWorkoutDetails, LazyWorkoutPlayDetail, Meal, User, Workout, WorkoutDetails, WorkoutPlayDetail } from './aws/models';
+import { Coordinates } from './aws/models';
 import { Env } from './env';
-//@ts-ignore
-import { Ingredient } from './src/models';
 
 export const uploadImageAndGetID = async (imageSource: MediaType): Promise<string> => {
     if (isStorageUri(imageSource.uri)) {
@@ -602,32 +600,21 @@ export const animationMapping = [
 
 
 export enum postMediaType {
-    none, media, meal, workout, exercise, run
+    none, media, meal='meal', workout='workout', exercise='exercise', run='run'
 }
 
 
 export interface PostMediaSearchDisplay {
-    id: string;
+    id: any;
     name?: string;
     img?: string;
     author?: string;
     coordinates?: string;
-    totalTime?: number;
+    time?: number;
 }
 
 
 
-export const getUsernameAndMedia = async (result: Meal | Workout | Exercise): Promise<PostMediaSearchDisplay> => {
-    let user = await DataStore.query(User, result.userID)
-    let username = user?.username || 'rage'
-    //@ts-ignore
-    let img = (result.preview || result.img || defaultImage);
-    if (isStorageUri(img)) {
-        img = await Storage.get(img)
-    }
-    //@ts-ignore
-    return { id: result.id, author: username, name: result.name || result.title || 'rage', img }
-}
 
 export interface ChartMapping { date: string; reps: number; weight: number; secs: number; metric?: boolean; };
 
@@ -725,23 +712,10 @@ export function calculateBodyFat(sex: 'male' | 'female', unit: 'USC' | 'Metric',
 
 
 export const usernameRegex = /^(?=[a-zA-Z0-9._]{4,20}$)(?!.*[_.]{2})[^_.].*[^_.]$/
-export const validateUsername = async (newUsername: string, currentUsername: string | null): Promise<string | null> => {
-    if (newUsername === '' || !newUsername) return 'You must input a username'
-    if (!newUsername.match(usernameRegex)) {
-        return 'Your username must be between 4 and 20 characters without special characters. Underscores and periods are allowed once'
-    }
-    if (currentUsername === newUsername) return null;
-    const potentialMatches = await DataStore.query(User, u => u.username.eq(newUsername))
-    if (potentialMatches.length > 0) {
-        return 'This username is already taken'
-    }
-    return null
-}
 
 
-
-export const inchesToFeet = (inches: number): string => {
-    console.log(inches)
+export const inchesToFeet = (_inches: number, min=-1000): string => {
+    let inches = _inches < min ? min : _inches
     const remainderInches = Math.round(inches % 12)
     const totalFeet = Math.round((inches - remainderInches) / 12)
     return `${totalFeet} ft ${remainderInches} in`

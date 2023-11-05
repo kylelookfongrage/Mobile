@@ -1,74 +1,50 @@
-import { ActivityIndicator, Alert, TouchableOpacity, useColorScheme } from 'react-native'
-import React from 'react'
+import { Alert, useColorScheme } from 'react-native'
+import React, { useState } from 'react'
 import { Text, View } from '../../components/base/Themed'
 import { BackButton } from '../../components/base/BackButton'
 import tw from 'twrnc'
 import { ErrorMessage } from '../../components/base/ErrorMessage'
-import { Auth, DataStore, Predicates } from 'aws-amplify'
-import { 
-  Follower, FoodProgress, Ingredient, Meal, MealProgress, Progress, 
-  WorkoutDetails, ExerciseEquiptmentDetail, Exercise, 
-  WorkoutPlayDetail, WorkoutPlay, Application, Favorite, User, RunProgress, Workout, LazyWorkoutPlay, LazyWorkoutPlayDetail, Equiptment 
-} from '../../aws/models'
 import { useCommonAWSIds } from '../../hooks/useCommonContext'
+import { supabase } from '../../supabase'
+import SaveButton from '../../components/base/SaveButton'
+import { Checkbox } from 'react-native-paper'
+import Spacer from '../../components/base/Spacer'
 
 export default function DeleteAccount() {
-  const {userId, setUserId} = useCommonAWSIds()
+  const { setUserId, setUsername, setUser, setProfile, setSub, setSubscribed, setHasSubscribedBefore, setStatus, setSignedInWithEmail, profile } = useCommonAWSIds()
   const dm = useColorScheme() === 'dark'
   const [errors, setErrors] = React.useState<string[]>([])
   const [uploading, setUploading] = React.useState<boolean>(false)
+  const [confirmed, setConfirmed] = useState<boolean>(false)
 
-  async function onPressConfirm(){
+  async function onPressConfirm() {
     setUploading(true)
-    try{
-      await DataStore.delete(FoodProgress, f => f.userID.eq(userId))
-      await DataStore.delete(MealProgress, mp => mp.userID.eq(userId))
-      await DataStore.delete(Follower, f => f.or(x => [x.subscribedFrom.eq(userId), f.userID.eq(userId)]))
-      await DataStore.delete(Ingredient, i => i.userID.eq(userId))
-
-      const meals = await DataStore.delete(Meal, m => m.userID.eq(userId))
-      await DataStore.delete(WorkoutPlayDetail, m => m.userID.eq(userId))
-      await DataStore.delete(WorkoutPlay, wo => wo.userID.eq(userId))
-      await DataStore.delete(WorkoutDetails, wo => wo.userID.eq(userId))
-      await DataStore.delete(ExerciseEquiptmentDetail, e => e.userID.eq(userId))
-      await DataStore.delete(Exercise, e => e.userID.eq(userId))
-      const workouts = await DataStore.delete(Workout, wo => wo.userID.eq(userId))
-      await DataStore.delete(RunProgress, r => r.userID.eq(userId))
-      await DataStore.delete(Progress, p => p.userID.eq(userId))
-      await DataStore.delete(Application, x => x.userID.eq(userId))
-      await DataStore.delete(Favorite, f => f.userID.eq(userId))
-      await DataStore.delete(User, userId)
-
-      // delete all associated data for the meals, workouts, exercises for that user
-      for (var meal of meals) {
-        await DataStore.delete(MealProgress, mp => mp.mealID.eq(meal.id))
-      }
-
-      let wPlaysToDelete: LazyWorkoutPlayDetail[] = [] 
-      for (var workout of workouts) {
-        const deletedWPDetail = await DataStore.delete(WorkoutPlayDetail, wo => wo.workoutID.eq(workout.id))
-        wPlaysToDelete = [...wPlaysToDelete, ...deletedWPDetail]
-      }
-      
-      for (var workoutPlay of wPlaysToDelete) {
-        await DataStore.delete(WorkoutPlay, x => x.id.eq(workoutPlay.workoutplayID))
-      }
-      
-      
-      await Auth.deleteUser()
-      alert('Your account has officially been deleted')
-      await Auth.signOut()
+    if (!profile) return;
+    console.log(profile)
+    try {
+      let {data, error} = await supabase.from('user').delete().filter('id', 'eq', profile.id)
+      console.log(error)
+      await supabase.auth.signOut()
+      setUserId('');
+      setUsername('')
+      setUser(null)
+      setProfile(null)
+      setSub('')
+      setSubscribed(false)
+      setHasSubscribedBefore(false)
+      setStatus({ pt: false, fp: false })
+      setSignedInWithEmail(false)
       //@ts-ignore
       setUserId(null)
       setUploading(false)
-    }catch (e) {
+    } catch (e) {
       setUploading(false)
       //@ts-ignore
       setErrors([e.message || 'There was a problem deleting your account, please check your connection.'])
     }
   }
   return (
-    <View style={{flex: 1}} includeBackground>
+    <View style={{ flex: 1 }} includeBackground>
       <BackButton />
       <View style={tw`px-4`}>
         {errors.length > 0 && <View style={tw`mb-4`}>
@@ -77,29 +53,34 @@ export default function DeleteAccount() {
         <Text style={tw`text-lg mt-9`} weight='bold'>Delete Account</Text>
         <Text style={tw`pb-2`}>
           Please note that if you delete your account{
-            <Text style={tw`text-red-500`} weight='bold'> ALL </Text>} 
-            of your 
-            {<Text style={tw`text-red-500`} weight='semibold'> progress, followers, meals, ingredients, exercises, equiptment, workouts and likes </Text>}
-            will be deleted.
-          </Text>
-          <Text style={tw`pb-9`}> If you are a personal trainer or food professional, 
-            {<Text style={tw`text-red-500`} weight='semibold'> all of your content will be deleted, and all content associated with your account from other users. However, we will make an account of monies owed as of today and will still pay out this amount. </Text>}
-            Please only delete your account if you are 100% sure!</Text>
-          <TouchableOpacity disabled={uploading} onPress={() => {
-            Alert.alert('Are you sure you want to delete your account?', 'This may take some time.', [
-            { text: 'Cancel', onPress: () => { } },
-            {
-              text: 'Delete', onPress: () => {
-                  // save workout
-                  onPressConfirm()
-              }
-          },
-            ])
-          }} style={tw`mt-9 items-center justify-center bg-red-${dm ? '700' : '500'} p-3 rounded-lg`}>
-          {uploading && <ActivityIndicator />}
-          {!uploading && <Text>Delete Account</Text>}
-        </TouchableOpacity>
+            <Text style={tw`text-red-500`} weight='bold'> ALL </Text>}
+          of your
+          {<Text style={tw`text-red-500`} weight='semibold'> progress, followers, meals, ingredients, exercises, equiptment, workouts and likes </Text>}
+          will be deleted.
+        </Text>
+        <Text> If you are a personal trainer or food professional,
+          {<Text style={tw`text-red-500`} weight='semibold'> all of your content will be deleted, and all content associated with your account from other users. All unpaid payments will be deleted.</Text>}
+          Please only delete your account if you are 100% sure!</Text>
+          <Spacer />
+
+        <View key={'accept-terms'} style={tw`flex-row items-center`}>
+          <Checkbox.Android status={confirmed ? 'checked' : 'unchecked'} color='red' uncheckedColor='gray' onPress={() => {
+            setConfirmed(!confirmed)
+          }} />
+          <Text style={tw`max-w-10/12 text-gray-500 text-xs`}>I understand that I am deleting my account</Text>
+        </View>
       </View>
+      <SaveButton disabled={!confirmed} uploading={uploading} safeArea title='Delete Account' onSave={() => {
+        Alert.alert('Are you sure you want to delete your account?', 'This may take some time.', [
+          { text: 'Cancel', onPress: () => { } },
+          {
+            text: 'Delete', onPress: () => {
+              // save workout
+              onPressConfirm()
+            }
+          },
+        ])
+      }} />
     </View>
   )
 }

@@ -1,22 +1,17 @@
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 import { View } from '../../components/base/Themed'
-import { RunProgress } from '../../aws/models'
-import { useCommonAWSIds } from '../../hooks/useCommonContext'
-import { DataStore } from 'aws-amplify'
 import { BackButton } from '../../components/base/BackButton'
 import RunListComponent from '../../components/features/RunListComponent'
 import { ScrollView } from 'react-native-gesture-handler'
 import tw from 'twrnc'
 import { useNavigation } from '@react-navigation/native'
+import { Tables } from '../../supabase/dao'
+import { ProgressDao } from '../../types/ProgressDao'
 
 
 export default function ListRuns() {
-    const [runs, setRuns] = useState<RunProgress[]>([])
-    const {progressId} = useCommonAWSIds()
-
-    useEffect(() => {
-        DataStore.query(RunProgress, rp => rp.progressID.eq(progressId), {limit: 10, sort: x => x.createdAt('DESCENDING')}).then(setRuns)
-    }, [])
+    let x = ProgressDao()
+    let runs = x.runProgress
     const navigator = useNavigation()
   return (
     <View style={{flex: 1}} includeBackground>
@@ -24,9 +19,9 @@ export default function ListRuns() {
       <ScrollView style={tw`px-4 pt-6`} showsVerticalScrollIndicator={false}>
       {runs.map(x => {
         return <View style={tw`my-3`} key={x.id}>
-            <RunListComponent run={x} onPress={() => {
+            <RunListComponent canScroll run={x} onPress={() => {
                 //@ts-ignore
-                navigator.navigate('Run', {id: x.id})
+                // navigator.navigate('Run', {id: x.id})
             }} />
         </View>
       })}

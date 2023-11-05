@@ -5,12 +5,10 @@ import { BackButton } from '../../components/base/BackButton'
 import tw from 'twrnc'
 import { ErrorMessage } from '../../components/base/ErrorMessage'
 import { completePrompt } from '../../constants/OpenAI'
-import { Ingredient, Meal } from '../../aws/models'
 import { ExpoIcon } from '../../components/base/ExpoIcon'
-import { defaultImage, exampleResult, GenerateIngredientResult, getIngredientsAndSteps, getMatchingNavigationScreen } from '../../data'
+import {  GenerateIngredientResult, getIngredientsAndSteps, getMatchingNavigationScreen } from '../../data'
 import { useCommonAWSIds } from '../../hooks/useCommonContext'
 import { useNavigation } from '@react-navigation/native'
-import { DataStore } from 'aws-amplify'
 import { Expand } from '../../components/base/Expand'
 import AnimatedLottieView from 'lottie-react-native'
 import cooking from '../../assets/animations/cooking.json'
@@ -55,24 +53,10 @@ export default function GenerateMeal() {
             setErrors(['Your meal must have a name'])
             return;
         }
-        const m = await DataStore.save(new Meal({
-            steps: steps,
-            userID: userId,
-            name: name,
-            isAiGenerated: true,
-            description: prompt,
-            //@ts-ignore
-            media: [{type: 'image', uri: defaultImage}]
-        }))
+       
 
         for (var ingr of ingredients) {
-            if (!ingr.ingredient) return;
-            const original = await DataStore.query(Ingredient, ingr.ingredient)
-            if (original) {
-                await DataStore.save(Ingredient.copyOf(original, x => {
-                    x.mealID = m.id
-                }))
-            }
+            
         }
         //map all 
         setAiResult(null)

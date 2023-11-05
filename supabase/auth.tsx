@@ -114,27 +114,13 @@ export function useSignOut(){
 
 
 export function useEmailSignIn(){
-  const login = async (email: string, password: string) => {
-      try {
-          const res = await supabase.auth.signInWithPassword({email, password})
-          if (res.error) throw Error(res.error.message)
-      } catch (e: any) {
-          console.log(e)
-      }
-  }
-  const register = async (email: string, password: string, confirmPassword: string) => {
-      await supabase.auth.signUp({email, password})
-  }
-  // const forgotPassword = async (email: string) => {
-  //     await supabase.auth.resetPasswordForEmail()
-  // }
-  return {login, register}
+  return {login: supabase.auth.signInWithPassword, register: supabase.auth.signUp}
 }
 
 
 
 export function useAuthListener(callback: (event: AuthChangeEvent, user: User) => void){
-  useEffect(() => {
+  return useEffect(() => {
     let sub = supabase.auth.onAuthStateChange((e, s) => {
       if (s?.user) {
         callback(e, s.user)

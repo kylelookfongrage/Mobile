@@ -1,3 +1,4 @@
+import { isStorageUri } from "../data";
 import { WorkoutAdditions } from "../hooks/useMultipartForm";
 import { supabase } from "../supabase";
 import { Tables, useDao } from "../supabase/dao";
@@ -41,7 +42,7 @@ export function WorkoutDao(){
     const save = async (workout: Tables['workout']['Insert']): Promise<Tables['workout']['Insert'] | null> => {
         let copiedDocument = {...workout}
         if (workout.image) {
-            let attemptedUpload = await storage.upload({type: 'image', uri: workout.image})
+            let attemptedUpload = await storage.upload({type: 'image', uri: workout.image, supabaseID: isStorageUri(workout.image) ? workout.image : undefined})
             copiedDocument['image'] = attemptedUpload?.uri || workout['image']
         }
         let res = workout.id ? await dao.update('workout', workout.id, copiedDocument) : await dao.save('workout', copiedDocument)
@@ -68,7 +69,7 @@ export function WorkoutDao(){
     const find_workout_play = async (id: Tables['workout_play']['Row']['id']): Promise<[Tables['workout_play']['Row'] | null, Tables['workout_play_details']['Row'][] | null]> => {
         let res = await supabase.from('workout_play').select('*').filter('id', 'eq', id).maybeSingle()
         let workoutPlay = res.data || null
-        let r2 = await supabase.from('workout_play_details').select('*').filter('workout_play_id', 'eq', id)
+        let r2 = await supabase.from('workout_play_details').select('*').filter('workout_play_id', 'eq', id).order('id', {ascending: true})
         let details = (r2?.data) || null
         return [workoutPlay, details]
     }

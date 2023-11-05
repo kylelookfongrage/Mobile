@@ -1,42 +1,51 @@
-import { ScrollView, Dimensions, TouchableOpacity, Platform } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { Dimensions, Platform } from 'react-native'
 import { Text, View } from '../../components/base/Themed'
-import React, { useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import * as SplashScreen from 'expo-splash-screen';
-import { Amplify, Auth, DataStore } from 'aws-amplify';
-import { Tier, User } from '../../aws/models';
 import { useCommonAWSIds } from '../../hooks/useCommonContext';
 import tw from 'twrnc'
 import { AdsConsent, AdsConsentStatus } from 'react-native-google-mobile-ads';
-import {getTrackingPermissionsAsync, requestTrackingPermissionsAsync} from 'expo-tracking-transparency'
-import { getAWSConfig } from '../../constants/getAWSConfig';
-
-
-//@ts-ignore
-
-
-
+import { getTrackingPermissionsAsync, requestTrackingPermissionsAsync } from 'expo-tracking-transparency'
 
 SplashScreen.preventAutoHideAsync();
 
 export default function GetStarted() {
   const [isReady, setIsReady] = React.useState<boolean>(false)
-  const { setSub, setUserId, setUsername, setUser, setProfile, setStatus, setSignedInWithEmail } = useCommonAWSIds()
-  const dao = UserQueries() 
-  useAuthListener((e, u) => {
-    if (!u) return;
-    setSignedInWithEmail(['apple', 'google'].includes(u?.app_metadata?.provider || ''))
-    dao.fetchProfile(u.id).then(x => {
-      if (x?.id) {
-        setUserId(x.id)
-        setProfile(x)
-      } else {
-        navigator.navigate('Registration')
+  const { setSub, setUserId, setUsername, setUser, setProfile, setStatus, setSignedInWithEmail, setSubscribed, setHasSubscribedBefore, profile, userId } = useCommonAWSIds()
+  const dao = UserQueries(false)  
+  const [f, setF] = useState<boolean>(false)
+
+  useOnLeaveScreen(() => setF(true))
+
+  useEffect(() => {
+    if (f) return;
+    let sub = supabase.auth.onAuthStateChange((e, s) => {
+      if(f)return;
+      if (s?.user) {
+        let u = s.user
+        if (!u) return;
+        if (profile || userId) return;
+        setSignedInWithEmail(u?.app_metadata?.provider === 'email')
+        console.log('Fetching profile from auth listener in getting started')
+        dao.fetchProfile(u.id).then(x => {
+          if (x?.id) {
+            setUserId(x.id)
+            setProfile(x)
+            setF(true)
+          } else {
+            setF(true)
+            navigator.navigate('Registration')
+          }
+        })
+        setSub(u.id)
+        setUser(u)
       }
     })
-    setSub(u.id)
-    setUser(u)
-  })
+    return () => {
+      sub.data?.subscription?.unsubscribe()
+    }
+  }, [])
+
   const width = Dimensions.get('screen').width
   const navigator = useNavigation()
   const x = useSharedValue(0)
@@ -46,23 +55,23 @@ export default function GetStarted() {
       x.value = event.contentOffset.x
     }
   })
-  
+
 
 
   React.useCallback(async () => {
+    if (Platform.OS === 'ios') {
+      const { granted } = await getTrackingPermissionsAsync();
+      console.log(granted === true)
+      if (!granted) {
+        await requestTrackingPermissionsAsync()
+      }
+    }
+    const consentInfo = await AdsConsent.requestInfoUpdate();
+    if (consentInfo.isConsentFormAvailable && consentInfo.status === AdsConsentStatus.REQUIRED) {
+      const { status } = await AdsConsent.showForm();
+      console.log(consentInfo)
+    }
     await SplashScreen.hideAsync();
-      if (Platform.OS === 'ios') {
-        const { granted } = await getTrackingPermissionsAsync();
-        console.log(granted === true)
-        if (!granted) {
-          await requestTrackingPermissionsAsync()
-        }
-      }
-      const consentInfo = await AdsConsent.requestInfoUpdate();
-      if (consentInfo.isConsentFormAvailable && consentInfo.status === AdsConsentStatus.REQUIRED) {
-        const { status } = await AdsConsent.showForm();
-        console.log(consentInfo)
-      }
   }, [])
 
   return (
@@ -81,7 +90,7 @@ export default function GetStarted() {
         renderItem={({ item, index }) => {
           const screen = item
           const i = index
-          return <View style={[{ width: width }, tw`items-center mt-30`]} key={screen.name}>
+          return <View style={[{ width: width, flex: 1 }, tw`items-center mt-30`]} key={screen.name}>
             <AnimatedLottieView
               autoPlay
               style={[{
@@ -92,9 +101,9 @@ export default function GetStarted() {
               // Find more Lottie files at https://lottiefiles.com/featured
               source={screen.animation}
             />
-            <Text style={tw`mb-2 mt-6 text-xl`} weight='bold'>{screen.name}</Text>
-            <Text style={tw`max-w-10/12 text-center`}>{screen.description}</Text>
-            <TouchableOpacity style={tw`mt-9 p-3 w-5/12 items-center rounded-xl bg-red-500`} onPress={() => {
+            <Text style={tw`mb-2 mt-6`} h1>{screen.name}</Text>
+            <Text style={tw`max-w-10/12 text-center text-gray-500`}>{screen.description}</Text>
+            <SaveButton safeArea title={i === onboardingScreens.length - 1 ? 'Get Started' : 'Next'} onSave={() => {
               if (i !== onboardingScreens.length - 1) {
                 if (scrollRef.current) {
                   //@ts-ignore
@@ -103,9 +112,7 @@ export default function GetStarted() {
               } else {
                 navigator.navigate('Login')
               }
-            }}>
-              <Text style={tw`text-white`} weight='bold'>{i === onboardingScreens.length - 1 ? 'Get Started' : 'Next'}</Text>
-            </TouchableOpacity>
+            }} />
           </View>
         }}
       />
@@ -120,8 +127,12 @@ import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native
 import { useNavigation } from '@react-navigation/native';
 import AnimatedLottieView from 'lottie-react-native';
 import awsmobile from '../../constants/aws-config';
-import { useAuthListener } from '../../supabase/auth';
+import { useAuthListener, useSignOut } from '../../supabase/auth';
 import { UserQueries } from '../../types/UserDao';
+import SaveButton from '../../components/base/SaveButton';
+import useAsync from '../../hooks/useAsync';
+import { supabase } from '../../supabase';
+import useOnLeaveScreen from '../../hooks/useOnLeaveScreen';
 
 const onboardingScreens: { name: string, description: string, animation: any }[] = [
   { name: 'Workout and Exercise', description: 'Log your workouts with ease! Rage make it very easy to create and keep track of your daily exercise routine', animation: crunches },

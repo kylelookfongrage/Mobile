@@ -1,195 +1,130 @@
 import { View, Text } from '../../components/base/Themed'
 import React, { useEffect, useMemo, useState } from 'react'
-import { Comments, Favorite, Post, User } from '../../aws/models'
 import { useCommonAWSIds } from '../../hooks/useCommonContext';
 import { useNavigation } from '@react-navigation/native';
-import { DataStore, Storage } from 'aws-amplify';
 import { defaultImage, formatCash, getMatchingNavigationScreen, isStorageUri } from '../../data';
 import { BackButton } from '../../components/base/BackButton';
 import { ScrollView, TextInput, TouchableOpacity } from 'react-native-gesture-handler';
 import tw from 'twrnc'
 import { ExpoIcon } from '../../components/base/ExpoIcon';
-import { KeyboardAvoidingView, Platform, useColorScheme, Image, Keyboard } from 'react-native';
+import { KeyboardAvoidingView, Platform, useColorScheme, Image, Keyboard, Dimensions } from 'react-native';
 import { PostMedia } from '../../components/features/PostMedia';
 import moment from 'moment';
-interface CommentDisplay extends Comments { userDidLike: boolean; numLikes: number }
-interface UserInfo { [k: string]: { username: string; img: string; name: string | null } }
+import { Tables } from '../../supabase/dao';
+import { supabase } from '../../supabase';
+import SupabaseImage from '../../components/base/SupabaseImage';
+import Spacer from '../../components/base/Spacer';
+import { PostDao } from '../../types/PostDao';
+import useHaptics from '../../hooks/useHaptics';
+import { ShowMoreDialogue } from '../home/ShowMore';
+type TPost = Tables['post']['Row'] & {user: {pfp?: string|null|undefined; name: string; username: string, feed?: Tables['feed']['Row'][]} }
+type TComment = Tables['comment']['Row'] & {user: {pfp?: string|null|undefined; name: string; username: string} }
 
 export default function PostDetails(props: { id: string }) {
-    const [post, setPost] = useState<Post | null>(null);
-    const { userId } = useCommonAWSIds();
-    const [FETCH_AMOUNT, setFetchAmount] = useState<number>(30)
-    const [userMapping, setUserMapping] = useState<UserInfo>({})
+    
+    const [post, setPost] = useState<TPost | null>(null);
+    const { profile } = useCommonAWSIds();
     const [pageNumber, setPageNumber] = useState<number>(0)
-    const [postComments, setPostComments] = useState<CommentDisplay[]>([])
+    const [postComments, setPostComments] = useState<TComment[]>([])
     const [numComments, setNumComments] = useState<number>(0)
-    const [likes, setLikes] = useState<number>(0)
     const [userHasLiked, setUserHasLiked] = useState<boolean>(false)
-    const [allFetched, setAllFetched] = useState<boolean>(false)
     const now = moment()
     const prepare = async () => {
-        const internalUserInfo: UserInfo = { ...userMapping }
-        if (!post) {
-            const postNoMedia = await DataStore.query(Post, props.id)
-            if (!postNoMedia) return;
-            const user = await DataStore.query(User, postNoMedia.userID)
-            const nComments = (await postNoMedia.Comments.toArray()).length
-            setNumComments(nComments)
-            const nLikes = (await DataStore.query(Favorite, f => f.and(fav => [fav.potentialID.eq(props.id), fav.type.eq('POST')]))).length
-            const userliked = (await DataStore.query(Favorite, f => f.and(fav => [fav.potentialID.eq(props.id), fav.type.eq('POST'), fav.userID.eq(userId)]))).length > 0
-            setLikes(nLikes)
-            setUserHasLiked(userliked)
-            if (user) {
-                let img = user.picture || defaultImage
-                if (isStorageUri(img)) img = await Storage.get(img, { expires: 900 })
-                internalUserInfo[user.id] = { name: user.name || null, img, username: user.username }
-            }
-            setPost(postNoMedia)
+       let res = await supabase.from('post').select('*, user(name, pfp,username), feed(*)').filter('id', 'eq', props.id).filter('feed.user_id', 'eq',profile?.id ).single()
+       if (res.data) {
+        setPost(res.data)
+        if (res.data.feed) {
+            setUserHasLiked(res.data.feed?.[0]?.liked === true)
         }
-        let internalMapping: UserInfo = {...userMapping}
-        if (!internalMapping[userId]) {
-            const user = await DataStore.query(User, userId)
-            if (!user) return;
-            let img = user.picture || defaultImage
-            if (isStorageUri(img)) img = await Storage.get(img)
-            internalMapping[userId] = {name: user.name || null, username: user.username, img}
+        let c = await supabase.from('comment').select('*, user(name, pfp,username)').filter('post_id', 'eq', props.id).order('created_at', {ascending: false}).range(0,50)
+        if (c.data) {
+            setPostComments(c.data)
         }
-        if (allFetched) return;
-        let comments = await DataStore.query(Comments, p => p.and(c => [
-            c.postID.eq(props.id), c.type.eq('POST'),
-            c.or(com => [com.createdAt.lt(now.utc().format()), com.userID.ne(userId)])
-        ]), { sort: x => x.createdAt('DESCENDING'), limit: FETCH_AMOUNT, page: pageNumber })
-        let newComments: CommentDisplay[] = []
-        for (var comment of comments) {
-            let info = internalUserInfo[comment.userID]
-            if (!info) {
-                const user = await DataStore.query(User, comment.userID)
-                if (!user) continue;
-                let img = user.picture || defaultImage
-                if (isStorageUri(img)) img = await Storage.get(img, { expires: 900 })
-                internalUserInfo[user.id] = { name: user.name || null, img, username: user.username }
-            }
-            const numLikes = (await DataStore.query(Favorite, f => f.and(fav => [fav.potentialID.eq(comment.id), fav.type.eq('COMMENT')]))).length
-            const userDidLike = (await DataStore.query(Favorite, f => f.and(fav => [fav.potentialID.eq(comment.id), fav.type.eq('COMMENT'), fav.userID.eq(userId)]))).length > 0
-            newComments.push({ ...comment, numLikes, userDidLike })
-        }
-        setPostComments([...postComments, ...newComments])
-        setAllFetched(newComments.length < FETCH_AMOUNT)
-        setUserMapping(internalUserInfo)
+       }
     }
     useEffect(() => {
         if (!props.id) return;
         prepare()
     }, [pageNumber])
     const dm = useColorScheme() === 'dark'
-    const onSubmitPress = async () => {
-        if (!newComment || newComment === '') return;
-        const newCommentDB = await DataStore.save(new Comments({
-            userID: userId, string: newComment, postID: props.id, potentialID: props.id, type: 'POST'
-        }))
-        setNewComment('')
-        const newCommentDisplay: CommentDisplay = {...newCommentDB, userDidLike: false, numLikes: 0}
-        setPostComments([newCommentDisplay, ...postComments])
-        setFetchAmount(FETCH_AMOUNT + 1)
+    const onSubmitPress = async (comment?: number | null | undefined) => {
+        let res = await supabase.from('comment').insert({user_id: profile?.id, description: newComment, post_id: props.id, comment_reply: comment}).select('*,user(pfp,username,name)')
+        if (res.data) {
+            if (res.data[0]) {
+                setPostComments([res.data[0],...postComments])
+            }
+        }
         Keyboard.dismiss()
+        setNewComment('')
     }
     const [newComment, setNewComment] = useState<string>('')
+    let dao = PostDao()
     const [shouldShowMore, setShouldShowMore] = useState<boolean>(false);
+    let h = useHaptics()
     if (!post) return <View includeBackground />
-    const postUser = userMapping[post?.userID]
-    if (!postUser) return <View includeBackground />
-
     return (
         <View includeBackground style={{ flex: 1 }}>
-            <BackButton />
+            <View style={{...tw`flex-row items-end`, width: Dimensions.get('screen').width - 55}}>
+                <BackButton />
+                <ShowMoreDialogue post_id={post.id} />
+            </View>
             <KeyboardAvoidingView enabled behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
                 <ScrollView
-                    contentContainerStyle={tw`px-6 pb-9 pt-4`}
+                    contentContainerStyle={tw`px-2 pb-9 pt-4`}
                     keyboardDismissMode='interactive'
+                    showsVerticalScrollIndicator={false}
                 >
                     <View style={tw`flex-row items-center`}>
-                        <Image style={tw`h-15 w-15 rounded-full`} source={{ uri: postUser.img }} />
+                        <SupabaseImage style={tw`h-15 w-15 rounded-full`} uri={post.user.pfp || defaultImage} />
                         <View style={tw`ml-2 max-w-9/12`}>
-                            <Text weight='semibold'>{postUser.name}</Text>
-                            <Text style={tw`text-gray-500 text-xs`}>@{postUser.username}</Text>
+                            <Text weight='semibold'>{post.user.name}</Text>
+                            <Text style={tw`text-gray-500 text-xs`}>@{post.user.username}</Text>
                         </View>
                     </View>
                     <Text style={tw`my-3`}>{shouldShowMore ? post.description : post.description?.substring(0, 100)} {(post?.description?.length || 100) >= 99 && <Text weight='semibold' style={tw`text-gray-500`} onPress={() => setShouldShowMore(!shouldShowMore)}>...{shouldShowMore ? 'Hide' : 'Show More'}</Text>}</Text>
                     {/* @ts-ignore */}
-                    <PostMedia canNavigate onDismissTap={() => { }} media={post.media} mealId={post.mealID} exerciseId={post.exerciseID} runProgressId={post.runProgressID} workoutId={post.workoutID} />
-                    <View style={tw`flex-row items-center justify-between mt-3 mb-9`}>
+                    <PostMedia canNavigate onDismissTap={() => { }} media={post.media} mealId={post.meal_id} exerciseId={post.exercise_id} runProgressId={post.run_id} workoutId={post.workout_id} />
+                    <View style={tw`flex-row items-center justify-between mt-3`}>
                         <View style={tw`flex-row items-center`}>
                             <TouchableOpacity onPress={async () => {
-                                if (userHasLiked) {
-                                    const ogLike = await DataStore.query(Favorite, f => f.and(fav => [fav.potentialID.eq(post.id), fav.type.eq('POST'), fav.userID.eq(userId)]))
-                                    if (ogLike[0]) {
-                                        await DataStore.delete(Favorite, ogLike[0].id)
-                                        setUserHasLiked(false)
-                                        setLikes(likes - 1)
-                                    }
-                                } else {
-                                    await DataStore.save(new Favorite({
-                                        potentialID: post.id,
-                                        type: 'POST',
-                                        userID: userId
-                                    }))
-                                    setUserHasLiked(true)
-                                    setLikes(likes + 1)
-                                }
+                                if (!post) return;
+                                await dao.on_like_press(post.id, userHasLiked)
+                                h.press()
+                                setPost({...post, likes: userHasLiked ? (post?.likes || 1)-1 : (post.likes || 0)+1})
+                                setUserHasLiked(!userHasLiked)
                             }} style={tw`flex-row items-center justify-center`}>
                                 <ExpoIcon name={userHasLiked ? 'heart' : 'heart-outline'} iconName='ion' size={25} color={userHasLiked ? 'red' : 'gray'} />
-                                <Text style={tw`text-gray-500 ml-2 text-xs`}>{likes} likes</Text>
+                                <Text style={tw`text-gray-500 ml-2 text-xs`}>{post.likes} likes</Text>
                             </TouchableOpacity>
-                            <TouchableOpacity onPress={() => { }} style={tw`flex-row items-center justify-center ml-5`}>
+                            {/* <TouchableOpacity onPress={() => { }} style={tw`flex-row items-center justify-center ml-5`}>
                                 <ExpoIcon name={'message-circle'} iconName='feather' size={25} color={'gray'} />
                                 <Text style={tw`text-gray-500 ml-2 text-xs`}>{numComments} comments</Text>
-                            </TouchableOpacity>
+                            </TouchableOpacity> */}
                         </View>
-                        <Text style={tw`text-xs text-gray-500`}>{moment(post.createdAt).fromNow()}</Text>
+                        <Text style={tw`text-xs text-gray-500`}>{moment(post.created_at).fromNow()}</Text>
                     </View>
-                    {postComments.length === 0 && <Text style={tw`text-center p-6 text-gray-500`}>There are no comments to show. Be the first to add one!</Text>}
+                    <Spacer full lg divider/>
+                    {postComments.length === 0 && <Text xs style={tw`text-center px-6 text-gray-500`}>There are no comments to show. Be the first to add one!</Text>}
                     {postComments.map(comment => {
-                        const info = userMapping[comment.userID]
                         const onLikeTap = async (id: string, liked: boolean) => {
                             if (liked) {
-                                const ogLike = await DataStore.query(Favorite, f => f.and(fav => [
-                                    fav.potentialID.eq(id), fav.type.eq('COMMENT'), fav.userID.eq(userId)
-                                ]))
-                                if (ogLike[0]) {
-                                    await DataStore.delete(Favorite, ogLike[0].id)
-                                    setPostComments([...postComments].map(x => {
-                                        if (x.id === comment.id) {
-                                            return {...x, numLikes: x.numLikes - 1, userDidLike: false}
-                                        }
-                                        return x
-                                    }))
-                                }
+                                
                             } else {
-                                await DataStore.save(new Favorite({
-                                    potentialID: comment.id, userID: userId, type: 'COMMENT' 
-                                }))
-                                setPostComments([...postComments].map(x => {
-                                    if (x.id === comment.id) {
-                                        return {...x, numLikes: x.numLikes + 1, userDidLike: true}
-                                    }
-                                    return x
-                                }))
+                                
                             }
                         }
-                        if (!info) return <View key={comment.id} />
-                        return <CommentDisplay key={comment.id} info={info} comment={comment} onLikeTap={onLikeTap} />
+                        return <CommentDisplay key={comment.id} comment={comment} onLikeTap={onLikeTap} />
                     })}
-                    {postComments.length > 0 && <TouchableOpacity disabled={allFetched} onPress={() => {
-                        setPageNumber(pageNumber + 1)
-                    }}>
-                        <Text weight='semibold' style={tw`text-center text-gray-500 py-4`} >{allFetched ? 'That\'s all!' : 'Show More...'}</Text>
-                    </TouchableOpacity>}
                 </ScrollView>
                 <View style={tw`pt-3`}>
-                    <View style={tw`mb-6 w-12/12 flex-row items-center justify-evenly`}>
-                        <TextInput onSubmitEditing={onSubmitPress} value={newComment} onChangeText={setNewComment} placeholderTextColor={'gray'} placeholder='Comment....' style={tw`bg-gray-${dm ? '700/50' : '300'} w-8.5/12 rounded-2xl p-4 text-${dm ? 'white' : 'black'}`} multiline numberOfLines={3} />
-                        <TouchableOpacity onPress={onSubmitPress} style={tw`items-center justify-center p-3 bg-gray-${dm ? '700/40' : '300'} rounded-full`}>
-                            <ExpoIcon name='message-circle' iconName='feather' size={25} color='gray' />
+                    <View style={tw`mb-2 w-12/12 flex-row items-center justify-between px-4`}>
+                        <View card style={tw`w-10/12 rounded-lg pb-3 pt-2 px-3`}>
+                        <TextInput onSubmitEditing={onSubmitPress} value={newComment} onChangeText={setNewComment} placeholderTextColor={'gray'} placeholder='Comment....' style={tw`w-12/12 text-${dm ? 'white' : 'black'}`} multiline numberOfLines={3} />
+                        </View>
+                        <TouchableOpacity onPress={onSubmitPress} style={tw`items-center justify-center`}>
+                            <View card style={tw`p-3 rounded-full`}>
+                            <ExpoIcon name='message-circle' iconName='feather' size={20} color='gray' />
+                            </View>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -199,29 +134,31 @@ export default function PostDetails(props: { id: string }) {
 }
 
 
-const CommentDisplay = (props: { info: { name: string | null; img: string; username: string }, onLikeTap: (id: string, liked: boolean) => void, comment: CommentDisplay }) => {
-    const { info, onLikeTap, comment } = props;
+const CommentDisplay = (props: {  onLikeTap: (id: string, liked: boolean) => void, comment: TComment }) => {
+    const {  onLikeTap, comment } = props;
     const internalComment = useMemo(() => comment, [comment])
     const navigator = useNavigation()
     const dm = useColorScheme() === 'dark'
-    return <View style={tw`py-1 my-1`}>
-        <View style={tw`flex-row items-center justify-between w-12/12`}>
+    return <View style={{...tw`py-1 my-1`}}>
+        <View style={{...tw`flex-row items-center justify-between w-12/12`}}>
             <View style={tw`flex-row items-start max-w-9/12`}>
-                <Image source={{ uri: info.img }} style={tw`h-10 w-10 rounded-full mr-1.5`} />
+                <SupabaseImage uri={comment.user.pfp || defaultImage} style={tw`h-10 w-10 rounded-full`} />
+                <Spacer horizontal sm />
                 <View>
+                    <Text weight='semibold' xs>{comment.user.name}</Text>
                     <Text onPress={() => {
                         const screen = getMatchingNavigationScreen('User', navigator)
                         //@ts-ignore
-                        navigator.navigate(screen, { id: comment.userID })
-                    }} style={tw`text-xs text-red-500`} weight='semibold'>@{info.username}</Text>
-                    <Text style={tw`mt-1 text-gray-${dm ? '300' : '500'}`}>{comment.string}</Text>
+                        navigator.navigate(screen, { id: comment.user_id })
+                    }} style={tw`text-red-500`} xs>@{comment.user.username}</Text>
+                    <Text style={tw`mt-1 text-gray-${dm ? '300' : '500'}`}>{comment.description}</Text>
                 </View>
             </View>
-            <TouchableOpacity style={tw`p-2 items-center flex-row justify-center`} onPress={() => onLikeTap && onLikeTap(internalComment.id, internalComment.userDidLike)}>
-                <ExpoIcon name={internalComment.userDidLike ? 'heart' : 'heart-outline'} iconName='ion' size={20} color={internalComment.userDidLike ? 'red' : 'gray'} />
-                <Text style={tw`text-xs text-gray-500 ml-2`} weight='semibold'>{formatCash(internalComment.numLikes)}</Text>
-            </TouchableOpacity>
+            {/* <TouchableOpacity style={tw`p-2 items-center flex-row justify-center`} onPress={() => onLikeTap && onLikeTap(internalComment.id, false)}>
+                <ExpoIcon name={internalComment.created_at ? 'heart' : 'heart-outline'} iconName='ion' size={20} color={internalComment.comment_reply ? 'red' : 'gray'} />
+                <Text style={tw`text-xs text-gray-500 ml-2`} weight='semibold'>{formatCash(0)}</Text>
+            </TouchableOpacity> */}
         </View>
-        <Text style={tw`text-xs text-gray-500 text-right`}>{moment(internalComment.createdAt).fromNow()}</Text>
+        <Text style={{...tw`text-gray-500 text-right`, fontSize: 10}}>{moment(internalComment.created_at).fromNow()}</Text>
     </View>
 }

@@ -59,7 +59,6 @@ export function UserQueries(realtime: boolean=false){
 
     const fetch_subscribers = async (id: Tables['user']['Row']['id']): Promise<{subscribers: number, subscribees: number, user_id: string}> => {
         let res = await supabase.rpc('fn_get_subscription_count', {query_id: id})
-        console.log(res)
         let result = {subscribees: 0, subscribers: 0, user_id: id}
         if (res?.data) {
             result.subscribees = res?.data?.[0]?.subscribees || 0
@@ -109,7 +108,6 @@ export function UserQueries(realtime: boolean=false){
             q = q.filter(`user.username`, 'ilike', `%${keyword}%`)
         }
         let res = await q.order('start_date', {'ascending': false}).range(0, 40) // @ts-ignore
-        console.log(res)
         return res?.data || null
     }
 

@@ -25,6 +25,7 @@ type TActionButton = {
   title: string;
   icon: string;
   onPress: () => void;
+  hidden?: boolean;
 }
 type TShowMoreDialogue = {
   workout_id?: number;
@@ -39,9 +40,9 @@ type TShowMoreDialogue = {
   options?: TActionButton[]
 }
 
-export const EditModeButton = (editing: boolean, onPress: () => void): TActionButton => {
+export const EditModeButton = (editing: boolean, onPress: () => void, user_id: string | null | undefined, current_user_id: string | null | undefined): TActionButton => {
   return {
-    title: editing ? 'Stop Editing' : 'Edit', icon: editing ? 'backspace' : 'create', onPress: onPress
+    title: editing ? 'Stop Editing' : 'Edit', icon: editing ? 'backspace' : 'create', onPress: onPress, hidden: user_id !== current_user_id
   }
 }
 
@@ -60,9 +61,9 @@ export const ShareButton = (props: TShowMoreDialogue): TActionButton => {
   return { title: 'Share', icon: 'arrow-redo', onPress: () => {} }
 }
 
-export const DeleteButton = (name: string, onDelete: () => Promise<any>): TActionButton => {
+export const DeleteButton = (name: string, onDelete: () => Promise<any>, user_id: string | null | undefined, current_user_id: string | null | undefined): TActionButton => {
   return {
-    title: 'Delete ' + name, icon: 'close-circle', onPress: () => {
+    title: 'Delete ' + name, icon: 'close-circle', hidden: user_id !== current_user_id, onPress: () => {
       Alert.alert('You are deleting your ' + name.toLowerCase(), 'Are you sure?', [
         { text: 'Cancel' },
         {
@@ -87,8 +88,6 @@ export const ShowMoreDialogue = (props: TShowMoreDialogue) => {
       icon: 'warning',
       onPress: () => {
         //@ts-ignore
-        navigator.pop()
-        //@ts-ignore
         navigator.navigate('Report', { ...props })
       }
     }]
@@ -103,8 +102,11 @@ export const ShowMoreDialogue = (props: TShowMoreDialogue) => {
         <ExpoIcon color='gray' size={25} iconName='feather' name={showDialogue ? 'x' : 'more-horizontal'} />
       </View>
       <Overlay excludeBanner style={{ ...tw`flex-row flex-wrap items-center` }} dialogueHeight={40} visible={showDialogue} onDismiss={() => setShowDialogue(false)}>
-        {options.map((x, i) => {
-          return <TouchableOpacity onPress={x.onPress} key={`Button: ${x.title} - ${i}`} style={{ ...tw`items-center justify-center mb-3`, width: s.width * 0.29 }}>
+        {options.filter(x => !x.hidden).map((x, i) => {
+          return <TouchableOpacity onPress={() => {
+            x.onPress()
+            setShowDialogue(false)
+          }} key={`Button: ${x.title} - ${i}`} style={{ ...tw`items-center justify-center mb-3`, width: s.width * 0.29 }}>
             <View card style={tw`px-6 py-5 rounded-xl items-center justify-center`}>
               <ExpoIcon name={x.icon} iconName='ion' size={30} color='gray' />
             </View>

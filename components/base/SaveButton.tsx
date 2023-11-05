@@ -8,12 +8,12 @@ import FavoritesDao from '../../types/FavoritesDao';
 import useAsync from '../../hooks/useAsync';
 import { useCommonAWSIds } from '../../hooks/useCommonContext';
 
-export default function SaveButton(props: {uploading?: boolean, discludeBackground?: boolean; onSave?: () => void; title?: string; favoriteId?: string | number, favoriteType?: 'food' | 'meal' | 'exercise' | 'workout' | 'plan'; hidden?: boolean, safeArea?: boolean}) {
+export default function SaveButton(props: {uploading?: boolean, disabled?: boolean, discludeBackground?: boolean; onSave?: () => void; title?: string; favoriteId?: string | number, favoriteType?: 'food' | 'meal' | 'exercise' | 'workout' | 'plan'; hidden?: boolean, safeArea?: boolean}) {
     const dm = useColorScheme() === 'dark'
     let [favorited, setFavorited] = useState<boolean>(false)
     let {profile} = useCommonAWSIds()
     let bg = dm ? 'red-600' : "red-500"
-    if (props.uploading) {
+    if (props.uploading || props.disabled) {
         bg += '/50'
     }
     let heartbg = `bg-gray-${dm ? '900' : '300'}`
@@ -37,12 +37,14 @@ export default function SaveButton(props: {uploading?: boolean, discludeBackgrou
     <View includeBackground={!props.discludeBackground} style={[
         {
             position: 'absolute',
-            bottom: props.safeArea ? insets.bottom : 0,
+            bottom: 0,
+            paddingBottom: props.safeArea ? insets.bottom + 20 : 10,
+            paddingTop: 10,
             flex: 1
         },
-        tw`w-12/12 flex-row items-center justify-evenly py-1.5`
+        tw`w-12/12 flex-row items-center justify-evenly`
     ]}>
-        <TouchableOpacity disabled={props.uploading} onPress={props.onSave} style={tw`bg-${bg} px-5 h-12 w-6/12 items-center justify-center flex-row rounded-lg`}>
+        <TouchableOpacity disabled={props.uploading || props.disabled} onPress={props.onSave} style={{...tw`bg-${bg} px-5 h-12 w-6/12 items-center justify-center flex-row rounded-lg`}}>
             <Text style={tw`text-center text-white mr-2`} weight='semibold'>{props.title || 'Save'}</Text>
             {props.uploading && <ActivityIndicator />}
             </TouchableOpacity>

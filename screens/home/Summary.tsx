@@ -6,24 +6,18 @@ import tw from 'twrnc'
 import { ExpoIcon } from '../../components/base/ExpoIcon';
 import useColorScheme from '../../hooks/useColorScheme';
 import { AnimatedCircularProgress } from 'react-native-circular-progress';
-import { FloatingActionButton } from '../../components/base/FAB';
 import { useNavigation } from '@react-navigation/native';
 import { useDateContext } from './Calendar';
-import { getTdee } from './Profile';
-import { DataStore } from 'aws-amplify';
-import { Progress, User } from '../../aws/models';
 import { useCommonAWSIds } from '../../hooks/useCommonContext';
-import { defaultImage, getMacrosFromIngredients, getMatchingNavigationScreen, titleCase } from '../../data';
+import { defaultImage, getMatchingNavigationScreen, titleCase } from '../../data';
 import * as Haptics from 'expo-haptics'
-import { useProgressValues } from '../../hooks/useProgressValues';
 import RunListComponent from '../../components/features/RunListComponent';
 import AnimatedLottieView from 'lottie-react-native';
 import drinkWater from '../../assets/animations/drinkwater.json'
 import moment from 'moment';
 import ThisAdHelpsKeepFree from '../../components/features/ThisAdHelpsKeepFree';
-import { BadgeType, useBadges } from '../../hooks/useBadges';
+import {  useBadges } from '../../hooks/useBadges';
 import { ProgressDao } from '../../types/ProgressDao';
-import { useRealtime } from 'react-supabase';
 import SupabaseImage from '../../components/base/SupabaseImage';
 import SwipeWithDelete from '../../components/base/SwipeWithDelete';
 
@@ -31,20 +25,23 @@ import SwipeWithDelete from '../../components/base/SwipeWithDelete';
 export const SummaryScreen = () => {
 
   const dateContext = useDateContext()
-  const { sub, userId, progressId, setProgressId, profile } = useCommonAWSIds()
+  const { progressId, profile } = useCommonAWSIds()
   const { formattedDate, AWSDate, today, setDate } = { formattedDate: dateContext.formattedDate, AWSDate: dateContext.AWSDate, today: dateContext.date, setDate: dateContext.setDate }
-  const { food, meals, workouts, fat, goal, water, runs } = useProgressValues({})
   const totalCalories = profile?.tdee || 2000;
   const dm = useColorScheme() === 'dark'
   const navigator = useNavigation()
   const {logProgress} = useBadges(false)
   const dao = ProgressDao()
-  const [food_progress, meal_progress, workout_progress] = [dao.foodProgress, dao.mealProgress, dao.workoutProgress]
+  const [food_progress, meal_progress, workout_progress, runs] = [dao.foodProgress, dao.mealProgress, dao.workoutProgress, dao.runProgress]
   let weight = dao.today?.weight || profile?.weight || 100
-  let ingredients = meal_progress.map(x => (x.meal)).flatMap(x => x.meal_ingredients)
-  const caloriesFromFoodAndMeals = food_progress.reduce((prev, c) => prev + (c.calories || 0), 0) + ingredients.reduce((prev, curr) => prev + (curr.calories || 0), 0)
-  const proteinFromFoodAndMeals = food_progress.reduce((prev, c) => prev + (c.protein || 0), 0) + ingredients.reduce((prev, curr) => prev + (curr.protein || 0), 0)
-  const carbsFromFoodAndMeals = food_progress.reduce((prev, c) => prev + (c.carbs || 0), 0) + ingredients.reduce((prev, curr) => prev + (curr.carbs || 0), 0)
+  let _ingredients = meal_progress.map(x => ({...x.meal, consumedWeight: x.consumed_weight, totalWeight: x.total_weight}))
+  let __ingredients = _ingredients.map(x => {
+      return {...x, meal_ingredients: x.meal_ingredients.map(z => ({...z,consumed_weight: x.consumedWeight, total_weight: x.totalWeight}))}
+  })
+  let ingredients=__ingredients.flatMap(x => x.meal_ingredients)
+  const caloriesFromFoodAndMeals = food_progress.reduce((prev, c) => prev + (c.calories || 0), 0) + ingredients.reduce((prev, curr) => prev + (curr.calories || 0) * ((curr.consumed_weight || 1) / (curr.total_weight || 1)), 0)
+  const proteinFromFoodAndMeals = food_progress.reduce((prev, c) => prev + (c.protein || 0), 0) + ingredients.reduce((prev, curr) => prev + (curr.protein || 0) * ((curr.consumed_weight || 1) / (curr.total_weight || 1)), 0)
+  const carbsFromFoodAndMeals = food_progress.reduce((prev, c) => prev + (c.carbs || 0), 0) + ingredients.reduce((prev, curr) => prev + (curr.carbs || 0) * ((curr.consumed_weight || 1) / (curr.total_weight || 1)), 0)
 
   React.useEffect(() => {
     if (totalCalories) {
@@ -177,22 +174,20 @@ export const SummaryScreen = () => {
               </View>
             </View>
           </View>
-         <TouchableOpacity onPress={() => {
-            //@ts-ignore
-            navigator.navigate('SummaryEdit', {progressId: progressId})
-          }} style={{}}>
-         <View card style={tw`w-12/12 rounded-lg p-4 mt-4 mb-6`}>
+          <View card style={tw`w-12/12 rounded-lg p-4 mt-4 mb-6`}>
             <Text style={tw`text-lg text-center`} weight='semibold'>Personal Information</Text>
-            <View style={tw`mt-4 flex-row items-center justify-around`}>
-              <View>
+            <View style={tw`mt-4 flex-row items-center justify-around`}> 
+            {/* @ts-ignore */}
+              <TouchableOpacity onPress={() => navigator.navigate('SummaryMetric', {weight: true})}>
               <Text style={tw`text-xs text-gray-500`}>Weight</Text>
               <Text style={tw`text-lg`} weight='semibold'>{dao.today?.weight || '-'} {<Text style={tw`text-red-500 text-sm`}>lbs</Text>}</Text>
-              </View>
+              </TouchableOpacity>
               <View style={[tw`h-15 bg-gray-${dm ? '600' : '400'}`, { width: 1 }]} />
-              <View>
+              {/* @ts-ignore */}
+              <TouchableOpacity onPress={() => navigator.navigate('SummaryMetric', {weight: false})}>
               <Text style={tw`text-xs text-gray-500`}>Body Fat</Text>
               <Text style={tw`text-lg`} weight='semibold'>{dao.today?.fat || '-'} {<Text style={tw`text-red-500 text-sm`}>%</Text>}</Text>
-              </View>
+              </TouchableOpacity>
               <View style={[tw`h-15 bg-gray-${dm ? '600' : '400'}`, { width: 1 }]} />
               <View style={tw`bg-transparent`}>
               <Text style={tw`text-xs text-gray-500`}>Goal</Text>
@@ -200,9 +195,8 @@ export const SummaryScreen = () => {
               </View>
             </View>
           </View>
-         </TouchableOpacity>
           <View style={tw`flex-row items-center justify-between w-12/12 mt-2`}>
-            <Text style={tw`text-lg`} weight='semibold'>Latest {lastRun?.runType || 'Run'} Activity</Text>
+            <Text style={tw`text-lg`} weight='semibold'>Latest {lastRun?.type || 'Run'} Activity</Text>
             <TouchableOpacity style={tw`p-3`} onPress={() => {
               //@ts-ignore
               navigator.navigate('Run', { progressId: progressId })

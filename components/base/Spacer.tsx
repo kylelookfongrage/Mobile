@@ -1,10 +1,10 @@
 import { View } from './Themed'
 import React from 'react'
-import { useColorScheme } from 'react-native';
+import { Dimensions, useColorScheme } from 'react-native';
 import { Divider } from 'react-native-paper';
 import tw from 'twrnc'
 
-export default function Spacer(props: {includeBackground?: boolean; horizontal?: boolean, xs?:boolean; sm?: boolean; lg?: boolean, xl?: boolean, divider?: boolean}) {
+export default function Spacer(props: {includeBackground?: boolean; horizontal?: boolean, xs?:boolean; sm?: boolean; lg?: boolean, xl?: boolean, divider?: boolean, full?: boolean}) {
   let letter = 'h'
   if (props.horizontal) letter='w'
   let dm = useColorScheme() === 'dark'
@@ -14,7 +14,7 @@ export default function Spacer(props: {includeBackground?: boolean; horizontal?:
   if (props.xl) size=8
   if (props.xs) size=1
   if (props.divider) {
-    return <Divider style={tw`bg-gray-${dm ? '800' : '300'} m${props.horizontal ? 'x' : 'y'}-${size}`} />
+    return <Divider style={{...tw`bg-gray-${dm ? '800' : '300'} m${props.horizontal ? 'x' : 'y'}-${size}`, ...(props.full && {width: Dimensions.get('screen').width + 100, marginLeft: -100})}} />
   }
   return (
     <View style={tw`${letter}-${size}`} includeBackground={props.includeBackground} />

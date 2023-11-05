@@ -6,10 +6,6 @@ import { useNavigation } from '@react-navigation/native'
 import { ExpoIcon } from '../../components/base/ExpoIcon'
 import { useCommonAWSIds } from '../../hooks/useCommonContext'
 import { BackButton } from '../../components/base/BackButton'
-import { useProgressValues } from '../../hooks/useProgressValues'
-import { WorkoutMode } from '../../data'
-import { DataStore } from 'aws-amplify'
-import { User } from '../../aws/models'
 import { UserQueries } from '../../types/UserDao'
 
 export interface AppSetting {
@@ -25,7 +21,7 @@ export interface AppSetting {
 }
 
 export default function Settings() {
-    const { status, subscribed, userId, profile } = useCommonAWSIds()
+    const { status, subscribed, userId, profile, setProfile } = useCommonAWSIds()
     const navigator = useNavigation()
     let dao = UserQueries()
     let settings = useMemo(() => {
@@ -35,9 +31,12 @@ export default function Settings() {
             { title: 'Content Creator Hub', icon: 'briefcase', screen: 'Apply' },
             {title: 'Video Workout Mode', icon: 'grid', switch: true, switchValue: (profile?.workoutMode === 'MUSIC')  ? true : false, onSwitch: async (b) => {
                 if (!profile) return;
-                await dao.update(profile.id, {workoutMode: b ? 'MUSIC' : 'DEFAULT'})
+                let res = await dao.update(profile.id, {workoutMode: b ? 'MUSIC' : 'DEFAULT'})
+                if (res) setProfile(res)
             } },
             { title: 'Update Goal', icon: 'bar-chart', screen: 'Setup' },
+            // { title: 'My Pantry', icon: 'cart', iconName: 'ion', screen: 'Pantry' },
+            // { title: 'Manage Allergies', icon: 'warning', iconName: 'ion', screen: 'Allergens' },
             { title: subscribed ? 'Subscribe or Remove Ads' : 'Manage Subscription', icon: 'tag', screen: 'Subscription' },
             { title: 'Help', icon: 'file-text', screen: 'Help', payload: { personal: true } },
             { title: 'About', icon: 'info', screen: 'About', payload: { personal: true } }

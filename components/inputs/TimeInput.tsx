@@ -4,7 +4,7 @@ import { MaskedInput } from 'react-native-ui-lib';
 import { Text } from '../base/Themed';
 import tw from 'twrnc'
 
-export default function TimeInput(props: {value?: string; onChange?: (v: string) => void;}) {
+export default function TimeInput(props: {value?: string; onChange?: (v: string) => void; editable?: boolean;}) {
     const minInput = useRef<any>();
     return <MaskedInput
         migrate
@@ -14,6 +14,7 @@ export default function TimeInput(props: {value?: string; onChange?: (v: string)
         keyboardType={'numeric'}
         maxLength={6}
         initialValue={props.value || ''}
+        editable={props.editable !== false}
         onChangeText={props.onChange}
     />
 }

@@ -6,9 +6,10 @@ import { ExpoIcon } from '../base/ExpoIcon';
 import tw from 'twrnc'
 import {View, Text} from '../base/Themed'
 
-export default function SelectScreen(props: {multi?: boolean; title?: string; options: string[], onSelect?: (s: string[] | string) => void; style?: any; getLabel?: (k: string) => string; getSelected?: (k: string) => boolean}) {
+export default function SelectScreen(props: {multi?: boolean; title?: string; options: string[], onSelect?: (s: string[] | string) => void; style?: any; getLabel?: (k: string) => string; getSelected?: (k: string) => boolean; hidden?: boolean}) {
     let dm = useColorScheme() === 'dark'
     let color = dm ? Colors.dark : Colors.light
+    if (props.hidden) return <View />
     return (
         <Picker
             // @ts-ignore

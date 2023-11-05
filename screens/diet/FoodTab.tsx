@@ -8,14 +8,9 @@ import { useNavigation } from '@react-navigation/native';
 import { ExpoIcon } from '../../components/base/ExpoIcon';
 import useColorScheme from '../../hooks/useColorScheme';
 import { defaultImage, getMatchingNavigationScreen, isStorageUri, substringForLists, titleCase } from '../../data';
-import { DataStore, Storage } from 'aws-amplify';
-import { Exercise, Follower, FoodProgress, Ingredient, Meal, User, Workout } from '../../aws/models';
-import { MediaType } from '../../types/Media';
-import { useDebounce } from '../../hooks/useDebounce';
 import { useCommonAWSIds } from '../../hooks/useCommonContext';
 import { getCommonScreens } from '../../components/screens/GetCommonScreens';
 import GenerateMeal from './GenerateMeal';
-import AllergenAlert from '../../components/features/AllergenAlert';
 import SearchBar from '../../components/inputs/SearchBar';
 import Spacer from '../../components/base/Spacer';
 import { supabase } from '../../supabase';
@@ -80,10 +75,7 @@ interface ISearchResult {
 
 export const FoodAndMeals = () => {
     const navigator = useNavigation()
-    const dm = useColorScheme() === 'dark'
-    const { userId } = useCommonAWSIds()
     let [results, setResults] = useState<ISearchResult[]>([])
-    const [selectedOptions, setSelectedOptions] = React.useState<typeof searchOptions[number][]>([])
     const search = async (keyword: string) => {
         console.log(keyword)
         const { data, error } = await supabase.rpc('fn_search', { keyword })
@@ -99,7 +91,7 @@ export const FoodAndMeals = () => {
         <Text h2>Search</Text>
         <Spacer />
         <SearchBar full onSearch={search} />
-        <Spacer />
+        {/* <Spacer />
         <ScrollView style={{ minHeight: 35, maxHeight: 35 }} horizontal showsHorizontalScrollIndicator={false}>
             {searchOptions.map(x => {
                 const selected = selectedOptions.includes(x)
@@ -114,7 +106,7 @@ export const FoodAndMeals = () => {
                     <Text>{x}</Text>
                 </TouchableOpacity>
             })}
-        </ScrollView>
+        </ScrollView> */}
         <Spacer divider/>
         <ScrollView contentContainerStyle={[tw``]} showsVerticalScrollIndicator={false}>
             {results.map((x, i) => {
@@ -124,6 +116,7 @@ export const FoodAndMeals = () => {
                     if (x.type === 'EXERCISE') screenName='ExerciseDetail'
                     if (x.type === 'MEAL') screenName='MealDetail'
                     if (x.type === 'WORKOUT') screenName='WorkoutDetail'
+                    if (x.type === 'PLAN') screenName='FitnessPlan'
                     if (x.type === 'USER') {
                         screenName='User'
                         id=x.user_id
@@ -135,8 +128,8 @@ export const FoodAndMeals = () => {
                         <View style={tw`flex-row items-center`}>
                             <SupabaseImage style='h-13 w-13 mr-2 rounded-lg' uri={x.image || defaultImage} />
                             <View>
-                                <Text weight='semibold'>{x.name}</Text>
-                                <Text xs style={tw`text-red-500`}>@{x.username}</Text>
+                                <Text weight='semibold'>{substringForLists(x.name, 27)}</Text>
+                                <Text xs style={tw`text-red-500`}>@{substringForLists(x.username, 40)}</Text>
                             </View>
                         </View>
                         <Text xs style={tw`text-gray-500`}>{titleCase(x.type)}</Text>
@@ -173,6 +166,12 @@ export const FoodAndMeals = () => {
                 name: 'New Workout', icon: () => (<Text style={{ fontSize: 15 }}>🏋️‍♀️</Text>), onPress: () => {
                     //@ts-ignore
                     navigator.navigate('FTWorkoutDetail', { id: null, editable: true })
+                }
+            },
+            {
+                name: 'New Fitness Plan', icon: () => (<Text style={{ fontSize: 15 }}>🤸‍♂️</Text>), onPress: () => {
+                    //@ts-ignore
+                    navigator.navigate('FTFitnessPlan', { id: null, editable: true })
                 }
             },
         ]} initialIcon={'plus'} bgColor='red-600' openIcon={() => {

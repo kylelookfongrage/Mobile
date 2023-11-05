@@ -1,19 +1,14 @@
-import { useColorScheme, Image } from 'react-native'
+import { useColorScheme } from 'react-native'
 import React from 'react'
 import { Text, View } from '../../components/base/Themed'
 import { BackButton } from '../../components/base/BackButton'
-import { FoodProgress, Meal, MealProgress, User } from '../../aws/models'
-import { DataStore, Storage } from 'aws-amplify'
 import { useCommonAWSIds } from '../../hooks/useCommonContext'
 import { defaultImage, getMacrosFromIngredients, getMatchingNavigationScreen } from '../../data'
 import { ScrollView, Swipeable, TouchableOpacity } from 'react-native-gesture-handler'
 import tw from 'twrnc'
 import { useNavigation } from '@react-navigation/native'
 import { AnimatedCircularProgress } from 'react-native-circular-progress'
-import { getTdee } from './Profile'
-import { Colors, ProgressBar } from 'react-native-paper'
 import { ExpoIcon } from '../../components/base/ExpoIcon'
-import { MealProgressDisplay, useProgressValues } from '../../hooks/useProgressValues'
 import { categoryMapping } from '../diet/ListFood'
 import ThisAdHelpsKeepFree from '../../components/features/ThisAdHelpsKeepFree'
 import { ProgressDao } from '../../types/ProgressDao'
@@ -21,22 +16,25 @@ import SupabaseImage from '../../components/base/SupabaseImage'
 
 export default function SummaryFoodList() {
     const { progressId, userId, profile } = useCommonAWSIds()
-    const { food, meals, carbGoal, fatGoal, proteinGoal, presetMacros } = useProgressValues({ foodAndMeals: true, metrics: true })
     const totalCalories = profile?.tdee || 2000
     const dm = useColorScheme() === 'dark'
     const dao = ProgressDao()
     const [food_progress, meal_progress] = [dao.foodProgress, dao.mealProgress]
-    let ingredients = meal_progress.map(x => (x.meal)).flatMap(x => x.meal_ingredients)
-    const caloriesFromFoodAndMeals = food_progress.reduce((prev, c) => prev + (c.calories || 0), 0) + ingredients.reduce((prev, curr) => prev + (curr.calories || 0), 0)
-    const proteinFromFoodAndMeals = food_progress.reduce((prev, c) => prev + (c.protein || 0), 0) + ingredients.reduce((prev, curr) => prev + (curr.protein || 0), 0)
-    const carbsFromFoodAndMeals = food_progress.reduce((prev, c) => prev + (c.carbs || 0), 0) + ingredients.reduce((prev, curr) => prev + (curr.carbs || 0), 0)
-    const fatFromFoodAndMeals = food_progress.reduce((prev, c) => prev + (c.fat || 0), 0) + ingredients.reduce((prev, curr) => prev + (curr.fat || 0), 0)
+    let _ingredients = meal_progress.map(x => ({...x.meal, consumedWeight: x.consumed_weight, totalWeight: x.total_weight}))
+    let __ingredients = _ingredients.map(x => {
+        return {...x, meal_ingredients: x.meal_ingredients.map(z => ({...z,consumed_weight: x.consumedWeight, total_weight: x.totalWeight}))}
+    })
+    let ingredients=__ingredients.flatMap(x => x.meal_ingredients)
+    const caloriesFromFoodAndMeals = food_progress.reduce((prev, c) => prev + (c.calories || 0), 0) + ingredients.reduce((prev, curr) => prev + (curr.calories || 0) * ((curr.consumed_weight || 1) / (curr.total_weight || 1)), 0)
+    const proteinFromFoodAndMeals = food_progress.reduce((prev, c) => prev + (c.protein || 0), 0) + ingredients.reduce((prev, curr) => prev + (curr.protein || 0) * ((curr.consumed_weight || 1) / (curr.total_weight || 1)), 0)
+    const carbsFromFoodAndMeals = food_progress.reduce((prev, c) => prev + (c.carbs || 0), 0) + ingredients.reduce((prev, curr) => prev + (curr.carbs || 0) * ((curr.consumed_weight || 1) / (curr.total_weight || 1)), 0)
+    const fatFromFoodAndMeals = food_progress.reduce((prev, c) => prev + (c.fat || 0), 0) + ingredients.reduce((prev, curr) => prev + (curr.fat || 0) * ((curr.consumed_weight || 1) / (curr.total_weight || 1)), 0)
   
     const navigator = useNavigation()
 
-    const totalProteinGrams = proteinGoal || (totalCalories * 0.4) / 4
-    const totalFatGrams = fatGoal || (totalCalories * 0.3) / 9
-    const totalCarbsGrams = carbGoal || (totalCalories * 0.3) / 4
+    const totalProteinGrams = profile?.proteinLimit || (totalCalories * 0.4) / 4
+    const totalFatGrams = profile?.fatLimit || (totalCalories * 0.3) / 9
+    const totalCarbsGrams = profile?.carbLimit || (totalCalories * 0.3) / 4
     const cpRef = React.useRef<AnimatedCircularProgress | null>(null)
     const proteinRef = React.useRef<AnimatedCircularProgress | null>(null)
     const carbsRef = React.useRef<AnimatedCircularProgress | null>(null)
@@ -54,7 +52,7 @@ export default function SummaryFoodList() {
             <ScrollView style={tw`px-4 mt-4`} showsVerticalScrollIndicator={false}>
                 <View card style={[tw`w-12/12 h-90 shadow-xl rounded-lg items-center justify-evenly`]}>
                     <Text style={tw`text-lg mt-3`} weight='semibold'>Daily Macros</Text>
-                    {presetMacros && <Text style={tw`text-gray-500`} weight='semibold'>{presetMacros} Diet</Text>}
+                    {/* {presetMacros && <Text style={tw`text-gray-500`} weight='semibold'>{presetMacros} Diet</Text>} */}
                     <AnimatedCircularProgress
                         size={170}
                         width={6}
@@ -183,7 +181,7 @@ export default function SummaryFoodList() {
                             <TouchableOpacity onPress={() => {
                                 const screen = getMatchingNavigationScreen('FoodDetail', navigator)
                                 //@ts-ignore
-                                navigator.navigate(screen, { id: ingr.id, editable: true, src: 'backend', progressId: progressId, img: ingr.img })
+                                navigator.navigate(screen, { id: ingr.food_id, progressId: ingr.id, img: ingr.img })
                             }} style={tw`flex-row items-center`}>
                                 {ingr.food.image && <SupabaseImage uri={ingr.food.image} style='items-center justify-center h-12 w-12 rounded-lg' />}
                                 {(!ingr.food.image) && <View style={[tw`items-center h-12 w-12 rounded-lg justify-center ${dm ? 'bg-gray-400' : 'bg-gray-200'}`]}>
@@ -193,10 +191,10 @@ export default function SummaryFoodList() {
                                 <View style={tw`ml-2 max-w-10/12`}>
                                     <Text weight='semibold' style={tw`mb-1`}>{ingr.food.name}</Text>
                                     <View style={tw`flex-row items-center`}>
-                                        <Text style={tw`pr-2 text-gray-500`}>{(ingr.food.calories || 0).toFixed()}kcal</Text>
-                                        <Text style={tw`px-2 text-gray-500`}>P: {(ingr.food.protein || 0).toFixed()}g</Text>
-                                        <Text style={tw`px-2 text-gray-500`}>C: {(ingr.food.carbs || 0).toFixed()}g</Text>
-                                        <Text style={tw`px-2 text-gray-500`}>F: {(ingr.food.fat || 0).toFixed()}g</Text>
+                                        <Text style={tw`pr-2 text-gray-500`}>{(ingr.calories || 0).toFixed()}kcal</Text>
+                                        <Text style={tw`px-2 text-gray-500`}>P: {(ingr.protein || 0).toFixed()}g</Text>
+                                        <Text style={tw`px-2 text-gray-500`}>C: {(ingr.carbs || 0).toFixed()}g</Text>
+                                        <Text style={tw`px-2 text-gray-500`}>F: {(ingr.fat || 0).toFixed()}g</Text>
                                     </View>
                                 </View>
                             </TouchableOpacity>
@@ -234,16 +232,16 @@ export default function SummaryFoodList() {
                             <TouchableOpacity onPress={() => {
                                 const screen = getMatchingNavigationScreen('MealDetail', navigator)
                                 //@ts-ignore
-                                navigator.navigate(screen, { id: ingr.meal_id, editable: false, idFromProgress: ingr.mealProgressID })
+                                navigator.navigate(screen, { id: ingr.meal_id, editable: false, idFromProgress: ingr.id })
                             }} style={tw`flex-row items-center`}>
                                 <SupabaseImage uri={ingr.meal.preview || defaultImage} style={`items-center justify-center h-12 w-12 rounded-lg`} />
                                 <View style={tw`ml-2 max-w-9/12`}>
                                     <Text weight='semibold'>{ingr.meal.name}</Text>
                                     <View style={tw`flex-row items-center`}>
-                                        <Text style={tw`pr-2 text-gray-500`}>{r.calories}kcal</Text>
-                                        <Text style={tw`px-2 text-gray-500`}>P: {r.protein.toFixed()}g</Text>
-                                        <Text style={tw`px-2 text-gray-500`}>C: {r.carbs.toFixed()}g</Text>
-                                        <Text style={tw`px-2 text-gray-500`}>F: {r.fat.toFixed()}g</Text>
+                                        <Text style={tw`pr-2 text-gray-500`}>{(r.calories * ((ingr.consumed_weight || 1) / (ingr.total_weight || 1))).toFixed()}kcal</Text>
+                                        <Text style={tw`px-2 text-gray-500`}>P: {(r.protein * ((ingr.consumed_weight || 1) / (ingr.total_weight || 1))).toFixed()}g</Text>
+                                        <Text style={tw`px-2 text-gray-500`}>C: {(r.carbs * ((ingr.consumed_weight || 1) / (ingr.total_weight || 1))).toFixed()}g</Text>
+                                        <Text style={tw`px-2 text-gray-500`}>F: {(r.fat * ((ingr.consumed_weight || 1) / (ingr.total_weight || 1))).toFixed()}g</Text>
                                     </View>
                                 </View>
                             </TouchableOpacity>

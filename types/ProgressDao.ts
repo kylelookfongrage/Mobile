@@ -37,11 +37,13 @@ export function ProgressDao(listen=true){
         }
         let workoutRes = await supabase.from('workout_play').select('*, workout(*, user(*))').filter('date', 'eq', today.date)
         if (workoutRes.data) {setWorkoutProgress(workoutRes.data)}
+        let runRes=await supabase.from('run_progress').select('*').filter('progress_id', 'eq', today.id)
+        if (runRes.data) {setRunProgress(runRes.data)}
     }
     const saveProgress = async <T extends keyof Tables>(table: T, payload: Tables[T]['Insert']): Promise<Tables[T]['Insert'] | null> => {
         if (!today) return null;
-        let res = await dao.save(table, {...payload, progress_id: today.id})
-        await dao.update('progress', today.id, {points: (today.points || 0) + 1})
+        let res = payload.id ? await dao.update(table, payload.id, {...payload, progress_id: today.id}) : await dao.save(table, {...payload, progress_id: today.id})
+        await log()
         return (res || null)
     }
 
@@ -106,7 +108,7 @@ export function ProgressDao(listen=true){
                 setToday(res[0])
             } else {
                 console.log('saving progress for ' + AWSDate)
-                let newProgress = await dao.save('progress', {date: AWSDate, metric: profile.metric})
+                let newProgress = await dao.save('progress', {date: AWSDate, metric: profile.metric, user_id: profile.id})
                 //@ts-ignore
                 setToday(newProgress)
             }

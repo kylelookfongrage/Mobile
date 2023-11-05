@@ -29,7 +29,7 @@ export default function Calendar() {
     const dm = useColorScheme() === 'dark'
     return (
         <View style={{flex: 1}} includeBackground>
-            <BackButton />
+            <BackButton name='My Agenda' />
             <CalendarList
                 // Callback which gets executed when visible months change in scroll view. Default = undefined
                 // Max amount of months allowed to scroll to the past. Default = 50
@@ -41,7 +41,7 @@ export default function Calendar() {
                 hideExtraDays={true}
                 hideArrows={false}
                 style={tw``}
-                theme={{ calendarBackground: 'transparent', dayTextColor: dm ? 'white' : 'black', monthTextColor: dm ? 'white' : 'black' }}
+                theme={{ calendarBackground: 'transparent', dayTextColor: dm ? 'white' : 'black', monthTextColor: dm ? 'white' : 'black', arrowColor: 'gray' }}
                 // date={markedDate}
                 horizontal={true}
                 // Enable paging on horizontal, default = false
@@ -51,7 +51,7 @@ export default function Calendar() {
                     [markedDate]: {
                         customStyles: {
                             container: {
-                                backgroundColor: 'green'
+                                backgroundColor: 'red'
                             },
                             text: {
                                 color: 'white',

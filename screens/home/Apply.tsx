@@ -15,7 +15,6 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { useNavigation } from '@react-navigation/native'
 import { Env } from '../../env'
 import { ExpoIcon } from '../../components/base/ExpoIcon'
-import { useProgressValues } from '../../hooks/useProgressValues'
 
 const Stack = createNativeStackNavigator()
 export default function CreatorHub() {
@@ -225,7 +224,7 @@ function CreatorScreen() {
     setWorkouts(workoutsWithData)
     setMeals(mealsWithData)
   }
-  const {creatorTerms} = useProgressValues({metrics: true})
+  const {creatorTerms} = {creatorTerms: false}
   const outstandingPayoutAmount = outstandingPayouts.reduce((prev, curr) => prev + (curr.amount || 0), 0)
 
   React.useEffect(() => {

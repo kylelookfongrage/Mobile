@@ -3,13 +3,10 @@
  * https://docs.expo.io/guides/color-schemes/
  */
 
-import { Storage } from 'aws-amplify';
-import { useEffect, useState } from 'react';
 import { Text as DefaultText, View as DefaultView, Image as DefaultImage} from 'react-native';
 import { SafeAreaView as DefaultSafeAreaView } from 'react-native-safe-area-context';
 
 import Colors from '../../constants/Colors';
-import { isStorageUri } from '../../data';
 import useColorScheme from '../../hooks/useColorScheme';
 import tw from 'twrnc'
 
@@ -42,7 +39,7 @@ interface HeadlingProps {
 
 
 export type TextProps = ThemeProps & DefaultText['props'] & WeightProps & HeadlingProps ;
-export type ViewProps = ThemeProps & DefaultView['props'] & {card?: boolean};
+export type ViewProps = ThemeProps & DefaultView['props'] & {card?: boolean, translucent?: boolean};
 export type ImageProps = ThemeProps & DefaultImage['props']
 
 export function Text(props: TextProps) {
@@ -98,8 +95,11 @@ export function View(props: ViewProps2) {
   if (props.card) {
     backgroundColor = dm ? Colors.dark.card : Colors.light.card
   }
+  if (props.translucent) {
+    backgroundColor += '99'
+  }
 
-  return <DefaultView style={[{ backgroundColor }, style]} {...otherProps} />;
+  return <DefaultView style={[{ backgroundColor: backgroundColor }, style]} {...otherProps} />;
 }
 
 

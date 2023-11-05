@@ -1,30 +1,19 @@
-import { ScrollView, TextInput, TouchableOpacity, Image, Alert, Dimensions } from 'react-native'
-import React, { useEffect, useRef, useState } from 'react'
+import { TextInput, TouchableOpacity } from 'react-native'
+import React, { useState } from 'react'
 import { Text, View } from '../../components/base/Themed'
-import { SafeAreaView } from 'react-native-safe-area-context';
 //@ts-ignore
 import { v4 as uuidv4 } from 'uuid';
 import tw from 'twrnc'
 import useColorScheme from '../../hooks/useColorScheme';
-import { ExpoIcon } from '../../components/base/ExpoIcon';
 import { useNavigation } from '@react-navigation/native';
-import { healthLabelMapping, NewFoodItemData, NutritionInfo } from './FoodDetail';
-import { ActivityIndicator, Divider, ProgressBar, Switch } from 'react-native-paper';
-import { defaultImage, getMacrosFromIngredients, getMatchingNavigationScreen, isStorageUri, MediaType, uploadMedias, validate } from '../../data';
-import { Category } from '../../types/Media';
+import { defaultImage, getMacrosFromIngredients, getMatchingNavigationScreen, MediaType, validate } from '../../data';
 import { ImagePickerView } from '../../components/inputs/ImagePickerView';
 import { ErrorMessage } from '../../components/base/ErrorMessage';
-import { Auth, DataStore, Storage } from 'aws-amplify';
-import { Meal, Ingredient, User, MealProgress, PantryItem, Favorite, FavoriteType } from '../../aws/models';
 import { useCommonAWSIds } from '../../hooks/useCommonContext';
 import { BackButton } from '../../components/base/BackButton';
-import { useDateContext } from '../home/Calendar';
-import AllergenAlert from '../../components/features/AllergenAlert';
-import { DeleteButton, EditModeButton, ShareButton, ShowMoreButton, ShowMoreDialogue, ShowUserButton } from '../home/ShowMore';
-import { BadgeType, useBadges } from '../../hooks/useBadges';
-import * as VT from 'expo-video-thumbnails'
+import { DeleteButton, EditModeButton, ShareButton, ShowMoreDialogue, ShowUserButton } from '../home/ShowMore';
+import { useBadges } from '../../hooks/useBadges';
 import ScrollViewWithDrag from '../../components/screens/ScrollViewWithDrag';
-import Reviews from '../../components/features/Reviews';
 import { FormReducer, useForm } from '../../hooks/useForm';
 import { Tables } from '../../supabase/dao';
 import TitleInput from '../../components/inputs/TitleInput';
@@ -32,16 +21,16 @@ import SaveButton from '../../components/base/SaveButton';
 import Spacer from '../../components/base/Spacer';
 import UsernameDisplay from '../../components/features/UsernameDisplay';
 import ManageButton from '../../components/features/ManageButton';
-import { IngredientAdditions, useMultiPartForm } from '../../hooks/useMultipartForm';
+import { IngredientAdditions, PlanAdditions, useMultiPartForm } from '../../hooks/useMultipartForm';
 import SwipeWithDelete from '../../components/base/SwipeWithDelete';
-import { useStorage } from '../../supabase/storage';
 import { MealDao } from '../../types/MealDao';
 import SupabaseImage from '../../components/base/SupabaseImage';
-import BarProgress from '../../components/base/BarProgress';
 import MacronutrientBar from '../../components/features/MacronutrientBar';
 import useOnLeaveScreen from '../../hooks/useOnLeaveScreen';
 import { ProgressDao } from '../../types/ProgressDao';
 import Overlay from '../../components/screens/Overlay';
+import { supabase } from '../../supabase';
+import QuantitySelect from '../../components/inputs/QuantitySelect';
 
 
 export interface MealDetailProps {
@@ -49,15 +38,12 @@ export interface MealDetailProps {
     editable: boolean;
     grocery?: boolean;
     idFromProgress?: string;
-}
-
-interface IngredientDisplay extends Ingredient {
-    userIsAllergic?: boolean;
+    planId?: string;
+    dow?: number
 }
 
 export default function MealDetailScreen(props: MealDetailProps) {
-    const { id, editable, idFromProgress } = props;
-    const { userId, sub, progressId, username, subscribed, profile } = useCommonAWSIds()
+    const { profile } = useCommonAWSIds()
     let MealForm = useForm<Tables['meal']['Insert']>({
         ai: false,
         description: '',
@@ -100,12 +86,16 @@ export default function MealDetailScreen(props: MealDetailProps) {
         showLogProgress: false
     })
     let [screen, setScreen] = [ScreenForm.state, ScreenForm.setForm]
-    const { AWSDate } = useDateContext();
+    let ProgressForm = useForm<Tables['meal_progress']['Insert']>({ consumed_weight: null, servingSize: null, total_weight: null }, async () => {
+        if (props.idFromProgress && Number(props.idFromProgress)) {
+            let res = await supabase.from('meal_progress').select('*').filter('id', 'eq', Number(props.idFromProgress)).maybeSingle()
+            return res?.data
+        }
+        return null
+    })
+    let [consumed, setConsumed] = [ProgressForm.state, ProgressForm.setForm]
     const [imageSource, setImageSource] = React.useState<MediaType[]>([])
-    const [author, setAuthor] = React.useState<string>(props.editable === true ? '' : '')
-    const [name, setName] = React.useState<string>('')
     const canViewDetails = !props.id || form.user_id === profile?.id || !form.price || false // if user purchased meal or subscribed to user
-    const [mealId, setMealId] = React.useState(id)
     const dm = useColorScheme() === 'dark'
     let pdao = ProgressDao(false)
     const { logProgress } = useBadges(false)
@@ -122,6 +112,7 @@ export default function MealDetailScreen(props: MealDetailProps) {
         await dao.remove(Number(props.id))
         navigator.pop()
     }
+
 
 
     const saveMeal = async () => {
@@ -156,6 +147,11 @@ export default function MealDetailScreen(props: MealDetailProps) {
         } else if (canViewDetails) {
             if (props.grocery) { // add to grocery list
 
+            } else if (props.planId) {
+                let c = ingrs.data['plans']?.[props.planId] || []
+                let copy: PlanAdditions[] = [...c, { meal_id: form.id, name: form.name || '', image: form.preview || defaultImage, day_of_week: props.dow || 0, id: -(c.length + 1) }]
+                ingrs.upsert('plans', props.planId, copy)
+                navigator.pop()
             } else { // add to progress
                 let meal_id = form.id
                 if (ingrs.data.edited[uuid] === true) { // make new meal & ingredients, linking old meal to new, then log progress
@@ -167,18 +163,23 @@ export default function MealDetailScreen(props: MealDetailProps) {
                         meal_id = res.id
                     }
                 }
-                await pdao.saveProgress('meal_progress', { meal_id, progress_id: null })
+                await pdao.saveProgress('meal_progress', {
+                    meal_id,
+                    progress_id: null,
+                    total_weight: consumed.total_weight,
+                    consumed_weight: consumed.consumed_weight,
+                    servingSize: consumed.servingSize,
+                    id: Number(props.idFromProgress) || undefined
+                })
                 navigator.pop()
             }
 
         } else { // redirect to subscription page
             navigator.navigate('Subscription')
         }
-
     }
 
-
-    const firstImage = imageSource.filter(x => x.type === 'image')
+    let fx = (consumed.consumed_weight || 1) / (consumed.total_weight || 1)
 
     return (
         <View style={{ flex: 1 }} includeBackground>
@@ -186,15 +187,15 @@ export default function MealDetailScreen(props: MealDetailProps) {
             {/* @ts-ignore */}
             <ScrollViewWithDrag rerenderTopView={[screen.editMode, (imageSource || [])]} TopView={() => <View>
                 <BackButton inplace Right={() => {
-                    if (screen.editMode || !id || !Number(id)) return <View />
-                    return <ShowMoreDialogue meal_id={Number(id)} options={[
-                        EditModeButton(screen.editMode, () => setScreen('editMode', !screen.editMode)),
-                        DeleteButton('Meal', deleteMeal),
-                        ShowUserButton(form.user_id, navigator),
-                        ShareButton({meal_id: Number(id)})
+                    if (screen.editMode || !props.id || !Number(props.id) || props.idFromProgress || props.planId) return <View />
+                    return <ShowMoreDialogue meal_id={Number(props.id)} options={[
+                        EditModeButton(screen.editMode, () => setScreen('editMode', !screen.editMode), form.user_id, profile?.id),
+                        DeleteButton('Meal', deleteMeal, form.user_id, profile?.id),
+                        // ShowUserButton(form.user_id, navigator),
+                        ShareButton({ meal_id: Number(props.id) })
                     ]} />
                 }} />
-                <ImagePickerView editable={screen.editMode} srcs={canViewDetails ? imageSource : imageSource.filter(x => x.type === 'image')} onChange={x => {
+                <ImagePickerView editable={screen.editMode} srcs={canViewDetails ? [{ type: 'image', uri: form.preview || defaultImage }] : imageSource.filter(x => x.type === 'image')} onChange={x => {
                     setImageSource(x)
                 }} type='all' />
             </View>} style={{ flex: 1, }} showsVerticalScrollIndicator={false}>
@@ -207,8 +208,8 @@ export default function MealDetailScreen(props: MealDetailProps) {
                         onChangeText={x => setForm('name', x)}
                         placeholder='My Meal'
                     />
-                    <Spacer sm />
-                    <UsernameDisplay disabled={(!screen.editMode || screen.uploading)} id={form.user_id} username={form.id ? null : profile?.username} />
+                    <Spacer />
+                    <UsernameDisplay image disabled={(screen.editMode || screen.uploading || (props.idFromProgress ? true : false))} id={form.user_id} username={form.id ? null : profile?.username} />
                     {/* @ts-ignore */}
                     <Spacer />
                     <TextInput
@@ -221,13 +222,28 @@ export default function MealDetailScreen(props: MealDetailProps) {
                         placeholderTextColor={'gray'}
                         style={tw`max-w-10/12 text-${dm ? 'white' : 'black'}`}
                     />
+
                     <Spacer divider />
+                    {(canViewDetails && props.id && !props.planId) && <View>
+                        <Text h3>Log Meal Details</Text>
+                        <Spacer />
+                        <QuantitySelect initialServingSize={consumed.servingSize} qty={consumed.consumed_weight} onQuantityChange={(x, y) => {
+                            setConsumed('consumed_weight', x)
+                            setConsumed('servingSize', y)
+                        }} title='Consumed' />
+                        <Spacer />
+                        {((consumed.servingSize && consumed.consumed_weight) ?
+                            <QuantitySelect selectedServingSize={consumed.servingSize} qty={consumed.total_weight} onQuantityChange={(x, y) => setConsumed('total_weight', x)} title='Total Servings' />
+                            : <View />)
+                        }
+                        <Spacer divider />
+                    </View>}
                     <View>
                         <Text h3>Macros</Text>
-                        <MacronutrientBar protein weight={protein || 0} totalEnergy={calories || 1} />
-                        <MacronutrientBar carbs weight={carbs || 0} totalEnergy={calories || 1} />
-                        <MacronutrientBar fat weight={fat || 0} totalEnergy={calories || 1} />
-
+                        <MacronutrientBar protein weight={(protein * fx) || 0} totalEnergy={(calories * fx) || 1} />
+                        <MacronutrientBar carbs weight={(carbs * fx) || 0} totalEnergy={(calories * fx) || 1} />
+                        <MacronutrientBar fat weight={(fat * fx) || 0} totalEnergy={(calories * fx) || 1} />
+                        <MacronutrientBar calories weight={(calories * fx) || 0} totalEnergy={(calories * fx) || 1} />
                         <Spacer divider />
                     </View>
                     <ManageButton title='Ingredients' buttonText='Add New' hidden={!screen.editMode} onPress={() => {
@@ -239,12 +255,13 @@ export default function MealDetailScreen(props: MealDetailProps) {
                     }} />
                     <Spacer sm />
                     {(ingredients).map((ingr, i) => {
-                        return <SwipeWithDelete onDelete={() => {
+                        return <SwipeWithDelete disabled={!screen.editMode} onDelete={() => {
                             let copy = [...ingredients]
                             copy.splice(i, 1)
                             ingrs.upsert('meals', uuid, copy)
                         }} key={`${ingr.food_id} - ${i}`}>
-                            <TouchableOpacity onPress={() => {
+                            <TouchableOpacity disabled={!screen.editMode} onPress={() => {
+                                if (!screen.editMode) return
                                 const s = getMatchingNavigationScreen('FoodDetail', navigator)
                                 //@ts-ignore
                                 navigator.navigate(s, { id: ingr.tempId, mealId: uuid, src: 'edit' })
@@ -306,7 +323,7 @@ export default function MealDetailScreen(props: MealDetailProps) {
             <Overlay visible={screen.showLogProgress} onDismiss={() => setScreen('showLogProgress', false)}>
 
             </Overlay>
-            <SaveButton favoriteId={form.id} title={screen.editMode ? 'Save Meal' : (canViewDetails ? (false ? 'Save to Plan' : 'Log Meal') : 'Purchase Meal')} favoriteType='meal' uploading={screen.uploading} onSave={saveMeal} />
+            <SaveButton favoriteId={form.id} title={screen.editMode ? 'Save Meal' : (canViewDetails ? (props.planId ? 'Save to Plan' : (props.idFromProgress ? 'Update Progress' : 'Log Meal')) : 'Purchase Meal')} favoriteType='meal' uploading={screen.uploading} onSave={saveMeal} />
         </View>
     )
 }

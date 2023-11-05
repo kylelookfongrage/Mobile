@@ -13,7 +13,7 @@ export function ExerciseDao() {
         let { preview, video } = await storage.uploadWithPreview(exercise.video, exercise.preview, originalVideo, originalPreview)
         copiedDocument['preview'] = preview;
         copiedDocument['video'] = video
-        return exercise.id ? await dao.update('exercise', exercise.id, copiedDocument) : await dao.save('exercise', copiedDocument)
+        return copiedDocument.id ? await dao.update('exercise', copiedDocument.id, copiedDocument) : await dao.save('exercise', copiedDocument)
     }
     const saveEquiptment = async (exercise: Tables['exercise']['Row'], equiptment: Tables['equiptment']['Row'][]) => {
         await supabase.from('exercise_equiptment').delete().filter('exercise_id', 'eq', exercise.id).filter('equiptment_id', 'in', equiptment.map(x => x.id))
@@ -37,17 +37,19 @@ export function ExerciseDao() {
         return data?.data || null
     }
 
-    const exercise_progress = async (id: Tables['exercise']['Row']['id'], user_id: Tables['user']['Row']['id'] | null | undefined): Promise<{ [k: string]: ChartMapping } | null> => {
+    const exercise_progress = async (id: Tables['exercise']['Row']['id'], user_id: Tables['user']['Row']['id'] | null | undefined): Promise<[{[k: string]: ChartMapping}, boolean] | null> => {
         if (!id || !user_id) return null;
         let now = moment().utc()
         let dateStart = now.subtract(60, 'days')
         let res = await supabase.from('workout_play_details').select('*').match({ 'user_id': user_id, 'exercise_id': id }).filter('created_at', 'gte', dateStart.format())
         let sets: Tables['workout_play_details']['Row'][] | null = res.data || null
+        let metric = false
         if (!sets) return sets;
         let dateMapping: { [k: string]: ChartMapping } = {}
         for (var wo of sets) {
             let woDate = moment(wo.created_at).utc().format('L')
             let data = dateMapping[woDate]
+            if (wo.metric) metric=true;
             dateMapping[woDate] = {
                 secs: Math.max((data?.secs || 0), (wo.time || 0)),
                 weight: Math.max((data?.weight || 0), (wo.weight || 0)),
@@ -55,8 +57,11 @@ export function ExerciseDao() {
                 date: woDate
             }
         }
-        return dateMapping
+        return [dateMapping, metric]
+    }
+    const remove = async (id: Tables['exercise']['Row']['id']) => {
+        await dao.remove('exercise', id)
     }
 
-    return { find, save, saveEquiptment, search, exercise_progress }
+    return { find, save, saveEquiptment, search, exercise_progress, remove }
 }

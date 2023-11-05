@@ -1,26 +1,24 @@
-import { TouchableOpacity, useColorScheme } from 'react-native'
+import { TouchableOpacity } from 'react-native'
 import React from 'react'
 import { Text, View } from '../../components/base/Themed'
 import { BackButton } from '../../components/base/BackButton'
 import { useNavigation } from '@react-navigation/native'
 import { AppSetting } from './Settings'
-import { Auth } from 'aws-amplify'
 import tw from 'twrnc'
 import { ExpoIcon } from '../../components/base/ExpoIcon'
 import { useCommonAWSIds } from '../../hooks/useCommonContext'
 import { useSignOut } from '../../supabase/auth'
+import SaveButton from '../../components/base/SaveButton'
 
 export default function Account() {
     const navigator = useNavigation()
-    const {setUserId, signedInWithEmail, setUsername, setSub, setSubscribed, setHasSubscribedBefore, setStatus, setSignedInWithEmail, setUser, setProfile} = useCommonAWSIds()
+    const {setUserId, signedInWithEmail, setUsername, setSub, setSubscribed, setHasSubscribedBefore, setStatus, setSignedInWithEmail, setUser, setProfile, profile} = useCommonAWSIds()
     let a = useSignOut()
-    const dm = useColorScheme() === 'dark'
-    const emailSettings = signedInWithEmail ?  [{ title: 'Change Password', icon: 'lock', screen: 'ChangePassword' },
-    { title: 'Update Email Address', icon: 'mail', screen: 'UpdateEmail' },] : []
+    let emailSettings = signedInWithEmail ?  [{ title: 'Update Email Address', icon: 'mail', screen: 'UpdateEmail' }] : []
     const settings: AppSetting[] = [
-        {title: 'Edit Bio', icon: 'paperclip', screen:'UserBio' },
+        {title: 'Edit Bio', icon: 'edit', screen:'UserBio' },
         ...emailSettings,
-        { title: 'Delete Account', icon: 'trash', screen: 'DeleteAccount' },
+        { title: 'Delete Account', icon: 'user-x', screen: 'DeleteAccount' },
     ]
     return (
         <View includeBackground style={{flex: 1}}>
@@ -40,7 +38,9 @@ export default function Account() {
                     <ExpoIcon name='chevron-right' iconName={'feather'} size={15} color='gray' />
                 </TouchableOpacity>
             })}
-                <TouchableOpacity onPress={async () => {
+                
+            </View>
+            <SaveButton safeArea title='Sign Out' onSave={async () => {
                     await a.signOut()
                     setUserId('');
                     setUsername('')
@@ -52,10 +52,7 @@ export default function Account() {
                     setStatus({pt: false, fp: false}) 
                     setSignedInWithEmail(false)
                     // navigator.navigate('GetStarted')
-                }} style={tw`mt-9 items-center justify-center mx-6 bg-red-${dm ? '700' : '500'} p-3 rounded-lg`}>
-                    <Text>Sign Out</Text>
-                </TouchableOpacity>
-            </View>
+                }} />
         </View>
     )
 }

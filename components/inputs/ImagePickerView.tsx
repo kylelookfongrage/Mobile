@@ -8,17 +8,14 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as ImagePicker from 'expo-image-picker'
 import React, { useRef, useState } from 'react';
-import { Dimensions, SafeAreaView, TouchableOpacity, useColorScheme, View, Image, StyleSheet, FlatList, Platform } from 'react-native';
+import { Dimensions, TouchableOpacity, useColorScheme, View, Image, StyleSheet, Platform } from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
 import { useNavigation } from '@react-navigation/native';
-import { DefaultVideoPlayer, Video } from '../base/Video';
+import { Video } from '../base/Video';
 import { ExpoIcon } from '../base/ExpoIcon';
 import tw from 'twrnc'
 import { Text } from '../base/Themed';
-import { Storage } from 'aws-amplify';
 import { MediaType, defaultImage, isStorageUri } from '../../data';
-import { ResizeMode } from 'expo-av';
-import VideoPlayer from 'expo-video-player'
 import { useStorage } from '../../supabase/storage';
 import { ActionSheet } from 'react-native-ui-lib';
 

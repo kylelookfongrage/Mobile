@@ -5,15 +5,16 @@ import tw from 'twrnc'
 import MapView, { Marker, Polyline } from 'react-native-maps'
 import { defaultRunTypes, getTotalDistance, toHHMMSS } from '../../data'
 import { RunProgress } from '../../aws/models'
+import { Tables } from '../../supabase/dao'
 
-export default function RunListComponent(props: {run: RunProgress; onPress?: (run: RunProgress) => void; canScroll: boolean;}) {
+export default function RunListComponent(props: {run: Tables['run_progress']['Row']; onPress?: (run: Tables['run_progress']['Row']) => void; canScroll?: boolean;}) {
     let {run} = props;
     const relevantCoordinates = run?.coordinates
     let lastRunCoordinates = relevantCoordinates?.[relevantCoordinates.length - 1] || {lat: 0, long: 0};
-    const runTypeMapping = defaultRunTypes.filter(x => x.name === run?.runType)?.[0] || defaultRunTypes[0]
+    const runTypeMapping = defaultRunTypes.filter(x => x.name === run?.type)?.[0] || defaultRunTypes[0]
     if (!run) return <View />
   return (
-    <TouchableOpacity onPress={() => {
+    <TouchableOpacity disabled={props.canScroll} onPress={() => {
         props.onPress && props.onPress(props.run)
     }} style={tw`flex-row items-center justify-center`}>
             <MapView
@@ -36,7 +37,7 @@ export default function RunListComponent(props: {run: RunProgress; onPress?: (ru
                     <Polyline coordinates={run?.coordinates?.map(x => ({ latitude: x.lat, longitude: x.long }))} strokeWidth={2} strokeColor={'red'} />
               </MapView>
               <View style={[{height: Dimensions.get('screen').height * 0.20}, tw`w-4/12 pl-6 rounded justify-center`]}>
-                <Text style={tw`text-lg`} weight='bold'>{toHHMMSS(run.totalTime || 0)}</Text>
+                <Text style={tw`text-lg`} weight='bold'>{toHHMMSS(run.time || 0)}</Text>
                 <Text style={tw`text-gray-500`}>Total Time</Text>
                  {/* @ts-ignore */}
                 <Text style={tw`text-lg mt-4`} weight='bold'>{getTotalDistance(run.coordinates || [])}{<Text style={tw`text-xs`} weight='bold'> miles</Text>}</Text>

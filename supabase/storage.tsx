@@ -18,6 +18,7 @@ export function useStorage() {
     const storage = supabase.storage
     const [uploading, setUploading] = useState<boolean>(false)
     const upload = async (media: MediaType, bucket = BucketIds.public, setUpload=false) => {
+        console.log(media)
         if (isStorageUri(media.uri)) return media;
         if (setUpload) {
             setUploading(true)
@@ -27,6 +28,7 @@ export function useStorage() {
         const extension = splits[splits.length - 1]
         console.log(media.supabaseID + ': Original ID being uploaded')
         const fileName = media.supabaseID ? media.supabaseID : randomUUID() + '.' + extension
+        console.log(fileName)
         let ext = uri.substring(uri.lastIndexOf('.') + 1)
         let formData = new FormData()
         //@ts-ignore
@@ -57,13 +59,16 @@ export function useStorage() {
     const uploadWithPreview = async (video: string | null | undefined, preview: string | null | undefined, originalVideoId: string | undefined=undefined, originalPreviewId: string | undefined=undefined): Promise<{video: string | null | undefined; preview: string | null | undefined}> => {
         let uri = video;
         let previewUri = preview || defaultImage
-        if (video) {
+        console.log('settting video')
+        if (video && !isStorageUri(video)) {
+            console.log('getting vt')
             if (isStorageUri(video)) uri = constructUrl(video)?.data?.publicUrl
             let {uri: thumbnail} = await VT.getThumbnailAsync(video, {time: 0, quality: 0.7})
             previewUri = (await upload({type: 'image', uri: thumbnail, supabaseID: originalPreviewId}))?.uri
             uri = (await upload({type: 'video', uri: video, supabaseID: originalVideoId}))?.uri
-        } else if (preview) {
-            if (!isStorageUri(preview)) previewUri = (await upload({type: 'image', uri: preview, supabaseID: originalPreviewId}))?.uri
+        } else if (preview && !isStorageUri(preview)) {
+            console.log('uploading preview')
+            previewUri = (await upload({type: 'image', uri: preview, supabaseID: originalPreviewId}))?.uri
         }
         return {preview: previewUri, video: uri}
     }

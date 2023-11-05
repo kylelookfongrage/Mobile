@@ -6,16 +6,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import { animationMapping } from '../../data'
 import AnimatedLottieView from 'lottie-react-native'
-import { useProgressValues } from '../../hooks/useProgressValues'
-import { DataStore } from 'aws-amplify'
 import { useCommonAWSIds } from '../../hooks/useCommonContext'
-import { User } from '../../aws/models'
+import { UserQueries } from '../../types/UserDao'
 
 export default function SelectSprite() {
     const dm = useColorScheme() === 'dark'
-    const {selectedAnimation} = useProgressValues({metrics: true})
     const padding = useSafeAreaInsets()
-    const {userId} = useCommonAWSIds()
+    const {userId, profile, setProfile} = useCommonAWSIds()
+    let selectedAnimation = profile?.sprite
+    let dao = UserQueries(false)
     const [newAnimation, setNewAnimation] = useState<string | null>(null)
     const [uploading, setUploading] = useState<boolean>(false)
     useEffect(() => {
@@ -25,16 +24,10 @@ export default function SelectSprite() {
     }, [selectedAnimation])
     const onFinish = async () => {
         setUploading(true)
-        const user = await DataStore.query(User, userId)
-        if (!user) {
-            alert('There was a problem, please try again')
-            setUploading(false)
-            return;
-        }
+        if (!profile) return;
         try {
-            await DataStore.save(User.copyOf(user, x => {
-                x.selectedSprite=newAnimation
-            }))
+            let res = await dao.update_profile({sprite: newAnimation}, profile)
+            if (res) setProfile(res)
             //@ts-ignore
             navigator.pop()
         } catch (error) {

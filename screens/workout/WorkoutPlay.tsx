@@ -11,7 +11,6 @@ import { defaultImage, isStorageUri, toHHMMSS, animationMapping, WorkoutMode } f
 import { useCommonAWSIds } from '../../hooks/useCommonContext'
 import timer from '../../assets/animations/timer.json'
 import { useDateContext } from '../home/Calendar'
-import { useProgressValues } from '../../hooks/useProgressValues'
 import WorkoutPlayStatic from '../../components/screens/WorkoutPlayStatic'
 import WorkoutPlayMusic from '../../components/screens/WorkoutPlayMusic'
 import { Tables } from '../../supabase/dao'
@@ -91,7 +90,8 @@ export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
                             id: -(fetchedPlayDetails.length+i+1),
                             workout_id: detail.workout_id,
                             workout_play_id: null,
-                            workout_detail_id: detail.id
+                            workout_detail_id: detail.id,
+                            metric: profile?.metric
                         }
                         fetchedPlayDetails.push(newDetail)
                     }
@@ -106,7 +106,6 @@ export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
         }
         fetchDetails()
     }, [])
-
 
     React.useEffect(() => {
         if (!selectedWorkoutPlayDetail) return;
@@ -227,7 +226,8 @@ export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
             workout_detail_id: selectedWorkoutPlayDetail.workout_detail_id,
             user_id: selectedWorkoutPlayDetail.user_id,
             workout_play_id: selectedWorkoutPlayDetail.workout_play_id,
-            id: -workoutPlayDetails.length - 1
+            id: -workoutPlayDetails.length - 1,
+            metric: profile?.metric
         }
         setWorkoutPlayDetails([...workoutPlayDetails, newSet])
         setSelectedWorkoutPlayDetail(newSet)
@@ -259,7 +259,6 @@ export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
         paused, setPaused, totalTime, onResetPress, workoutPlayDetails, onNewSetPress, onFinishPress, animation: animationMapping.filter(x => x.name === selectedAnimation)?.[0]?.animation || timer,
         selectedWorkoutPlayDetail, setSelectedWorkoutPlayDetail, workoutDetails, forwardBackwardPress
     }
-    console.log(selectedWorkoutMode)
     if (selectedWorkoutMode == WorkoutMode.player) {
         return <WorkoutPlayMusic {...p} />
     }

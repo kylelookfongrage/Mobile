@@ -2,10 +2,14 @@
 const { getDefaultConfig } = require('expo/metro-config');
 const blacklist = require('metro-config/src/defaults/exclusionList');
 
-
-module.exports = {
-    ...getDefaultConfig(__dirname),
+module.exports = (() => {
+  const defaultConfig = getDefaultConfig(__dirname);
+  const {assetExts} = defaultConfig.resolver;
+  return {
     resolver: {
-    blacklistRE: blacklist([/#current-cloud-backend\/.*/]),
-  },
-};
+      blacklistRE: blacklist([/#current-cloud-backend\/.*/]),
+      // Add bin to assetExts
+      assetExts: [...assetExts, 'bin'],
+    }
+  };
+})();

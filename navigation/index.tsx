@@ -65,6 +65,7 @@ import ChatDetail from '../screens/workout/ChatDetail';
 import Setup from '../screens/onboarding/Setup';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import OnboardingComplete from '../screens/onboarding/OnboardingComplete';
+import VideoScreen from '../screens/other/VideoScreen';
 
 
 function RootNavigator() {
@@ -76,6 +77,9 @@ function RootNavigator() {
       <Stack.Screen name="NotFound" component={NotFoundScreen} options={{ title: 'Oops!' }} />
       <Stack.Screen name='Image' options={{ headerShown: false, presentation: 'containedModal' }}>
         {props => <ImageDetailView uris={props.route?.params?.uris} defaultIndex={props.route?.params?.defaultIndex} />}
+      </Stack.Screen>
+      <Stack.Screen name='Video' options={{ headerShown: false, presentation: 'containedModal' }}>
+        {props => <VideoScreen uri={props.route?.params?.uri}/>}
       </Stack.Screen>
       <Stack.Screen name='WorkoutPlay' options={{ headerShown: false, gestureEnabled: false }}>
         {(props) => <WorkoutPlayScreen {...props} id={props.route.params.id} workoutId={props.route?.params?.workoutId} />}

@@ -88,7 +88,7 @@ export function useStorage() {
         return {media: otherMedia, preview: previewUpload.uri}
     }
 
-    const constructUrl = (uri: string, options: any=undefined) => {
+    const constructUrl = (uri: string, options?: any) => {
         return storage.from(BucketIds.public).getPublicUrl(uri, options)
     }   
 

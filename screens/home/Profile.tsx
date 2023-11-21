@@ -189,7 +189,7 @@ export default function Profile(props: ProfileProps) {
                         navigator.push(screen, { id: meal.id })
                     }}
                     style={[tw`items-start mx-1`]}>
-                    <SupabaseImage uri={meal.preview || defaultImage} style={tw`h-20 w-20 rounded-lg mb-1`} resizeMode='cover' />
+                    <SupabaseImage uri={meal.preview || defaultImage} style={tw`h-20 w-20 rounded-lg mb-1`} />
                     <Text style={tw`text-xs max-w-20`} weight='semibold'>{substringForLists(meal.name || '')}</Text>
                 </TouchableOpacity>
                 })}
@@ -212,7 +212,7 @@ export default function Profile(props: ProfileProps) {
                             navigator.navigate(screen, { id: workout.id })
                         }}
                         style={[tw`items-start px-1`]}>
-                        <SupabaseImage uri={workout.image || defaultImage} style={tw`h-20 w-20 rounded-lg`} resizeMode='cover' />
+                        <SupabaseImage uri={workout.image || defaultImage} style={tw`h-20 w-20 rounded-lg`}  />
                         <Text style={tw`text-xs max-w-20`} weight='semibold'>{substringForLists(workout.name)}</Text>
                         {/* <Text>{r.calories} kcal</Text> */}
                     </TouchableOpacity>
@@ -237,7 +237,7 @@ export default function Profile(props: ProfileProps) {
                             navigator.navigate(screen, { id: exercise.id })
                         }}
                         style={[tw`items-start px-1`]}>
-                        <SupabaseImage uri={exercise.preview || defaultImage} style={tw`h-20 w-20 rounded-lg`} resizeMode='cover' />
+                        <SupabaseImage uri={exercise.preview || defaultImage} style={tw`h-20 w-20 rounded-lg`} />
                         <Text style={tw`text-xs max-w-20`} weight='semibold'>{substringForLists(exercise.name || '')}</Text>
                         {/* <Text>{r.calories} kcal</Text> */}
                     </TouchableOpacity>

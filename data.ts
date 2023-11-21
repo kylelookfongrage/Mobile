@@ -341,9 +341,10 @@ export const uploadMedias = async (imageSources: MediaType[]): Promise<MediaType
 }
 
 export const isStorageUri = (id: string): boolean => {
+    if (!id || typeof id !== 'string') return false;
     const re = /^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}\.[A-Za-z]{3}/
     const re2 = /^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}\.[A-Za-z]{4}/
-    if (id.match(re) !== null || id.match(re2) !== null) return true
+    if (id?.match(re) !== null || id?.match(re2) !== null) return true
     return false
 }
 

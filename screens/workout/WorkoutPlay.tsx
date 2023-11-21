@@ -16,6 +16,7 @@ import WorkoutPlayMusic from '../../components/screens/WorkoutPlayMusic'
 import { Tables } from '../../supabase/dao'
 import { WorkoutDao, WorkoutPlayDisplayProps } from '../../types/WorkoutDao'
 import { ProgressDao } from '../../types/ProgressDao'
+import WorkoutPlayTrainer from '../../components/screens/WorkoutPlayTrainer'
 
 interface WorkoutPlayProps {
     id?: string;
@@ -259,6 +260,7 @@ export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
         paused, setPaused, totalTime, onResetPress, workoutPlayDetails, onNewSetPress, onFinishPress, animation: animationMapping.filter(x => x.name === selectedAnimation)?.[0]?.animation || timer,
         selectedWorkoutPlayDetail, setSelectedWorkoutPlayDetail, workoutDetails, forwardBackwardPress
     }
+    return <WorkoutPlayTrainer {...p}/>
     if (selectedWorkoutMode == WorkoutMode.player) {
         return <WorkoutPlayMusic {...p} />
     }

@@ -22,7 +22,7 @@ export const BackButton = (props: BackButtonProps) => {
     const insets = useSafeAreaInsets().top
     const dm = useColorScheme() === 'dark';
     const navigator = useNavigation()
-    return <View style={[tw`flex-row items-center justify-between px-4 pb-2 w-12/12`, {paddingTop: insets, ...(props.inplace && {position: 'absolute', top: 0, zIndex: 1})}]}>
+    return <View style={[tw`flex-row items-center justify-between px-4 pb-2 w-12/12`, {paddingTop: insets, ...(props.inplace && {position: 'absolute', top: 0, zIndex: 100})}]}>
     <View style={tw`flex-row items-center`}>
     <TouchableOpacity
         onPress={() => {

@@ -39,7 +39,8 @@ export default function Settings() {
             // { title: 'Manage Allergies', icon: 'warning', iconName: 'ion', screen: 'Allergens' },
             { title: subscribed ? 'Subscribe or Remove Ads' : 'Manage Subscription', icon: 'tag', screen: 'Subscription' },
             { title: 'Help', icon: 'file-text', screen: 'Help', payload: { personal: true } },
-            { title: 'About', icon: 'info', screen: 'About', payload: { personal: true } }
+            { title: 'About', icon: 'info', screen: 'About', payload: { personal: true } },
+            { title: 'Test AI Camera', icon: 'info', screen: 'AICamera', payload: { personal: true } }
         ]
     }, [profile])
     return (

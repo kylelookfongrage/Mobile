@@ -127,6 +127,7 @@ export default function ExerciseDetail(props: ExerciseDetailProps) {
         //@ts-ignore
         navigator.pop()
     }
+
     return (
         <View style={{ flex: 1 }} includeBackground>
             <ScrollViewWithDrag rerenderTopView={[video, screenForm.editMode]} TopView={() => {
@@ -137,7 +138,8 @@ export default function ExerciseDetail(props: ExerciseDetailProps) {
                             EditModeButton(screenForm.editMode, () => setScreen('editMode', !screenForm.editMode), form.user_id, profile?.id),
                             DeleteButton('Exercise', deleteExercise, form.user_id, profile?.id),
                             // ShowUserButton(form.user_id, navigator),
-                            ShareButton({ exercise_id: Number(id) })
+                            ShareButton({ exercise_id: Number(id) }),
+                            {title: 'Preview AI Camera', icon: 'camera', onPress: () => navigator.navigate('Video', {uri: video?.[0]?.uri})}
                         ]} />
                         
                     }} />

@@ -120,7 +120,9 @@ export const Video = ({ ...props }) => {
       <OriginalVideo
         ref={ref}
         useNativeControls={false}
-        onPlaybackStatusUpdate={(x) => updatePlaybackCallback(x)}
+        onPlaybackStatusUpdate={(x) => {
+          updatePlaybackCallback(x)
+        }}
         {...props}
       />
       {visible && (

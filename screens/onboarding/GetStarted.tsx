@@ -1,11 +1,12 @@
 import { Dimensions, Platform } from 'react-native'
-import { Text, View } from '../../components/base/Themed'
+import { View } from '../../components/base/Themed'
 import React, { useEffect, useRef, useState } from 'react'
 import * as SplashScreen from 'expo-splash-screen';
 import { useCommonAWSIds } from '../../hooks/useCommonContext';
 import tw from 'twrnc'
 import { AdsConsent, AdsConsentStatus } from 'react-native-google-mobile-ads';
 import { getTrackingPermissionsAsync, requestTrackingPermissionsAsync } from 'expo-tracking-transparency'
+import {Text} from 'tamagui'
 
 SplashScreen.preventAutoHideAsync();
 
@@ -101,9 +102,15 @@ export default function GetStarted() {
               // Find more Lottie files at https://lottiefiles.com/featured
               source={screen.animation}
             />
-            <Text style={tw`mb-2 mt-6`} h1>{screen.name}</Text>
-            <Text style={tw`max-w-10/12 text-center text-gray-500`}>{screen.description}</Text>
-            <SaveButton safeArea title={i === onboardingScreens.length - 1 ? 'Get Started' : 'Next'} onSave={() => {
+            <Text style={tw`mb-2 mt-6 px-6`} fontSize='$h3' fontWeight='600' textAlign='center'>{screen.name}</Text>
+            <Spacer />
+            <Text textAlign='center' style={tw`px-12`}>{screen.description}</Text>
+            <PageControl currentPage={i} numOfPages={onboardingScreens.length - 1} />
+            <XStack zIndex={1} position='absolute' bottom={40} alignSelf='center' w={'100%'} alignItems='center' justifyContent='space-evenly' gap={'$4'}>
+            <Button title='Skip' width={'$12'} height='$5' pill type='dark' onPress={() => {
+              navigator.navigate('Login')
+            }} />
+            <Button title={i === onboardingScreens.length - 1 ? 'Get Started' : 'Next'} width={'$12'} height='$5' pill onPress={() => {
               if (i !== onboardingScreens.length - 1) {
                 if (scrollRef.current) {
                   //@ts-ignore
@@ -113,6 +120,17 @@ export default function GetStarted() {
                 navigator.navigate('Login')
               }
             }} />
+            </XStack>
+            {/* <SaveButton safeArea title={i === onboardingScreens.length - 1 ? 'Get Started' : 'Next'} onSave={() => {
+              if (i !== onboardingScreens.length - 1) {
+                if (scrollRef.current) {
+                  //@ts-ignore
+                  scrollRef.current.scrollToIndex({ index: i + 1 })
+                }
+              } else {
+                navigator.navigate('Login')
+              }
+            }} /> */}
           </View>
         }}
       />
@@ -133,9 +151,14 @@ import SaveButton from '../../components/base/SaveButton';
 import useAsync from '../../hooks/useAsync';
 import { supabase } from '../../supabase';
 import useOnLeaveScreen from '../../hooks/useOnLeaveScreen';
+import Button from '../../components/base/Button';
+import { XStack } from 'tamagui';
+import Spacer from '../../components/base/Spacer';
+import { PageControl } from 'react-native-ui-lib';
 
 const onboardingScreens: { name: string, description: string, animation: any }[] = [
-  { name: 'Workout and Exercise', description: 'Log your workouts with ease! Rage make it very easy to create and keep track of your daily exercise routine', animation: crunches },
-  { name: 'Food and Meals', description: 'Tracking your calories has never been easier, simply search or scan your barcode! Need a recipe but don\'t know where to start? Rage can generate a meal for you!', animation: book },
-  { name: 'Make Money', description: 'Rage will always be a free application! Approved Personal Trainers or Food Professionals can make their meals or workouts premium and earn money made from subscribed users!', animation: equiptment }
+  { name: 'Your Health Journey Starts Here', description: 'Log your workouts with ease! Rage make it very easy to create and keep track of your daily exercise routine', animation: crunches },
+  { name: 'Tailored Fitness Plans for your needs', description: 'With Rage, you are able to subscribe to any fitness plan, customizing it to fit your needs', animation: book },
+  { name: 'Stay Informed About Your Fitness Progress', description: 'Track your fitness journey with ease! With Rage it is possible to achieve the results you have always wanted!', animation: equiptment },
+  { name: 'Earn Money with Rage', description: 'Rage will always be a free application! Approved Personal Trainers or Food Professionals can make their meals or workouts premium and earn money made from subscribed users!', animation: equiptment }
 ]

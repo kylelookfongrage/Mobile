@@ -5,10 +5,12 @@
 
 import { Text as DefaultText, View as DefaultView, Image as DefaultImage} from 'react-native';
 import { SafeAreaView as DefaultSafeAreaView } from 'react-native-safe-area-context';
+import { TamaguiComponent, TamaguiComponentPropsBase, Text as TamaguiText } from 'tamagui';
 
 import Colors from '../../constants/Colors';
 import useColorScheme from '../../hooks/useColorScheme';
 import tw from 'twrnc'
+import React from 'react';
 
 export function useThemeColor(
   props: { light?: string; dark?: string },
@@ -38,52 +40,30 @@ interface HeadlingProps {
 }
 
 
+// Urbanist_400Regular,
+//   Urbanist_400Regular_Italic,
+//   Urbanist_500Medium,
+//   Urbanist_500Medium_Italic,
+//   Urbanist_600SemiBold,
+//   Urbanist_600SemiBold_Italic,
+//   Urbanist_700Bold,
+//   Urbanist_700Bold_Italic
+
 export type TextProps = ThemeProps & DefaultText['props'] & WeightProps & HeadlingProps ;
 export type ViewProps = ThemeProps & DefaultView['props'] & {card?: boolean, translucent?: boolean};
 export type ImageProps = ThemeProps & DefaultImage['props']
 
 export function Text(props: TextProps) {
   const { style, lightColor, darkColor, weight, ...otherProps } = props;
-  let font = 'Poppins_400Regular'
-  switch (weight) {
-    case 'thin': 
-      font = 'Poppins_100Thin'
-      break;
-    case 'extralight': 
-      font = 'Poppins_200ExtraLight'
-      break;
-    case 'medium': 
-      font = "Poppins_500Medium"
-      break;
-    case 'semibold': 
-      font = 'Poppins_600SemiBold'
-      break;
-    case 'bold' : 
-      font = 'Poppins_700Bold';
-      break;
-    case 'extrabold' : 
-      font = 'Poppins_800ExtraBold';
-      break;
-    case 'black': 
-      font = 'Poppins_900Black';
-      break;
-    default: 
-      break;
-  }
+  
   const color = useThemeColor({ light: lightColor, dark: darkColor }, 'text');
   let fontSize = null
-  if (props.xs) fontSize='xs'
-  if (props.h3) fontSize='lg'
-  if (props.h2) fontSize='xl'
-  if (props.h1) fontSize='2xl'
-  if (props.h2 || props.h1) {
-    font='Poppins_700Bold'
-  }
-  if (props.h3) {
-    font='Poppins_600SemiBold'
-  }
+  if (props.xs) fontSize='$4'
+  if (props.h3) fontSize='$h3'
+  if (props.h2) fontSize='$h2'
+  if (props.h1) fontSize='$h1'
 
-  return <DefaultText style={[{ color, fontFamily: font }, style, tw`${fontSize ? 'text-'+fontSize : ''}`]} {...otherProps} />;
+  return <TamaguiText color={color} style={style} {...otherProps} fontSize={fontSize} />;
 }
 interface ViewProps2 extends ViewProps {
   includeBackground?: boolean

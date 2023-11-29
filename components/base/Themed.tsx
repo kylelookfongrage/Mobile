@@ -4,13 +4,14 @@
  */
 
 import { Text as DefaultText, View as DefaultView, Image as DefaultImage} from 'react-native';
-import { SafeAreaView as DefaultSafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView as DefaultSafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TamaguiComponent, TamaguiComponentPropsBase, Text as TamaguiText } from 'tamagui';
 
 import Colors from '../../constants/Colors';
 import useColorScheme from '../../hooks/useColorScheme';
 import tw from 'twrnc'
 import React from 'react';
+import { _tokens } from '../../tamagui.config';
 
 export function useThemeColor(
   props: { light?: string; dark?: string },
@@ -36,7 +37,16 @@ interface WeightProps{
 }
 
 interface HeadlingProps {
-  xs?: boolean; h3?: boolean; h2?: boolean; h1?: boolean
+  xl?: boolean;
+  lg?: boolean;
+  sm?: boolean;
+  xs?: boolean; 
+  h6?: boolean
+  h5?: boolean
+  h4?: boolean
+  h3?: boolean; 
+  h2?: boolean; 
+  h1?: boolean
 }
 
 
@@ -50,28 +60,60 @@ interface HeadlingProps {
 //   Urbanist_700Bold_Italic
 
 export type TextProps = ThemeProps & DefaultText['props'] & WeightProps & HeadlingProps ;
-export type ViewProps = ThemeProps & DefaultView['props'] & {card?: boolean, translucent?: boolean};
+export type ViewProps = ThemeProps & DefaultView['props'] & {card?: boolean, translucent?: boolean; safeAreaBottom?: boolean, safeAreaTop?: boolean};
 export type ImageProps = ThemeProps & DefaultImage['props']
 
 export function Text(props: TextProps) {
   const { style, lightColor, darkColor, weight, ...otherProps } = props;
-  
+  let font = 'Urbanist_500Medium'
+  switch (weight) {
+    case 'thin': 
+      font = 'Urbanist_400Regular'
+      break;
+    case 'extralight': 
+      font = 'Urbanist_400Regular'
+      break;
+    case 'medium': 
+      font = "Urbanist_500Medium"
+      break;
+    case 'semibold': 
+      font = 'Urbanist_600SemiBold'
+      break;
+    case 'bold' : 
+      font = 'Urbanist_700Bold';
+      break;
+    case 'extrabold' : 
+      font = 'Urbanist_700Bold';
+      break;
+    case 'black': 
+      font = 'Urbanist_700Bold';
+      break;
+    default: 
+      break;
+  }
   const color = useThemeColor({ light: lightColor, dark: darkColor }, 'text');
-  let fontSize = null
-  if (props.xs) fontSize='$4'
-  if (props.h3) fontSize='$h3'
-  if (props.h2) fontSize='$h2'
-  if (props.h1) fontSize='$h1'
-
-  return <TamaguiText color={color} style={style} {...otherProps} fontSize={fontSize} />;
+  let fontSize = 14
+  if (props.xs) fontSize=10
+  if (props.sm) fontSize=12
+  if (props.lg) fontSize=16
+  if (props.xl) fontSize=18
+  if (props.h6) fontSize=18
+  if (props.h5) fontSize=20
+  if (props.h4) fontSize=24
+  if (props.h3) fontSize=32
+  if (props.h2) fontSize=40
+  if (props.h1) fontSize=48
+  return <DefaultText style={[{ color, fontFamily: font, fontSize }, style]} {...otherProps} />;
 }
+
 interface ViewProps2 extends ViewProps {
   includeBackground?: boolean
 }
 export function View(props: ViewProps2) {
   const { style, lightColor, darkColor, includeBackground, ...otherProps } = props;
   const dm = useColorScheme() === 'dark'
-  let backgroundColor = includeBackground ? useThemeColor({ light: lightColor, dark: darkColor }, 'background') : '';
+  let insets = useSafeAreaInsets()
+  let backgroundColor = includeBackground ? (dm ? _tokens.darkBg : _tokens.lightBg) : '';
   if (props.card) {
     backgroundColor = dm ? Colors.dark.card : Colors.light.card
   }
@@ -79,12 +121,13 @@ export function View(props: ViewProps2) {
     backgroundColor += '99'
   }
 
-  return <DefaultView style={[{ backgroundColor: backgroundColor }, style]} {...otherProps} />;
+  return <DefaultView style={[{ backgroundColor: backgroundColor, ...(props.safeAreaTop ? {paddingTop: insets.top} : {}),  ...(props.safeAreaBottom ? {paddingBottom: insets.bottom} : {}) }, style]} {...otherProps} />;
 }
 
 
 export function SafeAreaView(props: ViewProps2) {
   const { style, lightColor, darkColor, includeBackground, ...otherProps } = props;
-  const backgroundColor = includeBackground ? useThemeColor({ light: lightColor, dark: darkColor }, 'background') : '';
+  let dm = useColorScheme() === 'dark'
+  const backgroundColor = includeBackground ? (dm ? _tokens.darkBg : _tokens.lightBg) : '';
   return <DefaultSafeAreaView style={[{ backgroundColor, flex: 1 }, style]} {...otherProps} />;
 }

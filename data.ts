@@ -777,7 +777,7 @@ export function caloriesPerDay(
   
     const dailyCalories = (totalCaloriesNeeded / daysDifference) + adjustedTDEE;
   
-    return dailyCalories;
+    return dailyCalories < 1400 ? 1400 : dailyCalories;
   }
   
 

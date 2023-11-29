@@ -9,10 +9,13 @@ import { ExpoIcon } from '../../components/base/ExpoIcon'
 import { useCommonAWSIds } from '../../hooks/useCommonContext'
 import { useSignOut } from '../../supabase/auth'
 import SaveButton from '../../components/base/SaveButton'
+import { useDispatch, useSelector } from '../../redux/store'
+import { signOut } from '../../redux/reducers/auth'
 
 export default function Account() {
     const navigator = useNavigation()
-    const {setUserId, signedInWithEmail, setUsername, setSub, setSubscribed, setHasSubscribedBefore, setStatus, setSignedInWithEmail, setUser, setProfile, profile} = useCommonAWSIds()
+    let {signedInWithEmail, profile} = useSelector(x => x.auth)
+    let dispatch = useDispatch()
     let a = useSignOut()
     let emailSettings = signedInWithEmail ?  [{ title: 'Update Email Address', icon: 'mail', screen: 'UpdateEmail' }] : []
     const settings: AppSetting[] = [
@@ -42,16 +45,7 @@ export default function Account() {
             </View>
             <SaveButton safeArea title='Sign Out' onSave={async () => {
                     await a.signOut()
-                    setUserId('');
-                    setUsername('')
-                    setUser(null)
-                    setProfile(null)
-                    setSub('') 
-                    setSubscribed(false)
-                    setHasSubscribedBefore(false) 
-                    setStatus({pt: false, fp: false}) 
-                    setSignedInWithEmail(false)
-                    // navigator.navigate('GetStarted')
+                    dispatch(signOut())
                 }} />
         </View>
     )

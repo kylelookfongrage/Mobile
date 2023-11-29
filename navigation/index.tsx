@@ -13,7 +13,7 @@ import NotFoundScreen from '../screens/NotFoundScreen';
 import TabOneScreen from '../screens/TabOneScreen';
 import { RootStackParamList, RootTabParamList, RootTabScreenProps } from '../types';
 import LinkingConfiguration from './LinkingConfiguration';
-import { ExpoIcon } from '../components/base/ExpoIcon';
+import { ExpoIcon, Icon } from '../components/base/ExpoIcon';
 import WorkoutPlayScreen from '../screens/workout/WorkoutPlay';
 import WorkoutTab from '../screens/workout/WorkoutTab';
 import FoodTab from '../screens/diet/FoodTab';
@@ -66,11 +66,14 @@ import Setup from '../screens/onboarding/Setup';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import OnboardingComplete from '../screens/onboarding/OnboardingComplete';
 import VideoScreen from '../screens/other/VideoScreen';
+import { useSelector } from '../redux/store';
+import { _tokens } from '../tamagui.config';
+import Spacer from '../components/base/Spacer';
 
 
 function RootNavigator() {
+  let profile = useSelector(x => x.auth.profile)
   const commonContext = useCommonAWSIds()
-  const { profile } = commonContext
   if (profile?.id) {
     return <Stack.Navigator initialRouteName={'Root'}>
       <Stack.Screen name="Root" component={BottomTabNavigator} options={{ headerShown: false }} />
@@ -224,6 +227,13 @@ function BottomTabNavigator() {
         }}
       />
       <BottomTab.Screen
+        name="History"
+        component={FoodTab}
+        options={{
+          tabBarShowLabel: false,
+        }}
+      />
+      <BottomTab.Screen
         name="Profile"
         options={{
           tabBarShowLabel: false,
@@ -241,28 +251,28 @@ function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 
   const iconsAndColors = {
     'Home': {
-      icon: "home",
+      icon: "Home",
       label: 'Home',
       color: dm ? "red-600" : "red-500"
     },
     'Exercise': {
-      icon: "compass",
+      icon: "Discovery",
       label: 'Discover',
       color: dm ? "red-600" : "red-500"
     },
-    'Add' : {
-      icon: 'plus-circle',
-      label: '',
+    'History' : {
+      icon: 'Chart',
+      label: 'History',
       color: dm ? 'white' : 'black',
       onPress: () => {}
     },
     'Profile': {
-      icon: "user",
+      icon: "Profile",
       label: 'Profile',
       color: dm ? "red-600" : "red-500"
     },
     'Food': {
-      icon: "search",
+      icon: "Search",
       label: 'Search',
       color: dm ? "red-600" : "red-500"
     }
@@ -272,9 +282,11 @@ function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
     <View includeBackground style={[{ flexDirection: 'row', paddingBottom: insets.bottom}, tw`pt-3 items-center justify-between w-12/12`]}>
       {state.routes.map((route, index) => {
         // @ts-ignore
-        const { icon, color, label } = (iconsAndColors[route.name]) || { icon: 'home', color: 'red-500', label: 'Home' }
+        const { icon, color: c, label } = (iconsAndColors[route.name]) || { icon: 'home', color: 'red-500', label: 'Home' }
         const { options } = descriptors[route.key];
         const isFocused = state.index === index;
+        let color = (focused: boolean) => focused ? (dm ? _tokens.white : _tokens.primary900) : _tokens.gray500
+
 
         const onPress = () => {
           const event = navigation.emit({
@@ -313,17 +325,15 @@ function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
             style={[{ flex: 1 }, tw`p-2`]}
           >
             <View style={tw`items-center`}>
-              {!isFocused && <ExpoIcon name={icon} iconName='feather' size={22} 
+            <Icon name={icon} weight={isFocused ? 'bold' : 'light'} size={20} 
               // style={tw`text-${color}`}
-              color='gray'
-               />}
-              {isFocused && <View style={tw`items-center`}>
-                <Text weight='semibold' style={tw`text-center text-${isFocused ? color : 'gray-700'}`}>
+              color={color(isFocused)}
+               />
+               <Spacer xs />
+              <Text xs weight={isFocused ? 'bold' : 'semibold'} style={{...tw`text-center`, color: color(isFocused)}}>
                   {/* @ts-ignore */}
                   {label}
                 </Text>
-              </View>
-              }
             </View>
           </TouchableOpacity>
         );

@@ -1,4 +1,4 @@
-import { View, Text } from '../../components/base/Themed'
+import { View, Text, SafeAreaView } from '../../components/base/Themed'
 import React, { useEffect, useRef, useState } from 'react'
 import tw from 'twrnc'
 import useColorScheme from '../../hooks/useColorScheme'
@@ -7,7 +7,6 @@ import { Goal, Tier, User } from '../../aws/models';
 import { BackButton } from '../../components/base/BackButton';
 import { ScrollView, TextInput } from 'react-native-gesture-handler';
 import { Dimensions, FlatList, KeyboardAvoidingView, Platform, TouchableOpacity } from 'react-native';
-import { ProgressBar } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ExpoIcon } from '../../components/base/ExpoIcon';
 import { RulerPicker } from 'react-native-ruler-picker';
@@ -19,6 +18,13 @@ import { DataStore } from 'aws-amplify';
 import { useNavigation } from '@react-navigation/native';
 import { UserQueries } from '../../types/UserDao';
 import Colors from '../../constants/Colors';
+import { useDispatch } from 'react-redux';
+import { useSelector } from '../../redux/store';
+import { registerProfile } from '../../redux/reducers/auth';
+import { Progress, XStack } from 'tamagui';
+import { _tokens } from '../../tamagui.config';
+import Input from '../../components/base/Input';
+import Button from '../../components/base/Button';
 
 
 
@@ -56,13 +62,14 @@ export default function Setup(props: { registration?: boolean; }) {
     const [weightGoal, setWeightGoal] = useState<number | null>(null)
     const [goalByDate, setGoalByDate] = useState<Date | null>(null);
     const [newUsername, setNewUsername] = useState<string | null>(null)
+    let dispatch = useDispatch()
     const [height, setHeight] = useState<number>(30)
     const dao = UserQueries(false)
     let weightPrefix = metric ? 'kg' : 'lb'
     let measurementPrefix = metric ? 'cm' : 'in'
     const registrationQuestions: SetupQuestion[] = [
-        { name: 'Your Name', description: 'Introduce yourself', value: name, setValue: setName, type: 'input', textIcon: 'person-circle' },
-        { name: 'Username', description: 'Let us get to know you!', value: newUsername, setValue: x => setNewUsername(x.toLowerCase()), type: 'input', textIcon: 'at', validation: x => dao.validateUsername(x, null) },
+        { name: 'Your Name', description: 'Introduce yourself', value: name, setValue: setName, type: 'input', textIcon: 'Profile' },
+        { name: 'Username', description: 'Let us get to know you!', value: newUsername, setValue: x => setNewUsername(x.toLowerCase()), type: 'input', textIcon: 'Send', validation: x => dao.validateUsername(x, null) },
     ]
     const questions: SetupQuestion[] = [
         ...(registration ? registrationQuestions : []),
@@ -113,7 +120,7 @@ export default function Setup(props: { registration?: boolean; }) {
     const [pageNumber, setPageNumber] = useState<number>(0);
     const listRef = useRef<FlatList | null>(null);
     const [shouldCalculateFat, setShouldCalculateFat] = useState<boolean>(false);
-    const { userId, username, setUserId, setUsername, sub, user, profile, setProfile } = useCommonAWSIds()
+    let {profile, user} = useSelector(x => x.auth)
     let c = dm ? Colors.dark : Colors.light
 
     useEffect(() => {
@@ -159,24 +166,27 @@ export default function Setup(props: { registration?: boolean; }) {
             //@ts-ignore
             let res = await dao.save(document)
             //@ts-ignore
-            setUserId(res?.id)
-            setUsername(newUsername)
-            if (res)
-            setProfile(res)
+            if (res) {
+                dispatch(registerProfile({profile: res}))
+            }
             setLoading(false)
             navigator.navigate('OnboardingComplete')
         } else if (!props.registration!! && profile?.id) {
             let new_doc = {...document} //@ts-ignore
             delete new_doc['name']
             delete new_doc['username']
-             await dao.update(profile.id, new_doc) //@ts-ignore
-            navigator.pop()
+            let res = await dao.update(profile.id, new_doc) 
+            if (res) {
+                dispatch(registerProfile({profile: res}))
+            }//@ts-ignore
+            navigator.pop();
         }
         setLoading(false)
     }
     return (
-        <View includeBackground style={{ flex: 1 }}>
-            <BackButton replacePop func={() => {
+        <SafeAreaView includeBackground style={{ flex: 1 }}>
+            <XStack paddingHorizontal={24} paddingTop={10} justifyContent='space-between' alignItems='center'>
+            <BackButton exlucdeSafeArea replacePop func={() => {
                 if (pageNumber !== 0) {
                     setPageNumber(pageNumber - 1)
                     if (listRef && listRef.current) {
@@ -187,24 +197,27 @@ export default function Setup(props: { registration?: boolean; }) {
                     navigator.goBack()
                 }
             }} />
-            <View style={tw`mx-12 items-center justify-center`}>
-                <Text style={tw`text-center text-gray-500 text-xs mb-2`}>Personalization</Text>
-                <ProgressBar style={{ width: s.width * 0.3 }} color={'red'} progress={(pageNumber) / questions.length} />
-            </View>
+                <Progress style={{ width: 214, height: 12, borderRadius: 100 }} value={((pageNumber) / questions.length) * 100}>
+                    <Progress.Indicator backgroundColor={_tokens.primary900} />
+                </Progress>
+                <Text weight='bold' lg>{pageNumber + 1} / {questions.length}</Text>
+            </XStack>
+           
             <FlatList horizontal showsHorizontalScrollIndicator={false} data={questions} scrollEnabled={false} ref={listRef} renderItem={({ item, index }) => {
                 const q: SetupQuestion = item
                 const isHeight = q.name === 'Height'
                 return <View key={`Question: ${index}`} style={[{ width: s.width, flex: 1 }, tw`justify-between mt-12`]}>
                     <View style={{ flex: 1 }}>
-                        <Text style={tw`text-center text-lg`} weight='bold'>{q.name}</Text>
-                        <Text style={tw`text-gray-500 text-center mx-9 mt-3 mb-6`}>{q.description}</Text>
+                        <Text style={tw`text-center`} weight='bold' h2>{q.name}</Text>
+                        <Text style={tw`text-center mx-9 mt-3 mb-6`} xl>{q.description}</Text>
                         {errorMessage && <Text style={tw`-mt-3 text-center text-xs text-red-500 px-6 mb-3`}>{errorMessage}</Text>}
-                        {q.type === 'input' && <View style={tw`items-center justify-center`}>
-                            <View card style={tw`flex-row items-center px-6 rounded-3xl`}>
+                        {q.type === 'input' && <View style={tw`items-center justify-center mt-6`}>
+                            <Input id={q.name} width={'90%'} iconLeft={q.textIcon} value={q.value} textChange={q.setValue} placeholder={q.name} />
+                            {/* <View card style={tw`flex-row items-center px-6 rounded-3xl`}>
                                 {q.textIcon && <ExpoIcon name={q.textIcon} iconName='ion' size={25} color='gray' />}
                                 <TextInput style={tw`h-20 text-lg pl-5 pb-6 pt-3 font-semibold rounded-3xl text-${dm ? 'white' : 'black'} w-8/12`} value={q.value} onChangeText={q.setValue} placeholderTextColor={'gray'} placeholder={q.name} />
 
-                            </View>
+                            </View> */}
                         </View>}
                         {(q.type === 'select' && (q.options || [])?.length > 0) && <View style={tw`px-6`}>
                             {q.options?.map((x) => {
@@ -216,13 +229,13 @@ export default function Setup(props: { registration?: boolean; }) {
                                 return <TouchableOpacity onPress={() => {
                                     q.setValue(x.value)
                                 }} key={`Question ${index}, option ${x.name}`}>
-                                    <View card={!selected} style={tw`px-6 ${x.description ? 'py-4' : 'py-6'} my-2 flex-row items-center ${color} rounded-2xl`}>
+                                    <View card={!selected} style={{...tw`px-6 ${x.description ? 'py-4' : 'py-6'} my-2 flex-row items-center rounded-2xl`, ...(selected && {backgroundColor: _tokens.primary900})}}>
                                     {x.icon && <View style={tw`mr-4`}>
                                         <ExpoIcon name={x.icon} iconName='ion' size={25} color={selected ? 'white' : "gray"} />
                                     </View>}
                                     <View>
-                                        <Text style={tw`${selected ? 'text-white' : ''}`} weight='semibold'>{x.name}</Text>
-                                        {x.description && <Text style={tw`text-${selected ? 'white' : 'gray-500'} text-xs`}>{x.description}</Text>}
+                                        <Text style={tw`${selected ? 'text-white' : ''}`} weight='semibold' h5>{x.name}</Text>
+                                        {x.description && <Text style={tw`text-${selected ? 'white' : 'gray-500'}`}>{x.description}</Text>}
                                     </View>
                                     </View>
                                 </TouchableOpacity>
@@ -233,7 +246,7 @@ export default function Setup(props: { registration?: boolean; }) {
                         </View>}
                         {q.type === 'ruler' && <View style={[tw`justify-evenly`, {}]}>
                             {q.fat && <TouchableOpacity style={[{ zIndex: 1 }, tw`items-center justify-center p-3`]} onPress={() => setShouldCalculateFat(!shouldCalculateFat)}>
-                                <Text style={tw`text-red-500`} weight='semibold'>{shouldCalculateFat ? 'Input Body Fat' : 'Calculate Body Fat'}</Text>
+                                <Text style={{color: _tokens.primary800}} weight='semibold' lg>{shouldCalculateFat ? 'Input Body Fat' : 'Calculate Body Fat'}</Text>
                             </TouchableOpacity>}
                             {(q.fat && shouldCalculateFat) && <View style={[tw`items-center justify-evenly mt-6`, { zIndex: 1 }]}>
                                 <Text style={tw`text-lg mb-6`} weight='semibold'>{fat}%</Text>
@@ -267,10 +280,10 @@ export default function Setup(props: { registration?: boolean; }) {
                                         <Text style={tw`ml-1`}>{measurementPrefix}</Text>
                                     </View>
                                 </View>
-                                <TouchableOpacity style={tw`mt-6`} onPress={async () => {
+                                <TouchableOpacity style={tw`mt-9`} onPress={async () => {
                                     await WebBrowser.openBrowserAsync('https://www.nasm.org/resources/body-fat-calculator')
                                 }}>
-                                    <Text style={tw`text-gray-500`}>Need help?</Text>
+                                    <Text style={tw`text-gray-500`} lg>Need help?</Text>
                                 </TouchableOpacity>
                             </View>}
                             {!shouldCalculateFat && <View style={tw`mt-6`}>
@@ -281,7 +294,7 @@ export default function Setup(props: { registration?: boolean; }) {
                                     height={s.height * 0.25} 
                                     indicatorHeight={100} 
                                     fractionDigits={0} 
-                                    indicatorColor='red' 
+                                    indicatorColor={_tokens.primary600} 
                                     valueTextStyle={(isHeight && !metric) ? 
                                         {fontSize: 0, color: 'transparent'} : 
                                         tw`text-${dm ? 'white' : 'black'}`
@@ -301,7 +314,7 @@ export default function Setup(props: { registration?: boolean; }) {
                         </View>}
                     </View>
                     {(q.value !== null && q.value !== '') && <View style={[tw`items-center justify-center`, { paddingBottom: insets.bottom + 30 }]}>
-                        <TouchableOpacity style={tw`px-4 py-4 bg-red-${dm ? '600' : '500'} rounded-xl w-6/12 items-center`} onPress={async () => {
+                        <Button type='primary' pill width={'50%'} height={60} title={index === questions.length - 1 ? 'Finish' : "Next"} onPress={async () => {
                             setErrorMessage(null)
                             if (q.validation) {
                                 let res = await q.validation(q.value)
@@ -319,11 +332,10 @@ export default function Setup(props: { registration?: boolean; }) {
                             } else {
                                 await saveProgress()
                             }
-                        }}>
-                            <Text style={tw`text-lg text-white`} weight='semibold'>{index === questions.length - 1 ? 'Finish' : "Next"}</Text>
-                        </TouchableOpacity></View>}
+                        }} />
+                       </View>}
                 </View>
             }} />
-        </View>
+        </SafeAreaView>
     )
 }

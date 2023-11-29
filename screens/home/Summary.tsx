@@ -20,19 +20,26 @@ import {  useBadges } from '../../hooks/useBadges';
 import { ProgressDao } from '../../types/ProgressDao';
 import SupabaseImage from '../../components/base/SupabaseImage';
 import SwipeWithDelete from '../../components/base/SwipeWithDelete';
+import Button from '../../components/base/Button';
+import { useDispatch, useSelector } from '../../redux/store';
+import { signOut } from '../../redux/reducers/auth';
+import { UserQueries } from '../../types/UserDao';
+import { useSignOut } from '../../supabase/auth';
+import { changeDate } from '../../redux/reducers/progress';
 
 
 export const SummaryScreen = () => {
-
-  const dateContext = useDateContext()
-  const { progressId, profile } = useCommonAWSIds()
-  const { formattedDate, AWSDate, today, setDate } = { formattedDate: dateContext.formattedDate, AWSDate: dateContext.AWSDate, today: dateContext.date, setDate: dateContext.setDate }
+  let {profile} = useSelector(x => x.auth)
+  let {formattedDate, today, foodProgress, mealProgress, workoutProgress, runProgress} = useSelector(x => x.progress)
+  let progressId = today?.id
+  let dispatch = useDispatch()
+  let setDate = (_date: string) => dispatch(changeDate({date: _date}))
   const totalCalories = profile?.tdee || 2000;
   const dm = useColorScheme() === 'dark'
   const navigator = useNavigation()
   const {logProgress} = useBadges(false)
-  const dao = ProgressDao()
-  const [food_progress, meal_progress, workout_progress, runs] = [dao.foodProgress, dao.mealProgress, dao.workoutProgress, dao.runProgress]
+  const dao = ProgressDao(false)
+  const [food_progress, meal_progress, workout_progress, runs] = [foodProgress, mealProgress, workoutProgress, runProgress]
   let weight = dao.today?.weight || profile?.weight || 100
   let _ingredients = meal_progress.map(x => ({...x.meal, consumedWeight: x.consumed_weight, totalWeight: x.total_weight}))
   let __ingredients = _ingredients.map(x => {
@@ -52,6 +59,7 @@ export const SummaryScreen = () => {
   const cpRef = React.useRef<AnimatedCircularProgress | null>(null)
   const waterRef = React.useRef(new Animated.Value(0))
   const waterGoal = Number(weight * 0.5)
+  let a = useSignOut()
 
   React.useEffect(() => {
     if (weight) {
@@ -67,7 +75,7 @@ export const SummaryScreen = () => {
   }, [dao.today?.water || 0, weight])
 
   const lastRun = runs[runs.length - 1]
-  const daysToDisplay = [0, 1, 2, 3, 4, 5, 6].map(x => moment(today).startOf('week').add(x, 'days'))
+  const daysToDisplay = [0, 1, 2, 3, 4, 5, 6].map(x => moment(formattedDate).startOf('week').add(x, 'days'))
   return (
     <View style={{ flex: 1 }} includeBackground>
       <SafeAreaView edges={['top']} style={[{ flex: 1 }, tw`h-12/12`]} >
@@ -89,7 +97,7 @@ export const SummaryScreen = () => {
         <ScrollView style={[tw`px-4 h-12/12`]} showsVerticalScrollIndicator={false}>
           <View style={[tw`flex-row items-center justify-between w-12/12 mb-3`]}>
             {daysToDisplay.map(day => {
-              const isSelected = day.isSame(today, 'date')
+              const isSelected = day.isSame(moment(formattedDate), 'date')
               let selectedColorTint = '800'
               if (!isSelected && !dm) selectedColorTint = '300'
               if (isSelected) selectedColorTint='600'

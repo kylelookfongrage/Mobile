@@ -15,6 +15,11 @@ import { supabase } from '../../supabase'
 import { makeRedirectUri } from "expo-auth-session";
 import * as QueryParams from "expo-auth-session/build/QueryParams";
 import * as Linking from "expo-linking";
+import Button, { SignInButton } from '../../components/base/Button'
+import Input from '../../components/base/Input'
+import { useDispatch, useSelector } from '../../redux/store'
+import { Session } from '@supabase/supabase-js'
+import { login, registerProfile } from '../../redux/reducers/auth'
 
 
 
@@ -55,15 +60,17 @@ const sendMagicLink = async (email: string) => {
 export default function Login() {
   const [email, setEmail] = React.useState<string>('')
   const [errors, setErrors] = React.useState<string[]>([])
-  const { setSignedInWithEmail, setSub, setUserId, setUsername, setStatus, setProfile, profile } = useCommonAWSIds()
+  let {profile, user} = useSelector(x => x.auth)
   const [uploading, setUploading] = React.useState(false)
-  const dm = useColorScheme() === 'dark'
   const navigator = useNavigation()
-  const [user, setUser] = React.useState<any>(null);
+  let dispatch = useDispatch()
   const [message, setMessage] = useState<string>('')
+  const { loginWithGoogle } = useGoogleSignIn()
+  const { signInWithApple } = useAppleLogin()
   const dao = UserQueries(false)
   const url = Linking.useURL();
-  const [session, setSession] = useState(null)
+  const [session, setSession] = useState<Session | null | undefined>(null)
+
   useEffect(() => {
     if (!url || session) return;
     createSessionFromUrl(url).then(x => setSession(x))
@@ -73,17 +80,15 @@ export default function Login() {
 
   useAuthListener((e, u) => {
     if (profile) return;
-    setSignedInWithEmail(u?.app_metadata?.provider === 'email')
+    if (user) return;
+    dispatch(login({user: u}))
     dao.fetchProfile(u.id).then(x => {
       if (x?.id) {
-        setUserId(x.id)
-        setProfile(x)
+        dispatch(registerProfile({profile: x}))
       } else {
         navigator.navigate('Registration')
       }
     })
-    setSub(u.id)
-    setUser(u)
   })
 
 
@@ -93,7 +98,7 @@ export default function Login() {
     try {
       await sendMagicLink(email)
       setMessage('We have sent you an email with a link to sign in, please check your inbox!')
-    } catch (error) {
+    } catch (error) { //@ts-ignore
       setErrors([error?.toString()])
       setUploading(false)
       return
@@ -102,52 +107,30 @@ export default function Login() {
 
   }
 
-  
-  const [acceptedTerms, setAcceptedTerms] = React.useState<boolean>(false)
-  
-  
-
-  let disabledButton = uploading || !email
-
   return (
     <SafeAreaView includeBackground style={{ flex: 1 }}>
       <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} contentContainerStyle={[tw`px-6`]}>
-        <View style={tw`mt-9`}>
-          {errors.length !== 0 && <ErrorMessage errors={errors} onDismissTap={() => setErrors([])} />}
-          <View style={tw`w-12/12 items-center flex-row`}>
-            <Text style={tw`text-2xl max-w-7/12 mt-4 mb-6`} weight='semibold'>{'Login or Sign Up to '}{<Text style={tw`text-red-600`} weight='semibold'>Rage</Text>}</Text>
-          </View>
-        </View>
+        <Spacer lg />
+        <Text style={tw``} h3 weight='bold'>{'Login or Create Your Free Account'}</Text>
         <Spacer />
-        <Text style={tw`text-center text-gray-500`} weight='semibold'>{message}</Text>
-        <Spacer />
-        <View card style={tw`w-12/12 flex-row items-center py-3 px-4 justify-between rounded-lg`}>
-          <TextInput value={email} onChangeText={setEmail} placeholder='email' keyboardType='email-address' style={tw`w-11/12 text-${dm ? 'white' : 'black'}`} />
-          <ExpoIcon name='at-sign' iconName='feather' color={dm ? 'white' : 'gray'} size={20} />
-        </View>
+        <Text xl weight='thin'>Sign in to access your personalized fitness plans! Send a code to your email.</Text>
+        <Spacer lg />
+        {/* <Text style={tw`text-center text-gray-500`} weight='semibold'>{message}</Text>
+        <Spacer /> */}
+        <Input iconLeft='Message' info={message} type={'email-address'} onSubmit={onCreateAccountOrLoginPress} name='Email' id='email' value={email} textChange={setEmail} placeholder='Email' />
         <Spacer xl/>
-        <TouchableOpacity
-          disabled={disabledButton}
-          onPress={() => {
-            onCreateAccountOrLoginPress()
-          }}
-          style={tw`items-center rounded-lg bg-red-600${disabledButton ? '/50' : ""} py-3`}>
-          {!uploading && <Text style={tw`text-white`} weight='bold'>Log In</Text>}
-          {uploading && <ActivityIndicator />}
-        </TouchableOpacity>
+        <Button title='Sign in' pill height={'$5'} disabled={email.length === 0} uploading={uploading} onPress={onCreateAccountOrLoginPress}  />
         <Spacer xl/>
-        <View style={tw`flex-row items-center justify-between mt-9 mb-4`}>
+        <View style={tw`flex-row items-center justify-between mt-4 mb-4`}>
           <View style={tw`h-0.5 w-5/12 bg-gray-700/60`} />
           <Text>or</Text>
           <View style={tw`h-0.5 w-5/12 bg-gray-700/60`} />
         </View>
         <Spacer xl/>
        <View style={tw`items-center justify-center`}>
-       {/* <SignInButton email register={!loginMode} emailPress={() => {
-          setLoginMode(!loginMode)
-        }}/> */}
-        {['ios', 'macos'].includes(Platform.OS) && <SignInButton apple />}
-        <SignInButton google/>
+        {['ios', 'macos'].includes(Platform.OS) && <SignInButton onPress={signInWithApple} apple />}
+        <Spacer />
+        <SignInButton onPress={loginWithGoogle} google/>
        </View>
        <Spacer xl/>
         <Text style={tw`text-xs text-center text-gray-500 mx-6 mt-3`}>By signing in with Email, Apple or Google, you are also agreeing to the Privacy Policy and Terms and Conditions</Text>
@@ -155,39 +138,4 @@ export default function Login() {
       </ScrollView>
     </SafeAreaView>
   )
-}
-
-
-
-
-export const SignInButton = (props: { apple?: boolean; google?: boolean; email?: boolean, emailPress?: () => void; register?: boolean; }) => {
-  const { loginWithGoogle } = useGoogleSignIn()
-  const { signInWithApple } = useAppleLogin()
-  const s = Dimensions.get('screen')
-  let name = 'Email'
-  let bg = 'red-600'
-  let icon = 'mail'
-  let iconColor = 'white'
-  let textColor = 'white'
-
-  let onPress = props.email ? props.emailPress : () => {}
-  if (props.apple) {
-      bg = 'black'
-      name = 'Apple'
-      icon = 'logo-apple'
-      onPress = signInWithApple
-  }
-  if (props.google) {
-      bg = 'sky-600'
-      name = 'Google'
-      icon = 'logo-google'
-      onPress = loginWithGoogle
-  }
-  return <TouchableOpacity onPress={onPress} style={[tw`flex-row px-4 items-center justify-between rounded-xl my-2 bg-${bg}`, { width: s.width * 0.80, height: 50 }]}>
-      <ExpoIcon iconName={'ion'} name={icon} size={20} color={iconColor} />
-      <View>
-          <Text weight='semibold' style={tw`text-center text-${textColor} font-semibold`}>{props.email ? (props.register ? 'Login' : 'Sign Up') : 'Continue'} With {name}</Text>
-      </View>
-      <Text> </Text>
-  </TouchableOpacity>
 }

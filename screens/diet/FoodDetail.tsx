@@ -40,6 +40,7 @@ import useAsync from '../../hooks/useAsync';
 import { ProgressDao } from '../../types/ProgressDao';
 import QuantitySelect from '../../components/inputs/QuantitySelect';
 import { supabase } from '../../supabase';
+import { useSelector } from '../../redux/store';
 
 interface FoodDetailProps {
     id?: string;
@@ -69,7 +70,7 @@ interface FoodDetailProps {
 
 export default function FoodDetail(props: FoodDetailProps) {
     const dm = useColorScheme() === 'dark'
-    const { progressId, aiResult, currentIngredietId, setCurrentIngredietId, setAiResult, userId, username, profile } = useCommonAWSIds()
+    let {profile} = useSelector(x => x.auth)
     const [editable, setEditable] = React.useState(props.editable === true)
     const src: 'new' | 'api' | 'ai' | 'backend' | 'edit' = props.src
     const [id, setId] = React.useState<string>(props.id || '')

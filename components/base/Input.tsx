@@ -1,4 +1,4 @@
-import { View, Text, useColorScheme, TextInput } from 'react-native'
+import { View, Text, useColorScheme, TextInput, KeyboardType } from 'react-native'
 import React, { useEffect, useRef, useState } from 'react'
 import { Label, Spacer, Input as TamaguiInput, XStack, TextArea as TamaguiTextArea } from 'tamagui'
 import { _tokens } from '../../tamagui.config';
@@ -14,11 +14,13 @@ interface InputProps {
     editable?: boolean;
     value?: string | number;
     number?: boolean;
-    onValueChange?: (v: string | number) => void;
+    textChange?: (v: string) => void;
+    numberChange?: (v: number | undefined) => void;
     error?: string;
     alert?: string;
-    width?: number;
-    height?: number;
+    info?: string;
+    width?: number | string;
+    height?: number | string;
     textSize?: number;
     leftOnPress?: () => void;
     rightOnPress?: () => void;
@@ -27,6 +29,8 @@ interface InputProps {
     otherProps?: TextInput['props'],
     password?: boolean;
     canClear?: boolean;
+    type?: KeyboardType
+    onSubmit?: () => void;
 }
 
 export default function Input(props: InputProps) {
@@ -46,7 +50,7 @@ export default function Input(props: InputProps) {
         <>
             {props.name && <Label size={'$1'} fontWeight={'500'}>{props.name}</Label>}
             <Spacer size='$2' />
-            <XStack alignItems='center' borderWidth={borderColor === 'transparent' ? '0' : '$0.5'} borderColor={borderColor} borderRadius={'$4'} space='$2' alignSelf='center' height={props.height || '$5.5'}
+            <XStack alignItems='center' borderWidth={borderColor === 'transparent' ? 0 : 2} borderColor={borderColor} borderRadius={'$4'} space='$2' alignSelf='center' height={props.height || 65}
                 width={props.width || '100%'} backgroundColor={dm ? tokens.dark1 : tokens.gray200} paddingHorizontal={20}
                 paddingVertical={18} >
                 {(props.iconLeft) && <TouchableOpacity disabled={!props.leftOnPress} onPress={props.leftOnPress}>
@@ -57,13 +61,14 @@ export default function Input(props: InputProps) {
                     height={'100%'}
                     width={'85%'}
                     ref={ref}
+                    onSubmitEditing={props.onSubmit}
                     value={props.value?.toString() || undefined}
                     onChangeText={v => {
-                        if (props.number) {
+                        if (props.numberChange) {
                             let nv = v.replace(/^\d*\.?\d*$/g, '')
-                            props.onValueChange && props.onValueChange(nv)
-                        } else {
-                            props.onValueChange && props.onValueChange(v)
+                            props.numberChange(Number(nv) || undefined)
+                        } else if (props.textChange) {
+                            props.textChange(v)
                         }
                     }}
                     onFocus={() => setBorderColor(_tokens.primary900 + '60')}
@@ -74,6 +79,7 @@ export default function Input(props: InputProps) {
                     backgroundColor={'$colorTransparent'}
                     fontSize={props.textSize || 18}
                     placeholder={props.placeholder}
+                    keyboardType={props.type}
                     color={dm ? _tokens.white : _tokens.black}
                     secureTextEntry={obscureText}
                     {...props.otherProps}
@@ -89,7 +95,7 @@ export default function Input(props: InputProps) {
                 </TouchableOpacity>}
             </XStack>
             <Spacer size='$2' />
-       {(props.error || props.alert) &&  <Toast message={props.error || props.alert} type={props.error ? 'error' : 'warning'} />}
+            {(props.error || props.alert || props.info) && <Toast message={props.error || props.alert || props.info} type={props.error ? 'error' : (props.info ? 'info' : 'warning')} />}
         </>
     )
 }
@@ -117,18 +123,18 @@ export function TextArea(props: InputProps) {
                     width={'85%'}
                     ref={ref}
                     backgroundColor={'$colorTransparent'}
-                    onFocus={() => setBorderColor(_tokens.primary900+'60')}
+                    onFocus={() => setBorderColor(_tokens.primary900 + '60')}
                     onBlur={() => setBorderColor('transparent')}
                     borderColor={'transparent'}
                     borderWidth={0}
                     editable={props.editable !== false}
                     value={props.value?.toString() || undefined}
                     onChangeText={v => {
-                        if (props.number) {
+                        if (props.numberChange) {
                             let nv = v.replace(/^\d*\.?\d*$/g, '')
-                            props.onValueChange && props.onValueChange(nv)
-                        } else {
-                            props.onValueChange && props.onValueChange(v)
+                            props.numberChange(Number(nv) || undefined)
+                        } else if (props.textChange) {
+                            props.textChange(v)
                         }
                     }}
                     placeholder={props.placeholder}
@@ -141,7 +147,7 @@ export function TextArea(props: InputProps) {
                 </TouchableOpacity>}
             </XStack>
             <Spacer size='$2' />
-            {(props.error || props.alert) &&  <Toast message={props.error || props.alert} type={props.error ? 'error' : 'warning'} />}
+            {(props.error || props.alert) && <Toast message={props.error || props.alert} type={props.error ? 'error' : 'warning'} />}
         </>
     )
 }

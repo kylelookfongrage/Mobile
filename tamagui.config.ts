@@ -85,7 +85,7 @@ export const _tokens = {
     success: '#12D18E',
     warning: '#FACC15',
     error: '#F75555',
-    lightBg: '#D8D8D8',
+    lightBg: 'white',
     darkBg: '#070707',
     buttonBg: '#1438CC',
     gray900: '#212121',

@@ -31,6 +31,7 @@ import { ProgressDao } from '../../types/ProgressDao';
 import Overlay from '../../components/screens/Overlay';
 import { supabase } from '../../supabase';
 import QuantitySelect from '../../components/inputs/QuantitySelect';
+import { useSelector } from '../../redux/store';
 
 
 export interface MealDetailProps {
@@ -43,7 +44,7 @@ export interface MealDetailProps {
 }
 
 export default function MealDetailScreen(props: MealDetailProps) {
-    const { profile } = useCommonAWSIds()
+    const { profile } = useSelector(x => x.auth)
     let MealForm = useForm<Tables['meal']['Insert']>({
         ai: false,
         description: '',

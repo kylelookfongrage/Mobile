@@ -3,6 +3,7 @@ import tw from 'twrnc'
 import { Text } from "./Themed";
 import { View, TouchableOpacity } from "react-native";
 import { ExpoIcon } from "./ExpoIcon";
+import React from "react";
 
 interface ErrorMessageProps {
     errors: string[];

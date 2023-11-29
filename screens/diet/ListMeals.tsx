@@ -9,6 +9,7 @@ import { SearchDao } from '../../types/SearchDao';
 import { Tables } from '../../supabase/dao';
 import SearchScreen from '../../components/screens/SearchScreen';
 import SearchResult from '../../components/base/SearchResult';
+import { useSelector } from '../../redux/store';
 
 export interface ListMealSearchResults {
     name: string;
@@ -36,7 +37,7 @@ export default function ListMeals(props: ListMealsProps) {
     const dm = useColorScheme() === 'dark'
     const navigator = useNavigation()
     const color = dm ? 'white' : 'black'
-    const { profile } = useCommonAWSIds()
+    const { profile } = useSelector(x => x.auth)
     const searchOptions = ['All Meals', 'My Meals', 'Favorites']
     let dao = SearchDao()
 

@@ -5,16 +5,19 @@ import { Text, SafeAreaView, View } from '../../components/base/Themed';
 import tw from 'twrnc'
 import { FloatingActionButton } from '../../components/base/FAB';
 import { useNavigation } from '@react-navigation/native';
-import { ExpoIcon } from '../../components/base/ExpoIcon';
+import { ExpoIcon, Icon } from '../../components/base/ExpoIcon';
 import useColorScheme from '../../hooks/useColorScheme';
 import { defaultImage, getMatchingNavigationScreen, isStorageUri, substringForLists, titleCase } from '../../data';
-import { useCommonAWSIds } from '../../hooks/useCommonContext';
 import { getCommonScreens } from '../../components/screens/GetCommonScreens';
 import GenerateMeal from './GenerateMeal';
 import SearchBar from '../../components/inputs/SearchBar';
 import Spacer from '../../components/base/Spacer';
 import { supabase } from '../../supabase';
 import SupabaseImage from '../../components/base/SupabaseImage';
+import { XStack } from 'tamagui';
+import { _tokens } from '../../tamagui.config';
+import TopBar from '../../components/base/TopBar';
+import Tag from '../../components/base/Tag';
 
 
 
@@ -58,7 +61,15 @@ export default function FoodTab() {
     )
 }
 
-const searchOptions = ['Profiles', 'Meals', 'Food', 'Workouts', 'Exercises'] as const
+const searchOptions = [
+    {'All': 'null'},
+    {'Users': 'null' },
+    {'Plans' : 'ListPlan'},
+    {'Meals': 'ListMeals'}, 
+    {'Workouts': 'ListWorkout'}, 
+    {'Food': 'ListFood'}, 
+    {'Exercises': 'ListExercise'},
+] as const
 
 interface ISearchResult {
     author: string;
@@ -76,10 +87,13 @@ interface ISearchResult {
 export const FoodAndMeals = () => {
     const navigator = useNavigation()
     let [results, setResults] = useState<ISearchResult[]>([])
+    let [loading, setLoading] = useState<boolean>(false)
     const search = async (keyword: string) => {
+        setLoading(true)
         console.log(keyword)
         const { data, error } = await supabase.rpc('fn_search', { keyword })
         if (error || !data) return;
+        setLoading(false)
         setResults(data)
 
     }
@@ -88,28 +102,24 @@ export const FoodAndMeals = () => {
     //@ts-ignore
     return <SafeAreaView style={[tw`px-3`, { flex: 1 }]} edges={['top']} includeBackground>
         <Spacer />
-        <Text h2>Search</Text>
+        <TopBar iconLeft='Search' title='Search' />
         <Spacer />
         <SearchBar full onSearch={search} />
-        {/* <Spacer />
-        <ScrollView style={{ minHeight: 35, maxHeight: 35 }} horizontal showsHorizontalScrollIndicator={false}>
-            {searchOptions.map(x => {
-                const selected = selectedOptions.includes(x)
-                return <TouchableOpacity onPress={() => {
-                    if (selected) {
-                        setSelectedOptions([...selectedOptions].filter(z => z !== x))
-                    }
-                    else {
-                        setSelectedOptions([...selectedOptions, x])
-                    }
-                }} key={`Search Option` + x} style={{ ...tw`py-2 px-3 mx-1 ${selected ? 'rounded-full bg-red-600 text-white' : ''}` }}>
-                    <Text>{x}</Text>
-                </TouchableOpacity>
-            })}
-        </ScrollView> */}
-        <Spacer divider/>
+        <Spacer sm />
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{minHeight: 50}}>
+        {searchOptions.map(obj => {
+            let key = Object.keys(obj)[0]
+            let screen = getMatchingNavigationScreen(Object.values(obj)[0], navigator)
+            return <TouchableOpacity key={key} style={tw`mr-2`} disabled={screen === null} onPress={() => navigator.navigate(screen)}>
+                <Tag type={key==='All' ? 'primary' : 'light'} color={key === 'All' ? 'primary900' : 'gray500'}>{key}</Tag>
+            </TouchableOpacity>
+        })}
+        </ScrollView>
+        
+        
+        {loading && <ActivityIndicator style={{alignSelf: 'stretch', paddingTop: 30}} />}
         <ScrollView contentContainerStyle={[tw``]} showsVerticalScrollIndicator={false}>
-            {results.map((x, i) => {
+            {(loading ? [] : results).map((x, i) => {
                 return <TouchableOpacity key={`Search Result ${x.identifier} - ${i}`} onPress={() => {
                     let screenName = 'FoodDetail'
                     let id = x.identifier
@@ -124,15 +134,15 @@ export const FoodAndMeals = () => {
                     let s = getMatchingNavigationScreen(screenName, navigator)
                     navigator.navigate(s, {id, src:'backend'})
                 }}>
-                    <View card style={tw`flex-row items-center justify-between p-2 my-1 rounded-xl`}>
+                    <View includeBackground style={tw`flex-row items-center justify-between p-2 my-1 rounded-xl`}>
                         <View style={tw`flex-row items-center`}>
                             <SupabaseImage style='h-13 w-13 mr-2 rounded-lg' uri={x.image || defaultImage} />
                             <View>
-                                <Text weight='semibold'>{substringForLists(x.name, 27)}</Text>
-                                <Text xs style={tw`text-red-500`}>@{substringForLists(x.username, 40)}</Text>
+                                <Text lg weight='bold'>{substringForLists(x.name, 27)}</Text>
+                                <Text sm style={tw`text-red-500`} weight='semibold'>@{substringForLists(x.username, 40)}</Text>
                             </View>
                         </View>
-                        <Text xs style={tw`text-gray-500`}>{titleCase(x.type)}</Text>
+                        <Text sm style={tw`text-gray-500`}>{titleCase(x.type)}</Text>
                     </View>
                 </TouchableOpacity>
             })}

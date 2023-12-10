@@ -3,7 +3,6 @@ import React from 'react'
 import { Text, View } from '../../components/base/Themed'
 import tw from 'twrnc'
 import { useNavigation } from '@react-navigation/native';
-import { useCommonAWSIds } from '../../hooks/useCommonContext';
 import { getMatchingNavigationScreen } from '../../data';
 import { SearchDao } from '../../types/SearchDao';
 import { Tables } from '../../supabase/dao';

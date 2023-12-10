@@ -3,12 +3,12 @@ import { Text, View } from '../../components/base/Themed'
 import tw from 'twrnc'
 import { useNavigation } from '@react-navigation/native'
 import { getMatchingNavigationScreen } from '../../data'
-import { useCommonAWSIds } from '../../hooks/useCommonContext'
 import { SearchDao } from '../../types/SearchDao'
 import SearchScreen from '../../components/screens/SearchScreen'
 import SearchResult from '../../components/base/SearchResult'
 import { Tables } from '../../supabase/dao'
 import { supabase } from '../../supabase'
+import { useSelector } from '../../redux/store'
 
 export interface ListWorkoutSearchResultsType {
   name: string;
@@ -30,7 +30,7 @@ interface ListWorkoutProps {
   dow?: number
 }
 export default function ListWorkout(props: ListWorkoutProps) {
-  const { profile } = useCommonAWSIds()
+  const { profile } = useSelector(x => x.auth)
   const navigator = useNavigation()
   let dao = SearchDao()
   const searchOptions = ['All Workouts', 'My Workouts', 'Favorites']
@@ -63,6 +63,6 @@ const WorkoutSearchResult = (props: { idx: number, item: Tables['workout']['Row'
     if (onPress) onPress(r.id)
   }}>
     {/* @ts-ignore */}
-    <Text style={tw`text-red-500 text-xs`}>@{r?.author?.username || 'rage'}</Text>
+    <Text style={tw`text-red-500`}>@{r?.author?.username || 'rage'}</Text>
   </SearchResult>
 }

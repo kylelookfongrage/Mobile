@@ -4,7 +4,7 @@ import { Text, View } from '../../components/base/Themed'
 import useColorScheme from '../../hooks/useColorScheme'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import tw from 'twrnc'
-import { ExpoIcon } from '../../components/base/ExpoIcon'
+import { ExpoIcon, Icon } from '../../components/base/ExpoIcon'
 import { FloatingActionButton } from '../../components/base/FAB'
 import { useNavigation } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
@@ -25,6 +25,9 @@ import { PostDao, TFeed } from '../../types/PostDao'
 import SupabaseImage from '../../components/base/SupabaseImage'
 import Spacer from '../../components/base/Spacer'
 import useHaptics from '../../hooks/useHaptics'
+import { useSelector } from '../../redux/store'
+import TopBar from '../../components/base/TopBar'
+import { _tokens } from '../../tamagui.config'
 
 
 export interface UserSearch {
@@ -58,7 +61,7 @@ interface PostDisplay extends Post {
 export const WorkoutAndExercises = () => {
   const dm = useColorScheme() === 'dark'
   const navigator = useNavigation()
-  const { userId, subscribed, profile } = useCommonAWSIds()
+  let {profile, subscribed} = useSelector(x => x.auth)
   const [refreshing, setRefreshing] = React.useState<boolean>(false);
   const [posts, setPosts] = React.useState<TFeed[]>([])
   let dao = PostDao()
@@ -79,17 +82,17 @@ export const WorkoutAndExercises = () => {
 
   return <View style={{ flex: 1 }} includeBackground>
     <SafeAreaView edges={['top']} style={tw`h-12/12`}>
-      <View style={tw`px-6 pb-3 pt-2`}>
-        <View style={tw`flex-row items-center justify-between`}>
-          <Text h2>For You</Text>
-          <TouchableOpacity style={tw`pl-3`} onPress={() => navigator.navigate('Inbox')}>
-            <ExpoIcon name='inbox' iconName='feather' size={28} color='gray' />
-          </TouchableOpacity>
-        </View>
-      </View>
+      <Spacer />
+      <TopBar title='Discover' iconLeft='Discovery' Right={() => {
+        return <TouchableOpacity style={tw`p-.5`} onPress={() => navigator.navigate('Inbox')}>
+        <Icon name='Send' size={26} color={dm ? _tokens.white : _tokens.black} />
+      </TouchableOpacity>
+      }} />
+      <Spacer />
       <ScrollView contentContainerStyle={[tw`px-4 py-3`]} showsVerticalScrollIndicator={false} refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={fetchTabResults} />
       }>
+        <Spacer />
 
         {posts.map((x, i) => {
           const shouldShow = showingModeIndex === i

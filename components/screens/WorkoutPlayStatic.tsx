@@ -53,13 +53,14 @@ export default function WorkoutPlayStatic(props: WorkoutPlayDisplayProps) {
                     {currentExercise.video && <Video resizeMode='cover' style={{ height: screen.height * 0.55, width: screen.width }} source={{ uri: isStorageUri(currentExercise.video) ? s.constructUrl(currentExercise.video)?.data?.publicUrl : currentExercise.video }} />}
                     {(!currentExercise.video) && <SupabaseImage style={{ height: screen.height * 0.55, width: screen.width }} uri={currentExercise.preview || defaultImage} />}
                     <View style={tw`px-4 pt-4`}>
-                        <Text style={tw`max-w-9/12`} h1>{currentExercise.name}</Text>
+                        <Text style={tw`max-w-9/12`} h4 weight='bold'>{currentExercise.name}</Text>
+                        <Spacer />
                         <Text style={tw``}>{(currentExercise?.description?.length || 0) > 100 ? (shouldShowMore ? currentExercise.description : (currentExercise.description || '').substring(0, 100)) : currentExercise.description}
                             <Text style={tw`ml-4 text-gray-500`} weight='semibold' onPress={() => setShouldShowMore(!shouldShowMore)}>  {((currentExercise.description || '').length > 100) ? (shouldShowMore ? 'Hide' : 'Show More') : ''}</Text>
                         </Text>
                         <Spacer />
                         {selectedWorkoutDetail.note && <Text>Note: {selectedWorkoutDetail.note}</Text>}
-                        
+                        <Spacer />
                         <View card style={tw`items-center w-12/12 items-center justify-center mt-3 mb-6 p-3 pb-6 rounded-xl`}>
                             <Text style={tw`text-4xl my-4`} weight='regular'>{toHHMMSS(totalTime)}</Text>
                             <View style={tw`flex flex-row items-center justify-center`}>

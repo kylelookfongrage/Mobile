@@ -9,11 +9,12 @@ export default function Tag(props: {
     children?: any,
     textSize?: any
     width?: any
+    pill?: any
 }) {
     let dm = useColorScheme() === 'dark'
     let s = getTagStyle(props.type || 'primary', props.color || 'success', dm)
   return (
-    <YStack width={props.width || '$12'} paddingVertical='$3' backgroundColor={s.bg} borderRadius={'$5'} borderColor={s.border ? s.border : undefined} borderWidth={s.border ? 2 : 0}>
+    <YStack maxWidth={props.width} minHeight={42} alignItems='center' justifyContent='center' backgroundColor={s.bg} paddingHorizontal='$4' borderRadius={'$11'} borderColor={s.border ? s.border : undefined} borderWidth={s.border ? 2 : 0}>
       <Text fontSize={props.textSize || 16} fontWeight={'600'} textAlign='center' color={s.text}>
       {props.children}
       </Text>

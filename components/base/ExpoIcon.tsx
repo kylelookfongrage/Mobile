@@ -5,7 +5,8 @@ import {
     Octicons,
     FontAwesome5,
     SimpleLineIcons,
-    createIconSet
+    createIconSet,
+    MaterialIcons
   } from "@expo/vector-icons";
 
   let uncicodeMapping = require('../../assets/fonts/unicodesMap.json')
@@ -48,7 +49,7 @@ import {
     switch (iconName) {
       case "material":
         //@ts-ignore
-        return <MaterialCommunityIcons {...iconProps} />;
+        return <MaterialIcons {...iconProps} />;
       case "fa5":
         //@ts-ignore
         return <FontAwesome5 {...iconProps} />;

@@ -14,6 +14,7 @@ import * as WebBrowser from 'expo-web-browser'
 import { Tables } from '../../supabase/dao'
 import Overlay from '../../components/screens/Overlay'
 import Spacer from '../../components/base/Spacer'
+import { _tokens } from '../../tamagui.config'
 /*
 ShowMore Options: 
 Favorite
@@ -41,6 +42,7 @@ type TShowMoreDialogue = {
 }
 
 export const EditModeButton = (editing: boolean, onPress: () => void, user_id: string | null | undefined, current_user_id: string | null | undefined): TActionButton => {
+  console.log(user_id === current_user_id)
   return {
     title: editing ? 'Stop Editing' : 'Edit', icon: editing ? 'backspace' : 'create', onPress: onPress, hidden: user_id !== current_user_id
   }
@@ -80,6 +82,7 @@ export const ShowMoreDialogue = (props: TShowMoreDialogue) => {
   const navigator = useNavigation()
   const [showDialogue, setShowDialogue] = useState<boolean>(false)
   let options: TActionButton[] = (props.options || [])
+  let dm = useColorScheme() === 'dark'
   let { workout_id, exercise_id, meal_id, messgage_id, post_id, plan_id, food_id, user_id, comment_id } = props;
   let canReport = workout_id || exercise_id || meal_id || messgage_id || plan_id || post_id || food_id || user_id || comment_id
   if (canReport) {
@@ -98,8 +101,8 @@ export const ShowMoreDialogue = (props: TShowMoreDialogue) => {
       //@ts-ignore
       setShowDialogue(!showDialogue)
     }}>
-      <View card style={[tw`p-2 rounded-lg`, { zIndex: 1 }]}>
-        <ExpoIcon color='gray' size={25} iconName='feather' name={showDialogue ? 'x' : 'more-horizontal'} />
+      <View style={[tw`p-2 rounded-full items-center justify-center mx-2`, { zIndex: 1, backgroundColor: dm ? _tokens.dark2 + '90' : _tokens.gray300 + '90'}]}>
+        <ExpoIcon color='gray' size={20} iconName='feather' name={showDialogue ? 'x' : 'more-horizontal'} />
       </View>
       <Overlay excludeBanner style={{ ...tw`flex-row flex-wrap items-center` }} dialogueHeight={40} visible={showDialogue} onDismiss={() => setShowDialogue(false)}>
         {options.filter(x => !x.hidden).map((x, i) => {

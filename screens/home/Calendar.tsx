@@ -7,6 +7,8 @@ import moment, { Moment } from 'moment'
 import { BackButton } from '../../components/base/BackButton'
 import tw from 'twrnc'
 import ThisAdHelpsKeepFree from '../../components/features/ThisAdHelpsKeepFree'
+import { useDispatch, useSelector } from '../../redux/store'
+import { changeDate } from '../../redux/reducers/progress'
 
 interface DateContextType {
     date: Moment;
@@ -23,9 +25,13 @@ export const useDateContext = () => React.useContext<DateContextType>(DateContex
 // }
 
 export default function Calendar() {
-    const { AWSDate, setDate, date } = useDateContext()
+    let {formattedDate} = useSelector(x => x.progress)
+    let dispatch = useDispatch()
+    let setDate = (_date: string) => dispatch(changeDate({date: _date}))
     const navigator = useNavigation()
-    const markedDate = AWSDate
+    console.log(formattedDate)
+    const markedDate = moment(formattedDate).format('YYYY-MM-DD')
+    console.log(markedDate)
     const dm = useColorScheme() === 'dark'
     return (
         <View style={{flex: 1}} includeBackground>
@@ -66,7 +72,7 @@ export default function Calendar() {
                 // Enable or disable vertical scroll indicator. Default = false
                 onDayPress={day => {
                     let newDate: Date = new Date(Date.parse(`${day.month}/${day.day}/${day.year}`))
-                    setDate(moment(newDate))
+                    setDate(moment(newDate).format())
                     //@ts-ignore
                     navigator.pop()
                 }}

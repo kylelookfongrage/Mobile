@@ -3,11 +3,11 @@ import { Text } from '../../components/base/Themed'
 import tw from 'twrnc'
 import { useNavigation } from '@react-navigation/native'
 import { getMatchingNavigationScreen } from '../../data'
-import { useCommonAWSIds } from '../../hooks/useCommonContext'
 import { Tables } from '../../supabase/dao'
 import SearchScreen from '../../components/screens/SearchScreen'
 import { SearchDao } from '../../types/SearchDao'
 import SearchResult from '../../components/base/SearchResult'
+import { useSelector } from '../../redux/store'
 
 interface ListExerciseProps {
     workoutId?: string;
@@ -15,7 +15,7 @@ interface ListExerciseProps {
     userId?: string;
 }
 export default function ListExercise(props: ListExerciseProps) {
-    const { profile } = useCommonAWSIds()
+    const { profile } = useSelector(x => x.auth)
     const searchOptions = ['All Exercises', 'My Exercises', 'Favorites']
     let dao = SearchDao()
     let navigator = useNavigation()

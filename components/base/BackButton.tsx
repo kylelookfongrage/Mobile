@@ -34,7 +34,7 @@ export const BackButton = (props: BackButtonProps) => {
             }
         }}
         >
-            <Icon name='Arrow---Left' size={28} style={tw`mr-.5`} color={'gray'} />
+            <Icon name='Arrow---Left' size={28} style={tw`mr-.5`} color={dm ? "white" : 'black'} />
     </TouchableOpacity>
     {props.name && <Text xl style={tw`ml-2`} weight='semibold'>{props.name}</Text>}
     </View>

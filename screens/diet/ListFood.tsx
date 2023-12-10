@@ -1,13 +1,12 @@
-import { ScrollView, useColorScheme, TouchableOpacity, Image, TextInput } from 'react-native'
+import { ScrollView, useColorScheme, TouchableOpacity, Image, TextInput, Dimensions } from 'react-native'
 import React, { useState } from 'react'
 import { Text, View } from '../../components/base/Themed'
 import tw from 'twrnc'
-import { ExpoIcon } from '../../components/base/ExpoIcon'
+import { ExpoIcon, Icon } from '../../components/base/ExpoIcon'
 import { FetchEdamamParser, getMatchingNavigationScreen } from '../../data'
 import { useNavigation } from '@react-navigation/native'
 import Barcode from '@kichiyaki/react-native-barcode-generator'
 import { BarCodeScanner } from 'expo-barcode-scanner'
-import { useCommonAWSIds } from '../../hooks/useCommonContext'
 import { BackButton } from '../../components/base/BackButton'
 import { ActivityIndicator, FAB } from 'react-native-paper'
 import moment from 'moment'
@@ -17,6 +16,10 @@ import Spacer from '../../components/base/Spacer'
 import { SearchDao } from '../../types/SearchDao'
 import useAsync from '../../hooks/useAsync'
 import SupabaseImage from '../../components/base/SupabaseImage'
+import { useSelector } from '../../redux/store'
+import { XGroup } from 'tamagui'
+import { _tokens } from '../../tamagui.config'
+import Selector from '../../components/base/Selector'
 export const categoryMapping = {
   'generic foods': '🍎',
   'generic meals': '🍽',
@@ -59,7 +62,8 @@ interface ListFoodProps {
 
 export default function ListFood(props: ListFoodProps) {
   const navigator = useNavigation()
-  const { userId, profile } = useCommonAWSIds()
+  const { profile } = useSelector(x => x.auth)
+  let w = Dimensions.get('screen').width
   const dm = useColorScheme() === 'dark'
   const color = dm ? 'white' : 'black'
   const [searchKey, setSearchKey] = React.useState<string>('')
@@ -163,25 +167,16 @@ export default function ListFood(props: ListFoodProps) {
 
   return (
     <View style={{ flex: 1 }} includeBackground>
-      <BackButton />
+      <BackButton name='Food' />
       <Spacer />
+      <View style={tw`px-2`}>
+      <SearchBar full onSearch={setSearchKey} />
+      </View>
+      <Spacer />
+      {/* @ts-ignore */}
+      <Selector searchOptions={searchOptions} selectedOption={selectedOption} onPress={setSelectedOption} />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[tw`px-4`]}>
-        <SearchBar full onSearch={setSearchKey} />
-        <View style={tw`flex-row justify-between py-4 px-5`}>
-          {searchOptions.map((o, i) => {
-            const selected = selectedOption === o
-            return <TouchableOpacity
-              key={`Search option ${o} at idx ${i}`}
-              style={tw`items-center py-2 px-5 ${selected ? 'border-b border-' + color : ''}`}
-              onPress={() => {
-                setSelectedOption(o)
-                setResults([])
-              }}>
-              <Text
-                weight={selected ? 'semibold' : 'regular'}>{o}</Text>
-            </TouchableOpacity>
-          })}
-        </View>
+        <Spacer />
         {showBarcode && <View>
           {!barcode && <BarcodeScannerView
             style={tw`h-50 w-12/12 rounded-xl border border-${dm ? 'white' : 'black'}`}
@@ -239,8 +234,8 @@ export default function ListFood(props: ListFoodProps) {
         if (showBarcode) {
           return <ExpoIcon name='close' iconName='ion' color='white' size={23} />
         }
-        return <ExpoIcon name='barcode-outline' iconName='ion' color='white' size={23} />
-        }} style={{...tw`bg-red-600 items-center justify-center pl-.5`, width: 55, height: 55, position: 'absolute',
+        return <Icon name='Scan' color='white' weight='bold' size={24} />
+        }} style={{...tw`bg-red-600 items-center justify-center`, width: 55, height: 55, position: 'absolute',
         margin: 15,
         right: 0,
         padding: 0,
@@ -287,13 +282,13 @@ const BarcodeScannerView = (props: BarcodeScannerViewProps) => {
   }
 
 
-  return <View style={[{ flex: 1 }, tw``]}>
+  return <View style={[{ flex: 1 }, tw`flex`]}>
     <BarCodeScanner
       style={props.style || tw`h-50 w-12/12`}
       onBarCodeScanned={handleBarCodeScanned}
     />
     <View style={[{ position: 'absolute', top: 1 }, tw`w-12/12 h-12/12 items-center justify-center`]}>
-      <ActivityIndicator color='red' size={'large'} style={tw``} />
+      <ActivityIndicator color='red' size={'large'} />
     </View>
   </View>
 

@@ -20,7 +20,6 @@ import Spacer from '../../components/base/Spacer'
 import UsernameDisplay from '../../components/features/UsernameDisplay'
 import SaveButton from '../../components/base/SaveButton'
 import ManageButton from '../../components/features/ManageButton'
-import { PlanAdditions, WorkoutAdditions, useMultiPartForm } from '../../hooks/useMultipartForm'
 import useOnLeaveScreen from '../../hooks/useOnLeaveScreen'
 import { SortableList } from 'react-native-ui-lib'
 import useHaptics from '../../hooks/useHaptics'
@@ -32,6 +31,14 @@ import TimeInput, { valueToSeconds } from '../../components/inputs/TimeInput'
 import { WorkoutDao } from '../../types/WorkoutDao'
 import SwipeWithDelete from '../../components/base/SwipeWithDelete'
 import Colors from '../../constants/Colors'
+import { PlanAdditions, WorkoutAdditions } from '../../redux/reducers/multiform'
+import { useMultiPartForm } from '../../redux/api/mpf'
+import { useSelector } from '../../redux/store'
+import { ExpoIcon, Icon } from '../../components/base/ExpoIcon'
+import Description from '../../components/base/Description'
+import Selector from '../../components/base/Selector'
+import { XStack, YStack } from 'tamagui'
+import { _tokens } from '../../tamagui.config'
 
 
 
@@ -45,7 +52,8 @@ interface WorkoutDetailProps {
 }
 
 export default function WorkoutDetail(props: WorkoutDetailProps) {
-  const { subscribed, profile } = useCommonAWSIds()
+  let { profile, subscribed } = useSelector(x => x.auth)
+  let options = ['Overview', 'Equipment']
   let WorkoutForm = useForm<Tables['workout']['Insert']>({
     name: '',
     description: '',
@@ -68,7 +76,7 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
           ...copy
         }
       })
-      multiPartForm.upsert('workouts', uuid, ex)
+      multiPartForm.upsert(ex)
       return res;
     }
     return null;
@@ -88,19 +96,19 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
     sorted: false
   })
   let [screen, setScreen] = [ScreenForm.state, ScreenForm.setForm]
-  let multiPartForm = useMultiPartForm()
   let [uuid] = useState<string>(uuidv4())
-  let associatedExercises = multiPartForm['data']['workouts'][uuid] || []
+  let multiPartForm = useMultiPartForm('workouts', uuid)
+  let associatedExercises = multiPartForm.data || []
   let allEquipment = associatedExercises.flatMap(x => x.equiptment)
   let associatedEquiptment = [...new Map(allEquipment.map(item =>
     [item['id'], item])).values()];
-  let [copiedExercises, setCopiedExercises] = useState<WorkoutAdditions[]>([])
+  let [copiedExercises, setCopiedExercises] = useState<WorkoutAdditions[]>(associatedExercises)
   let aEx = useMemo(() => {
     return associatedExercises.map(x => ({ ...x, id: ((x.tempId || '') + x.index?.toString()) })).sort((a, b) => (a.index || 0) - (b.index || 0))
   }, [associatedExercises])
   let selectedExercise = screen.selectedExercise === null ? null : aEx[screen.selectedExercise];
   useOnLeaveScreen(() => {
-    multiPartForm.remove('workouts', uuid)
+    multiPartForm.remove()
   })
   const { id } = props;
   const navigator = useNavigation()
@@ -119,7 +127,8 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
         if (e !== true) throw Error(e[0] || 'Ensure all values are filled out')
         let res = await dao.save({ ...form, image: form.image || defaultImage })
         if (res?.id) {
-          await dao.saveWorkoutDetails(res.id, copiedExercises.length > 0 ? copiedExercises : associatedExercises)
+          let r2 = await dao.saveWorkoutDetails(res.id, copiedExercises.length > 0 ? copiedExercises : associatedExercises)
+          console.log(r2)
           WorkoutForm.dispatch({ type: FormReducer.Set, payload: res })
           setScreen('uploading', false)
           setScreen('editMode', false)
@@ -132,6 +141,7 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
   }
 
   let h = useHaptics()
+  let [selectedItem, setSelectedItem] = useState('Overview');
   const onOrderChange = useCallback((items: WorkoutAdditions[]) => {
     h.press()
     setScreen('sorted', true)
@@ -144,42 +154,47 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
   }
   return (
     <View style={{ flex: 1 }} includeBackground>
-      <BackButton inplace Right={() => {
-        if (screen.editMode || !id || !Number(id) || props.planId) return <View />
-        return <ShowMoreDialogue workout_id={Number(id)} options={[
-          EditModeButton(screen.editMode, () => setScreen('editMode', !screen.editMode), form.user_id, profile?.id),
-          DeleteButton('Workout', deleteWorkout, form.user_id, profile?.id),
-          // ShowUserButton(form.user_id, navigator),
-          ShareButton({ workout_id: Number(id) })
-        ]} />
-      }} />
-      <ScrollViewWithDrag keyboardDismissMode='interactive' rerenderTopView={[screen.editMode, form.image]} showsVerticalScrollIndicator={false} TopView={() => <ImagePickerView editable={screen.editMode} srcs={form.image ? [{ type: 'image', uri: form.image }] : []} onChange={x => {
-        if (x[0]) { setForm('image', x[0].uri) }
-      }} type='image' />}>
-        <View style={[tw`pt-4 px-6 pb-60`]}>
+      <ScrollViewWithDrag disableRounding keyboardDismissMode='interactive' rerenderTopView={[screen.editMode, form.image, form.user_id]} showsVerticalScrollIndicator={false} TopView={() => {
+        return <View>
+          <BackButton inplace Right={() => {
+            if (screen.editMode || !id || !Number(id) || props.planId) return <View />
+            return <ShowMoreDialogue workout_id={Number(id)} options={[
+              EditModeButton(screen.editMode, () => setScreen('editMode', !screen.editMode), form.user_id, profile?.id),
+              DeleteButton('Workout', deleteWorkout, form.user_id, profile?.id),
+              // ShowUserButton(form.user_id, navigator),
+              ShareButton({ workout_id: Number(id) })
+            ]} />
+          }} />
+          <ImagePickerView editable={screen.editMode} srcs={form.image ? [{ type: 'image', uri: form.image }] : []} onChange={x => {
+            if (x[0]) { setForm('image', x[0].uri) }
+          }} type='image' />
+        </View>
+      }}>
+        <View includeBackground style={[tw`pt-4 px-2 pb-60`]}>
           <ErrorMessage errors={screen.errors} onDismissTap={() => setScreen('errors', [])} />
           <TitleInput value={form.name} onChangeText={x => setForm('name', x)} placeholder='Your workout' />
           <Spacer />
           <UsernameDisplay image disabled={(screen.editMode || screen.uploading)} id={form.user_id} username={form.id ? null : profile?.username} />
           <Spacer />
-          <TextInput
-            value={form.description || ''}
-            multiline
-            numberOfLines={4}
-            onChangeText={x => setForm('description', x)}
-            editable={screen.editMode}
-            placeholder='The description of your workout'
-            placeholderTextColor={'gray'}
-            style={tw`max-w-10/12 text-${dm ? 'white' : 'black'}`}
-          />
-          <Spacer divider />
-          <Text h3>Equipment</Text>
-          <Spacer sm />
-          {associatedEquiptment.map(equ => {
-            return <EquiptmentTile item={equ} key={`equiptment: ${equ.id}`} />
-          })}
-          <Spacer divider />
-          <ManageButton hidden={!screen.editMode} title='Exercises' buttonText='Add New' onPress={() => {
+          <Description value={form.description} onChangeText={x => setForm('description', x)} editable={screen.editMode} placeholder='Please describe your workout' />
+          <Spacer />
+          <XStack justifyContent='space-between' w={'100%'} alignItems='center'>
+            <ExerciseTile iconName='fa5' icon='running' iconSize={20} title={(associatedExercises?.length || 0).toString()} desc='exercises' />
+            <ExerciseTile iconName='ion' icon='time-outline' iconSize={20} title={toHHMMSS((associatedExercises|| []).reduce((prev, curr) => prev + (curr?.time || 0), 0))} desc='time' />
+            <ExerciseTile iconName='feather' icon='zap' iconSize={20} title={(associatedExercises|| []).reduce((prev, curr) => prev + (curr?.sets || 1) * (curr.reps || 1), 0).toString()} desc='reps' />
+          </XStack>
+          <Spacer lg/>
+          <Selector searchOptions={options} selectedOption={selectedItem} onPress={setSelectedItem} />
+          {selectedItem === 'Equipment' && <View>
+            {associatedEquiptment.length === 0 && <Text lg weight='semibold' style={tw`text-gray-500 text-center mt-9`}>No equipment associated to this workout</Text>}
+            <Spacer lg/>
+            {associatedEquiptment.map(equ => {
+              return <EquiptmentTile item={equ} key={`equiptment: ${equ.id}`} />
+            })}
+          </View>}
+          {selectedItem === 'Overview' && <View>
+            {screen.editMode && <Spacer />}
+          <ManageButton hidden={!screen.editMode} title={screen.editMode ? 'Exercises' : ' '} buttonText='Add New' onPress={() => {
             setScreen('sorted', false)
             const s = getMatchingNavigationScreen('ListExercise', navigator)
             //@ts-ignore
@@ -195,7 +210,7 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
                 }
                 return x
               })
-              multiPartForm.upsert('workouts', uuid, copy)
+              multiPartForm.upsert(copy)
               setScreen('newNote', null)
               setScreen('newReps', null)
               setScreen('newSets', null)
@@ -210,10 +225,10 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
               navigator.navigate(s, { id: selectedExercise?.tempId })
               setScreen('selectedExercise', null)
             }}>
-              <Text xs style={tw`text-red-600`}>Details</Text>
+              <Text lg weight='semibold' style={tw`text-red-600`}>Details</Text>
             </TouchableOpacity>
             <Spacer />
-            <TextInput editable={screen.editMode} value={screen.newNote || selectedExercise?.note || ''} placeholder='Any notes...' placeholderTextColor={'gray'} onChangeText={v => setScreen('newNote', v)} style={tw`text-${dm ? 'white' : 'black'}`} />
+            <TextInput editable={screen.editMode} numberOfLines={3} multiline value={screen.newNote || selectedExercise?.note || ''} placeholder='Any notes...' placeholderTextColor={'gray'} onChangeText={v => setScreen('newNote', v)} style={tw`text-${dm ? 'white' : 'black'}`} />
             <Spacer />
             <View style={tw`flex-row items-center justify-around w-12/12`}>
               <View>
@@ -243,13 +258,13 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
               const { index } = info
               //@ts-ignore
               let item = info.item as WorkoutAdditions
-              return <SwipeWithDelete includeBackground key={(item.tempId || '') + `3178${index}`} onDelete={() => {
-                multiPartForm.upsert('workouts', uuid, associatedExercises.filter((x, i) => i !== index))
+              return <SwipeWithDelete disabled={!screen.editMode} includeBackground key={(item.tempId || '') + `3178${index}`} onDelete={() => {
+                multiPartForm.upsert(associatedExercises.filter((x, i) => i !== index))
               }}>
                 <View includeBackground style={{ ...tw`items-center self-center justify-center`, width: screen.s.width * 0.87, height: screen.s.height * 0.09 }}>
                   <TouchableOpacity onPress={() => {
                     if (screen.sorted) {
-                      multiPartForm.upsert('workouts', uuid, copiedExercises)
+                      multiPartForm.upsert(copiedExercises)
                     }
                     setScreen('selectedExercise', index)
                     setScreen('newNote', item.note || null)
@@ -258,16 +273,16 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
                     setScreen('newTime', toHHMMSS(item.time || 0, ''))
                     setScreen('newRest', toHHMMSS(item.rest || 0, ''))
                   }}>
-                    <View card style={{ ...tw`px-4 py-1 rounded-lg flex-row items-center`, width: screen.s.width * 0.86, height: screen.s.height * 0.08 }}>
-                      <SupabaseImage uri={item.img} style='h-10 w-10 rounded-lg' />
+                    <View style={{ ...tw`px-1 py-1 rounded-lg flex-row items-center`, width: screen.s.width * 0.86, height: screen.s.height * 0.08 }}>
+                      {screen.editMode ? <ExpoIcon name='drag-indicator' color={dm ? 'white' : 'black'} iconName='material' size={28} style={tw`mr-3`} /> : <SupabaseImage resizeMode='auto' uri={item.img} style={{ width: 60, height: 60, borderRadius: 10 }} />}
                       <Spacer horizontal sm />
                       <View>
-                        <Text weight='semibold' style={tw`max-w-11/12`}>{item.name}</Text>
+                        <Text xl weight='bold' style={tw`max-w-11/12`}>{item.name}</Text>
                         <Spacer xs />
                         <View style={{ ...tw`flex-row items-center justify-between w-10/12` }}>
-                          <Text style={tw`text-gray-500`} xs>Sets: {item.reps || 0} x {item.sets || 1}</Text>
-                          <Text style={tw`text-gray-500`} xs>Rest: {toHHMMSS(item.rest || 0)}</Text>
-                          <Text style={tw`text-gray-500`} xs>Time: {toHHMMSS(item.time || 0)}</Text>
+                          <Text style={tw`text-gray-500`}>Sets: {item.reps || 0} x {item.sets || 1}</Text>
+                          <Text style={tw`text-gray-500`}>Rest: {toHHMMSS(item.rest || 0)}</Text>
+                          <Text style={tw`text-gray-500`}>Time: {toHHMMSS(item.time || 0)}</Text>
                         </View>
                       </View>
                     </View>
@@ -276,6 +291,7 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
               </SwipeWithDelete>
             }} />
           </ScrollView>
+          </View>}
         </View>
       </ScrollViewWithDrag>
       <SaveButton uploading={screen.uploading} title={screen.editMode ? 'Save Workout' : (canViewDetails ? (props.planId ? 'Save to Plan' : 'Start Workout') : 'Purchase Workout')} favoriteId={form.originalWorkout || form.id} favoriteType='workout' onSave={async () => {
@@ -284,9 +300,9 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
         } else if (canViewDetails && form.id) {
           if (props.planId) {
             setScreen('uploading', true)
-            let c = multiPartForm.data['plans']?.[props.planId] || []
+            let c = multiPartForm.q('plans', props.planId) || []
             let copy: PlanAdditions[] = [...c, { workout_id: form.id, name: form.name, image: form.image || defaultImage, day_of_week: props.dow || 0, id: -(c.length + 1) }]
-            multiPartForm.upsert('plans', props.planId, copy)
+            multiPartForm.upsert_other('plans', props.planId, copy)
             setScreen('uploading', false)
             navigator.pop()
           } else {
@@ -304,3 +320,17 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
   )
 }
 
+
+
+export const ExerciseTile = (props: {icon: string; iconName: string; iconSize: number; title: string; desc: string }) => {
+  let dm = useColorScheme() === 'dark'
+  return <YStack justifyContent='center' alignItems='center' w='32%' backgroundColor={dm ? _tokens.dark1 : _tokens.gray300} borderRadius={'$3'} paddingVertical={'$2'}>
+              <Spacer sm/>
+              {/* @ts-ignore */}
+              <ExpoIcon name={props.icon} iconName={props.iconName} color='white' size={props.iconSize} />
+              <Spacer sm/>
+              <Text h5 weight='bold'>{props.title}</Text>
+              <Spacer sm/>
+              <Text>{props.desc}</Text>
+            </YStack>
+}

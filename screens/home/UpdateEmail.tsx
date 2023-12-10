@@ -16,6 +16,9 @@ import * as Linking from "expo-linking";
 import { useCommonAWSIds } from '../../hooks/useCommonContext'
 import Spacer from '../../components/base/Spacer'
 import { UserQueries } from '../../types/UserDao'
+import { useDispatch, useSelector } from '../../redux/store'
+import { fetchUser } from '../../redux/api/auth'
+import Input from '../../components/base/Input'
 
 
 const redirectTo = makeRedirectUri({scheme: 'ragepersonalhealth'}) + 'email';
@@ -44,7 +47,9 @@ export default function UpdateEmail() {
   const dm = useColorScheme() === 'dark'
   const [newEmail, setNewEmail] = React.useState<string>('')
   const navigator = useNavigation()
-  let {user, profile, setProfile} = useCommonAWSIds()
+  let {profile} = useSelector(x => x.auth)
+  let dispatch = useDispatch()
+  let setProfile = () => dispatch(fetchUser())
   console.log(profile?.email)
   const [uploading, setUploading] = React.useState<boolean>(false)
   const [oldEmail, setOldEmail] = useState<string>('')
@@ -59,7 +64,7 @@ export default function UpdateEmail() {
     createSessionFromUrl(url, () => {
       if (!profile) return;
       dao.update_profile({email: newEmail}, profile).then(() => {
-        setProfile({...profile, email: newEmail})
+        setProfile()
         setUploading(false)
         alert('Your email has been changed!')
         navigator.pop()
@@ -97,26 +102,18 @@ export default function UpdateEmail() {
 
   return (
     <View style={{flex: 1}} includeBackground>
-      <BackButton />
-      <View style={tw`px-4 mt-9`}>
+      <BackButton name='Update Email' />
+      <View style={tw`px-4`}>
+        <Spacer />
         {errors.length > 0 && <View style={tw`mb-4`}>
             <ErrorMessage errors={errors} onDismissTap={() => setErrors([])} />
           </View>}
-        <Text style={tw`text-lg`} weight='bold'>Update Email Address</Text>
-        <Spacer />
+        <Spacer sm />
         <Text style={tw`text-center text-gray-500`} weight='semibold'>{message}</Text>
         <Spacer />
-        <Text>Old Email</Text>
-          <View card style={tw`w-12/12 mt-2 flex-row items-center py-3 px-4 justify-between rounded-lg`}>
-            <TextInput value={oldEmail} onChangeText={setOldEmail} placeholder='email' keyboardType='email-address' style={tw`w-11/12 text-${dm ? 'white' : 'black'}`} />
-            <ExpoIcon name='at-sign' iconName='feather' color={dm ? 'white' : 'gray'} size={25} />
-          </View>
+        <Input name='Old Email' placeholder='Current email' value={oldEmail} textChange={setOldEmail} type='email-address' id='old_email' iconLeft='Message' />
         <Spacer />
-        <Text>New Email</Text>
-          <View card style={tw`w-12/12 mt-2 flex-row items-center py-3 px-4 justify-between rounded-lg`}>
-            <TextInput value={newEmail} onChangeText={setNewEmail} placeholder='email' keyboardType='email-address' style={tw`w-11/12 text-${dm ? 'white' : 'black'}`} />
-            <ExpoIcon name='at-sign' iconName='feather' color={dm ? 'white' : 'gray'} size={25} />
-          </View>
+        <Input name='New Email' placeholder='New email' value={newEmail} textChange={setNewEmail} type='email-address' id='new_emal' iconLeft='Message' />
       </View>
       <SaveButton safeArea uploading={uploading} onSave={onPressConfirm} title='Change Email' />
     </View>

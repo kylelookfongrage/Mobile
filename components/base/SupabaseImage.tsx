@@ -19,5 +19,5 @@ export default function SupabaseImage(props: { uri: string, style: string | any,
     }, [props.uri])
     if (!src) return <View />
     //@ts-ignore
-    return <Image source={{ uri: src }} style={(typeof props.style === 'string') ? tw`${props.style}` : props.style} resizeMethod={props.resizeMode} />
+    return <Image source={{ uri: src }} style={(typeof props.style === 'string') ? tw`${props.style}` : props.style} resizeMethod={props.resizeMode || 'scale'} />
 }

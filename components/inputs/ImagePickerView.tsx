@@ -160,7 +160,7 @@ export const ImagePickerView = (props: ImagePickerViewProps) => {
                         navigator.navigate('Image', { uris: mediaSources.filter((x => x.type === 'image')).map((x => x.uri)), defaultIndex: i < numberOfVideos ? i : i - numberOfVideos })
                     }}>
                         <Image
-                            resizeMethod={props.resizeMode || 'contain'}
+                            resizeMethod={props.resizeMode || 'auto'}
                             source={{ uri: imageSource.uri }}
                             style={props.imageStyle ? props.imageStyle : styles.img} />
                     </TouchableOpacity>}

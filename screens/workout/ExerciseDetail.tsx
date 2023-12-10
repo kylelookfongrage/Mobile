@@ -24,8 +24,10 @@ import { EquiptmentDao } from '../../types/EquiptmentDao';
 import TitleInput from '../../components/inputs/TitleInput';
 import UsernameDisplay from '../../components/features/UsernameDisplay';
 import ManageButton from '../../components/features/ManageButton';
-import { useMultiPartForm } from '../../hooks/useMultipartForm';
 import ExerciseProgress from '../../components/features/ExerciseProgress';
+import { useMultiPartForm } from '../../redux/api/mpf';
+import Description from '../../components/base/Description';
+import { useSelector } from '../../redux/store';
 
 
 export interface ExerciseDetailProps {
@@ -36,8 +38,7 @@ export interface ExerciseDetailProps {
 
 export default function ExerciseDetail(props: ExerciseDetailProps) {
     const { id, workoutId } = props;
-    const { sub, userId, username, profile } = useCommonAWSIds()
-    const { setWorkouts } = useExerciseAdditions()
+    let {profile} = useSelector(x => x.auth)
     const ExerciseForm = useForm<Tables['exercise']['Insert']>({
         description: '',
         video: '',
@@ -45,7 +46,7 @@ export default function ExerciseDetail(props: ExerciseDetailProps) {
         name: '',
         preview: '',
         tags: [],
-        user_id: profile?.id,
+        user_id: null,
     }, async () => {
         if (!props.id) return null;
         let res = await dao.find(props.id)
@@ -72,7 +73,7 @@ export default function ExerciseDetail(props: ExerciseDetailProps) {
     const dm = useColorScheme() === 'dark'
     const [video, setVideo] = React.useState<MediaType[]>([])
     const [errors, setErrors] = React.useState<string[]>([])
-    let multiPartForm = useMultiPartForm()
+    let multiPartForm = useMultiPartForm('workouts', props.workoutId || '')
     const navigator = useNavigation()
     const saveExercise = async () => {
         setScreen('uploading', true)
@@ -104,9 +105,9 @@ export default function ExerciseDetail(props: ExerciseDetailProps) {
             setScreen('uploading', false)
             setScreen('editMode', false)
         } else if (props.workoutId) {
-            let potentialWorkout = [...(multiPartForm.data.workouts[props.workoutId] || [])]
+            let potentialWorkout = [...(multiPartForm.data || [])]
             potentialWorkout.push({ reps: 0, rest: 0, time: 0, index: potentialWorkout.length, tempId: props.id, equiptment, name: form.name || '', img: form.preview || defaultImage, sets: 1 })
-            multiPartForm.upsert('workouts', props.workoutId, potentialWorkout) //@ts-ignore
+            multiPartForm.upsert(potentialWorkout) //@ts-ignore
             navigator.pop()
         } else {
             setScreen('uploading', false)
@@ -128,9 +129,11 @@ export default function ExerciseDetail(props: ExerciseDetailProps) {
         navigator.pop()
     }
 
+    console.log(form)
+
     return (
         <View style={{ flex: 1 }} includeBackground>
-            <ScrollViewWithDrag rerenderTopView={[video, screenForm.editMode]} TopView={() => {
+            <ScrollViewWithDrag disableRounding rerenderTopView={[video, screenForm.editMode, form.user_id]} TopView={() => {
                 return <View>
                     <BackButton inplace Right={() => {
                         if (screenForm.editMode || !id || !Number(id)) return <View />
@@ -163,17 +166,7 @@ export default function ExerciseDetail(props: ExerciseDetailProps) {
                         <UsernameDisplay image disabled={(screenForm.editMode || screenForm.uploading)} id={form.user_id} username={form.id ? null : profile?.username} />
                     </View>
                     <Spacer />
-                    <TextInput
-                        value={form.description || ''}
-                        multiline
-                        numberOfLines={20}
-                        scrollEnabled={false}
-                        onChangeText={x => setForm('description', x)}
-                        editable={screenForm.editMode === true}
-                        placeholder='Please describe how to perform the exercise'
-                        placeholderTextColor={'gray'}
-                        style={tw`py-1 text-${dm ? 'white' : 'black'}`}
-                    />
+                    <Description value={form.description} editable={screenForm.editMode === true} placeholder='Please describe how to perform this exercise' onChangeText={x => setForm('description', x)} />
                     <Spacer lg divider />
                     <Text style={tw`text-lg`} weight='bold'>Muscular Profile</Text>
                     <Spacer sm />

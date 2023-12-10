@@ -7,7 +7,7 @@ export default function TitleInput(props: TextInput['props']) {
     return (
         <TextInput
             {...props}
-            style={tw`text-2xl text-center font-bold text-${dm ? 'white' : "black"}`}
+            style={{...tw`text-${dm ? 'white' : "black"}`, fontSize: 32, fontFamily: 'Urbanist_700Bold'}}
             multiline
             numberOfLines={2}
             placeholderTextColor={'gray'}

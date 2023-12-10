@@ -1,7 +1,6 @@
 import { Dimensions, useColorScheme } from 'react-native'
 import { ChartMapping, getFormattedDate, toHHMMSS } from '../../data'
 import useAsync from '../../hooks/useAsync'
-import { useCommonAWSIds } from '../../hooks/useCommonContext'
 import { ExerciseDao } from '../../types/ExerciseDao'
 import { View, Text } from '../base/Themed'
 import React, { useEffect, useState } from 'react'
@@ -11,6 +10,7 @@ import {
 } from "react-native-chart-kit";
 import moment from 'moment'
 import Spacer from '../base/Spacer'
+import { useSelector } from '../../redux/store'
 
 export default function ExerciseProgress(props: {
     exerciseId: number
@@ -19,7 +19,7 @@ export default function ExerciseProgress(props: {
 }) {
     let dao = ExerciseDao()
     const dm = useColorScheme() === 'dark'
-    const { profile } = useCommonAWSIds()
+    const { profile } = useSelector(x => x.auth)
     let [chartMapping, setChartMapping] = useState<{ [k: string]: ChartMapping }>({})
     const [chartTitle, setChartTitle] = useState<string>('Weight')
     const [metric, setMetric] = useState<boolean>(false)
@@ -54,13 +54,13 @@ export default function ExerciseProgress(props: {
         }
     }, [])
     if (chartTitle === '' || sortedChartLabels.length === 0 || sortedChart.length === 0) return <View>
-        <Text h3>Progress</Text>
+        <Text weight='bold' h5>Progress</Text>
         <Text style={tw`my-3 text-gray-500 text-center`} weight='semibold'>No progress to display</Text>
     </View>
     return (
         <View>
             <View style={tw`flex-row items-center justify-between`}>
-                <Text h3>{chartTitle} Progress</Text>
+                <Text h5 weight='bold'>{chartTitle} Progress</Text>
                 <View style={tw`flex-row items-center justify-evenly`}>
                     {['Weight', 'Reps', 'Time'].map(x => {
                         if (chartTitle === x) return <View key={x} />

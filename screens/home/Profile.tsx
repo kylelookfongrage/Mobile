@@ -1,5 +1,5 @@
 import { ScrollView, TouchableOpacity, RefreshControl } from 'react-native'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Text, View } from '../../components/base/Themed'
 import tw from 'twrnc'
 import useColorScheme from '../../hooks/useColorScheme';
@@ -16,6 +16,7 @@ import SupabaseImage from '../../components/base/SupabaseImage';
 import { Tables } from '../../supabase/dao';
 import Spacer from '../../components/base/Spacer';
 import ManageButton from '../../components/features/ManageButton';
+import { useSelector } from '../../redux/store';
 
 
 
@@ -36,7 +37,8 @@ const quickLinks: {name: string, icon: string, screen: string}[] = [
 
 export default function Profile(props: ProfileProps) {
     const { id } = props
-    const { userId, username, profile } = useCommonAWSIds()
+    let {profile} = useSelector(x => x.auth)
+    let userId = profile?.id
     const [pic, setPic] = React.useState<MediaType[]>([])
     const [img, setImg] = useState<string | null>(null)
     const [workouts, setWorkouts] = React.useState<Tables['workout']['Row'][]>([])
@@ -53,6 +55,15 @@ export default function Profile(props: ProfileProps) {
         fetchUserInfo()
 
     }, [])
+
+    useEffect(() => {
+        if (props.id || !profile) return;
+        setBio(profile.bio)
+        setName(profile.name)
+        setProfileName(profile.username)
+        setProfileLink(profile.links?.[0] || '')
+    }, [profile])
+
     const fetchUserInfo = async () => {
         const queryID = props.id || profile?.id
         if (!queryID) return
@@ -110,12 +121,12 @@ export default function Profile(props: ProfileProps) {
         {id && <BackButton Right={() => {
             return <ShowMoreDialogue user_id={id} />
         }} />}
-        <ScrollView contentContainerStyle={[tw`w-12/12 px-4 mt-6 pb-40`]} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchUserInfo} />}>
-            {!id && <TouchableOpacity style={tw`justify-end w-12/12 mt-9 items-end`} onPress={() => {
+        {!id && <TouchableOpacity style={tw`justify-end w-12/12 mt-9 items-end`} onPress={() => {
                 navigator.navigate('Settings')
             }}>
                 <ExpoIcon name='settings' iconName='feather' size={25} color={'gray'} />
             </TouchableOpacity>}
+        <ScrollView contentContainerStyle={[tw`w-12/12 px-4 mt-6 pb-40`]} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchUserInfo} />}>
             <View style={tw`flex-row items-center`}>
                 <TouchableOpacity onPress={() => {
                         navigator.navigate('Image', { uris: [pic.length > 0 ? pic[0].uri : defaultImage] })
@@ -261,7 +272,7 @@ export default function Profile(props: ProfileProps) {
                             navigator.navigate(screen, { id: f.id, src: 'backend' })
                         }}
                         style={[tw`items-start px-1`]}>
-                        <SupabaseImage uri={f.image || defaultImage} style={tw`h-20 w-20 rounded-lg`} resizeMode='cover' />
+                        <SupabaseImage uri={f.image || defaultImage} style={tw`h-20 w-20 rounded-lg`} />
                         <Text style={tw`text-xs max-w-20`} weight='semibold'>{substringForLists(f.name || '')}</Text>
                         {/* <Text>{r.calories} kcal</Text> */}
                     </TouchableOpacity>

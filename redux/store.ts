@@ -12,7 +12,8 @@ export default function createStore(preloadedState: any) {
     const store = configureStore({
         reducer: {
             auth: authSlice.reducer,
-            progress: progressSlice.reducer
+            progress: progressSlice.reducer,
+            mpf: multipartformSlice.reducer
         },
         preloadedState,
         enhancers: [compose(...storeEnhancers)]
@@ -32,6 +33,7 @@ import {
     TypedUseSelectorHook,
   } from 'react-redux'
 import progressSlice from "./reducers/progress";
+import multipartformSlice from "./reducers/multiform";
 
 export const useSelector: TypedUseSelectorHook<RootState> = useReduxSelector
 

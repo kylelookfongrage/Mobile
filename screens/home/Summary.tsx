@@ -3,7 +3,7 @@ import React from 'react'
 import { Text, View } from '../../components/base/Themed'
 import { SafeAreaView } from 'react-native-safe-area-context';
 import tw from 'twrnc'
-import { ExpoIcon } from '../../components/base/ExpoIcon';
+import { ExpoIcon, Icon } from '../../components/base/ExpoIcon';
 import useColorScheme from '../../hooks/useColorScheme';
 import { AnimatedCircularProgress } from 'react-native-circular-progress';
 import { useNavigation } from '@react-navigation/native';
@@ -26,6 +26,9 @@ import { signOut } from '../../redux/reducers/auth';
 import { UserQueries } from '../../types/UserDao';
 import { useSignOut } from '../../supabase/auth';
 import { changeDate } from '../../redux/reducers/progress';
+import TopBar from '../../components/base/TopBar';
+import { _tokens } from '../../tamagui.config';
+import Spacer from '../../components/base/Spacer';
 
 
 export const SummaryScreen = () => {
@@ -79,37 +82,29 @@ export const SummaryScreen = () => {
   return (
     <View style={{ flex: 1 }} includeBackground>
       <SafeAreaView edges={['top']} style={[{ flex: 1 }, tw`h-12/12`]} >
-        <View style={tw`px-4`}>
-          <View style={tw`flex-row items-center justify-between`}>
-            <Text h2>Summary</Text>
-            {/* @ts-ignore */}
-            <TouchableOpacity style={tw`p-3`} onPress={() => navigator.navigate('Calendar')}>
-              <ExpoIcon iconName='feather' name='calendar' size={25} color={dm ? 'gray' : 'gray'} />
-            </TouchableOpacity>
-          </View>
-          <TouchableOpacity onPress={() => {
-            //@ts-ignore
-            navigator.navigate('Calendar')
-          }} style={tw`pb-4 w-12/12`}>
-            <Text style={tw``} weight='semibold'>{formattedDate}</Text>
-          </TouchableOpacity>
-        </View>
-        <ScrollView style={[tw`px-4 h-12/12`]} showsVerticalScrollIndicator={false}>
-          <View style={[tw`flex-row items-center justify-between w-12/12 mb-3`]}>
+        <Spacer />
+        <TopBar iconLeft='Home' title='Summary' Right={() => {
+          return <TouchableOpacity style={tw`p-.5`} onPress={() => navigator.navigate('Calendar')}>
+          <Icon name='Calendar' size={26} color={dm ? _tokens.white : _tokens.black} />
+        </TouchableOpacity>
+        }} />
+        <Spacer sm/>
+        <View style={[tw`flex-row items-center justify-between w-12/12 px-2 mb-3`]}>
             {daysToDisplay.map(day => {
               const isSelected = day.isSame(moment(formattedDate), 'date')
               let selectedColorTint = '800'
               if (!isSelected && !dm) selectedColorTint = '300'
               if (isSelected) selectedColorTint='600'
               return <TouchableOpacity key={day.format('LL')}
-                onPress={() => setDate(day)}>
-                  <View card={!isSelected} style={tw`h-${isSelected ? '30' : '20'} w-12 ${isSelected ? 'bg-red-'+selectedColorTint : ''} rounded-full items-center justify-center`}>
-                  <Text weight='bold' style={tw`text-lg ${(dm || isSelected) ? 'text-white' : ''}`}>{day.format('DD')}</Text>
-                <Text weight='semibold' style={tw`text-xs ${(dm || isSelected) ? 'text-white' : ''}`}>{day.format('dd')}</Text>
+                onPress={() => setDate(day.format('YYYY-MM-DD'))}>
+                  <View card={!isSelected} style={{...tw`h-${isSelected ? '25' : '20'} w-12 rounded-full items-center justify-center`, backgroundColor: isSelected ? _tokens.primary900 : (dm ? _tokens.dark1 : _tokens.gray200)}}>
+                  <Text weight='bold' h5 style={tw`${(dm || isSelected) ? 'text-white' : ''}`}>{day.format('DD')}</Text>
+                <Text weight='semibold' lg style={tw`text-xs ${(dm || isSelected) ? 'text-white' : ''}`}>{day.format('dd')}</Text>
                   </View>
               </TouchableOpacity>
             })}
           </View>
+        <ScrollView style={[tw`px-4 h-12/12`]} showsVerticalScrollIndicator={false}>
           <TouchableOpacity onPress={() => {
             const screen = getMatchingNavigationScreen('SummaryFoodList', navigator)
             //@ts-ignore

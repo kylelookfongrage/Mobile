@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useCommonAWSIds } from "./useCommonContext";
+import { useSelector } from "../redux/store";
 
 export enum BadgeType {
     progress='numProgress', 
@@ -22,7 +22,8 @@ export enum BadgeType {
 export function useBadges(fetchData: boolean=true, value=0) {
     const [badgeProgress, setBadgeProgress] = useState<any | null>(null)
     const [badges, setBadges] = useState<any[]>([])
-    const {userId} = useCommonAWSIds();
+    const {profile} = useSelector(x => x.auth);
+    let userId = profile?.id
     const [newBadges, setNewBadges] = useState<any[]>([])
     async function logProgress(type: BadgeType): Promise<null>{
        return null;

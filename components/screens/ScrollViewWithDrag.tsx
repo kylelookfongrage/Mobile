@@ -24,7 +24,7 @@ export default function ScrollViewWithDrag(props: ScrollProps) {
         }]}>
         {props.TopView && <MemoizedTopView />}
         </Animated.View>
-        {!props.gradient && <View includeBackground style={tw`-mt-12 ${props.disableRounding ? '' : 'rounded-3xl'} h-12/12 w-12/12`}>
+        {!props.gradient && <View includeBackground style={tw`-mt-28 ${props.disableRounding ? '' : 'rounded-3xl'} h-12/12 w-12/12`}>
         {props.children && props.children}
         </View>}
         {props.gradient && <BackgroundGradient style={[tw`-mt-28`]}>

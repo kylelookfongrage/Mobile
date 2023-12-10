@@ -50,7 +50,7 @@ export function WorkoutDao(){
     }
 
     const saveWorkoutDetails = async (id: Tables['workout']['Row']['id'], details: WorkoutAdditions[]) => {
-        await supabase.from('workout_details').delete().filter('workout_id', 'eq', id)
+        await supabase.from('workout_details').delete().filter('workout_id', 'eq', id).filter('id', 'not.in', details.filter(x => x.id && x.id > 0).map(x => x.id))
         let ingrs: Tables['workout_details']['Insert'][] = []
         for (var d of details) {
             let copy = {...d} //@ts-ignore
@@ -63,7 +63,7 @@ export function WorkoutDao(){
             ingrs.push(copy)
         }
         console.log(ingrs)
-        return await supabase.from('workout_details').insert(ingrs).select()
+        return await supabase.from('workout_details').upsert(ingrs).select()
     }
 
     const find_workout_play = async (id: Tables['workout_play']['Row']['id']): Promise<[Tables['workout_play']['Row'] | null, Tables['workout_play_details']['Row'][] | null]> => {

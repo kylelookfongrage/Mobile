@@ -18,6 +18,7 @@ import SupabaseImage from '../../components/base/SupabaseImage'
 import { SearchDao } from '../../types/SearchDao'
 import { Tables } from '../../supabase/dao'
 import { PostDao } from '../../types/PostDao'
+import { useSelector } from '../../redux/store'
 const Stack = createNativeStackNavigator()
 
 export default function MakePost(props: { id?: string, workoutId?: string; mealId?: string; exerciseId?: string; runProgressId?: string; description?: string; media?: string }) {
@@ -78,7 +79,7 @@ const SearchForPostMedia = (props: { onSelect: (id: number, type: postMediaType)
   const [searchKey, setSearchKey] = useState<string>('')
   const debouncedSearchKey = useDebounce(searchKey, 500)
   const [results, setResults] = useState<PostMediaSearchDisplay[]>([])
-  let { profile } = useCommonAWSIds()
+  let {profile} = useSelector(x => x.auth)
   let dao = SearchDao()
   useEffect(() => {
     const prepare = async () => {
@@ -157,7 +158,7 @@ const SearchForPostMedia = (props: { onSelect: (id: number, type: postMediaType)
 
 function MakePostScreen(props: { id?: string, newWorkoutId?: number | null; newMealId?: number | null; newExerciseId?: number | null; newRunProgressId?: number | null; description?: string; media?: string; onDismissTap: () => void }) {
   const dm = useColorScheme() === 'dark';
-  const { userId, profile } = useCommonAWSIds()
+  const { profile } = useSelector(x => x.auth)
   const [newDescription, setNewDescription] = useState<string | null>(props.description || null)
   const [newMedia, setNewMedia] = useState<(MediaType | null | undefined)[]>([])
   let dao = PostDao()

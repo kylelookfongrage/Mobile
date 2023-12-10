@@ -90,8 +90,12 @@ export default function Input(props: InputProps) {
                 {(props.password && !props.canClear) && <TouchableOpacity onPress={() => setObscureText(p => !p)}>
                     <Icon name={obscureText ? 'Unlock' : 'Lock'} size={22} color={_tokens.gray500} />
                 </TouchableOpacity>}
-                {(props.canClear) && <TouchableOpacity onPress={() => ref?.current?.clear()}>
-                    <ExpoIcon name='close-circle-outline' iconName='ion' size={22} color={_tokens.gray500} />
+                {(props.canClear) && <TouchableOpacity onPress={() => {
+                    ref?.current?.clear()
+                    if (props.textChange) props.textChange('')
+                    if (props.numberChange) props.numberChange(undefined)
+                }}>
+                    <ExpoIcon name='close-outline' iconName='ion' size={25} color={_tokens.gray500} />
                 </TouchableOpacity>}
             </XStack>
             <Spacer size='$2' />
@@ -111,10 +115,10 @@ export function TextArea(props: InputProps) {
         <>
             {props.name && <Label size={'$1'} fontWeight={'500'}>{props.name}</Label>}
             <Spacer size='$2' />
-            <XStack alignItems='center' borderWidth={borderColor === 'transparent' ? '0' : '$0.5'} borderColor={borderColor} borderRadius={'$4'} space='$2' alignSelf='center' height={props.height || '$5.5'}
+            <XStack alignItems='stretch' borderWidth={borderColor === 'transparent' ? '$0' : '$0.5'} borderColor={borderColor} borderRadius={'$4'} space='$2' alignSelf='center' height={props.height || '$6'}
                 width={props.width || '100%'} backgroundColor={dm ? tokens.dark1 : tokens.gray200} paddingHorizontal={20}
                 paddingVertical={10} >
-                {(props.iconLeft) && <TouchableOpacity disabled={!props.leftOnPress} onPress={props.leftOnPress}>
+                {(props.iconLeft) && <TouchableOpacity style={{height: '100%', paddingTop: 15}} disabled={!props.leftOnPress} onPress={props.leftOnPress}>
                     <Icon name={props.iconLeft} size={20} color={_tokens.gray500} />
                 </TouchableOpacity>}
                 {/* @ts-ignore */}

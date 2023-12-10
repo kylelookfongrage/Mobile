@@ -1,13 +1,15 @@
 import { View, Text } from '../base/Themed'
 import React, { useState } from 'react'
-import { useCommonAWSIds } from '../../hooks/useCommonContext'
 import useAsync from '../../hooks/useAsync';
 import { Tables } from '../../supabase/dao';
 import { BackButton } from '../base/BackButton';
 import SearchBar from '../inputs/SearchBar';
 import Spacer from '../base/Spacer';
-import { ScrollView, TouchableOpacity, useColorScheme } from 'react-native';
+import { ActivityIndicator, Dimensions, ScrollView, TouchableOpacity, useColorScheme } from 'react-native';
 import tw from 'twrnc'
+import { XGroup } from 'tamagui';
+import { _tokens } from '../../tamagui.config';
+import Selector from '../base/Selector';
 
 export default function SearchScreen<T extends string[], K extends keyof Tables>(
     props: {
@@ -24,14 +26,25 @@ export default function SearchScreen<T extends string[], K extends keyof Tables>
     const [searchKey, setSearchKey] = React.useState<string>('')
     const searchOptions = props.searchOptions || [] as const
     const dm = useColorScheme() === 'dark'
-    const color = dm ? 'white' : 'black'
+    let availableOptions = [...searchOptions.filter(x => {
+        if (!props.excludeOptions) return true
+        return !props.excludeOptions.includes(x)
+    })]
     const [selectedOption, setSelectedOption] = useState<typeof searchOptions[number]>(props.searchOptions[0])
     let [results, setResults] = useState<Tables[K]['Row'][]>([])
+    let [uploading, setUploading] = useState<boolean>(false)
     useAsync(async () => {
         if (props.onSearch) {
-            let res = await props.onSearch(searchKey, selectedOption)
-            if (res) {
-                setResults(res)
+            setUploading(true)
+            try {
+                let res = await props.onSearch(searchKey, selectedOption)
+                if (res) {
+                    setResults(res)
+                }
+            } catch (error) {
+
+            } finally {
+                setUploading(false)
             }
         }
     }, [selectedOption, searchKey])
@@ -40,26 +53,15 @@ export default function SearchScreen<T extends string[], K extends keyof Tables>
         <Spacer />
         <SearchBar onSearch={x => setSearchKey(x)} />
         <Spacer />
-        <View style={tw`flex-row justify-around`}>
-            {searchOptions.map((o, i) => {
-                if (props.excludeOptions && props.excludeOptions.includes(o)) return <View key={`Search option ${o} at idx ${i}`} />;
-                const selected = selectedOption === o
-                return <TouchableOpacity
-                    key={`Search option ${o} at idx ${i}`}
-                    style={tw`items-center py-2 px-5 ${selected ? 'border-b border-' + color : ''}`}
-                    onPress={() => setSelectedOption(o)}>
-                    <Text
-                        weight={selected ? 'semibold' : 'regular'}>{o}</Text>
-                </TouchableOpacity>
-            })}
-        </View>
+        <Selector searchOptions={availableOptions} selectedOption={selectedOption} onPress={setSelectedOption} />
         <Spacer />
         <ScrollView
             keyboardDismissMode='interactive'
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={[tw`px-3 pb-20`]}>
-            {results.length === 0 && <View style={tw`w-12/12 justify-center items-center mt-9`}><Text>No results to display</Text></View>}
-            {results.map((r, idx) => {
+            contentContainerStyle={[tw`px-2 pb-20`]}>
+            {uploading && <ActivityIndicator style={tw`mt-9`} size={'large'} />}
+            {(results.length === 0 && !uploading ) && <View style={tw`w-12/12 justify-center items-center mt-9`}><Text>No results to display</Text></View>}
+            {!uploading && results.map((r, idx) => {
                 return <Item key={`search result at index ${idx}`} index={idx} item={r} />
             })}
         </ScrollView>

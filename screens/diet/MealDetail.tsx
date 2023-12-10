@@ -9,7 +9,6 @@ import { useNavigation } from '@react-navigation/native';
 import { defaultImage, getMacrosFromIngredients, getMatchingNavigationScreen, MediaType, validate } from '../../data';
 import { ImagePickerView } from '../../components/inputs/ImagePickerView';
 import { ErrorMessage } from '../../components/base/ErrorMessage';
-import { useCommonAWSIds } from '../../hooks/useCommonContext';
 import { BackButton } from '../../components/base/BackButton';
 import { DeleteButton, EditModeButton, ShareButton, ShowMoreDialogue, ShowUserButton } from '../home/ShowMore';
 import { useBadges } from '../../hooks/useBadges';
@@ -21,7 +20,6 @@ import SaveButton from '../../components/base/SaveButton';
 import Spacer from '../../components/base/Spacer';
 import UsernameDisplay from '../../components/features/UsernameDisplay';
 import ManageButton from '../../components/features/ManageButton';
-import { IngredientAdditions, PlanAdditions, useMultiPartForm } from '../../hooks/useMultipartForm';
 import SwipeWithDelete from '../../components/base/SwipeWithDelete';
 import { MealDao } from '../../types/MealDao';
 import SupabaseImage from '../../components/base/SupabaseImage';
@@ -32,6 +30,8 @@ import Overlay from '../../components/screens/Overlay';
 import { supabase } from '../../supabase';
 import QuantitySelect from '../../components/inputs/QuantitySelect';
 import { useSelector } from '../../redux/store';
+import { IngredientAdditions, PlanAdditions } from '../../redux/reducers/multiform';
+import { useMultiPartForm } from '../../redux/api/mpf';
 
 
 export interface MealDetailProps {
@@ -73,7 +73,7 @@ export default function MealDetailScreen(props: MealDetailProps) {
                     servingSizes: z.food.servingSizes || {}
                 }
             })
-            ingrs.upsert('meals', uuid, ing)
+            ingrs.upsert(ing)
             return res;
         }
         return null
@@ -100,13 +100,13 @@ export default function MealDetailScreen(props: MealDetailProps) {
     const dm = useColorScheme() === 'dark'
     let pdao = ProgressDao(false)
     const { logProgress } = useBadges(false)
-    let ingrs = useMultiPartForm()
     let [uuid, setUuid] = useState<string>(uuidv4())
-    let ingredients = ingrs['data']['meals'][uuid] || []
+    let ingrs = useMultiPartForm('meals', uuid)
+    let ingredients = ingrs.data
     const { protein, carbs, calories, fat, otherNutrition } = getMacrosFromIngredients(ingredients)
     const navigator = useNavigation()
     const dao = MealDao()
-    useOnLeaveScreen(() => ingrs.remove('meals', uuid))
+    useOnLeaveScreen(() => ingrs.remove())
 
     const deleteMeal = async () => {
         if (!props.id || !Number(props.id)) return;
@@ -149,13 +149,13 @@ export default function MealDetailScreen(props: MealDetailProps) {
             if (props.grocery) { // add to grocery list
 
             } else if (props.planId) {
-                let c = ingrs.data['plans']?.[props.planId] || []
+                let c = ingrs.q('plans', props.planId)
                 let copy: PlanAdditions[] = [...c, { meal_id: form.id, name: form.name || '', image: form.preview || defaultImage, day_of_week: props.dow || 0, id: -(c.length + 1) }]
-                ingrs.upsert('plans', props.planId, copy)
+                ingrs.upsert_other('plans', props.planId, copy)
                 navigator.pop()
             } else { // add to progress
                 let meal_id = form.id
-                if (ingrs.data.edited[uuid] === true) { // make new meal & ingredients, linking old meal to new, then log progress
+                if (ingrs.edited === true) { // make new meal & ingredients, linking old meal to new, then log progress
                     let copy = { ...form }
                     delete copy['id']
                     let res = await dao.save({ ...copy, public: false, price: 0 })
@@ -259,7 +259,7 @@ export default function MealDetailScreen(props: MealDetailProps) {
                         return <SwipeWithDelete disabled={!screen.editMode} onDelete={() => {
                             let copy = [...ingredients]
                             copy.splice(i, 1)
-                            ingrs.upsert('meals', uuid, copy)
+                            ingrs.upsert(copy)
                         }} key={`${ingr.food_id} - ${i}`}>
                             <TouchableOpacity disabled={!screen.editMode} onPress={() => {
                                 if (!screen.editMode) return

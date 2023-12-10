@@ -12,7 +12,6 @@ import Animated, {
 import { defaultImage, EdamamNutrientsResponse, FetchEdamamNutrients, fractionStrToDecimal, GenerateMealResult, getMatchingNavigationScreen, isStorageUri, titleCase, uploadImageAndGetID } from '../../data';
 import { useNavigation } from '@react-navigation/native';
 import { ImagePickerView } from '../../components/inputs/ImagePickerView';
-import { useCommonAWSIds } from '../../hooks/useCommonContext';
 import { ErrorMessage } from '../../components/base/ErrorMessage';
 import { BackButton } from '../../components/base/BackButton';
 import AllergenAlert from '../../components/features/AllergenAlert';
@@ -35,12 +34,12 @@ import SwipeWithDelete from '../../components/base/SwipeWithDelete';
 import TitleInput from '../../components/inputs/TitleInput';
 import UsernameDisplay from '../../components/features/UsernameDisplay';
 import ManageButton from '../../components/features/ManageButton';
-import { formToIngredient, useMultiPartForm } from '../../hooks/useMultipartForm';
 import useAsync from '../../hooks/useAsync';
 import { ProgressDao } from '../../types/ProgressDao';
 import QuantitySelect from '../../components/inputs/QuantitySelect';
 import { supabase } from '../../supabase';
 import { useSelector } from '../../redux/store';
+import { formToIngredient, useMultiPartForm } from '../../redux/api/mpf';
 
 interface FoodDetailProps {
     id?: string;
@@ -163,7 +162,7 @@ export default function FoodDetail(props: FoodDetailProps) {
             setNutritionInfo(EdamamFoodToFoodItemData(v))
         } else if (props.id && (props.src === 'edit' || props.src === 'backend')) {
             if (props.mealId) {
-                let potentialData = multiPartForm.data['meals'][props.mealId]?.filter(x => x.tempId == props.id)?.[0]
+                let potentialData = (multiPartForm.data || []).filter(x => x.tempId == props.id)?.[0]
                 if (potentialData) {
                     let newNutritionInfo = NewFoodItemData(potentialData.calories, potentialData.protein, potentialData.fat, potentialData.carbs, potentialData.otherNutrition)
                     setNutritionInfo(newNutritionInfo)
@@ -202,7 +201,7 @@ export default function FoodDetail(props: FoodDetailProps) {
 
     const navigator = useNavigation()
     const [errors, setErrors] = React.useState<string[]>([])
-    let multiPartForm = useMultiPartForm()
+    let multiPartForm = useMultiPartForm('meals', props.mealId || '')
 
 
     const onAddPress = async () => {
@@ -226,9 +225,9 @@ export default function FoodDetail(props: FoodDetailProps) {
                 }
             } else if (props.src === 'api') { // food from edamam
                 if (props.mealId) { // add to meal
-                    let existingIngredients = [...(multiPartForm.data.meals[props.mealId] || [])]
+                    let existingIngredients = [...(multiPartForm.data || [])]
                     existingIngredients.push(formToIngredient({ ...form.state }, { calories, protein, carbs, fat, otherNutrition, tempId: props.id || '' }))
-                    multiPartForm.upsert('meals', props.mealId, existingIngredients)
+                    multiPartForm.upsert(existingIngredients)
                     navigator.pop()
                 } else if (props.grocery) { // add to grocery list
 
@@ -245,7 +244,7 @@ export default function FoodDetail(props: FoodDetailProps) {
 
             } else if (props.src === 'edit' || props.progressId) {
                 if (props.mealId) { // update meal ingredient
-                    let existingIngredients = [...(multiPartForm.data.meals[props.mealId] || [])]
+                    let existingIngredients = [...(multiPartForm.data|| [])]
                     existingIngredients = existingIngredients.map(x => {
                         if (x.tempId === props.id) {
                             return formToIngredient({ ...form.state, id: (Number(props.id) || undefined) }, { calories, protein, carbs, fat, otherNutrition, tempId: props.id || '' })
@@ -255,7 +254,7 @@ export default function FoodDetail(props: FoodDetailProps) {
                     if (existingIngredients.find(x => x.tempId==props.id) === undefined) {
                         existingIngredients.push(formToIngredient({ ...form.state }, { calories, protein, carbs, fat, otherNutrition, tempId: props.id || '' }))
                     }
-                    multiPartForm.upsert('meals', props.mealId, existingIngredients)
+                    multiPartForm.upsert(existingIngredients)
                     navigator.pop()
                 } else if (props.grocery) { // update grocery item
 

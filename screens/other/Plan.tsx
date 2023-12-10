@@ -20,7 +20,6 @@ import moment from 'moment'
 import { TouchableOpacity } from 'react-native-gesture-handler'
 import { ActionSheet } from 'react-native-ui-lib'
 import { useNavigation } from '@react-navigation/native'
-import { useMultiPartForm } from '../../hooks/useMultipartForm'
 //@ts-ignore
 import { v4 as uuidv4 } from 'uuid';
 import useOnLeaveScreen from '../../hooks/useOnLeaveScreen'
@@ -29,9 +28,11 @@ import SwipeWithDelete from '../../components/base/SwipeWithDelete'
 import { ErrorMessage } from '../../components/base/ErrorMessage'
 import { PlanDao } from '../../types/PlanDao'
 import ManageButton from '../../components/features/ManageButton'
+import { useSelector } from '../../redux/store'
+import { useMultiPartForm } from '../../redux/api/mpf'
 
 export default function Plan(props: { id: Tables['fitness_plan']['Row']['id'] }) {
-    let { profile } = useCommonAWSIds()
+    let { profile } = useSelector(x => x.auth)
     let PlanForm = useForm<Tables['fitness_plan']['Insert']>({
         name: '', description: '', image: null, user_id: profile?.id
     }, async () => {
@@ -39,7 +40,7 @@ export default function Plan(props: { id: Tables['fitness_plan']['Row']['id'] })
             let res = await supabase.from('fitness_plan').select('*').filter('id', 'eq', props.id).maybeSingle()
             let d = await dao.getDetails(props.id)
             if (d) {
-                mpf.upsert('plans', uuid, d)
+                mpf.upsert(d)
             }
             if (res.data) {
                 return res.data
@@ -56,9 +57,9 @@ export default function Plan(props: { id: Tables['fitness_plan']['Row']['id'] })
     }
     let canViewDetails = true;
     let [uuid] = useState<string>(uuidv4())
-    let mpf = useMultiPartForm()
-    useOnLeaveScreen(() => mpf.remove('plans', uuid))
-    let details = mpf['data']['plans'][uuid] || []
+    let mpf = useMultiPartForm('plans', uuid)
+    useOnLeaveScreen(() => mpf.remove())
+    let details = mpf.data || []
     let dm = useColorScheme() === 'dark'
     const [selectedDayOfWeek, setSelectedDayOfWeek] = useState<number | null>(null)
     let [dow, setDow] = useState<number>(0)
@@ -102,7 +103,7 @@ export default function Plan(props: { id: Tables['fitness_plan']['Row']['id'] })
                         style={tw`max-w-11/12 text-${dm ? 'white' : 'black'}`}
                     />
                     <Spacer divider lg />
-                    <Text h3>Nutrition Goals</Text>
+                    <Text h5 weight='bold'>Nutrition Goals</Text>
                     <Spacer sm />
                     <View style={tw`flex-row items-center justify-around flex-wrap rounded-lg`} card translucent>
                         <MacroInput name='Protein' editable={s.editMode} percent={f.protein_percent} limit={f.protein_limit} onChange={(x, y) => {
@@ -119,20 +120,20 @@ export default function Plan(props: { id: Tables['fitness_plan']['Row']['id'] })
                         }} />
                     </View>
                     <Spacer divider lg />
-                    <Text h3>Daily Breakdown</Text>
+                    <Text h5 weight='bold'>Daily Breakdown</Text>
                     <Spacer />
                     <View style={tw`flex-row items-center justify-between`}>
                     {[0,1,2,3,4,5,6].map((x) => {
                         let selected = dow == x
                         return <TouchableOpacity onPress={() => setDow(x)} key={`Day of week ${x}`}>
                            <View card={!selected} style={tw`rounded-full h-10 w-10 items-center justify-center ${selected ? 'bg-red-600' : ''}`}>
-                           <Text weight={selected ? 'bold' : 'regular'} style={tw`text-center ${selected ? 'text-white' : ''}`}>{moment().local().weekday(x).format('dd')}</Text>
+                           <Text weight={'bold'} lg style={tw`text-center ${selected ? 'text-white' : ''}`}>{moment().local().weekday(x).format('dd')}</Text>
                            </View>
                         </TouchableOpacity>
                     })}
                     </View>
                     <Spacer lg/>
-                    <ManageButton title='Workouts' style={tw`font-bold`} hidden={!s.editMode} buttonText='Add' onPress={() => {
+                    <ManageButton title='Workouts' hidden={!s.editMode} buttonText='Add' onPress={() => {
                         let s = getMatchingNavigationScreen('ListWorkout', navigator)
                         //@ts-ignore
                         navigator.navigate(s, {planId: uuid, dow})
@@ -141,7 +142,7 @@ export default function Plan(props: { id: Tables['fitness_plan']['Row']['id'] })
                     {details.filter(z => z.day_of_week===dow && z.workout_id).length === 0 && <Text style={tw`my-3 text-center text-gray-500`}>No workouts to display</Text>}
                     {details.filter(z => z.day_of_week===dow && z.workout_id).map((d, i) => {
                         return <SwipeWithDelete disabled={!s.editMode} onDelete={() => {
-                            mpf.upsert('plans', uuid, [...details].filter(deet => deet.id !== d.id))
+                            mpf.upsert([...details].filter(deet => deet.id !== d.id))
                         }} key={`Plan detail for ${dow} - ${d.workout_id || d.meal_id} - ${i}`}>
                             <TouchableOpacity onPress={() => {
                                 let sc = d.workout_id ? 'WorkoutDetail' : 'MealDetail'
@@ -161,7 +162,7 @@ export default function Plan(props: { id: Tables['fitness_plan']['Row']['id'] })
                         </SwipeWithDelete>
                     })}
                     <Spacer lg/>
-                    <ManageButton title='Meals' style={tw`font-bold`} hidden={!s.editMode} buttonText='Add' onPress={() => {
+                    <ManageButton title='Meals' hidden={!s.editMode} buttonText='Add' onPress={() => {
                         let s = getMatchingNavigationScreen('ListMeal', navigator)
                         //@ts-ignore
                         navigator.navigate(s, {planId: uuid, dow})
@@ -170,7 +171,7 @@ export default function Plan(props: { id: Tables['fitness_plan']['Row']['id'] })
                     {details.filter(z => z.day_of_week===dow && z.meal_id).length === 0 && <Text style={tw`my-3 text-center text-gray-500`}>No meals to display</Text>}
                     {details.filter(z => z.day_of_week===dow && z.meal_id).map((d, i) => {
                         return <SwipeWithDelete disabled={!s.editMode} onDelete={() => {
-                            mpf.upsert('plans', uuid, [...details].filter(deet => deet.id !== d.id))
+                            mpf.upsert([...details].filter(deet => deet.id !== d.id))
                         }} key={`Plan detail for ${dow} - ${d.workout_id || d.meal_id} - ${i}`}>
                             <TouchableOpacity onPress={() => {
                                 let sc = d.workout_id ? 'WorkoutDetail' : 'MealDetail'

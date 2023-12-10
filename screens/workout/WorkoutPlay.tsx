@@ -17,6 +17,8 @@ import { Tables } from '../../supabase/dao'
 import { WorkoutDao, WorkoutPlayDisplayProps } from '../../types/WorkoutDao'
 import { ProgressDao } from '../../types/ProgressDao'
 import WorkoutPlayTrainer from '../../components/screens/WorkoutPlayTrainer'
+import { useSelector } from '../../redux/store'
+import moment from 'moment'
 
 interface WorkoutPlayProps {
     id?: string;
@@ -28,9 +30,10 @@ interface WorkoutPlayProps {
 
 export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
     const dm = useColorScheme() === 'dark'
-    const { sub, userId, profile } = useCommonAWSIds()
+    let {profile} = useSelector(x => x.auth)
     const [selectedAnimation, selectedWorkoutMode] = [profile?.sprite, profile?.workoutMode]
-    const { AWSDate } = useDateContext()
+    let {formattedDate} = useSelector(x => x.progress)
+    let AWSDate = moment(formattedDate).format()
     const { id, workoutId } = props;
     const navigator = useNavigation()
 
@@ -260,10 +263,10 @@ export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
         paused, setPaused, totalTime, onResetPress, workoutPlayDetails, onNewSetPress, onFinishPress, animation: animationMapping.filter(x => x.name === selectedAnimation)?.[0]?.animation || timer,
         selectedWorkoutPlayDetail, setSelectedWorkoutPlayDetail, workoutDetails, forwardBackwardPress
     }
-    return <WorkoutPlayTrainer {...p}/>
-    if (selectedWorkoutMode == WorkoutMode.player) {
-        return <WorkoutPlayMusic {...p} />
-    }
+    // return <WorkoutPlayTrainer {...p}/>
+    // if (selectedWorkoutMode == WorkoutMode.player) {
+    //     return <WorkoutPlayMusic {...p} />
+    // }
     return <WorkoutPlayStatic {...p} />
 }
 

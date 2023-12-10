@@ -5,7 +5,6 @@ import { Keyboard, Pressable, ScrollView, TextInput, TouchableOpacity, useColorS
 import tw from 'twrnc'
 import { Avatar } from 'react-native-paper'
 import { useNavigation } from '@react-navigation/native'
-import { useCommonAWSIds } from '../../hooks/useCommonContext'
 import * as ImagePicker from 'expo-image-picker'
 import { defaultImage, isStorageUri } from '../../data'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -13,6 +12,10 @@ import { ExpoIcon } from '../../components/base/ExpoIcon'
 import { UserQueries } from '../../types/UserDao'
 import { useStorage } from '../../supabase/storage'
 import SaveButton from '../../components/base/SaveButton'
+import { useDispatch, useSelector } from '../../redux/store'
+import { fetchUser } from '../../redux/api/auth'
+import Input, { TextArea } from '../../components/base/Input'
+import Spacer from '../../components/base/Spacer'
 
 type TextInputProps = TextInput['props'];
 interface TextInputWithLeftProps extends TextInputProps{
@@ -29,7 +32,9 @@ const TextInputWithLeft = (props: TextInputWithLeftProps) => {
 
 export default function Bio(props: {registration?: boolean;}) {
     const {registration} = props;
-    const { userId, username, setUsername, sub, setUserId, profile, setProfile } = useCommonAWSIds()
+    let {profile} = useSelector(x => x.auth)
+    let dispatch = useDispatch()
+    let setProfile = () => dispatch(fetchUser())
     const [newUsername, setNewUsername] = React.useState<string>(profile?.username || '')
     const dm = useColorScheme() === 'dark'
     const navigator = useNavigation()
@@ -53,10 +58,9 @@ export default function Bio(props: {registration?: boolean;}) {
                 setUploading(false)
                 return;
             }
-            setUsername(newUsername)
             let res = await dao.update_profile({name: name || '', username: newUsername || profile?.username || '', bio, links: [newLink], pfp: pic}, profile)
             if (res) {
-                setProfile(res)
+                setProfile()
                 navigator.pop()
             }
             
@@ -67,22 +71,26 @@ export default function Bio(props: {registration?: boolean;}) {
     const padding = useSafeAreaInsets()
   return (
     <View includeBackground style={{flex: 1, paddingTop: !registration ? 0 : padding.top }}>
-        {!registration && <BackButton name='Account Information' />}
+        {!registration && <BackButton name='My Profile' />}
         <ScrollView contentContainerStyle={tw`px-6 mt-2`} showsVerticalScrollIndicator={false}>
+            <Spacer />
             <Pressable onPress={() => {
                 Keyboard.dismiss()
             }}>
             {registration && <Text style={tw`text-xl mb-4`} weight='semibold'>Account Information</Text>}
             <ProfilePicture uri={pic} onChange={setPic} />
-            <Text style={tw`my-4`} weight='semibold'>Name</Text>
-            <TextInputWithLeft value={name || ''} icon={'user'} onChangeText={setName} placeholder='Your Name' placeholderTextColor={'gray'} />
-            <Text style={tw`mb-4 mt-6`} weight='semibold'>Username</Text>
-            <TextInputWithLeft value={newUsername} icon='at-sign' onChangeText={(v) => setNewUsername(v.toLowerCase())} placeholder='@...' placeholderTextColor={'gray'} />
-            {usernameError && <Text style={tw`text-red-500 mt-2`}>{usernameError}</Text>}
-            <Text style={tw`mb-4 mt-6`} weight='semibold'>Your Bio</Text>
-            <TextInputWithLeft value={bio} icon='align-center' onChangeText={setBio} placeholder='This is your bio' placeholderTextColor={'gray'} multiline numberOfLines={3} />
-            <Text style={tw`mb-4 mt-6`} weight='semibold'>Website</Text>
-            <TextInputWithLeft value={(newLink || '')} icon='compass' onChangeText={setNewLink} placeholder='https://' placeholderTextColor={'gray'} />
+            <Spacer />
+            <Input id='Name' iconLeft='Profile' name='Name' value={name || ''} textChange={setName} placeholder='Your Name...'  />
+            <Spacer />
+            <Input id='Username' error={usernameError || undefined} iconLeft='Send' name='Username' value={newUsername || ''} textChange={setNewUsername} placeholder='@...'  />
+            <Spacer />
+            <TextArea value={bio} iconLeft='Document' height={'$12'} textChange={setBio} placeholder='Your bio...' id='Bio' name='Bio' />
+            <Spacer />
+            <Input id='Links' iconLeft='Discovery' value={newLink || ''} textChange={setNewLink} placeholder='https://....' name='Website' />
+            {/* <Text style={tw`my-4`} weight='semibold'>Name</Text>
+            <TextInputWithLeft value={name || ''} icon={'user'} onChangeText={setName} placeholder='Your Name' placeholderTextColor={'gray'} /> */}
+            {/* <Text style={tw`mb-4 mt-6`} weight='semibold'>Username</Text>
+            <TextInputWithLeft value={newUsername} icon='at-sign' onChangeText={(v) => setNewUsername(v.toLowerCase())} placeholder='@...' placeholderTextColor={'gray'} /> */}
             </Pressable>
             <View style={tw`pb-90`} />
         </ScrollView>

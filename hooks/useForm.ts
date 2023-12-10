@@ -50,18 +50,19 @@ export function useForm<T extends object>(initialState: T, fetch?: () => Promise
     const setForm = <K extends keyof T>(fieldID: K, value: T[K]) => {
         dispatch({type: FormReducer.Field, payload: value, field: fieldID})
     }
-    const fetchFromSupabase = async () => {
+    const fetchFromSupabase = () => {
         if (!fetch) return;
-        const res = await fetch(); 
-        if (!res) return;
-        dispatch({payload: res, type: FormReducer.Fetch})
-        
+        fetch().then(res => {
+            if (!res) return;
+            dispatch({payload: res, type: FormReducer.Fetch})
+            setHasFetchedBefore(true)
+        })
     }
     const [hasFetchedBefore, setHasFetchedBefore] = useState<boolean>(false)
 
     useEffect(() => {
         if (!hasFetchedBefore && fetch) {
-            fetchFromSupabase().then(x => setHasFetchedBefore(true))
+            fetchFromSupabase()
         }
     }, [])
 

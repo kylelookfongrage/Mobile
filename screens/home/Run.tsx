@@ -14,6 +14,7 @@ import { useCommonAWSIds } from '../../hooks/useCommonContext';
 import { useBadges } from '../../hooks/useBadges';
 import SaveButton from '../../components/base/SaveButton';
 import { ProgressDao } from '../../types/ProgressDao';
+import { useSelector } from '../../redux/store';
 
 
 
@@ -22,8 +23,9 @@ const Stack = createNativeStackNavigator()
 
 const RunTracker = (props: { id?: string }) => {
     const { id } = props;
-    const { AWSDate } = useDateContext()
-    const { profile } = useCommonAWSIds()
+    let {formattedDate} = useSelector(x => x.progress)
+    let AWSDate = moment(formattedDate).format()
+    let {profile} = useSelector(x => x.auth)
     const [coordinates, setCoordinates] = useState<{lat: number, long: number}[]>([]);
     const mapRef = useRef<MapView | null>(null)
     const [currentlocation, setcurrentlocation] = useState<Location.LocationObject | null>(null)
@@ -32,7 +34,6 @@ const RunTracker = (props: { id?: string }) => {
     const [paused, setPaused] = useState<boolean>(true)
     const [originalTime, setOriginalTime] = useState<number | null>(null)
     const [totalTime, setTotalTime] = useState<number>(0)
-    const [ready, setReady] = useState<boolean>(false)
     const [status, requestPermission] = Location.useForegroundPermissions()
 
     function onResetCameraPress() {
@@ -60,7 +61,6 @@ const RunTracker = (props: { id?: string }) => {
 
     useEffect(() => {
         setTimeout(() => {
-            if (!ready) return; // wait for datastore if existing
             if (coordinates.length > 0) { // if already started 
                 if (paused) return;
                 setTotalTime((totalTime || 0) + 1)
@@ -86,33 +86,13 @@ const RunTracker = (props: { id?: string }) => {
     }, [currentlocation])
 
     useEffect(() => {
-        if (!ready) return;
         (async () => {
-            if (!status?.granted) {
+            if (!status?.granted && status?.canAskAgain) {
                 requestPermission()
                 return;
             }
         })();
-    }, [status, ready])
-
-    useEffect(() => {
-        if (id) {
-            // DataStore.query(RunProgress, id).then(x => {
-            //     console.log('setting coords - 3')
-            //     if (x) {
-            //         setTotalTime(x.totalTime || 0)
-            //         setOriginalTime(x.totalTime || 0)
-            //         setDate(moment(x.date || '2023-01-01').format('LL'))
-            //         setRunType(defaultRunTypes.filter(y => y.name === x.runType)[0] || defaultRunTypes[0])
-            //         //@ts-ignore
-            //         setCoordinates(x.coordinates || [])
-            //         setReady(true)
-            //     }
-            // })
-        } else {
-            setReady(true)
-        }
-    }, [])
+    }, [status])
 
 
     const navigator = useNavigation()
@@ -120,6 +100,9 @@ const RunTracker = (props: { id?: string }) => {
     let dao = ProgressDao(false)
 
     async function onSavePress() {
+        if (!totalTime) {
+            navigator.navigate('FinishedExercise')
+        }
         setPaused(true)
         dao.saveProgress('run_progress', {
             user_id: profile?.id,

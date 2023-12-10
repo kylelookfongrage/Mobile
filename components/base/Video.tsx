@@ -139,7 +139,7 @@ export const Video = ({ ...props }) => {
             },
           ]}
         >
-          <View style={tw`items-center justify-center self-center mb-${props.indicatorMarginTop || '30'}`}>
+          <View style={tw`items-center justify-center self-center mb-${props.indicatorMarginTop || '20'}`}>
             <Pressable
               onPress={
                 playbackInstanceInfo.state === "Buffering" ? null : togglePlay
@@ -203,7 +203,7 @@ const VideoControls = (props: {
       ]}
     >
       <View
-        style={tw`flex-row items-center justify-between rounded-3xl w-12/12`}
+        style={tw`flex-row items-center justify-between mb-15 rounded-3xl w-12/12`}
       >
         <Text style={tw`text-xs text-white`}>
           {toHHMMSS(playbackInstanceInfo.position / 1000)}

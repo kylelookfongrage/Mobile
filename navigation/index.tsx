@@ -36,7 +36,6 @@ export default function Navigation({ colorScheme }: { colorScheme: ColorSchemeNa
 }
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
-import { useCommonAWSIds } from '../hooks/useCommonContext';
 import Settings from '../screens/home/Settings';
 import ProfileScreen from '../screens/home/ProfileScreen';
 import PersonalInformation from '../screens/home/PersonalInformation';
@@ -73,7 +72,6 @@ import Spacer from '../components/base/Spacer';
 
 function RootNavigator() {
   let profile = useSelector(x => x.auth.profile)
-  const commonContext = useCommonAWSIds()
   if (profile?.id) {
     return <Stack.Navigator initialRouteName={'Root'}>
       <Stack.Screen name="Root" component={BottomTabNavigator} options={{ headerShown: false }} />
@@ -247,7 +245,6 @@ function BottomTabNavigator() {
 
 function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const dm = useColorScheme() === 'dark'
-  const { setAiResult, setCurrentIngredietId } = useCommonAWSIds()
 
   const iconsAndColors = {
     'Home': {
@@ -294,10 +291,6 @@ function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
             target: route.key,
             canPreventDefault: true,
           });
-          if (route.name === 'Food') {
-            setAiResult(null)
-            setCurrentIngredietId(null)
-          }
 
           if (!isFocused && !event.defaultPrevented) {
             // The `merge: true` option makes sure that the params inside the tab screen are preserved

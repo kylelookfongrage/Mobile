@@ -55,7 +55,7 @@ export const EquiptmentTile = (props: {item: Tables['equiptment']['Row'], select
     return <View key={`Equiptment Search=` + item.id} style={tw`mb-3 flex-row items-center justify-between`}>
         <View style={tw`flex-row items-center`}>
         <Image source={{uri: item.image}} style={tw`h-12 w-12 rounded mr-2`} />
-        <Text weight='semibold'>{item.name}</Text>
+        <Text weight='bold' lg>{item.name}</Text>
         {item.gym && <View style={tw`p-.5 border border-red-500 rounded ml-2`}>
             <Text style={{...tw`text-red-500`, fontSize: 8}}>GYM</Text>
         </View>}

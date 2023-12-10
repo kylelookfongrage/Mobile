@@ -1,12 +1,12 @@
 import { View, Text } from '../base/Themed'
 import React, { useEffect, useState } from 'react'
-import { useCommonAWSIds } from '../../hooks/useCommonContext';
+import { useSelector } from '../../redux/store';
 
 export default function Reviews(props: {mealId?: string; userId?: string; workoutId?: string; fitnessPlanId?: string}) {
     const {mealId, userId, workoutId, fitnessPlanId} = props;
     const [userReview, setUserReview] = useState<any | null>(null);
     const [reviews, setReviews] = useState<any[]>([])
-    const ids = useCommonAWSIds()
+    const ids = useSelector(x => x.auth)
     const [newReview, setNewReview] = useState<{rating: number; description: string; title: string; }>({rating: 0, description: '', title: ""})
 
     

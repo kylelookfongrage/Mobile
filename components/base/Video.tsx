@@ -59,6 +59,12 @@ export const Video = ({ ...props }) => {
     //@ts-ignore
   }, [ref, status.isPlaying]);
 
+  useEffect(() => {
+    if (props.autoPlay) {
+      ref.current?.playAsync()
+    }
+  }, [])
+
   const updatePlaybackCallback = (status: AVPlaybackStatus) => {
     setStatus(status);
     if (status.isLoaded) {
@@ -155,6 +161,7 @@ export const Video = ({ ...props }) => {
             playbackInstanceInfo={playbackInstanceInfo}
             setPlaybackInstanceInfo={setPlaybackInstanceInfo}
             togglePlay={togglePlay}
+            indicatorMarginBottom={props.indicatorMarginBottom}
           />
         </Animated.View>
       )}
@@ -184,6 +191,7 @@ const VideoControls = (props: {
   setPlaybackInstanceInfo: any;
   playbackInstance: any;
   toggleFullScreen: any;
+  indicatorMarginBottom?: any
 }) => {
   const {
     state,
@@ -203,7 +211,7 @@ const VideoControls = (props: {
       ]}
     >
       <View
-        style={tw`flex-row items-center justify-between mb-15 rounded-3xl w-12/12`}
+        style={tw`flex-row items-center justify-between mb-${props.indicatorMarginBottom || '16'} rounded-3xl w-12/12`}
       >
         <Text style={tw`text-xs text-white`}>
           {toHHMMSS(playbackInstanceInfo.position / 1000)}

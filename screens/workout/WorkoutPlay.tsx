@@ -237,6 +237,15 @@ export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
         setSelectedWorkoutPlayDetail(newSet)
     }
 
+    const onSetUpdate = (x: Tables['workout_play_details']['Insert']) => {
+        setWorkoutPlayDetails(prev => prev.map(z => {
+            if (z.id === x.id) {
+                return x
+            }
+            return z
+        }))
+    }
+
     const onResetPress = () => {
         Alert.alert("Are you sure you want to restart your time?", 'This will restart all of your progress.', [
             { text: 'Cancel' }, {
@@ -261,7 +270,7 @@ export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
     const p: WorkoutPlayDisplayProps = {
         currentExercise, exercises, shouldShowMore, setShouldShowMore, selectedWorkoutDetail, setSelectedWorkoutDetail,
         paused, setPaused, totalTime, onResetPress, workoutPlayDetails, onNewSetPress, onFinishPress, animation: animationMapping.filter(x => x.name === selectedAnimation)?.[0]?.animation || timer,
-        selectedWorkoutPlayDetail, setSelectedWorkoutPlayDetail, workoutDetails, forwardBackwardPress
+        selectedWorkoutPlayDetail, setSelectedWorkoutPlayDetail, workoutDetails, forwardBackwardPress, onSetUpdate
     }
     // return <WorkoutPlayTrainer {...p}/>
     // if (selectedWorkoutMode == WorkoutMode.player) {

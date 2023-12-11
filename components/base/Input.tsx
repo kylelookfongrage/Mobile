@@ -21,6 +21,7 @@ interface InputProps {
     info?: string;
     width?: number | string;
     height?: number | string;
+    inputWidth?: any
     textSize?: number;
     leftOnPress?: () => void;
     rightOnPress?: () => void;
@@ -58,8 +59,8 @@ export default function Input(props: InputProps) {
                 </TouchableOpacity>}
                 {/* @ts-ignore */}
                 <TamaguiInput
-                    height={'100%'}
-                    width={'85%'}
+                    height={props.height || '85%'}
+                    width={props.inputWidth || '85%'}
                     ref={ref}
                     onSubmitEditing={props.onSubmit}
                     value={props.value?.toString() || undefined}

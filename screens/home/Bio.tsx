@@ -104,7 +104,8 @@ export default function Bio(props: {registration?: boolean;}) {
 
 interface ProfilePicProps{
     uri: string;
-    onChange: (uri: string) => void
+    onChange?: (uri: string) => void
+    editable?: boolean;
 }
 export const ProfilePicture = (props: ProfilePicProps) => {
     const {uri, onChange} = props
@@ -154,8 +155,8 @@ export const ProfilePicture = (props: ProfilePicProps) => {
         }
         prepare()
     }, [uri])
-    return <TouchableOpacity onPress={onChangeImagePress} style={tw`items-center justify-center mt-3 w-12/12`}>
+    return <TouchableOpacity disabled={props.editable === false} onPress={onChangeImagePress} style={tw`items-center justify-center mt-3 w-12/12`}>
     {img!! && <Avatar.Image source={{ uri: img }} />}
-    <Text style={tw`mt-2`}>Change Image</Text>
+    {props.editable !== false && <Text style={tw`mt-2`}>Change Image</Text>}
 </TouchableOpacity>
 }

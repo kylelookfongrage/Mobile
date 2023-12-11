@@ -10,6 +10,8 @@ interface ButtonProps {
     height?: any;
     type?: 'primary' | 'light' | 'outline' | 'dark' | 'darkOutline' | 'secondary'
     icon1?: string;
+    IconLeft?: React.JSXElementConstructor<any>;
+    IconRight?: React.JSXElementConstructor<any>;
     icon2?: string;
     title?: string;
     pill?: boolean;
@@ -20,14 +22,17 @@ interface ButtonProps {
 }
 export default function Button(props: ButtonProps) {
     let dm = useColorScheme() === 'dark'
+    let {IconLeft, IconRight} = props;
     let s = getButtonStyle(props.type || 'primary', dm, (props.disabled === true || props.uploading === true))
     if (props.hidden) return <></>
     return (
         <TamaguiButton disabled={props.uploading || props.disabled} width={props.width || undefined} onPress={props.onPress} borderRadius={props.pill ? "$11" : undefined} height={props.height || undefined} backgroundColor={s.bg} flexDirection='row' alignItems='center' justifyContent='center' borderWidth={s.border ? 2 : 0} borderColor={s.border || undefined}>
             <XStack flexDirection='row' alignItems='center' gap='$3'>
+                {IconLeft && <IconLeft />}
                 {props.icon1 && <Icon name={props.icon1} weight='bold' size={20} color={s.text} />}
                 {props.title && (props.uploading ? <ActivityIndicator /> : <Text color={s.text} fontSize={16} fontWeight={'$h3'}>{props.title}</Text>)}
                 {props.icon2 && <Icon name={props.icon2} weight='bold' size={20} color={s.text} />}
+                {IconRight && <IconRight />}
             </XStack>
         </TamaguiButton>
     )
@@ -75,10 +80,11 @@ export const IconButton = (props: {
     circle?: boolean;
     onPress?: () => void;
     disabled?: boolean
+    iconWeight?: any
 }) => {
     let dm = useColorScheme() === 'dark'
     let s = getButtonStyle(props.type || 'primary', dm, props.disabled || false)
-    return <TamaguiButton onPress={props.onPress} padding='$-0.5' borderRadius={props.circle ? '$12' : undefined} w={props.size || '$5'} h={props.size || '$5'} backgroundColor={s.bg} borderWidth={s.border ? 2 : 0} borderColor={s.border || undefined} icon={(p) => <Icon name={props.iconName || 'Discovery'} color={s.text} size={props.iconSize || p.size} weight='bold'/>} />
+    return <TamaguiButton onPress={props.onPress} padding='$-0.5' borderRadius={props.circle ? '$12' : undefined} w={props.size || '$5'} h={props.size || '$5'} backgroundColor={s.bg} borderWidth={s.border ? 2 : 0} borderColor={s.border || undefined} icon={(p) => <Icon name={props.iconName || 'Discovery'} color={s.text} size={props.iconSize || p.size} weight={props.iconWeight || 'bold'}/>} />
 }
 
 
@@ -111,7 +117,7 @@ const getButtonStyle = (type: string, dm: boolean=false, disabled?: boolean): {b
             text: dm ? _tokens.lightBg : _tokens.darkBg
         },
         'dark': {
-            bg: dm ? _tokens.dark2 : _tokens.gray300,
+            bg: dm ? _tokens.dark2 : _tokens.gray200,
             border: null,
             text: dm ? _tokens.lightBg : _tokens.darkBg
         }

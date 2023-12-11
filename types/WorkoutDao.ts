@@ -119,4 +119,5 @@ export interface WorkoutPlayDisplayProps {
     selectedWorkoutPlayDetail: Tables['workout_play_details']['Insert'] | undefined;
     setSelectedWorkoutPlayDetail: React.Dispatch<React.SetStateAction<Tables['workout_play_details']['Insert'] | undefined>>;
     forwardBackwardPress: (b?: boolean) => void;
+    onSetUpdate: (n: Tables['workout_play_details']['Insert']) => void;
 }

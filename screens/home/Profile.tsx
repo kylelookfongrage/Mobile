@@ -1,9 +1,9 @@
-import { ScrollView, TouchableOpacity, RefreshControl } from 'react-native'
-import React, { useEffect, useState } from 'react'
+import { ScrollView, TouchableOpacity, RefreshControl, Pressable } from 'react-native'
+import React, { useEffect, useMemo, useState } from 'react'
 import { Text, View } from '../../components/base/Themed'
 import tw from 'twrnc'
 import useColorScheme from '../../hooks/useColorScheme';
-import { ExpoIcon } from '../../components/base/ExpoIcon';
+import { ExpoIcon, Icon } from '../../components/base/ExpoIcon';
 import { useNavigation } from '@react-navigation/native';
 import { MediaType } from '../../types/Media';
 import * as WebBrowser from 'expo-web-browser'
@@ -17,6 +17,14 @@ import { Tables } from '../../supabase/dao';
 import Spacer from '../../components/base/Spacer';
 import ManageButton from '../../components/features/ManageButton';
 import { useSelector } from '../../redux/store';
+import { XStack, YStack } from 'tamagui';
+import TopBar from '../../components/base/TopBar';
+import { ProfilePicture } from './Bio';
+import { _tokens } from '../../tamagui.config';
+import Button, { IconButton } from '../../components/base/Button';
+import Description from '../../components/base/Description';
+import Tag from '../../components/base/Tag';
+import SearchResult from '../../components/base/SearchResult';
 
 
 
@@ -45,11 +53,13 @@ export default function Profile(props: ProfileProps) {
     const [exercises, setExercises] = React.useState<Tables['exercise']['Row'][]>([])
     const [food, setFood] = React.useState<Tables['food']['Row'][]>([])
     const [meals, setMeals] = React.useState<Tables['meal']['Row'][]>([])
+    let [plans, setPlans] = useState<Tables['fitness_plan']['Row'][]>([])
     const [bio, setBio] = React.useState<string | null | undefined>('')
     const [profileLink, setProfileLink] = React.useState<string>('')
     const isCurrentUsersProfile = id === userId || !id
     const navigator = useNavigation()
     let dao = UserQueries()
+
 
     React.useEffect(() => {
         fetchUserInfo()
@@ -91,6 +101,7 @@ export default function Profile(props: ProfileProps) {
             setMeals(children.meal)
             setExercises(children.exercise)
             setFood(children.food)
+            setPlans(children.fitness_plan)
         }
         setRefreshing(false)
     }
@@ -103,6 +114,32 @@ export default function Profile(props: ProfileProps) {
     const [refreshing, setRefreshing] = React.useState<boolean>(false)
     const [name, setName] = React.useState<string | null | undefined>('')
     const [showBio, setShowBio] = React.useState<boolean>(false)
+
+    let options = {
+        'Plans' : plans, 
+        'Workouts' : workouts,
+        'Meals' : meals,
+        'Exercises': exercises,
+        'Food' : food
+    }
+
+    let [selectedOption, setSelectedOption] = useState<string>(Object.keys(options)[0])
+    let screen = useMemo(() => {
+        switch (selectedOption) {
+            case 'Plans':
+                return ['FitnessPlan']
+            case 'Workouts':
+                return ['WorkoutDetail']
+            case 'Meals':
+                return ['MealDetail']
+            case 'Exercises':
+                return ['ExerciseDetail']
+            case 'Food':
+                return ['FoodDetail']
+            default:
+                return ['FitnessPlan']
+        }
+    }, [selectedOption])
 
     const onFollowingPress = async () => {
         if (!id || !profile?.id) return;
@@ -117,44 +154,26 @@ export default function Profile(props: ProfileProps) {
         }
     }
 
-    return <View style={{ flex: 1 }} includeBackground>
-        {id && <BackButton Right={() => {
-            return <ShowMoreDialogue user_id={id} />
-        }} />}
-        {!id && <TouchableOpacity style={tw`justify-end w-12/12 mt-9 items-end`} onPress={() => {
+    return <View includeBackground safeAreaTop style={{flex: 1}}>
+        <Spacer />
+        <TopBar title='Trainer Profile' iconLeft='Profile' Right={() => {
+            if (id) {
+                return <ShowMoreDialogue user_id={id} />
+            }
+            return <TouchableOpacity style={tw``} onPress={() => {
                 navigator.navigate('Settings')
             }}>
-                <ExpoIcon name='settings' iconName='feather' size={25} color={'gray'} />
-            </TouchableOpacity>}
-        <ScrollView contentContainerStyle={[tw`w-12/12 px-4 mt-6 pb-40`]} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchUserInfo} />}>
-            <View style={tw`flex-row items-center`}>
-                <TouchableOpacity onPress={() => {
-                        navigator.navigate('Image', { uris: [pic.length > 0 ? pic[0].uri : defaultImage] })
-                    }}>
-                   <SupabaseImage uri={img || defaultImage} style={tw`w-20 h-20 rounded-full`} />
-                </TouchableOpacity>
-                <View style={tw`flex-row w-9/12 justify-around items-center`}>
-                <TouchableOpacity onPress={() => {
-                            const screen = getMatchingNavigationScreen('Subscribees', navigator)
-                            //@ts-ignore
-                            navigator.push(screen, { to: props.id || userId })
-                        }} style={tw`items-center justify-center`}>
-                            <Text>{formatCash(followers)}</Text>
-                            <Text weight='semibold'>Followers</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => {
-                            const screen = getMatchingNavigationScreen('Subscribees', navigator)
-                            //@ts-ignore
-                            navigator.push(screen, { from: props.id || userId })
-                        }} style={tw`items-center justify-center`}>
-                            <Text>{formatCash(following)}</Text>
-                            <Text weight='semibold'>Following</Text>
-                        </TouchableOpacity>
-                </View>
-            </View>
-            {name && <Text style={tw`mt-4`} weight='bold'>{name}</Text>}
-            <Text style={tw`my-${(name) ? '1' : '4'} text-gray-500`} weight='semibold'>{<Text style={tw`text-xs text-gray-500`}>@</Text>}{profileName}</Text>
-            {bio && <Text style={tw`mb-1`}>{(showBio || bio.length <= 150) ? bio : bio.substring(0, 149)} {(bio.length >= 150) && <Text style={tw`text-gray-500`} weight='semibold' onPress={() => {setShowBio(!showBio)}}>...{showBio ? 'Hide' : 'Show More'}</Text>}</Text>}
+                <Icon name='Setting' size={25} color={dm ? 'white' : 'black'} />
+            </TouchableOpacity>
+        }} />
+        <Spacer />
+        <ScrollView refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchUserInfo} />} showsVerticalScrollIndicator={false}>
+            <ProfilePicture uri={img || defaultImage} editable={false} />
+            <Spacer />
+            <Text style={tw`text-center`} h5 weight='bold'>{name}</Text>
+            <Spacer xs/>
+            <Text style={{...tw`text-center`, color: _tokens.gray500}}>@{profileName}</Text>
+            {profileLink && <Spacer xs/>}
             {profileLink && <TouchableOpacity onPress={async () => {
                 try {
                     let url = 'https://'
@@ -168,118 +187,86 @@ export default function Profile(props: ProfileProps) {
                     alert('There was a problem opening this link')
                 }
             }}>
-                    <Text style={tw`text-red-500`} weight='semibold'>{profileLink}</Text>
+                    <Text style={tw`text-red-500 px-6 text-center`} weight='semibold'>{profileLink}</Text>
                 </TouchableOpacity>}
-                {!isCurrentUsersProfile && <Spacer />}
-            {!isCurrentUsersProfile && <TouchableOpacity onPress={onFollowingPress}>
-                <View card={isFollowing} style={tw`${isFollowing ? '' : 'bg-red-600'} items-center justify-center p-3 mx-12 rounded-xl mt-3`}>
-                <Text weight='bold'>{isFollowing ? 'Unfollow' : 'Follow'}</Text>
-            </View>
-                </TouchableOpacity>}
-            {isCurrentUsersProfile && <View>
-                <TouchableOpacity onPress={() => {
-                    navigator.navigate('UserBio')
-                }}>
-                    <Text style={tw`text-center my-3 text-gray-500`} weight='bold'>Edit Account Info</Text>
-                    </TouchableOpacity>
-            </View>}
-            <Spacer lg/>
-            <ManageButton title='Meals' buttonText='See All' onPress={() => {
-                const screen = getMatchingNavigationScreen('ListMeal', navigator)
-                //@ts-ignore
-                navigator.navigate(screen, {userId: props.id || userId})
-            }} />
+                {bio && <Spacer xs />}
+            {bio && <Description style={tw`px-6 text-center`} value={bio} placeholder='' editable={false} />}
             <Spacer />
-            {meals.length === 0 && <Text style={tw`text-center my-5`}>No meals to display</Text>}
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {meals.map((meal, i) => {
-                    return <TouchableOpacity key={`food item ${meal.name} at index ${i}`}
-                    onPress={() => {
-                        const screen = getMatchingNavigationScreen('MealDetail', navigator)
+            <XStack justifyContent='space-evenly' alignItems='center'>
+                <YStack justifyContent='center' alignItems='center'>
+                    <Text h4 weight='bold'>{followers}</Text>
+                    <Spacer xs />
+                    <Text>   Rating   </Text>
+                </YStack>
+                <YStack width={'$0.25'} height={'$2'} borderRadius={'$2'} backgroundColor={dm ? _tokens.gray900 : _tokens.gray300} />
+                <YStack justifyContent='center' alignItems='center'>
+                    <Pressable onPress={() => {
+                        const screen = getMatchingNavigationScreen('Subscribees', navigator)
                         //@ts-ignore
-                        navigator.push(screen, { id: meal.id })
-                    }}
-                    style={[tw`items-start mx-1`]}>
-                    <SupabaseImage uri={meal.preview || defaultImage} style={tw`h-20 w-20 rounded-lg mb-1`} />
-                    <Text style={tw`text-xs max-w-20`} weight='semibold'>{substringForLists(meal.name || '')}</Text>
-                </TouchableOpacity>
-                })}
+                        navigator.push(screen, { to: props.id || userId })
+                    }}>
+                    <Text h4 weight='bold' style={tw`text-center`}>{formatCash(followers)}</Text>
+                    <Spacer xs/>
+                    <Text style={tw`text-center`}>Followers</Text>
+                    </Pressable>
+                </YStack>
+                <YStack width={'$0.25'} height={'$2'} borderRadius={'$2'} backgroundColor={dm ? _tokens.gray900 : _tokens.gray300} />
+                <YStack justifyContent='center' alignItems='center'>
+                    <Pressable onPress={() => {
+                        const screen = getMatchingNavigationScreen('Subscribees', navigator)
+                        //@ts-ignore
+                        navigator.push(screen, { from: props.id || userId })
+                    }}>
+                    <Text h4 weight='bold' style={tw`text-center`}>{formatCash(following)}</Text>
+                    <Spacer xs/>
+                    <Text style={tw`text-center`}>Following</Text>
+                    </Pressable>
+                </YStack>
+            </XStack>
+            <Spacer lg/>
+            <XStack alignItems='center' justifyContent='center'>
+                <Button pill width={'60%'} 
+                    onPress={isCurrentUsersProfile ? () => navigator.navigate('UserBio') : onFollowingPress} 
+                    title={!isCurrentUsersProfile ? (isFollowing ? 'Unsubscribe' : 'Subscribe') : "Edit Profile"} 
+                    type={!isCurrentUsersProfile ? (isFollowing ? 'outline' : 'primary') : 'light'} />
+                <Spacer horizontal lg />
+                <IconButton iconName='Send' circle size={'$4'} type='dark' />
+            </XStack>
+            <Spacer xl/>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{minHeight: 50, ...tw`mx-2`}}>
+            {Object.keys(options).map(x => {
+                let selected = selectedOption === x
+                return <TouchableOpacity key={x} style={tw`mr-2`} onPress={() => setSelectedOption(x)}>
+                <Tag type={selected ? 'primary' : 'light'} color={selected ? 'primary900' : 'gray500'}>{x}</Tag>
+            </TouchableOpacity>
+            })}
             </ScrollView>
-            <Spacer />
-            <ManageButton title='Workouts' buttonText='See All' onPress={() => {
-                const screen = getMatchingNavigationScreen('ListWorkout', navigator)
-                //@ts-ignore
-                navigator.navigate(screen, {userId: props.id || userId})
-            }} />
-            <Spacer />
-            {workouts.length === 0 && <Text style={tw`text-center my-5`}>No workouts to display</Text>}
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {workouts.map((workout, i) => {
-                    return <TouchableOpacity
-                        key={`workout ${workout.name} at index ${i}`}
-                        onPress={() => {
-                            const screen = getMatchingNavigationScreen('WorkoutDetail', navigator)
-                            //@ts-ignore
-                            navigator.navigate(screen, { id: workout.id })
-                        }}
-                        style={[tw`items-start px-1`]}>
-                        <SupabaseImage uri={workout.image || defaultImage} style={tw`h-20 w-20 rounded-lg`}  />
-                        <Text style={tw`text-xs max-w-20`} weight='semibold'>{substringForLists(workout.name)}</Text>
-                        {/* <Text>{r.calories} kcal</Text> */}
-                    </TouchableOpacity>
-                })}
-            </ScrollView>
-            {isCurrentUsersProfile && <View style={{flex: 1}}>
-            <Spacer />
-            <ManageButton title='Exercises' buttonText='See All' onPress={() => {
-                const screen = getMatchingNavigationScreen('ListExercise', navigator)
-                //@ts-ignore
-                navigator.navigate(screen, {userId: props.id || userId})
-            }} />
-            <Spacer />
-                {exercises.length === 0 && <Text style={tw`text-center my-5`}>No exercises to display</Text>}
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {exercises.map((exercise, i) => {
-                    return <TouchableOpacity
-                        key={`workout ${exercise.name} at index ${i}`}
-                        onPress={() => {
-                            const screen = getMatchingNavigationScreen('ExerciseDetail', navigator)
-                            //@ts-ignore
-                            navigator.navigate(screen, { id: exercise.id })
-                        }}
-                        style={[tw`items-start px-1`]}>
-                        <SupabaseImage uri={exercise.preview || defaultImage} style={tw`h-20 w-20 rounded-lg`} />
-                        <Text style={tw`text-xs max-w-20`} weight='semibold'>{substringForLists(exercise.name || '')}</Text>
-                        {/* <Text>{r.calories} kcal</Text> */}
-                    </TouchableOpacity>
-                })}
-                </ScrollView>
+            <Spacer sm />
+            {/* @ts-ignore */}
+            {options[selectedOption].length === 0 && <Text lg weight='semibold' style={tw`text-center text-gray-500 mt-6`}>No {selectedOption.toLowerCase()} to display</Text>}
+            {/* @ts-ignore */}
+            {(options[selectedOption].length >0 && screen[1]) && <YStack paddingHorizontal={'$3'}>
                 <Spacer />
-            <ManageButton title='Food' buttonText='See All' onPress={() => {
-                const screen = getMatchingNavigationScreen('ListFood', navigator)
+                <ManageButton title={selectedOption} buttonText='See All' onPress={() => {
+                    if (!screen[1]) return;
+                let s = getMatchingNavigationScreen(screen[1], navigator)
                 //@ts-ignore
-                navigator.navigate(screen, {userId: props.id || userId})
+                if (s) navigator.navigate(s, {userId: profile?.id})
             }} />
             <Spacer />
-            {food.length === 0 && <Text style={tw`text-center my-5`}>No food to display</Text>}
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {food.map((f, i) => {
-                    return <TouchableOpacity
-                        key={`workout ${f.name} at index ${i}`}
-                        onPress={() => {
-                            const screen = getMatchingNavigationScreen('FoodDetail', navigator)
-                            //@ts-ignore
-                            navigator.navigate(screen, { id: f.id, src: 'backend' })
-                        }}
-                        style={[tw`items-start px-1`]}>
-                        <SupabaseImage uri={f.image || defaultImage} style={tw`h-20 w-20 rounded-lg`} />
-                        <Text style={tw`text-xs max-w-20`} weight='semibold'>{substringForLists(f.name || '')}</Text>
-                        {/* <Text>{r.calories} kcal</Text> */}
-                    </TouchableOpacity>
-                })}
-                </ScrollView>
-            </View>}
-            <View style={tw`h-20`}/>
+                </YStack>}
+            {/* @ts-ignore */}
+            {options[selectedOption].map(x => {
+                return <SearchResult style={tw`px-3 flex-row items-center`} key={x.id} name={x.title || x.name} img={x.img || x.preview || x.image || defaultImage} onPress={() => {
+                    if (!screen[0]) return;
+                    let s = getMatchingNavigationScreen(screen[0], navigator)
+                    //@ts-ignore
+                    navigator.navigate(s, {id: x.id, src: 'backend'})
+
+
+                }} />
+            })}
+            <View style={tw`h-90`} />
         </ScrollView>
     </View>
 

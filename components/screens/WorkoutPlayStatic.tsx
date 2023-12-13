@@ -44,6 +44,11 @@ export default function WorkoutPlayStatic(props: WorkoutPlayDisplayProps) {
         animation,
         workoutDetails
     } = props;
+
+    console.log('SELECTED')
+    console.log(selectedWorkoutPlayDetail)
+    console.log('ALL')
+    console.log(workoutPlayDetails)
     let s = useStorage()
     let screen = Dimensions.get('screen')
     const ref = useRef<ScrollView | null>(null)
@@ -173,7 +178,7 @@ export default function WorkoutPlayStatic(props: WorkoutPlayDisplayProps) {
                                 <XStack marginBottom={'$2'} marginHorizontal='$1' borderRadius={'$4'} alignItems='center' backgroundColor={selected ? _tokens.primary900 : dm ? _tokens.dark1 : _tokens.gray300}>
                                     <SupabaseImage style={tw`h-12 w-12 rounded`} uri={currentExerciseForWD.preview || defaultImage} />
                                     <Spacer sm horizontal/>
-                                    <Text xl weight='semibold' style={tw`${selected ? 'text-white' : ''}`}>{currentExerciseForWD.name}</Text>
+                                    <Text lg style={tw`${selected ? 'text-white' : ''}`}>{currentExerciseForWD.name}</Text>
                                 </XStack>
                             </TouchableOpacity>
                         })}

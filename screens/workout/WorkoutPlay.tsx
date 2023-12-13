@@ -19,6 +19,7 @@ import { ProgressDao } from '../../types/ProgressDao'
 import WorkoutPlayTrainer from '../../components/screens/WorkoutPlayTrainer'
 import { useSelector } from '../../redux/store'
 import moment from 'moment'
+import useAsync from '../../hooks/useAsync'
 
 interface WorkoutPlayProps {
     id?: string;
@@ -53,9 +54,8 @@ export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
     const [shouldShowMore, setShouldShowMore] = React.useState<boolean>(false)
     let dao = WorkoutDao()
     let pdao = ProgressDao(false)
-    React.useEffect(() => {
-        const fetchDetails = async () => {
-            let fetchedPlayDetails: Tables['workout_play_details']['Insert'][] = []
+    useAsync(async () => {
+        let fetchedPlayDetails: Tables['workout_play_details']['Insert'][] = []
             let details: Tables['workout_details']['Row'][] = []
             let exercisesWithMedia: Tables['exercise']['Row'][] = []
             if (id && Number(id)) {
@@ -102,14 +102,14 @@ export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
                 }
             }
             setWorkoutPlayDetails(fetchedPlayDetails)
+            //@ts-ignore
             setOriginalDetails(fetchedPlayDetails)
             setWorkoutDetails(details)
             setSelectedWorkoutPlayDetail(fetchedPlayDetails[0])
             setSelectedWorkoutDetail(details[0])
             setExercises(exercisesWithMedia)
-        }
-        fetchDetails()
     }, [])
+    
 
     React.useEffect(() => {
         if (!selectedWorkoutPlayDetail) return;

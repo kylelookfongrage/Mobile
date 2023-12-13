@@ -7,7 +7,7 @@ import { useNavigation } from '@react-navigation/native'
 import { Workout, WorkoutPlayDetail, WorkoutDetails, WorkoutPlay, Exercise } from '../../aws/models'
 import { DataStore, Storage } from 'aws-amplify'
 import { MediaType } from '../../types/Media'
-import { defaultImage, isStorageUri, toHHMMSS, animationMapping, WorkoutMode } from '../../data'
+import { defaultImage, isStorageUri, toHHMMSS, animationMapping, WorkoutMode, findLastIndex } from '../../data'
 import { useCommonAWSIds } from '../../hooks/useCommonContext'
 import timer from '../../assets/animations/timer.json'
 import { useDateContext } from '../home/Calendar'
@@ -240,7 +240,7 @@ export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
 
     const onNewSetPress = () => {
         if (!selectedWorkoutPlayDetail) return;
-        let index = workoutPlayDetails.findLastIndex(x => x.workout_detail_id === selectedWorkoutPlayDetail.workout_detail_id)
+        let index = findLastIndex(workoutPlayDetails, x => x.workout_detail_id === selectedWorkoutPlayDetail.workout_detail_id)
         if (typeof index !== 'number' || index === -1) return;
         const newSet: Tables['workout_play_details']['Insert'] = {
             workout_id: selectedWorkoutPlayDetail.workout_id,

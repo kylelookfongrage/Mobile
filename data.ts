@@ -391,7 +391,7 @@ export const getMatchingNavigationScreen = (key: string, navigator: any): string
 
 
 //@ts-ignore
-export const fractionStrToDecimal = (str: string, places=2): number => Number(Number(str.split('/').reduce((p, c) => p / c)).toFixed(places));
+export const fractionStrToDecimal = (str: string, places = 2): number => Number(Number(str.split('/').reduce((p, c) => p / c)).toFixed(places));
 
 
 export const getIngredientsAndSteps = (res: string): GenerateMealResult => {
@@ -601,7 +601,7 @@ export const animationMapping = [
 
 
 export enum postMediaType {
-    none, media, meal='meal', workout='workout', exercise='exercise', run='run'
+    none, media, meal = 'meal', workout = 'workout', exercise = 'exercise', run = 'run'
 }
 
 
@@ -715,7 +715,7 @@ export function calculateBodyFat(sex: 'male' | 'female', unit: 'USC' | 'Metric',
 export const usernameRegex = /^(?=[a-zA-Z0-9._]{4,20}$)(?!.*[_.]{2})[^_.].*[^_.]$/
 
 
-export const inchesToFeet = (_inches: number, min=-1000): string => {
+export const inchesToFeet = (_inches: number, min = -1000): string => {
     let inches = _inches < min ? min : _inches
     const remainderInches = Math.round(inches % 12)
     const totalFeet = Math.round((inches - remainderInches) / 12)
@@ -731,25 +731,25 @@ import { Tables } from './supabase/dao';
 function calculateTDEE(male: boolean, weight: number, height: number, age: number, activity: 'sedentary' | 'light' | 'average' | 'active', metric: boolean = false): number {
     const heightMultiplier = metric ? 1 : 2.54; // Convert inches to cm if not using metric units
     const weightMultiplier = metric ? 1 : 0.453592; // Convert pounds to kg if not using metric units
-  
+
     const heightInCm = height * heightMultiplier;
     const weightInKg = weight * weightMultiplier;
-  
+
     const bmr = male
-      ? 10 * weightInKg + 6.25 * heightInCm - 5 * age + 5
-      : 10 * weightInKg + 6.25 * heightInCm - 5 * age - 161;
-  
+        ? 10 * weightInKg + 6.25 * heightInCm - 5 * age + 5
+        : 10 * weightInKg + 6.25 * heightInCm - 5 * age - 161;
+
     const activityMultipliers = {
-      sedentary: 1.2,
-      light: 1.375,
-      average: 1.55,
-      active: 1.725,
+        sedentary: 1.2,
+        light: 1.375,
+        average: 1.55,
+        active: 1.725,
     };
-  
+
     const tdee = bmr * activityMultipliers[activity];
     return tdee;
-  }
-  
+}
+
 export function caloriesPerDay(
     male: boolean,
     dateOfBirth: string,
@@ -761,27 +761,27 @@ export function caloriesPerDay(
     bodyFat: number,
     activity: 'sedentary' | 'light' | 'average' | 'active',
     metric: boolean = false
-  ): number {
+): number {
     const daysDifference = moment(endDate, 'YYYY-MM-DD').diff(moment(startDate, 'YYYY-MM-DD'), 'days');
     const weightChange = startWeight - endWeight; // Positive for weight gain, negative for weight loss
-  
+
     const caloriesPerUnitChange = metric ? 7700 : 3500; // 7700 calories per kg (metric) or 3500 calories per pound (imperial)
-  
+
     const totalCaloriesNeeded = caloriesPerUnitChange * weightChange;
-  
+
     const age = moment().diff(moment(dateOfBirth, 'YYYY-MM-DD'), 'years');
     const tdee = calculateTDEE(male, startWeight, height, age, activity, metric);
-  
+
     const leanMass = startWeight * (1 - bodyFat / 100);
     const adjustedTDEE = tdee + (leanMass - startWeight) * 20;
-  
-    const dailyCalories = (totalCaloriesNeeded / daysDifference) + adjustedTDEE;
-  
-    return dailyCalories < 1400 ? 1400 : dailyCalories;
-  }
-  
 
-  export interface MediaType {
+    const dailyCalories = (totalCaloriesNeeded / daysDifference) + adjustedTDEE;
+
+    return dailyCalories < 1400 ? 1400 : dailyCalories;
+}
+
+
+export interface MediaType {
     uri: string;
     type: string;
     supabaseID?: string;
@@ -816,53 +816,53 @@ export const validate = function (textFieldValuesAndOptions: ValidationObject[])
     */
     const errors: string[] = [];
     textFieldValuesAndOptions.forEach((k) => {
-      const textField = k;
-      const name = textField.name;
-      const value = textField.value;
-      const options = textField.options;
-  
-      //these are available options for each {required, contains, cannotContain}
-      if (options.required) {
-        const requriedErrorMessage = `${name} is required`;
-        if (value === null || value === undefined || value == '' || value.length === 0) {
-          errors.push(requriedErrorMessage);
-        }
-      }
-  
-      //these are available options for each {required, contains: {text}, cannotContain: {text}}
-      if (options.contains) {
-        const containsRequirement = options.contains.text;
-        const alias = options.contains.alias
-        const requriedErrorMessage = `${name} must contain ${alias || containsRequirement}`;
-        if (!value.includes(containsRequirement))
-          errors.push(requriedErrorMessage);
-      }
-  
-      //these are available options for each {required, contains: {text}, cannotContain: {text}}
-      if (options.cannotContain) {
-        const cannotContainsRequirement = options.cannotContain.text;
-        const requriedErrorMessage = `${name} must NOT contain ${cannotContainsRequirement}`;
-        if (value.includes(cannotContainsRequirement))
-          errors.push(requriedErrorMessage);
-      }
+        const textField = k;
+        const name = textField.name;
+        const value = textField.value;
+        const options = textField.options;
 
-      if (options.validate) {
-        let validationInput = options.validate(value)
-        if (!validationInput) {
-            errors.push(options.errorMessage || 'Something went wrong')
+        //these are available options for each {required, contains, cannotContain}
+        if (options.required) {
+            const requriedErrorMessage = `${name} is required`;
+            if (value === null || value === undefined || value == '' || value.length === 0) {
+                errors.push(requriedErrorMessage);
+            }
         }
-      }
+
+        //these are available options for each {required, contains: {text}, cannotContain: {text}}
+        if (options.contains) {
+            const containsRequirement = options.contains.text;
+            const alias = options.contains.alias
+            const requriedErrorMessage = `${name} must contain ${alias || containsRequirement}`;
+            if (!value.includes(containsRequirement))
+                errors.push(requriedErrorMessage);
+        }
+
+        //these are available options for each {required, contains: {text}, cannotContain: {text}}
+        if (options.cannotContain) {
+            const cannotContainsRequirement = options.cannotContain.text;
+            const requriedErrorMessage = `${name} must NOT contain ${cannotContainsRequirement}`;
+            if (value.includes(cannotContainsRequirement))
+                errors.push(requriedErrorMessage);
+        }
+
+        if (options.validate) {
+            let validationInput = options.validate(value)
+            if (!validationInput) {
+                errors.push(options.errorMessage || 'Something went wrong')
+            }
+        }
 
 
     });
-  
+
     if (Object.keys(errors).length === 0) {
-      return true;
+        return true;
     } else {
-      return errors;
+        return errors;
     }
-  };
-  
+};
+
 
 
 
@@ -903,12 +903,22 @@ export const getMacrosFromIngredients = (ingrs: IngredientAdditions[]): { protei
 
 
 
-export function pad(pad: string, str: string, padLeft=false): string {
-    if (typeof str === 'undefined') 
-      return pad;
+export function pad(pad: string, str: string, padLeft = false): string {
+    if (typeof str === 'undefined')
+        return pad;
     if (padLeft) {
-      return (pad + str).slice(-pad.length);
+        return (pad + str).slice(-pad.length);
     } else {
-      return (str + pad).substring(0, pad.length);
+        return (str + pad).substring(0, pad.length);
     }
-  }
+}
+
+
+export function findLastIndex<T>(array: Array<T>, predicate: (value: T, index: number, obj: T[]) => boolean): number {
+    let l = array.length;
+    while (l--) {
+        if (predicate(array[l], l, array))
+            return l;
+    }
+    return -1;
+}

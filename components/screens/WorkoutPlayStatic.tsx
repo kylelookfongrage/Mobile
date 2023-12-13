@@ -72,7 +72,7 @@ export default function WorkoutPlayStatic(props: WorkoutPlayDisplayProps) {
                 <Pressable onPress={onFinishPress}>
                     <ExpoIcon name='close' iconName='ion' size={25} color={dm ? 'white' : 'black'} />
                 </Pressable>
-                <Text lg weight='bold'>{resting ? 'RESTING' : "PAUSED"}</Text>
+                <Text lg weight='bold' style={tw`text-white`}>{resting ? 'RESTING' : "PAUSED"}</Text>
                 <Icon name='Setting' size={25} color={dm ? 'white' : 'black'} />
             </XStack>
             <Spacer lg/>
@@ -84,7 +84,7 @@ export default function WorkoutPlayStatic(props: WorkoutPlayDisplayProps) {
             {(resting && next && exercise) && <Text lg weight='bold' style={tw`text-white text-center`}>Up Next</Text>}
             {resting && <Spacer lg/>}
             <XStack alignItems='center' justifyContent='center'>
-                <Text h5 weight='semibold' style={tw`text-center`}>{exercise?.name}</Text>
+                <Text h5 weight='semibold' style={tw`text-center text-white`}>{exercise?.name}</Text>
                 <Spacer horizontal sm />
                 <IconButton onPress={() => setShowExerciseDetails(true)} iconName='Info-Square' iconWeight={'light'} type='primary' size={'$2'} iconSize={25} />
             </XStack>
@@ -92,8 +92,8 @@ export default function WorkoutPlayStatic(props: WorkoutPlayDisplayProps) {
             {!resting && <Text style={tw`text-center text-white`} lg weight='semibold'>Round {selectedWorkoutPlayDetail.num || 1} of {(workoutPlayDetails.filter(x => x.workout_detail_id === selectedWorkoutDetail.id).length || 1)}</Text>}
             {(resting && next) && <Text style={tw`text-center text-white`} lg weight='semibold'>Round {next.num} of {(workoutPlayDetails.filter(x => x.workout_detail_id === selectedWorkoutDetail.id).length || 1)}</Text>}
             <Spacer />
-            {!resting && <Text h1 weight='bold' style={tw`text-center`}>{toHHMMSS(selectedWorkoutDetail.time ? ((selectedWorkoutDetail.time - (selectedWorkoutPlayDetail?.time || 0)) > 0 ? (selectedWorkoutDetail.time - (selectedWorkoutPlayDetail?.time || 0)) : 0) : totalTime, ' : ')}</Text>}
-            {resting && <Text h1 weight='bold' style={tw`text-center`}>{toHHMMSS((selectedWorkoutDetail.rest || 0) - (selectedWorkoutPlayDetail.rest || 0))}</Text>}
+            {!resting && <Text h1 weight='bold' style={tw`text-center text-white`}>{toHHMMSS(selectedWorkoutDetail.time ? ((selectedWorkoutDetail.time - (selectedWorkoutPlayDetail?.time || 0)) > 0 ? (selectedWorkoutDetail.time - (selectedWorkoutPlayDetail?.time || 0)) : 0) : totalTime, ' : ')}</Text>}
+            {resting && <Text h1 weight='bold' style={tw`text-center text-white`}>{toHHMMSS((selectedWorkoutDetail.rest || 0) - (selectedWorkoutPlayDetail.rest || 0))}</Text>}
             <Spacer />
             <YStack paddingHorizontal='$3'>
                 {paused && <>
@@ -177,10 +177,10 @@ export default function WorkoutPlayStatic(props: WorkoutPlayDisplayProps) {
                             </XStack>
                             </SwipeWithDelete>
                         })}
-                        <TouchableOpacity onPress={onNewSetPress} style={tw`flex-row items-center p-2 mt-4`}>
+                        {!paused && <TouchableOpacity onPress={onNewSetPress} style={tw`flex-row items-center p-2 mt-4`}>
                             <ExpoIcon name='plus' iconName='feather' size={20} color={'gray'} />
                             <Text>New Set</Text>
-                        </TouchableOpacity>
+                        </TouchableOpacity>}
                     </ScrollView>
                 </View>
             </YStack>}
@@ -239,3 +239,5 @@ export default function WorkoutPlayStatic(props: WorkoutPlayDisplayProps) {
         </View>
     )
 }
+
+

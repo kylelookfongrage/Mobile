@@ -12,7 +12,6 @@ export function ProgressDao(listen=true){
     let {profile} = useSelector(x => x.auth)
     let dispatch = useDispatch()
     let {runProgress, foodProgress, mealProgress, workoutProgress, today, formattedDate: date} = useSelector(x => x.progress)
-    console.log(today)
 
     useEffect(() => {
         if (!profile) return;

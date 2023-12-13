@@ -65,8 +65,10 @@ export default function Input(props: InputProps) {
                     onSubmitEditing={props.onSubmit}
                     value={props.value?.toString() || undefined}
                     onChangeText={v => {
+                        console.log(typeof v)
                         if (props.numberChange) {
-                            let nv = v.replace(/^\d*\.?\d*$/g, '')
+                            let nv = v 
+                            nv.replace(/^\d*\.?\d*$/g, '')
                             props.numberChange(Number(nv) || undefined)
                         } else if (props.textChange) {
                             props.textChange(v)

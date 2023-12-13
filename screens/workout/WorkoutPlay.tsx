@@ -44,12 +44,17 @@ export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
     // All of the sets of the workout and the selected set
     const [thisWorkout, setThisWorkout] = React.useState<Tables['workout_play']['Insert'] | null>(null)
     const [workoutPlayDetails, setWorkoutPlayDetails] = React.useState<Tables['workout_play_details']['Insert'][]>([])
-    const [selectedWorkoutPlayDetail, setSelectedWorkoutPlayDetail] = React.useState<Tables['workout_play_details']['Insert'] | undefined>(undefined)
+    const [selected, setSelected] = React.useState<number>(0)
+    let selectedWorkoutPlayDetail = workoutPlayDetails[selected]
+    let next = workoutPlayDetails[selected + 1]
 
     // All of the exercises of the workout that are to be done
     const [workoutDetails, setWorkoutDetails] = React.useState<Tables['workout_details']['Row'][]>([])
-    const [selectedWorkoutDetail, setSelectedWorkoutDetail] = React.useState<Tables['workout_details']['Row'] | undefined>(undefined)
+    let selectedWorkoutDetail = selectedWorkoutPlayDetail ? workoutDetails.find(x => x.id === selectedWorkoutPlayDetail.workout_detail_id) : undefined
     const [paused, setPaused] = React.useState<boolean>(true)
+    let resting = (selectedWorkoutDetail && selectedWorkoutPlayDetail && selectedWorkoutPlayDetail.completed) ? (
+        (selectedWorkoutPlayDetail.rest || 0) < (selectedWorkoutDetail.rest || 0)
+    ) : false
     const [originalDetails, setOriginalDetails] = React.useState<Tables['workout_play_details']['Row'][]>([])
     const [shouldShowMore, setShouldShowMore] = React.useState<boolean>(false)
     let dao = WorkoutDao()
@@ -82,6 +87,7 @@ export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
                     if (detail.exercise) {
                         exercisesWithMedia.push(detail.exercise)
                     }
+                    
                     for (let i = 0; i < n; i++) {
                         const newDetail: Tables['workout_play_details']['Insert'] = {
                             completed: false,
@@ -91,7 +97,8 @@ export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
                             time: 0,
                             user_id: profile.id,
                             weight: null,
-                            id: -(fetchedPlayDetails.length+i+1),
+                            num: i + 1,
+                            id: -(fetchedPlayDetails.length+1),
                             workout_id: detail.workout_id,
                             workout_play_id: null,
                             workout_detail_id: detail.id,
@@ -105,76 +112,80 @@ export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
             //@ts-ignore
             setOriginalDetails(fetchedPlayDetails)
             setWorkoutDetails(details)
-            setSelectedWorkoutPlayDetail(fetchedPlayDetails[0])
-            setSelectedWorkoutDetail(details[0])
             setExercises(exercisesWithMedia)
     }, [])
-    
 
-    React.useEffect(() => {
-        if (!selectedWorkoutPlayDetail) return;
-        const newWorkoutPlays = [...workoutPlayDetails].map(x => {
-            //@ts-ignore
-            if (x.id === selectedWorkoutPlayDetail.id) {
-                return selectedWorkoutPlayDetail
-            } else return x
+    const onWorkoutDetailPress = (wd: Tables['workout_details']['Row']) => {
+        let idx = workoutPlayDetails.findIndex(x => x.workout_detail_id === wd.id)
+        if (idx !== -1) {
+            setSelected(idx)
+        }
+    }
+
+
+    const deleteSet = (wpd: Tables['workout_play_details']['Insert']) => {
+        setWorkoutPlayDetails(prev => {
+            return prev.filter(x => x.id !== wpd.id).map(x => {
+                if (x.workout_detail_id === wpd.workout_detail_id && (x.num || 0) > (wpd.num || 0)) {
+                    return {...x, num: (x.num || 0) + 1}
+                }
+                return x
+            })
         })
-        //@ts-ignore
-        setWorkoutPlayDetails(newWorkoutPlays)
-    }, [selectedWorkoutPlayDetail])
+    }
+    
 
     const perSecondFunc = () => {
         if (paused || !selectedWorkoutPlayDetail) return;
         setTotalTime(totalTime + 1)
         // set the selected workout play details time + 1 if they are not completed, else add to the rest
-        const timeToRest = selectedWorkoutDetail?.rest || 0
-        let selectedSetToChange: Tables['workout_play_details']['Insert'] | null = null
-        if (!selectedWorkoutPlayDetail.completed) {
-            const newSetTime = (selectedWorkoutPlayDetail.time || 0) + 1
-            selectedSetToChange = { ...selectedWorkoutPlayDetail, time: newSetTime }
-        } else if (selectedWorkoutPlayDetail.completed) {
+        const timeToRest = selectedWorkoutPlayDetail.completed ? selectedWorkoutDetail?.rest || 0 : 0
+        onSetUpdate({
+            ...selectedWorkoutPlayDetail, 
+            time: !selectedWorkoutPlayDetail.completed ? (selectedWorkoutPlayDetail.time || 0) + 1 : selectedWorkoutPlayDetail.time,
+            rest: timeToRest && (selectedWorkoutPlayDetail.rest || 0) < timeToRest ? (selectedWorkoutPlayDetail.rest || 0) + 1 : selectedWorkoutPlayDetail.rest,
+            completed: selectedWorkoutPlayDetail.completed ? selectedWorkoutPlayDetail.completed : (selectedWorkoutDetail?.time && selectedWorkoutPlayDetail.time === selectedWorkoutDetail.time ? true : false) 
+        })
+        if (selectedWorkoutPlayDetail.completed){
             if (timeToRest && (selectedWorkoutPlayDetail.rest || 0) < timeToRest) {
-                const newRestTime = (selectedWorkoutPlayDetail.rest || 0) + 1
-                selectedSetToChange = { ...selectedWorkoutPlayDetail, rest: newRestTime }
-            } else if (selectedWorkoutDetail) {
-                // if mode is music player mode
-                forwardBackwardPress()
-
+                return;
             }
+            forwardBackwardPress()
         }
-        if (!selectedSetToChange) return;
-        setSelectedWorkoutPlayDetail(selectedSetToChange)
+        
     }
 
 
     const forwardBackwardPress = (forward: boolean = true, shouldFinish=false) => {
         if (!selectedWorkoutDetail || !selectedWorkoutPlayDetail) return;
-        if (!selectedWorkoutPlayDetail.completed && forward) {
-            setSelectedWorkoutPlayDetail({...selectedWorkoutPlayDetail, completed: true})
-            return;
-        }
-        if (workoutPlayDetails.filter(x => !x.completed).length === 0 && forward && shouldFinish) {
+        if (selected === workoutPlayDetails.length - 1 && forward) {
             onFinishPress();
             return;
         }
-        const i = workoutPlayDetails.findIndex(x => x.id === selectedWorkoutPlayDetail.id)
-        if (!forward && (i === 0 || workoutPlayDetails[i-1]?.exercise_id === selectedWorkoutPlayDetail.id) && selectedWorkoutPlayDetail.completed) {
-            setSelectedWorkoutPlayDetail({...selectedWorkoutPlayDetail, completed: false})
-            return;
-        }
-        if (i === -1) return;
-        let newSet = workoutPlayDetails[forward ? i + 1 : i - 1]
-        if (newSet) {
-            if (newSet.exercise_id !== selectedWorkoutDetail.exercise_id) {
-                const i2 = workoutDetails.findIndex(x => x.exercise_id === newSet.exercise_id)
-                if (i2 === -1) {
-                    return;
-                }
-                setSelectedWorkoutDetail(workoutDetails[i2])
-            } 
-            setSelectedWorkoutPlayDetail({...newSet, completed: forward ? newSet.completed : false})
-        }
-       
+        let hasToRest = false;
+        if (forward && !resting) {
+            hasToRest = ((selectedWorkoutDetail.rest || 0) > 0 && (selectedWorkoutPlayDetail.rest || 0) < (selectedWorkoutDetail.rest || 0))
+        }// } else if (!resting) {
+        //     if (selected !== 0) {
+        //         let prevWpd = workoutPlayDetails[selected - 1]
+        //         let prevWd = workoutDetails.find(x => x.id === prevWpd?.workout_detail_id)
+        //         if (prevWd && prevWpd) {
+        //             hasToRest = ((prevWd.rest || 0) > 0 && (prevWpd.rest || 0) < (prevWd.rest || 0))
+        //         }
+                
+        //     }
+        // }
+        
+        onSetUpdate({...selectedWorkoutPlayDetail, completed: forward ? true : false, rest: forward ? selectedWorkoutPlayDetail.rest : 0})
+        setSelected(idx => {
+            if (forward) {
+                if (idx < workoutPlayDetails.length && !hasToRest ) return idx + 1
+                return idx
+            } else {
+                if (idx > 0) return idx - 1
+                return idx
+            }
+        })
     }
 
     React.useEffect(() => {
@@ -185,16 +196,16 @@ export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
     const [totalTime, setTotalTime] = React.useState<number>(0)
 
     const saveWorkoutDetails = async () => {
-        setPaused(true)
+        let time = totalTime;
         if (totalTime === 0) {
             navigator.navigate('FinishedExercise')
             return;
         }
         let newWorkout: Tables['workout_play']['Insert'] = {}
         if (thisWorkout) {
-            newWorkout={...thisWorkout, time: totalTime}
+            newWorkout={...thisWorkout, time: time}
         } else {
-            newWorkout={user_id: profile?.id, workout_id: Number(props.workoutId) || null, date: AWSDate, time: totalTime }
+            newWorkout={user_id: profile?.id, workout_id: Number(props.workoutId) || null, date: AWSDate, time: time }
         }
         await dao.completeWorkout(newWorkout, workoutPlayDetails.map(x => {
             if (x['id'] && x['id'] < 0) {
@@ -224,6 +235,8 @@ export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
 
     const onNewSetPress = () => {
         if (!selectedWorkoutPlayDetail) return;
+        let index = workoutPlayDetails.findLastIndex(x => x.workout_detail_id === selectedWorkoutPlayDetail.workout_detail_id)
+        if (typeof index !== 'number' || index === -1) return;
         const newSet: Tables['workout_play_details']['Insert'] = {
             workout_id: selectedWorkoutPlayDetail.workout_id,
             exercise_id: selectedWorkoutPlayDetail.exercise_id,
@@ -231,10 +244,15 @@ export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
             user_id: selectedWorkoutPlayDetail.user_id,
             workout_play_id: selectedWorkoutPlayDetail.workout_play_id,
             id: -workoutPlayDetails.length - 1,
+            num: (workoutPlayDetails[index].num || 1) + 1,
             metric: profile?.metric
         }
-        setWorkoutPlayDetails([...workoutPlayDetails, newSet])
-        setSelectedWorkoutPlayDetail(newSet)
+        setWorkoutPlayDetails(prev => {
+            let res = prev
+            res.splice(index + 1, 0, newSet)
+            console.log(res)
+            return res
+        })
     }
 
     const onSetUpdate = (x: Tables['workout_play_details']['Insert']) => {
@@ -252,8 +270,7 @@ export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
                 text: 'Yes', onPress: async () => {
                     setTotalTime(0)
                     setWorkoutPlayDetails(originalDetails)
-                    setSelectedWorkoutPlayDetail(originalDetails[0])
-
+                    setSelected(0)
                 }
             }
         ])
@@ -266,11 +283,11 @@ export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
             </SafeAreaView>
         </View>
     }
-    const currentExercise = exercises.filter(x => x.id === selectedWorkoutDetail?.exercise_id)[0]
+    const currentExercise = exercises.filter(x => x.id === selectedWorkoutPlayDetail?.exercise_id)[0]
     const p: WorkoutPlayDisplayProps = {
-        currentExercise, exercises, shouldShowMore, setShouldShowMore, selectedWorkoutDetail, setSelectedWorkoutDetail,
+        currentExercise, exercises, shouldShowMore, setShouldShowMore, selectedWorkoutDetail, onWorkoutDetailPress,
         paused, setPaused, totalTime, onResetPress, workoutPlayDetails, onNewSetPress, onFinishPress, animation: animationMapping.filter(x => x.name === selectedAnimation)?.[0]?.animation || timer,
-        selectedWorkoutPlayDetail, setSelectedWorkoutPlayDetail, workoutDetails, forwardBackwardPress, onSetUpdate
+        selectedWorkoutPlayDetail, workoutDetails, forwardBackwardPress, onSetUpdate, resting, next, deleteSet
     }
     // return <WorkoutPlayTrainer {...p}/>
     // if (selectedWorkoutMode == WorkoutMode.player) {

@@ -16,7 +16,7 @@ import {
   
   interface getIconProps {
     name: string;
-    iconName?: "material" | "ion" | "feather" | "oct" | "fa5" | "line";
+    iconName?: "material" | "ion" | "feather" | "oct" | "fa5" | "line" | 'matc';
     size?: number;
     color?: string;
     style?: any;
@@ -47,6 +47,9 @@ import {
     const iconProps = { size, color, style, name };
     let I: any;
     switch (iconName) {
+      case 'matc':
+        //@ts-ignore
+        return <MaterialCommunityIcons {...iconProps} />
       case "material":
         //@ts-ignore
         return <MaterialIcons {...iconProps} />;

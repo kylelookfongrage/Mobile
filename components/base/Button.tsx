@@ -9,6 +9,7 @@ interface ButtonProps {
     width?: any;
     height?: any;
     type?: 'primary' | 'light' | 'outline' | 'dark' | 'darkOutline' | 'secondary'
+    color?: any;
     icon1?: string;
     IconLeft?: React.JSXElementConstructor<any>;
     IconRight?: React.JSXElementConstructor<any>;
@@ -26,7 +27,7 @@ export default function Button(props: ButtonProps) {
     let s = getButtonStyle(props.type || 'primary', dm, (props.disabled === true || props.uploading === true))
     if (props.hidden) return <></>
     return (
-        <TamaguiButton disabled={props.uploading || props.disabled} width={props.width || undefined} onPress={props.onPress} borderRadius={props.pill ? "$11" : undefined} height={props.height || undefined} backgroundColor={s.bg} flexDirection='row' alignItems='center' justifyContent='center' borderWidth={s.border ? 2 : 0} borderColor={s.border || undefined}>
+        <TamaguiButton disabled={props.uploading || props.disabled} width={props.width || undefined} onPress={props.onPress} borderRadius={props.pill ? "$11" : undefined} height={props.height || undefined} backgroundColor={props.color || s.bg} flexDirection='row' alignItems='center' justifyContent='center' borderWidth={s.border ? 2 : 0} borderColor={s.border || undefined}>
             <XStack flexDirection='row' alignItems='center' gap='$3'>
                 {IconLeft && <IconLeft />}
                 {props.icon1 && <Icon name={props.icon1} weight='bold' size={20} color={s.text} />}

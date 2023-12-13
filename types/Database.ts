@@ -1640,6 +1640,7 @@ export interface Database {
           completed: boolean | null
           created_at: string
           exercise_id: number | null
+          num: number | null
           id: number
           metric: boolean | null
           reps: number | null
@@ -1665,6 +1666,7 @@ export interface Database {
           workout_detail_id?: number | null
           workout_id?: number | null
           workout_play_id?: number | null
+          num?: number | null
         }
         Update: {
           completed?: boolean | null
@@ -1680,6 +1682,7 @@ export interface Database {
           workout_detail_id?: number | null
           workout_id?: number | null
           workout_play_id?: number | null
+          num?: number | null
         }
         Relationships: [
           {

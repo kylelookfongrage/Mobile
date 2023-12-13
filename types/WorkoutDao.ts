@@ -105,19 +105,21 @@ export interface WorkoutPlayDisplayProps {
     exercises: Tables['exercise']['Row'][];
     shouldShowMore: boolean;
     setShouldShowMore: React.Dispatch<React.SetStateAction<boolean>>;
-    selectedWorkoutDetail: Tables['workout_details']['Row'];
-    setSelectedWorkoutDetail: React.Dispatch<React.SetStateAction<Tables['workout_details']['Row'] | undefined>>;
+    selectedWorkoutDetail: Tables['workout_details']['Insert'];
     paused: boolean;
     setPaused: React.Dispatch<React.SetStateAction<boolean>>;
     totalTime: number;
     onResetPress: () => void;
+    deleteSet: (wpd: Tables['workout_play_details']['Insert']) => void;
     workoutPlayDetails: Tables['workout_play_details']['Insert'][];
     onNewSetPress: () => void;
     onFinishPress: () => void;
     animation: any;
     workoutDetails: Tables['workout_details']['Row'][];
     selectedWorkoutPlayDetail: Tables['workout_play_details']['Insert'] | undefined;
-    setSelectedWorkoutPlayDetail: React.Dispatch<React.SetStateAction<Tables['workout_play_details']['Insert'] | undefined>>;
     forwardBackwardPress: (b?: boolean) => void;
     onSetUpdate: (n: Tables['workout_play_details']['Insert']) => void;
+    onWorkoutDetailPress: (wd: Tables['workout_details']['Row']) => void;
+    resting: boolean;
+    next: Tables['workout_play_details']['Insert'] | undefined
 }

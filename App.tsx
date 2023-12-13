@@ -10,7 +10,15 @@ import { Platform } from "react-native";
 import { User } from "@supabase/supabase-js";
 import { useFonts } from "expo-font";
 import { store } from "./redux/store";
-import { Ionicons, Feather } from "@expo/vector-icons";
+import {
+  Ionicons,
+  Feather,
+  Octicons,
+  FontAwesome5,
+  SimpleLineIcons,
+  MaterialIcons,
+  MaterialCommunityIcons,
+} from "@expo/vector-icons";
 import {
   Urbanist_400Regular,
   Urbanist_400Regular_Italic,
@@ -25,7 +33,7 @@ import { TamaguiProvider, Theme } from 'tamagui'
 import config, { _tokens } from './tamagui.config'
 import React, { useCallback, useEffect, useLayoutEffect, useState } from "react";
 import { AdsConsent, AdsConsentStatus } from 'react-native-google-mobile-ads';
-import {Provider as ReduxProvider} from "react-redux";
+import { Provider as ReduxProvider } from "react-redux";
 import { registerRootComponent } from "expo";
 import { Env } from "./env";
 import moment, { Moment } from "moment";
@@ -44,7 +52,7 @@ function App() {
   const colorScheme = useColorScheme();
   let [appIsReady, setAppIsReady] = useState<boolean>(false);
   const [date, setDate] = React.useState<Moment>(moment());
-  
+
   const [user, setUser] = useState<User | null>(null);
   let dm = useColorScheme() === 'dark'
 
@@ -97,12 +105,17 @@ function App() {
       });
     });
   }, [user]);
-  
+
   const formattedDate = date.format("dddd, MMMM Do");
   const AWSDate = date.format("YYYY-MM-DD");
   let [fontsLoaded] = useFonts({
     ...Ionicons.font,
     ...Feather.font,
+    ...Octicons.font,
+    ...FontAwesome5.font,
+    ...SimpleLineIcons.font,
+    ...MaterialIcons.font,
+    ...MaterialCommunityIcons.font,
     Urbanist_400Regular,
     Urbanist_400Regular_Italic,
     Urbanist_500Medium,
@@ -111,7 +124,7 @@ function App() {
     Urbanist_600SemiBold_Italic,
     Urbanist_700Bold,
     Urbanist_700Bold_Italic,
-    
+
     Iconly: require('./assets/fonts/Iconly.ttf'),
   });
 
@@ -121,12 +134,12 @@ function App() {
     return (
       <SafeAreaProvider onLayout={onLayout}>
         <ReduxProvider store={store}>
-        <TamaguiProvider config={config}>
-                  <Theme name={dm ? 'dark' : 'light'}>
-                  <Navigation colorScheme={colorScheme} />
-                <StatusBar />
-                  </Theme>
-                </TamaguiProvider>
+          <TamaguiProvider config={config}>
+            <Theme name={dm ? 'dark' : 'light'}>
+              <Navigation colorScheme={colorScheme} />
+              <StatusBar />
+            </Theme>
+          </TamaguiProvider>
         </ReduxProvider>
       </SafeAreaProvider>
     );

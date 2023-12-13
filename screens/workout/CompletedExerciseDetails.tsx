@@ -18,6 +18,11 @@ import useAsync from '../../hooks/useAsync';
 import { WorkoutDao } from '../../types/WorkoutDao';
 import Achievement from '../../components/base/Achievement';
 import SaveButton from '../../components/base/SaveButton';
+import { XStack, YStack } from 'tamagui';
+import Description from '../../components/base/Description';
+import Selector from '../../components/base/Selector';
+import Spacer from '../../components/base/Spacer';
+import { ExerciseTile } from './WorkoutDetail';
 
 export default function CompletedExerciseDetails(props: { workoutPlayId: string; }) {
     const [workout, setWorkout] = useState<Tables['workout']['Row'] | null>(null);
@@ -57,7 +62,7 @@ export default function CompletedExerciseDetails(props: { workoutPlayId: string;
     }, [])
    
     const s = Dimensions.get('screen')
-    const tabs = ['Summary', 'Workout Details', 'My Progress'] as const
+    const tabs = ['Summary', 'Workout Details', 'Progress'] as const
     const [tab, setTab] = useState<typeof tabs[number]>(tabs[0])
     
     let bodyPartMapping: { [k: string]: number } = {}
@@ -83,31 +88,27 @@ export default function CompletedExerciseDetails(props: { workoutPlayId: string;
                 <ActivityIndicator />
                 <Text style={tw`text-gray-500 mt-2`}>Loading...</Text>
             </View>}
-            {(workout && workoutPlay && workoutPlayDetails && (Object.keys(details).length > 0)) && <ScrollViewWithDrag rerenderTopView={[workout.image]} TopView={() => <View>
+            {(workout && workoutPlay && workoutPlayDetails && (Object.keys(details).length > 0)) && <ScrollViewWithDrag disableRounding rerenderTopView={[workout.image]} TopView={() => <View>
                 <BackButton inplace />
                 <SupabaseImage resizeMode='cover' style={[tw`w-12/12`, { height: s.height * 0.45 }]} uri={workout.image || defaultImage} />
             </View>} showsVerticalScrollIndicator={false}>
-                <View style={[tw`pt-20 pb-60 -mt-12`, { zIndex: 1, flex: 1 }]}>
-                    <Text style={tw`text-xl px-6`} weight='semibold'>{workout.name}</Text>
-                    <Text style={tw`px-6 text-gray-500 text-xs mt-2`} weight='semibold'>{moment(workoutPlay.created_at).format('LL • LT')}</Text>
+                <View style={[tw`pt-6 pb-60`, { zIndex: 1, flex: 1 }]}>
+                    <YStack paddingHorizontal='$2'>
+                    <Text h4 weight='bold'>{workout.name}</Text>
+                    <Description value={moment(workoutPlay.created_at).format('LL • LT')} editable={false} />
+                    </YStack>
+                    <Spacer />
                     {/* @ts-ignore */}
-                    <TabSelector style={tw`py-3`} tabs={[...tabs]} selected={tab} onTabChange={setTab} />
-                    <View style={[tw`pt-4`]}>
-                        {tab === 'Summary' && <View style={tw`px-6`}>
-                            <View card style={tw`px-3 py-4 rounded-lg mb-6 flex-row items-center justify-around`}>
-                                <View style={tw`items-center justify-center`}>
-                                    <Text weight='bold'>{exercises.length}</Text>
-                                    <Text style={tw`text-xs text-gray-500 mt-1`} weight='semibold'>Exercises</Text>
-                                </View>
-                                <View style={tw`items-center justify-center`}>
-                                    <Text weight='bold'>{toHHMMSS(workoutPlay.time || 0)}</Text>
-                                    <Text style={tw`text-xs text-gray-500 mt-1`} weight='semibold'>Time</Text>
-                                </View>
-                                <View style={tw`items-center justify-center`}>
-                                    <Text weight='bold'>{workoutPlayDetails.reduce((prev, curr) => prev + (curr.weight || 0), 0)}</Text>
-                                    <Text style={tw`text-xs text-gray-500 mt-1`} weight='semibold'>Volume</Text>
-                                </View>
-                            </View>
+                    <Selector searchOptions={tabs} onPress={setTab} selectedOption={tab} />
+                    <Spacer lg/>
+                    <View style={[tw``]}>
+                        {tab === 'Summary' && <View style={tw`px-3`}>
+                        <XStack justifyContent='space-between' w={'100%'} alignItems='center'>
+            <ExerciseTile iconName='fa5' icon='running' iconSize={20} title={exercises.length.toString()} desc='exercises' />
+            <ExerciseTile iconName='ion' icon='time-outline' iconSize={20} title={toHHMMSS(workoutPlay.time || 0)} desc='time' />
+            <ExerciseTile iconName='matc' icon='weight' iconSize={20} title={workoutPlayDetails.reduce((prev, curr) => prev + (curr.weight || 0), 0).toFixed(0)} desc={workoutPlayDetails[0].metric ? 'kgs' : 'lbs'} />
+          </XStack>
+                           <Spacer xl/>
                             {Object.keys(details).map(d => {
                                 let deets = details[d].sort((a,b) => a.id-b.id)
                                 let exerciseId = deets?.[0]?.exercise_id
@@ -152,7 +153,7 @@ export default function CompletedExerciseDetails(props: { workoutPlayId: string;
                                 })} scale={1.2} />
                             </View>
                         </View>}
-                        {tab === 'My Progress' && <View style={{flex: 1}}>
+                        {tab === 'Progress' && <View style={{flex: 1}}>
                             <ScrollView ref={progressRef} scrollEnabled={false} horizontal pagingEnabled>
                                 {exercises.map((x, i) => {
                                     if (!x) return <View key={i} />
@@ -174,8 +175,9 @@ export default function CompletedExerciseDetails(props: { workoutPlayId: string;
                     </View>
                 </View>
             </ScrollViewWithDrag>}
-            <SaveButton favoriteId={workout?.id} favoriteType='workout' title='Resume Workout' onSave={() => {
-                navigator.navigate('WorkoutPlay', {id: props.workoutPlayId})
+            <SaveButton favoriteId={workout?.id} favoriteType='workout' title='Redo Workout' onSave={() => {
+                if (!workout) return;
+                navigator.navigate('WorkoutPlay', {workoutId: workout.id})
             }} />
         </View>
     )

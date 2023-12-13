@@ -125,9 +125,14 @@ export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
 
     const deleteSet = (wpd: Tables['workout_play_details']['Insert']) => {
         setWorkoutPlayDetails(prev => {
-            return prev.filter(x => x.id !== wpd.id).map(x => {
-                if (x.workout_detail_id === wpd.workout_detail_id && (x.num || 0) > (wpd.num || 0)) {
-                    return {...x, num: (x.num || 0) + 1}
+            return prev.filter(x => x.id !== wpd.id).map((x, i) => {
+                if (x.workout_detail_id === wpd.workout_detail_id) {
+                    if ((x.num || 0) > (wpd.num || 0)) {
+                        return {...x, num: (x.num || 0) - 1}
+                    }
+                    if (wpd.id === selectedWorkoutPlayDetail.id && (x.num || 0) === (wpd.num || 0) - 1) {
+                        setSelected(i)
+                    }
                 }
                 return x
             })

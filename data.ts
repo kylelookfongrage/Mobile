@@ -588,6 +588,7 @@ import sleepy_sleep from './assets/animations/sleepy_sleep.json'
 import squirrel_sleep from './assets/animations/squirrel-sleeping.json'
 
 export const animationMapping = [
+    { name: 'Up Next Video', animation: null},
     { name: 'Dog Run', animation: timer },
     { name: 'Squirrel Sleep', animation: squirrel_sleep },
     { name: 'Pigeon Wait', animation: pigeon_wait },

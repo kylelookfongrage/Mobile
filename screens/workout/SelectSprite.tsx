@@ -6,10 +6,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import { animationMapping } from '../../data'
 import AnimatedLottieView from 'lottie-react-native'
-import { useCommonAWSIds } from '../../hooks/useCommonContext'
 import { UserQueries } from '../../types/UserDao'
 import { useDispatch, useSelector } from '../../redux/store'
 import { fetchUser } from '../../redux/api/auth'
+import { Icon } from '../../components/base/ExpoIcon'
+import { BackButton } from '../../components/base/BackButton'
+import { XStack } from 'tamagui'
+import SaveButton from '../../components/base/SaveButton'
+import { _tokens } from '../../tamagui.config'
+import Spacer from '../../components/base/Spacer'
 
 export default function SelectSprite() {
     const dm = useColorScheme() === 'dark'
@@ -42,32 +47,24 @@ export default function SelectSprite() {
     }
     const navigator = useNavigation()
     
-    return <View style={[tw`bg-gray-${dm ? '800' : '200'}/95`, {paddingTop: padding.top, flex: 1}]}>
+    return <View includeBackground style={[tw``, {flex: 1}]}>
+        <BackButton name='Back' />
     <ScrollView>
-      <View style={tw`flex-row items-center justify-center flex-wrap w-12/12 mt-12`}>
-      {animationMapping.map(x => {
-        const selected = (newAnimation === x.name || (!newAnimation && x.name === 'Dog Run'))
+        <Spacer />
+    {animationMapping.map(x => {
+        const selected = (newAnimation === x.name) || (!selectedAnimation && !x.animation && !newAnimation)
         const selectedTextColor = dm ? 'white' : 'black'
-        return <TouchableOpacity key={x.name} style={tw`items-center justify-center mx-3 my-2`} onPress={() => setNewAnimation(x.name)}>
-            <AnimatedLottieView
+        return <TouchableOpacity key={x.name} style={{...tw`items-center flex-row mx-3 my-1 py-1 rounded-xl`, backgroundColor: selected ? _tokens.primary900 : undefined}} onPress={() => setNewAnimation(x.animation ? x.name : null)}>
+            {x.animation && <AnimatedLottieView
                 autoPlay
-                style={tw`h-25 w-25 bg-transparent`}
+                style={tw`h-12 w-12 bg-transparent mr-2`}
                 source={x.animation}
-            />
-            <Text style={tw`text-${selected ? selectedTextColor : 'gray-500'}`} weight={selected ? 'semibold' : 'regular'}>{x.name}</Text>
+            />}
+            {!x.animation && <Icon name='Image' size={38} style={tw`mx-2`} color={dm ? 'white' : 'black'}/>}
+            <Text lg style={tw`text-${selected ? selectedTextColor : 'gray-500'}`} weight={selected ? 'semibold' : 'regular'}>{x.name}</Text>
         </TouchableOpacity>
       })}
-      </View>
-      {(newAnimation && newAnimation !== selectedAnimation) && <View style={tw`w-12/12 items-center justify-center mt-4`}>
-        <TouchableOpacity onPress={onFinish} style={tw`px-9 py-3 rounded-2xl bg-red-500 items-center justify-center`}>
-            <Text weight='bold' style={tw`text-white`}>Finish</Text>
-        </TouchableOpacity>
-        </View>}
     </ScrollView>
-    {/* @ts-ignore */}
-    <TouchableOpacity disabled={uploading} onPress={() => navigator.pop()} style={[{paddingBottom: padding.bottom + 20}, tw`px-3 pt-3`]}>
-      {!uploading && <Text style={tw`text-center text-gray-500 text-lg`} weight='bold'>Close</Text>}
-      {uploading && <ActivityIndicator />}
-    </TouchableOpacity>
+    <SaveButton uploading={uploading} safeArea title='Finish' onSave={onFinish} />
   </View>
 }

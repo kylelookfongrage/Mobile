@@ -59,7 +59,8 @@ export default function WorkoutPlayStatic(props: WorkoutPlayDisplayProps) {
     let [selectedOption, setSelectedOption] = useState(options[0])
     let [showExerciseDetails, setShowExerciseDetails] = useState<boolean>(false)
     let [showOptions, setShowOptions] = useState<boolean>(false)
-    console.log(`SWD.Metric ${selectedWorkoutPlayDetail?.metric}`)
+    console.log(`SWPD.Rest ${selectedWorkoutPlayDetail?.rest}`)
+    console.log(`SWD.REST`, selectedWorkoutDetail.rest)
     if (!selectedWorkoutPlayDetail) {
         return <View includeBackground style={{ flex: 1 }}>
             <SafeAreaView>
@@ -83,10 +84,14 @@ export default function WorkoutPlayStatic(props: WorkoutPlayDisplayProps) {
                 <Text>     </Text>
             </XStack>
             <Spacer lg/>
-            <YStack>
-                {exercise?.video && <Video autoPlay isLooping resizeMode='cover' indicatorMarginBottom={'0'} indicatorMarginTop={15} style={{ height: screen.height * 0.40, width: screen.width }} source={{ uri: isStorageUri(exercise?.video) ? s.constructUrl(exercise?.video)?.data?.publicUrl : exercise?.video }} />}
+            {(!resting || (resting && !animation)) && <YStack>
+               {exercise?.video && <Video autoPlay isLooping resizeMode='cover' indicatorMarginBottom={'0'} indicatorMarginTop={15} style={{ height: screen.height * 0.40, width: screen.width }} source={{ uri: isStorageUri(exercise?.video) ? s.constructUrl(exercise?.video)?.data?.publicUrl : exercise?.video }} />}
                 {(!exercise?.video) && <SupabaseImage style={{ height: screen.height * 0.40, width: screen.width }} uri={exercise?.preview || defaultImage} />}
-            </YStack>
+            </YStack> }
+            {(resting && animation) && <YStack style={{ height: screen.height * 0.40, width: screen.width }} alignItems='center' justifyContent='center'>
+                <AnimatedLottieView source={animation} autoPlay
+                style={{ height: screen.height * 0.40, width: screen.width }} />
+                </YStack>}
             <Spacer lg />
             {(resting && next && exercise) && <Text lg weight='bold' style={tw`text-white text-center`}>Up Next</Text>}
             {resting && <Spacer lg/>}
@@ -100,7 +105,7 @@ export default function WorkoutPlayStatic(props: WorkoutPlayDisplayProps) {
             {(resting && next) && <Text style={tw`text-center text-white`} lg weight='semibold'>Round {next.num} of {(workoutPlayDetails.filter(x => x.workout_detail_id === wd?.id).length || 1)}</Text>}
             <Spacer />
             {!resting && <Text h1 weight='bold' style={tw`text-center text-white`}>{toHHMMSS(wd?.time ? ((wd?.time - (wpd?.time || 0)) > 0 ? (wd?.time - (wpd?.time || 0)) : 0) : totalTime, ' : ')}</Text>}
-            {resting && <Text h1 weight='bold' style={tw`text-center text-white`}>{toHHMMSS((wd?.rest || 0) - (wpd?.rest || 0))}</Text>}
+            {resting && <Text h1 weight='bold' style={tw`text-center text-white`}>{toHHMMSS((selectedWorkoutDetail?.rest || 0) - (selectedWorkoutPlayDetail?.rest || 0))}</Text>}
             <Spacer />
             <YStack paddingHorizontal='$3'>
                 {paused && <>
@@ -243,11 +248,10 @@ export default function WorkoutPlayStatic(props: WorkoutPlayDisplayProps) {
             <Overlay dialogueHeight={45} visible={showOptions} onDismiss={() => setShowOptions(false)}>
                 <Text h4 weight='bold' style={tw`text-center`}>Workout Settings</Text>
                 <Spacer divider />
-                <SettingItem setting={{title: 'Resting Display', description: props.selectedAnimation ? titleCase(props.selectedAnimation) : 'Up Next Video', onPress: (n) => {
+                <SettingItem setting={{title: 'Resting Display', description: selectedAnimation ? titleCase(selectedAnimation) : 'Up Next Video', onPress: (n) => {
                     try {
                         setShowOptions(false)
-                        sleep(2000).then(x => n.replace('SelectSprite'))
-                        
+                        n.navigate('SelectSprite')
                     } catch (error) {
                         console.log(error)
                     }

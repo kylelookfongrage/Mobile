@@ -109,7 +109,7 @@ function RootNavigator() {
       <Stack.Screen name="OnboardingComplete" component={OnboardingComplete} options={{ headerShown: false }} />
       <Stack.Screen name="Setup" component={Setup} options={{ headerShown: false }} />
       <Stack.Screen name="NewChat" component={NewChat} options={{ headerShown: false, presentation: 'transparentModal', gestureEnabled: true, gestureDirection: 'vertical', fullScreenGestureEnabled: true }} />
-      <Stack.Screen name="SelectSprite" component={SelectSprite} options={{ headerShown: false, presentation: 'transparentModal' }} />
+      <Stack.Screen name="SelectSprite" component={SelectSprite} options={{ headerShown: false }} />
       <Stack.Screen name='UserBio' component={Bio} options={{ headerShown: false }} />
       <Stack.Screen name="FinishedExercise" options={{ headerShown: false, gestureEnabled: false }}>
         {/* @ts-ignore */}

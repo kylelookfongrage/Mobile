@@ -8,16 +8,21 @@ import { animationMapping } from '../../data'
 import AnimatedLottieView from 'lottie-react-native'
 import { useCommonAWSIds } from '../../hooks/useCommonContext'
 import { UserQueries } from '../../types/UserDao'
+import { useDispatch, useSelector } from '../../redux/store'
+import { fetchUser } from '../../redux/api/auth'
 
 export default function SelectSprite() {
     const dm = useColorScheme() === 'dark'
     const padding = useSafeAreaInsets()
-    const {userId, profile, setProfile} = useCommonAWSIds()
+    const {profile} = useSelector(x => x.auth)
+    let dispatch = useDispatch()
+    let setProfile = () => dispatch(fetchUser())
     let selectedAnimation = profile?.sprite
     let dao = UserQueries(false)
     const [newAnimation, setNewAnimation] = useState<string | null>(null)
     const [uploading, setUploading] = useState<boolean>(false)
     useEffect(() => {
+        console.log('selected sprite')
         if(selectedAnimation) {
             setNewAnimation(selectedAnimation)
         }
@@ -27,7 +32,7 @@ export default function SelectSprite() {
         if (!profile) return;
         try {
             let res = await dao.update_profile({sprite: newAnimation}, profile)
-            if (res) setProfile(res)
+            if (res) setProfile()
             //@ts-ignore
             navigator.pop()
         } catch (error) {
@@ -36,6 +41,7 @@ export default function SelectSprite() {
         }
     }
     const navigator = useNavigation()
+    
     return <View style={[tw`bg-gray-${dm ? '800' : '200'}/95`, {paddingTop: padding.top, flex: 1}]}>
     <ScrollView>
       <View style={tw`flex-row items-center justify-center flex-wrap w-12/12 mt-12`}>

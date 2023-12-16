@@ -4,11 +4,8 @@ import { Text, View } from '../../components/base/Themed'
 import tw from 'twrnc'
 import { useNavigation } from '@react-navigation/native'
 import { ExpoIcon, Icon } from '../../components/base/ExpoIcon'
-import { useCommonAWSIds } from '../../hooks/useCommonContext'
 import { BackButton } from '../../components/base/BackButton'
-import { UserQueries } from '../../types/UserDao'
-import { useDispatch, useSelector } from '../../redux/store'
-import { fetchUser } from '../../redux/api/auth'
+import { useSelector } from '../../redux/store'
 import { _tokens } from '../../tamagui.config'
 import Spacer from '../../components/base/Spacer'
 
@@ -23,6 +20,7 @@ export interface AppSetting {
     description?: string;
     switchValue?: boolean;
     onSwitch?: (b: boolean) => void;
+    onPress?: (navigator?: any) => void;
     dangerous?: boolean
 }
 
@@ -60,8 +58,8 @@ export default function Settings() {
 }
 
 
-export const SettingItem = (props: {setting: AppSetting}) => {
-    let {setting} = props;
+export const SettingItem = (props: {setting: AppSetting, hideCarat?: boolean, disableMargin?: boolean}) => {
+    let setting = useMemo(() => props.setting, [props.setting])
     let navigator = useNavigation()
     let dm = useColorScheme() === 'dark'
     return <TouchableOpacity
@@ -70,16 +68,20 @@ export const SettingItem = (props: {setting: AppSetting}) => {
             //@ts-ignore
             navigator.push(setting.screen, setting.payload || {})
         }
+        if (setting.onPress){
+            setting.onPress(navigator)
+        }
     }}
-     disabled={!setting.screen!!} style={tw`w-12/12 pt-2 pb-1 my-2 flex-row items-center justify-between`}>
+     disabled={!setting.screen!! && !setting.onPress} style={{...tw` pt-2 pb-1 ${props.disableMargin ? '' : 'my-2'} flex-row items-center justify-between`}}>
     <View style={tw`flex-row ${(setting.description ? '' : 'items-center')}`}>
         {setting.icon && <Icon name={setting.icon} size={25} color={dm ? _tokens.white : _tokens.black}/>}
         {setting.icon && <Spacer horizontal/>}
-        <View style={tw`${setting.icon ? 'w-9/12' : 'w-11/12'}`}>
+        <View style={tw`${setting.icon ? 'w-9/12' : 'w-10/12'}`}>
         <Text lg weight='bold' style={tw`max-w-11/12 ${setting.dangerous ? 'text-red-500' : ''}`}>{setting.title}</Text>
         {setting.description && <Text style={tw`max-w-11/12 mt-1 text-gray-${dm ? '400' : '500'}`}>{setting.description}</Text>}
         </View>
     </View>
-    <ExpoIcon name='chevron-right' iconName={'feather'} size={25} color='gray' />
+    {(setting.switch || setting.onSwitch) && <Switch style={{...tw`pr-10`}} trackColor={{false: undefined, true: _tokens.primary900}} value={setting.switchValue} onValueChange={setting.onSwitch} />}
+    {!(props.hideCarat || setting.switch) && <ExpoIcon name='chevron-right' iconName={'feather'} size={25} color='gray' />}
 </TouchableOpacity>
 }

@@ -47,7 +47,6 @@ export default function Profile(props: ProfileProps) {
     const { id } = props
     let {profile} = useSelector(x => x.auth)
     let userId = profile?.id
-    const [pic, setPic] = React.useState<MediaType[]>([])
     const [img, setImg] = useState<string | null>(null)
     const [workouts, setWorkouts] = React.useState<Tables['workout']['Row'][]>([])
     const [exercises, setExercises] = React.useState<Tables['exercise']['Row'][]>([])
@@ -156,7 +155,7 @@ export default function Profile(props: ProfileProps) {
 
     return <View includeBackground safeAreaTop style={{flex: 1}}>
         <Spacer />
-        <TopBar title='Trainer Profile' iconLeft='Profile' Right={() => {
+        <TopBar title='Trainer Profile' iconLeftOnPress={props.id ? () => navigator.goBack() : undefined} iconLeft={props.id ? 'Arrow---Left' : 'Profile'} iconLeftWeight={props.id ? 'light' : 'bold'} iconLeftColor={props.id ? (dm ? _tokens.white : _tokens.black) : undefined} Right={() => {
             if (id) {
                 return <ShowMoreDialogue user_id={id} />
             }

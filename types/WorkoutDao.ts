@@ -115,11 +115,13 @@ export interface WorkoutPlayDisplayProps {
     onNewSetPress: () => void;
     onFinishPress: () => void;
     animation: any;
+    selectedAnimation: string | null | undefined
     workoutDetails: Tables['workout_details']['Row'][];
     selectedWorkoutPlayDetail: Tables['workout_play_details']['Insert'] | undefined;
     forwardBackwardPress: (b?: boolean) => void;
     onSetUpdate: (n: Tables['workout_play_details']['Insert']) => void;
     onWorkoutDetailPress: (wd: Tables['workout_details']['Row']) => void;
+    updateAllSets: <T extends keyof Tables['workout_play_details']['Insert'], V extends Tables['workout_play_details']['Insert'][T]>(key:T, value: V) => void;
     resting: boolean;
     next: Tables['workout_play_details']['Insert'] | undefined
 }

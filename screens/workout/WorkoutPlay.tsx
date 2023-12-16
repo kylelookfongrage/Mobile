@@ -200,6 +200,13 @@ export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
 
     const [totalTime, setTotalTime] = React.useState<number>(0)
 
+    const updateAllSets = <T extends keyof Tables['workout_play_details']['Insert'], V extends Tables['workout_play_details']['Insert'][T]>(key:T, value: V) => {
+        console.log(`Updating ${key} to ${value}`)
+        setWorkoutPlayDetails(prev => prev.map(z => {
+            return {...z, [key]: value}
+        }))
+    }
+
     const saveWorkoutDetails = async () => {
         let time = totalTime;
         if (totalTime === 0) {
@@ -222,8 +229,8 @@ export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
         }))
         await pdao.log()
         
-        
-        navigator.navigate('FinishedExercise')
+        //@ts-ignore
+        navigator.navigate('FinishedExercise', {time: totalTime, exercises: workoutDetails.length, metric: workoutPlayDetails[0]?.metric, weight: workoutPlayDetails.reduce((prev, curr) => prev + ((curr.weight || 0) * (curr.reps || 1)), 0)})
     }
 
     const onFinishPress = () => {
@@ -291,8 +298,8 @@ export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
     const currentExercise = exercises.filter(x => x.id === selectedWorkoutPlayDetail?.exercise_id)[0]
     const p: WorkoutPlayDisplayProps = {
         currentExercise, exercises, shouldShowMore, setShouldShowMore, selectedWorkoutDetail, onWorkoutDetailPress,
-        paused, setPaused, totalTime, onResetPress, workoutPlayDetails, onNewSetPress, onFinishPress, animation: animationMapping.filter(x => x.name === selectedAnimation)?.[0]?.animation || timer,
-        selectedWorkoutPlayDetail, workoutDetails, forwardBackwardPress, onSetUpdate, resting, next, deleteSet
+        paused, setPaused, totalTime, onResetPress, workoutPlayDetails, onNewSetPress, onFinishPress, animation: animationMapping.filter(x => x.name === selectedAnimation)?.[0]?.animation, selectedAnimation,
+        selectedWorkoutPlayDetail, workoutDetails, forwardBackwardPress, onSetUpdate, resting, next, deleteSet, updateAllSets
     }
     // return <WorkoutPlayTrainer {...p}/>
     // if (selectedWorkoutMode == WorkoutMode.player) {

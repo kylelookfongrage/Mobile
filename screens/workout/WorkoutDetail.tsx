@@ -324,10 +324,10 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
 
 export const ExerciseTile = (props: {icon: string; iconName: string; iconSize: number; title: string; desc: string }) => {
   let dm = useColorScheme() === 'dark'
-  return <YStack justifyContent='center' alignItems='center' w='32%' backgroundColor={dm ? _tokens.dark1 : _tokens.gray300} borderRadius={'$3'} paddingVertical={'$2'}>
+  return <YStack justifyContent='center' alignItems='center' w='32%' backgroundColor={dm ? _tokens.dark1 : _tokens.gray200} borderRadius={'$3'} paddingVertical={'$2'}>
               <Spacer sm/>
               {/* @ts-ignore */}
-              <ExpoIcon name={props.icon} iconName={props.iconName} color='white' size={props.iconSize} />
+              <ExpoIcon name={props.icon} iconName={props.iconName} color={dm ? 'white' : 'black'} size={props.iconSize} />
               <Spacer sm/>
               <Text h5 weight='bold'>{props.title}</Text>
               <Spacer sm/>

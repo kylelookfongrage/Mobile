@@ -11,7 +11,7 @@ import Spacer from '../base/Spacer';
 
 const adUnitId = TestIds.BANNER // (Platform.OS === 'android' ? Env.GOOGLE_AD_UNIT : Env.APPLE_AD_UNIT) || TestIds.BANNER
 
-export default function ThisAdHelpsKeepFree() {
+export default function ThisAdHelpsKeepFree(props: {size?: string}) {
     const {subscribed} = useSelector(x => x.auth)
     let dm = useColorScheme() === 'dark'
     if (subscribed) return <View />;
@@ -21,7 +21,7 @@ export default function ThisAdHelpsKeepFree() {
             <Spacer sm />
             <BannerAd
                 unitId={adUnitId}
-                size={'275x250'}
+                size={props.size || '275x250'}
                 requestOptions={{
                     requestNonPersonalizedAdsOnly: true,
                 }}

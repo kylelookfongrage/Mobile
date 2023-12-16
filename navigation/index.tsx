@@ -111,7 +111,10 @@ function RootNavigator() {
       <Stack.Screen name="NewChat" component={NewChat} options={{ headerShown: false, presentation: 'transparentModal', gestureEnabled: true, gestureDirection: 'vertical', fullScreenGestureEnabled: true }} />
       <Stack.Screen name="SelectSprite" component={SelectSprite} options={{ headerShown: false, presentation: 'transparentModal' }} />
       <Stack.Screen name='UserBio' component={Bio} options={{ headerShown: false }} />
-      <Stack.Screen name="FinishedExercise" component={FinishedExercise} options={{ headerShown: false, gestureEnabled: false }} />
+      <Stack.Screen name="FinishedExercise" options={{ headerShown: false, gestureEnabled: false }}>
+        {/* @ts-ignore */}
+        {props => <FinishedExercise weight={props.route?.params?.weight} time={props.route?.params?.time} metric={props.route?.params?.metric} exercises={props.route?.params?.exercises} />}
+      </Stack.Screen>
       <Stack.Screen name="ShowMore" options={{ headerShown: false, presentation: 'transparentModal' }}>
         {props => <ShowMore
           // @ts-ignore

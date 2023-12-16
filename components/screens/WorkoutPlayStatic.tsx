@@ -2,7 +2,7 @@ import { useColorScheme, Dimensions, ScrollView, TouchableOpacity, ActivityIndic
 import React, { useRef, useState } from 'react'
 import tw from 'twrnc'
 import { View, Text } from '../base/Themed'
-import { defaultImage, isStorageUri, toHHMMSS } from '../../data'
+import { defaultImage, isStorageUri, sleep, titleCase, toHHMMSS } from '../../data'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { ExpoIcon, Icon } from '../base/ExpoIcon'
 import AnimatedLottieView from 'lottie-react-native'
@@ -22,6 +22,7 @@ import SpinSelect from '../inputs/SpinSelect'
 import Input from '../base/Input'
 import Animated, { FadeIn, FadeInUp, FadeOut, FadeOutDown } from 'react-native-reanimated'
 import SwipeWithDelete from '../base/SwipeWithDelete'
+import { SettingItem } from '../../screens/home/Settings'
 
 export default function WorkoutPlayStatic(props: WorkoutPlayDisplayProps) {
     const dm = useColorScheme() === 'dark'
@@ -40,6 +41,8 @@ export default function WorkoutPlayStatic(props: WorkoutPlayDisplayProps) {
         selectedWorkoutPlayDetail,
         forwardBackwardPress,
         animation,
+        selectedAnimation,
+        updateAllSets,
         deleteSet,
         workoutDetails,
         onWorkoutDetailPress,
@@ -55,6 +58,8 @@ export default function WorkoutPlayStatic(props: WorkoutPlayDisplayProps) {
     let options = ['Exercise', 'Set Log', 'Remaining']
     let [selectedOption, setSelectedOption] = useState(options[0])
     let [showExerciseDetails, setShowExerciseDetails] = useState<boolean>(false)
+    let [showOptions, setShowOptions] = useState<boolean>(false)
+    console.log(`SWD.Metric ${selectedWorkoutPlayDetail?.metric}`)
     if (!selectedWorkoutPlayDetail) {
         return <View includeBackground style={{ flex: 1 }}>
             <SafeAreaView>
@@ -66,6 +71,8 @@ export default function WorkoutPlayStatic(props: WorkoutPlayDisplayProps) {
     if (resting || (paused && totalTime > 0)) {
         let wpd = paused ? selectedWorkoutPlayDetail : next
         let exercise = exercises.find(x => x.id === wpd?.exercise_id)
+        let wd = workoutDetails.find(x => x.id === wpd?.workout_detail_id)
+
         return <Animated.View entering={FadeInUp} exiting={FadeOutDown} style={[{ flex: 1, backgroundColor: _tokens.primary900 }]}>
             <SafeAreaView>
             <XStack alignItems='center' justifyContent='space-between' paddingHorizontal='$3'>
@@ -73,7 +80,7 @@ export default function WorkoutPlayStatic(props: WorkoutPlayDisplayProps) {
                     <ExpoIcon name='close' iconName='ion' size={25} color={dm ? 'white' : 'black'} />
                 </Pressable>
                 <Text lg weight='bold' style={tw`text-white`}>{resting ? 'RESTING' : "PAUSED"}</Text>
-                <Icon name='Setting' size={25} color={dm ? 'white' : 'black'} />
+                <Text>     </Text>
             </XStack>
             <Spacer lg/>
             <YStack>
@@ -89,11 +96,11 @@ export default function WorkoutPlayStatic(props: WorkoutPlayDisplayProps) {
                 <IconButton onPress={() => setShowExerciseDetails(true)} iconName='Info-Square' iconWeight={'light'} type='primary' size={'$2'} iconSize={25} />
             </XStack>
             <Spacer sm />
-            {!resting && <Text style={tw`text-center text-white`} lg weight='semibold'>Round {selectedWorkoutPlayDetail.num || 1} of {(workoutPlayDetails.filter(x => x.workout_detail_id === selectedWorkoutDetail.id).length || 1)}</Text>}
-            {(resting && next) && <Text style={tw`text-center text-white`} lg weight='semibold'>Round {next.num} of {(workoutPlayDetails.filter(x => x.workout_detail_id === selectedWorkoutDetail.id).length || 1)}</Text>}
+            {!resting && <Text style={tw`text-center text-white`} lg weight='semibold'>Round {wpd?.num || 1} of {(workoutPlayDetails.filter(x => x.workout_detail_id === wd?.id).length || 1)}</Text>}
+            {(resting && next) && <Text style={tw`text-center text-white`} lg weight='semibold'>Round {next.num} of {(workoutPlayDetails.filter(x => x.workout_detail_id === wd?.id).length || 1)}</Text>}
             <Spacer />
-            {!resting && <Text h1 weight='bold' style={tw`text-center text-white`}>{toHHMMSS(selectedWorkoutDetail.time ? ((selectedWorkoutDetail.time - (selectedWorkoutPlayDetail?.time || 0)) > 0 ? (selectedWorkoutDetail.time - (selectedWorkoutPlayDetail?.time || 0)) : 0) : totalTime, ' : ')}</Text>}
-            {resting && <Text h1 weight='bold' style={tw`text-center text-white`}>{toHHMMSS((selectedWorkoutDetail.rest || 0) - (selectedWorkoutPlayDetail.rest || 0))}</Text>}
+            {!resting && <Text h1 weight='bold' style={tw`text-center text-white`}>{toHHMMSS(wd?.time ? ((wd?.time - (wpd?.time || 0)) > 0 ? (wd?.time - (wpd?.time || 0)) : 0) : totalTime, ' : ')}</Text>}
+            {resting && <Text h1 weight='bold' style={tw`text-center text-white`}>{toHHMMSS((wd?.rest || 0) - (wpd?.rest || 0))}</Text>}
             <Spacer />
             <YStack paddingHorizontal='$3'>
                 {paused && <>
@@ -113,15 +120,15 @@ export default function WorkoutPlayStatic(props: WorkoutPlayDisplayProps) {
             </YStack>
 
             <Overlay dialogueHeight={45} visible={showExerciseDetails} onDismiss={() => setShowExerciseDetails(false)}>
-                <Text h4 weight='bold'>{currentExercise.name}</Text>
+                <Text h4 weight='bold'>{exercise?.name}</Text>
                 <Spacer sm />
                 <XStack alignItems='center' justifyContent='space-around'>
-                    <Text>{selectedWorkoutDetail.reps} x {selectedWorkoutDetail.sets} Sets</Text>
-                    <Text>{toHHMMSS(selectedWorkoutDetail.rest || 0)} Rest</Text>
-                    <Text>{toHHMMSS(selectedWorkoutDetail.time || 0)} Time</Text>
+                    <Text>{wd?.reps} x {wd?.sets} Sets</Text>
+                    <Text>{toHHMMSS(wd?.rest || 0)} Rest</Text>
+                    <Text>{toHHMMSS(wd?.time || 0)} Time</Text>
                 </XStack>
                 <Spacer sm />
-                <Description value={currentExercise.description + (!selectedWorkoutDetail.note ? '' : `\nNote: ${selectedWorkoutDetail.note}`)} editable={false} />
+                <Description value={exercise?.description + (!wd?.note ? '' : `\nNote: ${wd?.note}`)} editable={false} />
 
             </Overlay>
             </SafeAreaView>
@@ -136,7 +143,9 @@ export default function WorkoutPlayStatic(props: WorkoutPlayDisplayProps) {
                 <Progress style={{ width: 214, height: 12, borderRadius: 100 }} value={100 * workoutPlayDetails.filter(x => x.completed).length / workoutPlayDetails.length}>
                     <Progress.Indicator backgroundColor={_tokens.primary900} />
                 </Progress>
+                <Pressable onPress={() => setShowOptions(true)}>
                 <Icon name='Setting' size={25} color={dm ? 'white' : 'black'} />
+                </Pressable>
             </XStack>
             <Spacer lg />
             <Selector searchOptions={options} selectedOption={selectedOption} onPress={setSelectedOption} />
@@ -146,13 +155,8 @@ export default function WorkoutPlayStatic(props: WorkoutPlayDisplayProps) {
                 {(!currentExercise.video) && <SupabaseImage style={{ height: screen.height * 0.40, width: screen.width }} uri={currentExercise.preview || defaultImage} />}
 
             </YStack>}
-            {selectedOption === options[1] && <YStack onPress={() => {
-                if (Keyboard.isVisible()) {
-                    Keyboard.dismiss()
-                }
-            }} w='100%' h={screen.height * 0.40}>
-                <View style={{ flex: 1 }}>
-                    <ScrollView showsVerticalScrollIndicator={false} style={tw`px-2`}>
+            {selectedOption === options[1] && <YStack padding='$0' w='100%' h={screen.height * 0.40}>
+                    <ScrollView keyboardShouldPersistTaps='handled' keyboardDismissMode='on-drag' showsVerticalScrollIndicator={false} style={tw`px-2`}>
                         {workoutPlayDetails.filter(x => x.workout_detail_id === selectedWorkoutPlayDetail.workout_detail_id).map((set, i) => {
                             const selected = selectedWorkoutPlayDetail.id === set.id
                             return <SwipeWithDelete onDelete={() => {
@@ -182,7 +186,6 @@ export default function WorkoutPlayStatic(props: WorkoutPlayDisplayProps) {
                             <Text>New Set</Text>
                         </TouchableOpacity>}
                     </ScrollView>
-                </View>
             </YStack>}
             {selectedOption === options[2] && <YStack w='100%' h={screen.height * 0.40}>
                     <View style={{flex: 1}}>
@@ -234,6 +237,26 @@ export default function WorkoutPlayStatic(props: WorkoutPlayDisplayProps) {
                 </XStack>
                 <Spacer sm />
                 <Description value={currentExercise.description + (!selectedWorkoutDetail.note ? '' : `\nNote: ${selectedWorkoutDetail.note}`)} editable={false} />
+
+            </Overlay>
+
+            <Overlay dialogueHeight={45} visible={showOptions} onDismiss={() => setShowOptions(false)}>
+                <Text h4 weight='bold' style={tw`text-center`}>Workout Settings</Text>
+                <Spacer divider />
+                <SettingItem setting={{title: 'Resting Display', description: props.selectedAnimation ? titleCase(props.selectedAnimation) : 'Up Next Video', onPress: (n) => {
+                    try {
+                        setShowOptions(false)
+                        sleep(2000).then(x => n.replace('SelectSprite'))
+                        
+                    } catch (error) {
+                        console.log(error)
+                    }
+                }}} disableMargin hideCarat/>
+                <Spacer />
+                <SettingItem setting={{title: 'Metric Units', description: 'This can be globally changed in your profile settings', switch: true, switchValue: selectedWorkoutPlayDetail?.metric === true ? true : false, onSwitch: (b) => {
+                    console.log(b)
+                    updateAllSets('metric', b)
+                }}} disableMargin hideCarat/>
 
             </Overlay>
         </View>

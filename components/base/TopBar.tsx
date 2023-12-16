@@ -4,16 +4,23 @@ import { Text } from './Themed';
 import tw from 'twrnc'
 import { Icon } from './ExpoIcon';
 import { _tokens } from '../../tamagui.config';
+import { Pressable } from 'react-native';
 
 export default function TopBar(props: {
     iconLeft?: string;
+    iconLeftColor?: string;
+    iconLeftOnPress?: () => void;
+    iconLeftWeight?: string;
     title: string;
     Right?: React.JSXElementConstructor<any>
 }) {
     let {iconLeft, title, Right} = props;
   return (
     <XStack w='100%' justifyContent='space-between' alignItems='center' paddingHorizontal={16}>
-            {iconLeft ? <Icon name={iconLeft} size={26} weight='bold' color={_tokens.primary900} /> : <Text> </Text>}
+            {iconLeft ? <Pressable disabled={!props.iconLeftOnPress} onPress={props.iconLeftOnPress}>
+              {/* @ts-ignore */}
+              <Icon name={iconLeft} size={26} weight={props.iconLeftWeight || 'bold'} color={props.iconLeftColor || _tokens.primary900} />
+            </Pressable> : <Text> </Text>}
             <Text h4 weight='bold' style={tw`text-center`}>{title}</Text>
             {Right ? <Right /> : <Text> </Text>}
         </XStack>

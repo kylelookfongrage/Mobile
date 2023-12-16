@@ -106,7 +106,7 @@ export default function CompletedExerciseDetails(props: { workoutPlayId: string;
                         <XStack justifyContent='space-between' w={'100%'} alignItems='center'>
             <ExerciseTile iconName='fa5' icon='running' iconSize={20} title={exercises.length.toString()} desc='exercises' />
             <ExerciseTile iconName='ion' icon='time-outline' iconSize={20} title={toHHMMSS(workoutPlay.time || 0)} desc='time' />
-            <ExerciseTile iconName='matc' icon='weight' iconSize={20} title={workoutPlayDetails.reduce((prev, curr) => prev + (curr.weight || 0), 0).toFixed(0)} desc={workoutPlayDetails[0].metric ? 'kgs' : 'lbs'} />
+            <ExerciseTile iconName='matc' icon='weight' iconSize={20} title={workoutPlayDetails.reduce((prev, curr) => prev + ((curr.weight || 0) * (curr.reps || 1)), 0).toFixed(0)} desc={workoutPlayDetails[0].metric ? 'kgs' : 'lbs'} />
           </XStack>
                            <Spacer xl/>
                             {Object.keys(details).map(d => {

@@ -163,7 +163,7 @@ export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
 
     const forwardBackwardPress = (forward: boolean = true, shouldFinish=false) => {
         if (!selectedWorkoutDetail || !selectedWorkoutPlayDetail) return;
-        if (selected === workoutPlayDetails.length - 1 && forward) {
+        if (selected === workoutPlayDetails.length - 1 && forward && selectedWorkoutPlayDetail.completed) {
             onFinishPress();
             return;
         }

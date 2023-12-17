@@ -70,7 +70,7 @@ export default function WorkoutPlayStatic(props: WorkoutPlayDisplayProps) {
         </View>
     }
     if (resting || (paused && totalTime > 0)) {
-        let wpd = paused ? selectedWorkoutPlayDetail : next
+        let wpd = paused ? selectedWorkoutPlayDetail : (next || selectedWorkoutPlayDetail)
         let exercise = exercises.find(x => x.id === wpd?.exercise_id)
         let wd = workoutDetails.find(x => x.id === wpd?.workout_detail_id)
 

@@ -18,4 +18,4 @@ export const fetchUser = createAsyncThunk('auth/fetchUser', async (): Promise<{u
     let {data: profile, error: profileError} = await supabase.from('user').select('*').filter('id', 'eq', data.session.user.id).single()
     if (profileError) throw Error(profileError.message)
     return {user: data.session.user, profile}
-})
+}) 

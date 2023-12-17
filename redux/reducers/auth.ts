@@ -33,6 +33,10 @@ let authSlice = createSlice({
             let {profile} = action.payload;
             state.profile = profile;
             state.username = profile.username
+        },
+        updateUserState: <T extends keyof UserState, V extends UserState[T]>(state: UserState, action: PayloadAction<{key: T, value: V}>) => {
+            let {key, value} = action.payload;
+            state[key] = value
         }
     },
     extraReducers: _builder => {
@@ -56,4 +60,4 @@ let authSlice = createSlice({
 
 export default authSlice
 
-export const {signOut, login, registerProfile} = authSlice.actions;
+export const {signOut, login, registerProfile, updateUserState} = authSlice.actions;

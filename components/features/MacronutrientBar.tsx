@@ -27,11 +27,11 @@ export default function MacronutrientBar(props: {protein?: boolean; carbs?: bool
     let s = Dimensions.get('screen')
     return <View style={{...tw`self-end flex-row justify-between items-end mb-3`, width: s.width * 0.60}}>
         <View style={tw`items-start`}>
-            <Text xs weight='semibold'>{name} ({props.weight.toFixed(0)}{props.calories ? 'kcal' : 'g'}) </Text>
+            <Text weight='semibold'>{name} ({props.weight.toFixed(0)}{props.calories ? 'kcal' : 'g'}) </Text>
             <Spacer sm />
             <BarProgress progressColor={color} widthOfScreen={0.5} progress={percentage*100 > 100 ? 100 : percentage*100} />
         </View>
         <Spacer horizontal lg />
-        <Text xs weight='bold'>{(percentage * 100 > 100 ? 100 : percentage * 100).toFixed(0)}%</Text>
+        <Text weight='bold'>{(percentage * 100 > 100 ? 100 : percentage * 100).toFixed(0)}%</Text>
     </View>
 }

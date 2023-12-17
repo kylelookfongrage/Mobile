@@ -4,7 +4,7 @@ import { NavigationContainer, DefaultTheme, DarkTheme, useNavigation } from '@re
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import * as React from 'react';
 import { Text, View } from '../components/base/Themed';
-import { ColorSchemeName, Pressable, TouchableOpacity } from 'react-native';
+import { ColorSchemeName, Platform, Pressable, TouchableOpacity } from 'react-native';
 import tw from 'twrnc';
 
 import Colors from '../constants/Colors';
@@ -65,13 +65,38 @@ import Setup from '../screens/onboarding/Setup';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import OnboardingComplete from '../screens/onboarding/OnboardingComplete';
 import VideoScreen from '../screens/other/VideoScreen';
-import { useSelector } from '../redux/store';
+import { useDispatch, useSelector } from '../redux/store';
 import { _tokens } from '../tamagui.config';
 import Spacer from '../components/base/Spacer';
+import Purchases from 'react-native-purchases';
+import { Env } from '../env';
+import { updateUserState } from '../redux/reducers/auth';
 
 
 function RootNavigator() {
   let profile = useSelector(x => x.auth.profile)
+  let dispatch = useDispatch()
+
+  React.useEffect(() => {
+    if (!profile?.id) return;
+    Purchases.configure({
+      apiKey:
+        Platform.OS === "ios"
+          ? Env.REVENUE_CAT_APPLE_KEY
+          : Env.REVENUE_CAT_ANDROID_KEY,
+    });
+    Purchases.logIn(profile.id).then((x) => {
+      if (!x) return;
+      Purchases.addCustomerInfoUpdateListener((info) => {
+        if (info?.entitlements?.active["pro"]?.isActive) {
+          dispatch(updateUserState({key: 'subscribed', value: true}))
+        }
+        if (Object.keys(info?.entitlements?.all).length > 0) {
+          dispatch(updateUserState({key: 'hasSubscribedBefore', value: true}))
+        }
+      });
+    });
+  }, [profile])
   if (profile?.id) {
     return <Stack.Navigator initialRouteName={'Root'}>
       <Stack.Screen name="Root" component={BottomTabNavigator} options={{ headerShown: false }} />

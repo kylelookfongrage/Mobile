@@ -97,7 +97,7 @@ export const SummaryScreen = () => {
               if (isSelected) selectedColorTint='600'
               return <TouchableOpacity key={day.format('LL')}
                 onPress={() => setDate(day.format('YYYY-MM-DD'))}>
-                  <View card={!isSelected} style={{...tw`h-${isSelected ? '25' : '20'} w-12 rounded-full items-center justify-center`, backgroundColor: isSelected ? _tokens.primary900 : (dm ? _tokens.dark1 : _tokens.gray200)}}>
+                  <View card={!isSelected} style={{...tw`h-20 w-12 rounded-full items-center justify-center`, backgroundColor: isSelected ? _tokens.primary900 : (dm ? _tokens.dark1 : _tokens.gray200)}}>
                   <Text weight='bold' h5 style={tw`${(dm || isSelected) ? 'text-white' : ''}`}>{day.format('DD')}</Text>
                 <Text weight='semibold' lg style={tw`text-xs ${(dm || isSelected) ? 'text-white' : ''}`}>{day.format('dd')}</Text>
                   </View>

@@ -11,10 +11,14 @@ import { titleCase } from '../../data'
 import Purchases, { PurchasesPackage, PurchasesPromotionalOffer, PurchasesStoreProduct } from 'react-native-purchases'
 import { ActivityIndicator } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
+import { useDispatch, useSelector } from '../../redux/store'
+import { updateUserState } from '../../redux/reducers/auth'
 
 export default function Subscription() {
   const navigator = useNavigation()
-  const { subscribed, setSubscribed, hasSubscribedBefore } = useCommonAWSIds()
+  const { subscribed, hasSubscribedBefore } = useSelector(x => x.auth)
+  let dispatch = useDispatch()
+  let setSubscribed = (b: boolean) => dispatch(updateUserState({key: 'subscribed', value: b}))
   const freeTier: PurchasesPackage = {
     identifier: 'free-tier',
     //@ts-ignore
@@ -42,6 +46,7 @@ export default function Subscription() {
 
       }
     } catch (e) {
+      console.log(e)
      alert('There was a problem, please check your internet connection')
      //@ts-ignore
      navigator.pop()

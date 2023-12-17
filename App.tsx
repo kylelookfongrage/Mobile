@@ -84,30 +84,6 @@ function App() {
     }
   }, [appIsReady])
 
-
-  React.useEffect(() => {
-    if (!user?.id) return;
-    Purchases.configure({
-      apiKey:
-        Platform.OS === "ios"
-          ? Env.REVENUE_CAT_APPLE_KEY
-          : Env.REVENUE_CAT_ANDROID_KEY,
-    });
-    Purchases.logIn(user.id).then((x) => {
-      if (!x) return;
-      Purchases.addCustomerInfoUpdateListener((info) => {
-        if (info?.entitlements?.active["pro"]?.isActive) {
-          // setSubscribed(true);
-        }
-        if (Object.keys(info?.entitlements?.all).length > 0) {
-          // setHasSubscribedBefore(true);
-        }
-      });
-    });
-  }, [user]);
-
-  const formattedDate = date.format("dddd, MMMM Do");
-  const AWSDate = date.format("YYYY-MM-DD");
   let [fontsLoaded] = useFonts({
     ...Ionicons.font,
     ...Feather.font,

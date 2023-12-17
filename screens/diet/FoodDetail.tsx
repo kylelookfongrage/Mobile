@@ -314,6 +314,7 @@ export default function FoodDetail(props: FoodDetailProps) {
     return (
         <View style={{ flex: 1 }} includeBackground>
             <ScrollViewWithDrag
+            disableRounding
                 rerenderTopView={[screenState.state.editMode == true, form.state.image]}
                 TopView={() => <View>
                     <BackButton inplace Right={() => {
@@ -341,8 +342,8 @@ export default function FoodDetail(props: FoodDetailProps) {
                         placeholder={'Something delicious'}
                         onChangeText={x => form.setForm('name', x)}
                     />
-                    <Spacer sm />
-                    <UsernameDisplay disabled={(!!edamamId || !authorId || screenState.state.editMode)} id={form.state.user_id} username={screenState.state.editMode ? profile?.username : null} />
+                    <Spacer />
+                    <UsernameDisplay image disabled={(!!edamamId || !authorId || screenState.state.editMode)} id={form.state.user_id} username={screenState.state.editMode ? profile?.username : null} />
 
                     {/* <View style={tw`justify-between flex-row items-center py-4`}>
                         <View style={tw`w-12/12`}>

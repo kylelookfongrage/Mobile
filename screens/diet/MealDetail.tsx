@@ -32,6 +32,7 @@ import QuantitySelect from '../../components/inputs/QuantitySelect';
 import { useSelector } from '../../redux/store';
 import { IngredientAdditions, PlanAdditions } from '../../redux/reducers/multiform';
 import { useMultiPartForm } from '../../redux/api/mpf';
+import Description from '../../components/base/Description';
 
 
 export interface MealDetailProps {
@@ -186,7 +187,7 @@ export default function MealDetailScreen(props: MealDetailProps) {
         <View style={{ flex: 1 }} includeBackground>
 
             {/* @ts-ignore */}
-            <ScrollViewWithDrag rerenderTopView={[screen.editMode, (imageSource || [])]} TopView={() => <View>
+            <ScrollViewWithDrag disableRounding rerenderTopView={[screen.editMode, (imageSource || [])]} TopView={() => <View>
                 <BackButton inplace Right={() => {
                     if (screen.editMode || !props.id || !Number(props.id) || props.idFromProgress || props.planId) return <View />
                     return <ShowMoreDialogue meal_id={Number(props.id)} options={[
@@ -196,7 +197,7 @@ export default function MealDetailScreen(props: MealDetailProps) {
                         ShareButton({ meal_id: Number(props.id) })
                     ]} />
                 }} />
-                <ImagePickerView editable={screen.editMode} srcs={canViewDetails ? [{ type: 'image', uri: form.preview || defaultImage }] : imageSource.filter(x => x.type === 'image')} onChange={x => {
+                <ImagePickerView editable={screen.editMode} srcs={canViewDetails ? imageSource : imageSource.filter(x => x.type === 'image')} onChange={x => {
                     setImageSource(x)
                 }} type='all' />
             </View>} style={{ flex: 1, }} showsVerticalScrollIndicator={false}>
@@ -213,20 +214,11 @@ export default function MealDetailScreen(props: MealDetailProps) {
                     <UsernameDisplay image disabled={(screen.editMode || screen.uploading || (props.idFromProgress ? true : false))} id={form.user_id} username={form.id ? null : profile?.username} />
                     {/* @ts-ignore */}
                     <Spacer />
-                    <TextInput
-                        value={form.description || ''}
-                        multiline
-                        numberOfLines={4}
-                        onChangeText={x => setForm('description', x)}
-                        editable={screen.editMode}
-                        placeholder='The description of your meal'
-                        placeholderTextColor={'gray'}
-                        style={tw`max-w-10/12 text-${dm ? 'white' : 'black'}`}
-                    />
+                    <Description editable={screen.editMode} placeholder='The description of your meal' value={form.description || ''} onChangeText={x => setForm('description', x)}  />
 
                     <Spacer divider />
                     {(canViewDetails && props.id && !props.planId) && <View>
-                        <Text h3>Log Meal Details</Text>
+                        <ManageButton title='Log Meal Details' buttonText=' ' />
                         <Spacer />
                         <QuantitySelect initialServingSize={consumed.servingSize} qty={consumed.consumed_weight} onQuantityChange={(x, y) => {
                             setConsumed('consumed_weight', x)
@@ -240,7 +232,7 @@ export default function MealDetailScreen(props: MealDetailProps) {
                         <Spacer divider />
                     </View>}
                     <View>
-                        <Text h3>Macros</Text>
+                        <ManageButton title='Macros' buttonText=' ' />
                         <MacronutrientBar protein weight={(protein * fx) || 0} totalEnergy={(calories * fx) || 1} />
                         <MacronutrientBar carbs weight={(carbs * fx) || 0} totalEnergy={(calories * fx) || 1} />
                         <MacronutrientBar fat weight={(fat * fx) || 0} totalEnergy={(calories * fx) || 1} />
@@ -291,7 +283,7 @@ export default function MealDetailScreen(props: MealDetailProps) {
                         </SwipeWithDelete>
                     })}
                     <Spacer divider />
-                    <Text h3>Directions</Text>
+                    <ManageButton title='Directions' buttonText=' '  />
                     <Spacer sm />
                     {(form.steps || []).map((x, i) => {
                         return <SwipeWithDelete key={`step ${x} ${i}`} disabled={!screen.editMode} onDelete={() => {

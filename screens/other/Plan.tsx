@@ -32,7 +32,7 @@ import { useSelector } from '../../redux/store'
 import { useMultiPartForm } from '../../redux/api/mpf'
 
 export default function Plan(props: { id: Tables['fitness_plan']['Row']['id'] }) {
-    let { profile } = useSelector(x => x.auth)
+    let { profile } = useSelector(x => x.auth);
     let PlanForm = useForm<Tables['fitness_plan']['Insert']>({
         name: '', description: '', image: null, user_id: profile?.id
     }, async () => {
@@ -64,7 +64,7 @@ export default function Plan(props: { id: Tables['fitness_plan']['Row']['id'] })
     const [selectedDayOfWeek, setSelectedDayOfWeek] = useState<number | null>(null)
     let [dow, setDow] = useState<number>(0)
     let dao = PlanDao()
-    let navigator = useNavigation()
+    let navigator = useNavigation();
     return (
         <View style={{ flex: 1 }} includeBackground>
             <ScrollViewWithDrag rerenderTopView={[s.editMode, f.image]} disableRounding TopView={() => <View>

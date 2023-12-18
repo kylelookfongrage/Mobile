@@ -76,7 +76,7 @@ export const SettingItem = (props: {setting: AppSetting, hideCarat?: boolean, di
     <View style={tw`flex-row ${(setting.description ? '' : 'items-center')}`}>
         {setting.icon && <Icon name={setting.icon} size={25} color={dm ? _tokens.white : _tokens.black}/>}
         {setting.icon && <Spacer horizontal/>}
-        <View style={tw`${setting.icon ? 'w-9/12' : 'w-10/12'}`}>
+        <View style={tw`${setting.icon ? 'w-9/12' : 'w-10.5/12'}`}>
         <Text lg weight='bold' style={tw`max-w-11/12 ${setting.dangerous ? 'text-red-500' : ''}`}>{setting.title}</Text>
         {setting.description && <Text style={tw`max-w-11/12 mt-1 text-gray-${dm ? '400' : '500'}`}>{setting.description}</Text>}
         </View>

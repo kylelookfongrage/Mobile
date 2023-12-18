@@ -18,7 +18,7 @@ export default function Account() {
     let a = useSignOut()
     let emailSettings = signedInWithEmail ?  [{ title: 'Update Email Address', screen: 'UpdateEmail' }] : []
     const settings: AppSetting[] = [
-        { title: 'Update Goal', screen: 'Setup' },
+        { title: 'Update Goal', screen: 'Setup', dangerous: false, description: 'Reset profile metrics and settings' },
         ...emailSettings,
         { title: 'Delete Account', dangerous: true, description: 'Permanently remove your account and data from Rage. Proceed with caution.', screen: 'DeleteAccount' },
     ]

@@ -33,6 +33,7 @@ import { useSelector } from '../../redux/store';
 import { IngredientAdditions, PlanAdditions } from '../../redux/reducers/multiform';
 import { useMultiPartForm } from '../../redux/api/mpf';
 import Description from '../../components/base/Description';
+import { XStack } from 'tamagui';
 
 
 export interface MealDetailProps {
@@ -187,7 +188,7 @@ export default function MealDetailScreen(props: MealDetailProps) {
         <View style={{ flex: 1 }} includeBackground>
 
             {/* @ts-ignore */}
-            <ScrollViewWithDrag disableRounding rerenderTopView={[screen.editMode, (imageSource || [])]} TopView={() => <View>
+            <ScrollViewWithDrag disableRounding rerenderTopView={[screen.editMode, (imageSource || []), form.user_id]} TopView={() => <View>
                 <BackButton inplace Right={() => {
                     if (screen.editMode || !props.id || !Number(props.id) || props.idFromProgress || props.planId) return <View />
                     return <ShowMoreDialogue meal_id={Number(props.id)} options={[
@@ -232,12 +233,16 @@ export default function MealDetailScreen(props: MealDetailProps) {
                         <Spacer divider />
                     </View>}
                     <View>
-                        <ManageButton title='Macros' buttonText=' ' />
+                        <ManageButton title='Nutrition' buttonText=' ' />
+                        <Spacer />
+                        <XStack alignItems='center' justifyContent='space-evenly'>
+                        <MacronutrientBar calories weight={(calories * fx) || 0} totalEnergy={(calories * fx) || 1} />
                         <MacronutrientBar protein weight={(protein * fx) || 0} totalEnergy={(calories * fx) || 1} />
                         <MacronutrientBar carbs weight={(carbs * fx) || 0} totalEnergy={(calories * fx) || 1} />
                         <MacronutrientBar fat weight={(fat * fx) || 0} totalEnergy={(calories * fx) || 1} />
-                        <MacronutrientBar calories weight={(calories * fx) || 0} totalEnergy={(calories * fx) || 1} />
-                        <Spacer divider />
+                        </XStack>
+                        
+                        <Spacer lg />
                     </View>
                     <ManageButton title='Ingredients' buttonText='Add New' hidden={!screen.editMode} onPress={() => {
                         const screen = getMatchingNavigationScreen('ListFood', navigator)
@@ -267,15 +272,15 @@ export default function MealDetailScreen(props: MealDetailProps) {
                                     <Spacer horizontal sm />
                                     <View style={tw`w-9/12`}>
                                         <View style={tw`flex-row items-center justify-between`}>
-                                            <Text weight='semibold' style={tw`max-w-9/12`}>{ingr.name.substring(0, 30)}{ingr.name.length > 29 ? '...' : ''}</Text>
-                                            <Text xs style={tw`text-gray-500`}>{ingr.quantity?.toFixed(0)} {ingr.servingSize}</Text>
+                                            <Text lg weight='semibold' style={tw`max-w-9/12`}>{ingr.name.substring(0, 30)}{ingr.name.length > 29 ? '...' : ''}</Text>
+                                            <Text style={tw`text-gray-500`}>{ingr.quantity?.toFixed(0)} {ingr.servingSize}</Text>
                                         </View>
                                         <Spacer xs />
                                         <View style={tw`flex-row items-center justify-between`}>
-                                            <Text xs style={tw`text-gray-500`}>{ingr.calories?.toFixed(0)} kcal</Text>
-                                            <Text xs style={tw`text-gray-500`}>P: {ingr.protein?.toFixed(0)}g</Text>
-                                            <Text xs style={tw`text-gray-500`}>C: {ingr.carbs?.toFixed(0)}g</Text>
-                                            <Text xs style={tw`text-gray-500`}>F: {ingr.fat?.toFixed(0)}g</Text>
+                                            <Text style={tw`text-gray-500`}>{ingr.calories?.toFixed(0)} kcal</Text>
+                                            <Text style={tw`text-gray-500`}>P: {ingr.protein?.toFixed(0)}g</Text>
+                                            <Text style={tw`text-gray-500`}>C: {ingr.carbs?.toFixed(0)}g</Text>
+                                            <Text style={tw`text-gray-500`}>F: {ingr.fat?.toFixed(0)}g</Text>
                                         </View>
                                     </View>
                                 </View>

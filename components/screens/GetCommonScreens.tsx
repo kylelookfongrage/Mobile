@@ -20,6 +20,8 @@ import PostDetails from "../../screens/workout/PostDetails"
 import CompletedExerciseDetails from "../../screens/workout/CompletedExerciseDetails"
 import Plan from "../../screens/other/Plan"
 import ListPlans from "../../screens/other/ListPlans"
+import React from 'react'
+import LogWater from "../../screens/home/LogWater"
 
 export const getCommonScreens = (prefix: string, Stack: any) => {
     return <Stack.Group>
@@ -115,5 +117,6 @@ export const getCommonScreens = (prefix: string, Stack: any) => {
             </Stack.Screen>
             <Stack.Screen name={prefix + 'ListRun'} component={ListRuns} options={{ headerShown: false }} />
             <Stack.Screen name={prefix + 'ListPlan'} component={ListPlans} options={{ headerShown: false }} />
+            <Stack.Screen name={prefix + 'LogWater'} component={LogWater} options={{ headerShown: false }} />
     </Stack.Group>
 }

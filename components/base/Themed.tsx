@@ -115,7 +115,7 @@ export function View(props: ViewProps2) {
   let insets = useSafeAreaInsets()
   let backgroundColor = includeBackground ? (dm ? _tokens.darkBg : _tokens.lightBg) : '';
   if (props.card) {
-    backgroundColor = dm ? Colors.dark.card : Colors.light.card
+    backgroundColor = dm ? _tokens.dark1 : _tokens.gray200
   }
   if (props.translucent) {
     backgroundColor += '99'

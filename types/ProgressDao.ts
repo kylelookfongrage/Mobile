@@ -6,6 +6,7 @@ import { useDateContext } from "../screens/home/Calendar"
 import { supabase } from "../supabase"
 import { useDispatch, useSelector } from "../redux/store"
 import { fetchProgressChildren, fetchToday } from "../redux/api/progress"
+import { setProgressValue } from "../redux/reducers/progress"
 
 export function ProgressDao(listen=true){
     const dao = useDao()
@@ -48,7 +49,9 @@ export function ProgressDao(listen=true){
             [key in C]: V
         } = {}
         document[column] = value
+        console.log(document)
         await dao.update('progress', today.id, document)
+        dispatch(setProgressValue({key: column, value: value}))
     }
 
     return {today, saveProgress, updateProgress, deleteProgress, foodProgress, mealProgress, runProgress, workoutProgress, log}

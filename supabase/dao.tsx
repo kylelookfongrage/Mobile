@@ -62,7 +62,6 @@ export function useDao<T>(predicate: Predicate | null = null, fetch: boolean=fal
             //@ts-ignore
             return res.data || null
         } catch (error) {
-            console.log(error)
             return null
         }
     }
@@ -87,7 +86,6 @@ export function useDao<T>(predicate: Predicate | null = null, fetch: boolean=fal
     const update = async <T extends keyof Tables, K extends Tables[T]['Update']>(table: T, id: Tables[T]['Update']['id'], document: K): Promise<Tables[T]['Row'] | null> => {
         try {
             const res = await supabase.from(table).update(document).filter('id', 'eq', id).select('*')
-            console.log(res)
             if (res.error) {
                 throw Error(res.error.message)
             }
@@ -148,7 +146,6 @@ export function useDao<T>(predicate: Predicate | null = null, fetch: boolean=fal
             }
             throw Error(error.toString())
         } catch (error: any) {
-            console.log(error)
             setLoading(false)
             throw Error((error.toString() || 'There was a problem, please try again.'))
         }

@@ -31,6 +31,12 @@ let progressSlice = createSlice({
     reducers: {
         changeDate: (state: TProgress, action: PayloadAction<{date: string}>) => {
             state.formattedDate = moment(action.payload.date).format()
+        },
+        setProgressValue: <T extends keyof TProgress['today'], V extends TProgress['today'][T]>(state: TProgress, action: PayloadAction<{key: T, value: V}>) => {
+            let {key, value} = action.payload
+            console.log('Updating ', key, ' to ', value)
+            //@ts-ignore
+            state['today'][key] = value;
         }
     },
     extraReducers: _builder => {
@@ -50,4 +56,4 @@ let progressSlice = createSlice({
 
 
 export default progressSlice;
-export const {changeDate} = progressSlice.actions
+export const {changeDate, setProgressValue} = progressSlice.actions

@@ -284,115 +284,12 @@ export const SummaryScreen = () => {
                   fl oz
                 </Text>
               </YStack>
-              <Text Text sm style={{ ...tw`text-center mb-1` }}>{waterGoal.toFixed(0)} goal</Text>
+              <Text sm style={{ ...tw`text-center mb-1` }}>{waterGoal.toFixed(0)} goal</Text>
             </SummaryListItem>
           </ScrollView>
           <Spacer />
-          <TouchableOpacity
-            onPress={() => {
-              const screen = getMatchingNavigationScreen(
-                "SummaryFoodList",
-                navigator
-              );
-              //@ts-ignore
-              navigator.navigate(screen);
-            }}
-          >
-            <View
-              card
-              style={tw`mb-4 p-5 rounded-lg items-center justify-between`}
-            >
-              <Text style={tw`text-lg mb-2`} weight="semibold">
-                Macronutrients
-              </Text>
-              <AnimatedCircularProgress
-                size={150}
-                width={6}
-                rotation={270}
-                fill={0}
-                arcSweepAngle={180}
-                style={tw`mt-2 -mb-6`}
-                lineCap="round"
-                tintColor="#D22B2B"
-                backgroundColor={!dm ? "#C0C0C0" : "#808080"}
-                ref={cpRef}
-              >
-                {(fill) => (
-                  <View style={tw`items-center -mt-4`}>
-                    <Text style={tw`text-lg`} weight="semibold">
-                      {totalCalories <= caloriesFromFoodAndMeals
-                        ? 0
-                        : Math.round(
-                            totalCalories - caloriesFromFoodAndMeals
-                          ).toFixed()}
-                      {
-                        <Text style={tw`text-xs`} weight="semibold">
-                          kcal
-                        </Text>
-                      }
-                    </Text>
-                    <Text>Remaining</Text>
-                  </View>
-                )}
-              </AnimatedCircularProgress>
-              <View
-                style={[
-                  tw`rounded flex-row items-center justify-around w-12/12`,
-                ]}
-              >
-                <View>
-                  <Text style={tw`text-lg`} weight="bold">
-                    {Math.abs(totalCalories).toFixed()}{" "}
-                    {
-                      <Text style={tw`text-xs`} weight="bold">
-                        kcal
-                      </Text>
-                    }
-                  </Text>
-                  <Text style={tw`text-gray-500`}>Caloric Goal</Text>
-                </View>
-                {/* @ts-ignore */}
-                <View>
-                  <Text style={tw`text-lg`} weight="bold">
-                    {Math.round(proteinFromFoodAndMeals)}
-                    {
-                      <Text style={tw`text-xs`} weight="bold">
-                        {" "}
-                        g
-                      </Text>
-                    }
-                  </Text>
-                  <Text style={tw`text-gray-500`}>Protein</Text>
-                </View>
-                <View>
-                  <Text style={tw`text-lg`} weight="bold">
-                    {Math.round(carbsFromFoodAndMeals)}
-                    {
-                      <Text style={tw`text-xs`} weight="bold">
-                        {" "}
-                        g
-                      </Text>
-                    }
-                  </Text>
-                  <Text style={tw`text-gray-500`}>Carbs</Text>
-                </View>
-              </View>
-            </View>
-          </TouchableOpacity>
-          <View
-            card
-            style={tw`w-12/12 max-h-1.5/12 px-6 rounded-lg items-center justify-between flex-row my-4`}
-          >
-            <View style={tw``}>
-              <Text weight="semibold" style={tw`mt-2 text-lg`}>
-                Water Intake
-              </Text>
-              <Text style={tw`text-gray-500 text-xs mb-4`}>
-                {(dao.today?.water || 0).toFixed()} of {waterGoal.toFixed()} fl
-                oz
-              </Text>
-            </View>
-          </View>
+         
+          
           <View card style={tw`w-12/12 rounded-lg p-4 mt-4 mb-6`}>
             <Text style={tw`text-lg text-center`} weight="semibold">
               Personal Information

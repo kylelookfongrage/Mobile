@@ -56,48 +56,56 @@ export interface Database {
           {
             foreignKeyName: "chat_message_chat_room_id_fkey"
             columns: ["chat_room_id"]
+            isOneToOne: false
             referencedRelation: "chat_room"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "chat_message_exercise_id_fkey"
             columns: ["exercise_id"]
+            isOneToOne: false
             referencedRelation: "exercise"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "chat_message_food_id_fkey"
             columns: ["food_id"]
+            isOneToOne: false
             referencedRelation: "food"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "chat_message_meal_id_fkey"
             columns: ["meal_id"]
+            isOneToOne: false
             referencedRelation: "meal"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "chat_message_plan_id_fkey"
             columns: ["plan_id"]
+            isOneToOne: false
             referencedRelation: "fitness_plan"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "chat_message_post_id_fkey"
             columns: ["post_id"]
+            isOneToOne: false
             referencedRelation: "post"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "chat_message_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "user"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "chat_message_workout_id_fkey"
             columns: ["workout_id"]
+            isOneToOne: false
             referencedRelation: "workout"
             referencedColumns: ["id"]
           }
@@ -159,12 +167,14 @@ export interface Database {
           {
             foreignKeyName: "comment_post_id_fkey"
             columns: ["post_id"]
+            isOneToOne: false
             referencedRelation: "post"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "comment_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "user"
             referencedColumns: ["id"]
           }
@@ -202,6 +212,7 @@ export interface Database {
           {
             foreignKeyName: "equiptment_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "user"
             referencedColumns: ["id"]
           }
@@ -248,6 +259,7 @@ export interface Database {
           {
             foreignKeyName: "exercise_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "user"
             referencedColumns: ["id"]
           }
@@ -276,12 +288,14 @@ export interface Database {
           {
             foreignKeyName: "exercise_equiptment_equiptment_id_fkey"
             columns: ["equiptment_id"]
+            isOneToOne: false
             referencedRelation: "equiptment"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "exercise_equiptment_exercise_id_fkey"
             columns: ["exercise_id"]
+            isOneToOne: false
             referencedRelation: "exercise"
             referencedColumns: ["id"]
           }
@@ -334,48 +348,56 @@ export interface Database {
           {
             foreignKeyName: "favorites_comment_id_fkey"
             columns: ["comment_id"]
+            isOneToOne: false
             referencedRelation: "comment"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "favorites_exercise_id_fkey"
             columns: ["exercise_id"]
+            isOneToOne: false
             referencedRelation: "exercise"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "favorites_food_id_fkey"
             columns: ["food_id"]
+            isOneToOne: false
             referencedRelation: "food"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "favorites_meal_id_fkey"
             columns: ["meal_id"]
+            isOneToOne: false
             referencedRelation: "meal"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "favorites_plan_id_fkey"
             columns: ["plan_id"]
+            isOneToOne: false
             referencedRelation: "fitness_plan"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "favorites_post_id_fkey"
             columns: ["post_id"]
+            isOneToOne: false
             referencedRelation: "post"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "favorites_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "user"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "favorites_workout_id_fkey"
             columns: ["workout_id"]
+            isOneToOne: false
             referencedRelation: "workout"
             referencedColumns: ["id"]
           }
@@ -410,18 +432,21 @@ export interface Database {
           {
             foreignKeyName: "feed_post_id_fkey"
             columns: ["post_id"]
+            isOneToOne: false
             referencedRelation: "post"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "feed_subscription_id_fkey"
             columns: ["subscription_id"]
+            isOneToOne: false
             referencedRelation: "subscription"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "feed_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "user"
             referencedColumns: ["id"]
           }
@@ -486,6 +511,7 @@ export interface Database {
           {
             foreignKeyName: "fitness_plan_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "user"
             referencedColumns: ["id"]
           }
@@ -520,18 +546,21 @@ export interface Database {
           {
             foreignKeyName: "fitness_plan_details_fitness_plan_id_fkey"
             columns: ["fitness_plan_id"]
+            isOneToOne: false
             referencedRelation: "fitness_plan"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "fitness_plan_details_meal_id_fkey"
             columns: ["meal_id"]
+            isOneToOne: false
             referencedRelation: "meal"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "fitness_plan_details_workout_id_fkey"
             columns: ["workout_id"]
+            isOneToOne: false
             referencedRelation: "workout"
             referencedColumns: ["id"]
           }
@@ -563,12 +592,14 @@ export interface Database {
           {
             foreignKeyName: "fitness_plan_subscription_fitness_plan_id_fkey"
             columns: ["fitness_plan_id"]
+            isOneToOne: false
             referencedRelation: "fitness_plan"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "fitness_plan_subscription_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "user"
             referencedColumns: ["id"]
           }
@@ -645,6 +676,7 @@ export interface Database {
           {
             foreignKeyName: "food_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "user"
             referencedColumns: ["id"]
           }
@@ -703,18 +735,21 @@ export interface Database {
           {
             foreignKeyName: "food_progress_food_id_fkey"
             columns: ["food_id"]
+            isOneToOne: false
             referencedRelation: "food"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "food_progress_progress_id_fkey"
             columns: ["progress_id"]
+            isOneToOne: false
             referencedRelation: "progress"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "food_progress_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "user"
             referencedColumns: ["id"]
           }
@@ -767,6 +802,7 @@ export interface Database {
           {
             foreignKeyName: "invoice_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "user"
             referencedColumns: ["id"]
           }
@@ -819,6 +855,7 @@ export interface Database {
           {
             foreignKeyName: "meal_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "user"
             referencedColumns: ["id"]
           }
@@ -874,12 +911,14 @@ export interface Database {
           {
             foreignKeyName: "meal_ingredients_food_id_fkey"
             columns: ["food_id"]
+            isOneToOne: false
             referencedRelation: "food"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "meal_ingredients_meal_id_fkey"
             columns: ["meal_id"]
+            isOneToOne: false
             referencedRelation: "meal"
             referencedColumns: ["id"]
           }
@@ -920,12 +959,14 @@ export interface Database {
           {
             foreignKeyName: "meal_progress_meal_id_fkey"
             columns: ["meal_id"]
+            isOneToOne: false
             referencedRelation: "meal"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "meal_progress_progress_id_fkey"
             columns: ["progress_id"]
+            isOneToOne: false
             referencedRelation: "progress"
             referencedColumns: ["id"]
           }
@@ -966,12 +1007,14 @@ export interface Database {
           {
             foreignKeyName: "pantry_item_food_id_fkey"
             columns: ["food_id"]
+            isOneToOne: false
             referencedRelation: "food"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "pantry_item_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "user"
             referencedColumns: ["id"]
           }
@@ -1027,30 +1070,35 @@ export interface Database {
           {
             foreignKeyName: "post_exercise_id_fkey"
             columns: ["exercise_id"]
+            isOneToOne: false
             referencedRelation: "exercise"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "post_meal_id_fkey"
             columns: ["meal_id"]
+            isOneToOne: false
             referencedRelation: "meal"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "post_run_id_fkey"
             columns: ["run_id"]
+            isOneToOne: false
             referencedRelation: "run_progress"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "post_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "user"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "post_workout_id_fkey"
             columns: ["workout_id"]
+            isOneToOne: false
             referencedRelation: "workout"
             referencedColumns: ["id"]
           }
@@ -1115,6 +1163,7 @@ export interface Database {
           {
             foreignKeyName: "progress_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "user"
             referencedColumns: ["id"]
           }
@@ -1173,54 +1222,63 @@ export interface Database {
           {
             foreignKeyName: "reports_of_terms_comment_id_fkey"
             columns: ["comment_id"]
+            isOneToOne: false
             referencedRelation: "comment"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "reports_of_terms_exercise_id_fkey"
             columns: ["exercise_id"]
+            isOneToOne: false
             referencedRelation: "exercise"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "reports_of_terms_food_id_fkey"
             columns: ["food_id"]
+            isOneToOne: false
             referencedRelation: "food"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "reports_of_terms_meal_id_fkey"
             columns: ["meal_id"]
+            isOneToOne: false
             referencedRelation: "meal"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "reports_of_terms_plan_id_fkey"
             columns: ["plan_id"]
+            isOneToOne: false
             referencedRelation: "fitness_plan"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "reports_of_terms_post_id_fkey"
             columns: ["post_id"]
+            isOneToOne: false
             referencedRelation: "post"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "reports_of_terms_reported_by_fkey"
             columns: ["reported_by"]
+            isOneToOne: false
             referencedRelation: "user"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "reports_of_terms_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "user"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "reports_of_terms_workout_id_fkey"
             columns: ["workout_id"]
+            isOneToOne: false
             referencedRelation: "workout"
             referencedColumns: ["id"]
           }
@@ -1264,30 +1322,35 @@ export interface Database {
           {
             foreignKeyName: "review_meal_id_fkey"
             columns: ["meal_id"]
+            isOneToOne: false
             referencedRelation: "meal"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "review_plan_id_fkey"
             columns: ["plan_id"]
+            isOneToOne: false
             referencedRelation: "fitness_plan"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "review_reviewed_by_fkey"
             columns: ["reviewed_by"]
+            isOneToOne: false
             referencedRelation: "user"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "review_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "user"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "review_workout_id_fkey"
             columns: ["workout_id"]
+            isOneToOne: false
             referencedRelation: "workout"
             referencedColumns: ["id"]
           }
@@ -1328,12 +1391,14 @@ export interface Database {
           {
             foreignKeyName: "run_progress_progress_id_fkey"
             columns: ["progress_id"]
+            isOneToOne: false
             referencedRelation: "progress"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "run_progress_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "user"
             referencedColumns: ["id"]
           }
@@ -1368,12 +1433,14 @@ export interface Database {
           {
             foreignKeyName: "subscription_subscribed_from_fkey"
             columns: ["subscribed_from"]
+            isOneToOne: false
             referencedRelation: "user"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "subscription_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "user"
             referencedColumns: ["id"]
           }
@@ -1396,6 +1463,7 @@ export interface Database {
           goal: string
           goalDate: string | null
           height: number | null
+          home_widgets: Json[] | null
           id: string
           links: string[] | null
           metric: boolean | null
@@ -1433,6 +1501,7 @@ export interface Database {
           goal?: string
           goalDate?: string | null
           height?: number | null
+          home_widgets?: Json[] | null
           id?: string
           links?: string[] | null
           metric?: boolean | null
@@ -1470,6 +1539,7 @@ export interface Database {
           goal?: string
           goalDate?: string | null
           height?: number | null
+          home_widgets?: Json[] | null
           id?: string
           links?: string[] | null
           metric?: boolean | null
@@ -1495,6 +1565,7 @@ export interface Database {
           {
             foreignKeyName: "user__user_fkey"
             columns: ["_user"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           }
@@ -1538,6 +1609,7 @@ export interface Database {
           {
             foreignKeyName: "workout_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "user"
             referencedColumns: ["id"]
           }
@@ -1584,12 +1656,14 @@ export interface Database {
           {
             foreignKeyName: "workout_details_exercise_id_fkey"
             columns: ["exercise_id"]
+            isOneToOne: false
             referencedRelation: "exercise"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "workout_details_workout_id_fkey"
             columns: ["workout_id"]
+            isOneToOne: false
             referencedRelation: "workout"
             referencedColumns: ["id"]
           }
@@ -1624,12 +1698,14 @@ export interface Database {
           {
             foreignKeyName: "workout_play_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "user"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "workout_play_workout_id_fkey"
             columns: ["workout_id"]
+            isOneToOne: false
             referencedRelation: "workout"
             referencedColumns: ["id"]
           }
@@ -1640,9 +1716,9 @@ export interface Database {
           completed: boolean | null
           created_at: string
           exercise_id: number | null
-          num: number | null
           id: number
           metric: boolean | null
+          num: number | null
           reps: number | null
           rest: number | null
           time: number | null
@@ -1658,6 +1734,7 @@ export interface Database {
           exercise_id?: number | null
           id?: number
           metric?: boolean | null
+          num?: number | null
           reps?: number | null
           rest?: number | null
           time?: number | null
@@ -1666,7 +1743,6 @@ export interface Database {
           workout_detail_id?: number | null
           workout_id?: number | null
           workout_play_id?: number | null
-          num?: number | null
         }
         Update: {
           completed?: boolean | null
@@ -1674,6 +1750,7 @@ export interface Database {
           exercise_id?: number | null
           id?: number
           metric?: boolean | null
+          num?: number | null
           reps?: number | null
           rest?: number | null
           time?: number | null
@@ -1682,36 +1759,40 @@ export interface Database {
           workout_detail_id?: number | null
           workout_id?: number | null
           workout_play_id?: number | null
-          num?: number | null
         }
         Relationships: [
           {
             foreignKeyName: "workout_play_details_exercise_id_fkey"
             columns: ["exercise_id"]
+            isOneToOne: false
             referencedRelation: "exercise"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "workout_play_details_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "user"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "workout_play_details_workout_detail_id_fkey"
             columns: ["workout_detail_id"]
+            isOneToOne: false
             referencedRelation: "workout_details"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "workout_play_details_workout_id_fkey"
             columns: ["workout_id"]
+            isOneToOne: false
             referencedRelation: "workout"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "workout_play_details_workout_play_id_fkey"
             columns: ["workout_play_id"]
+            isOneToOne: false
             referencedRelation: "workout_play"
             referencedColumns: ["id"]
           }
@@ -1829,3 +1910,83 @@ export interface Database {
     }
   }
 }
+
+export type Tables<
+  PublicTableNameOrOptions extends
+    | keyof (Database["public"]["Tables"] & Database["public"]["Views"])
+    | { schema: keyof Database },
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+    ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
+        Database[PublicTableNameOrOptions["schema"]]["Views"])
+    : never = never
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
+      Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : PublicTableNameOrOptions extends keyof (Database["public"]["Tables"] &
+      Database["public"]["Views"])
+  ? (Database["public"]["Tables"] &
+      Database["public"]["Views"])[PublicTableNameOrOptions] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : never
+
+export type TablesInsert<
+  PublicTableNameOrOptions extends
+    | keyof Database["public"]["Tables"]
+    | { schema: keyof Database },
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
+    : never = never
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : PublicTableNameOrOptions extends keyof Database["public"]["Tables"]
+  ? Database["public"]["Tables"][PublicTableNameOrOptions] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : never
+
+export type TablesUpdate<
+  PublicTableNameOrOptions extends
+    | keyof Database["public"]["Tables"]
+    | { schema: keyof Database },
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
+    : never = never
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : PublicTableNameOrOptions extends keyof Database["public"]["Tables"]
+  ? Database["public"]["Tables"][PublicTableNameOrOptions] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : never
+
+export type Enums<
+  PublicEnumNameOrOptions extends
+    | keyof Database["public"]["Enums"]
+    | { schema: keyof Database },
+  EnumName extends PublicEnumNameOrOptions extends { schema: keyof Database }
+    ? keyof Database[PublicEnumNameOrOptions["schema"]]["Enums"]
+    : never = never
+> = PublicEnumNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : PublicEnumNameOrOptions extends keyof Database["public"]["Enums"]
+  ? Database["public"]["Enums"][PublicEnumNameOrOptions]
+  : never

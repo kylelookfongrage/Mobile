@@ -1,5 +1,5 @@
-import { View, Text } from 'react-native'
-import React, { useEffect } from 'react'
+import { View, Text } from 'react-native';
+import React, { useEffect } from 'react';
 
 export default function useAsync(fun: () => Promise<any>, deps: any[]) {
   useEffect(() => {

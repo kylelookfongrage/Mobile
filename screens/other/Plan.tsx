@@ -65,6 +65,7 @@ export default function Plan(props: { id: Tables['fitness_plan']['Row']['id'] })
     let [dow, setDow] = useState<number>(0)
     let dao = PlanDao()
     let navigator = useNavigation();
+    let [showSubscription, setShowSubscription] = useState<boolean>(false)
     return (
         <View style={{ flex: 1 }} includeBackground>
             <ScrollViewWithDrag rerenderTopView={[s.editMode, f.image]} disableRounding TopView={() => <View>

@@ -22,8 +22,9 @@ export interface Database {
           run: boolean | null
           start_date: string | null
           start_time: string | null
-          user_id: number | null
+          user_id: string | null
           workout_id: number | null
+          subscription_id: number | undefined
         }
         Insert: {
           created_at?: string
@@ -37,8 +38,9 @@ export interface Database {
           run?: boolean | null
           start_date?: string | null
           start_time?: string | null
-          user_id?: number | null
+          user_id?: string | null
           workout_id?: number | null
+          subscription_id?: number | undefined
         }
         Update: {
           created_at?: string
@@ -52,8 +54,9 @@ export interface Database {
           run?: boolean | null
           start_date?: string | null
           start_time?: string | null
-          user_id?: number | null
+          user_id?: string | null
           workout_id?: number | null
+          subscription_id?: number | undefined
         }
         Relationships: [
           {

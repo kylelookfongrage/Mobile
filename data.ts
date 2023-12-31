@@ -923,3 +923,6 @@ export function findLastIndex<T>(array: Array<T>, predicate: (value: T, index: n
     }
     return -1;
 }
+
+
+type RepeatFrequencies = 'DAILY' | 'MONTHLY' | 'BI-MONTHLY' | 'WEEKLY' | 'BI-WEEKLY' | 'ANNUALLY' | undefined | null

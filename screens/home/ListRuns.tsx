@@ -7,11 +7,13 @@ import tw from 'twrnc'
 import { useNavigation } from '@react-navigation/native'
 import { Tables } from '../../supabase/dao'
 import { ProgressDao } from '../../types/ProgressDao'
+import { useSelector } from '../../redux/store'
+import SaveButton from '../../components/base/SaveButton'
 
 
 export default function ListRuns() {
-    let x = ProgressDao()
-    let runs = x.runProgress
+    let {runProgress} = useSelector(x => x.progress)
+    let runs = runProgress
     const navigator = useNavigation()
   return (
     <View style={{flex: 1}} includeBackground>
@@ -27,6 +29,9 @@ export default function ListRuns() {
       })}
       <View style={tw`pb-40`} />
       </ScrollView>
+      <SaveButton title='Start Run' onSave={() => {
+        navigator.navigate('Run')
+      }} />
     </View>
   )
 }

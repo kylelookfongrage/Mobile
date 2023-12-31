@@ -222,7 +222,7 @@ export default function Profile(props: ProfileProps) {
                     </Pressable>
                 </YStack>
             </XStack>
-            <Spacer lg/>
+            <Spacer />
             <XStack alignItems='center' justifyContent='center'>
                 <Button pill width={'60%'} 
                     onPress={isCurrentUsersProfile ? () => navigator.navigate('UserBio') : onFollowingPress} 
@@ -231,8 +231,8 @@ export default function Profile(props: ProfileProps) {
                 <Spacer horizontal lg />
                 <IconButton iconName='Send' circle size={'$4'} type='dark' />
             </XStack>
-            <Spacer xl/>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{minHeight: 50, ...tw`mx-2`}}>
+            <Spacer />
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{minHeight: 50, ...tw`ml-3 mr-3`}}>
             {Object.keys(options).map(x => {
                 let selected = selectedOption === x
                 return <TouchableOpacity key={x} style={tw`mr-2`} onPress={() => setSelectedOption(x)}>

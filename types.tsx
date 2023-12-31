@@ -43,6 +43,7 @@ export type RootStackParamList = {
   ShowMore: undefined;
   Profile: undefined;
   Report: undefined;
+  EditDashboard: undefined;
   SummaryEdit: undefined;
   SummaryMetric: undefined;
   Quiz: undefined;

@@ -90,6 +90,7 @@ export default function Plan(props: { id: Tables['fitness_plan']['Row']['id'] })
                         placeholder='New Fitness Plan'
                     />
                     <Spacer lg />
+                    {/* @ts-ignore */}
                     <UsernameDisplay image disabled={(s.editMode || s.uploading)} id={f.user_id} username={f.id ? null : profile?.username} />
                     <Spacer lg />
                     <TextInput
@@ -147,6 +148,7 @@ export default function Plan(props: { id: Tables['fitness_plan']['Row']['id'] })
                             <TouchableOpacity onPress={() => {
                                 let sc = d.workout_id ? 'WorkoutDetail' : 'MealDetail'
                                 let screen = getMatchingNavigationScreen(sc, navigator)
+                                //@ts-ignore
                                 navigator.navigate(screen, {id: d.meal_id || d.workout_id})
                             }}>
                             <View style={tw`flex-row items-center mb-2 justify-between`}>
@@ -176,6 +178,7 @@ export default function Plan(props: { id: Tables['fitness_plan']['Row']['id'] })
                             <TouchableOpacity onPress={() => {
                                 let sc = d.workout_id ? 'WorkoutDetail' : 'MealDetail'
                                 let screen = getMatchingNavigationScreen(sc, navigator)
+                                //@ts-ignore
                                 navigator.navigate(screen, {id: d.meal_id || d.workout_id})
                             }}>
                             <View style={tw`flex-row items-center mb-2 justify-between`}>
@@ -216,7 +219,7 @@ export default function Plan(props: { id: Tables['fitness_plan']['Row']['id'] })
                     ]}
                 />
             </ScrollViewWithDrag>
-            <SaveButton uploading={s.uploading} title={saveTitle} favoriteId={f.id} favoriteType='plan' onSave={async () => {
+            <SaveButton discludeBackground uploading={s.uploading} title={saveTitle} favoriteId={f.id} favoriteType='plan' onSave={async () => {
                 setScreen('uploading', true)
                 try {
                     if (s.editMode) {
@@ -228,10 +231,14 @@ export default function Plan(props: { id: Tables['fitness_plan']['Row']['id'] })
                         if (e !== true && e.length > 0) throw Error(e[0])
                         let res = await dao.save({...f, user_id: props.id ? f.user_id : profile?.id})
                         if (res?.id || props.id) {
+                            //@ts-ignore
                             await dao.saveDetails((props.id || res.id), details)
                             PlanForm.dispatch({type: FormReducer.Set, payload: res})
                             setScreen('editMode', false)
                         }
+                    } else if (f.id) {
+                        // check if subscribed
+
                     }
                 } catch (error) {
                     //@ts-ignore

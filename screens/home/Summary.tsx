@@ -30,6 +30,9 @@ import { _tokens } from "../../tamagui.config";
 import Spacer from "../../components/base/Spacer";
 import ManageButton from "../../components/features/ManageButton";
 import { YStack } from "tamagui";
+import SummaryListItem from "../../components/features/SummaryListItem";
+import { MasonryFlashList } from "@shopify/flash-list";
+import presetDashboardComponents, { UserInputs } from "../../components/features/PresetSummaryListItems";
 
 export const SummaryScreen = () => {
   let { profile } = useSelector((x) => x.auth);
@@ -42,94 +45,32 @@ export const SummaryScreen = () => {
     runProgress,
   } = useSelector((x) => x.progress);
   let progressId = today?.id;
+  let weight = today?.weight || profile?.weight || 100
+  let tdee = profile?.tdee || 2000
+  const totalProteinGrams = profile?.proteinLimit || (tdee * 0.4) / 4
+  const totalFatGrams = profile?.fatLimit || (tdee * 0.3) / 9
+  const totalCarbsGrams = profile?.carbLimit || (tdee * 0.3) / 4
+  let waterGoal = Number(weight * 0.5);
   let dispatch = useDispatch();
   let setDate = (_date: string) => dispatch(changeDate({ date: _date }));
-  const totalCalories = profile?.tdee || 2000;
   const dm = useColorScheme() === "dark";
   const navigator = useNavigation();
   const { logProgress } = useBadges(false);
   const dao = ProgressDao(false);
-  const [food_progress, meal_progress, workout_progress, runs] = [
-    foodProgress,
-    mealProgress,
-    workoutProgress,
-    runProgress,
-  ];
-  let weight = dao.today?.weight || profile?.weight || 100;
-  let _ingredients = meal_progress.map((x) => ({
-    ...x.meal,
-    consumedWeight: x.consumed_weight,
-    totalWeight: x.total_weight,
-  }));
-  let __ingredients = _ingredients.map((x) => {
-    return {
-      ...x,
-      meal_ingredients: x.meal_ingredients.map((z) => ({
-        ...z,
-        consumed_weight: x.consumedWeight,
-        total_weight: x.totalWeight,
-      })),
-    };
-  });
-  let ingredients = __ingredients.flatMap((x) => x.meal_ingredients);
-  const caloriesFromFoodAndMeals =
-    food_progress.reduce((prev, c) => prev + (c.calories || 0), 0) +
-    ingredients.reduce(
-      (prev, curr) =>
-        prev +
-        (curr.calories || 0) *
-          ((curr.consumed_weight || 1) / (curr.total_weight || 1)),
-      0
-    );
-  const proteinFromFoodAndMeals =
-    food_progress.reduce((prev, c) => prev + (c.protein || 0), 0) +
-    ingredients.reduce(
-      (prev, curr) =>
-        prev +
-        (curr.protein || 0) *
-          ((curr.consumed_weight || 1) / (curr.total_weight || 1)),
-      0
-    );
-  const carbsFromFoodAndMeals =
-    food_progress.reduce((prev, c) => prev + (c.carbs || 0), 0) +
-    ingredients.reduce(
-      (prev, curr) =>
-        prev +
-        (curr.carbs || 0) *
-          ((curr.consumed_weight || 1) / (curr.total_weight || 1)),
-      0
-    );
-
-  React.useEffect(() => {
-    if (totalCalories) {
-      cpRef.current?.animate(
-        (caloriesFromFoodAndMeals / totalCalories) * 100,
-        800
-      );
-    }
-  }, [caloriesFromFoodAndMeals, totalCalories]);
-
-  const cpRef = React.useRef<AnimatedCircularProgress | null>(null);
-  const waterRef = React.useRef(new Animated.Value(0));
-  const waterGoal = Number(weight * 0.5);
+  let obj = {
+    water: today?.water || 0,
+    waterGoal: waterGoal,
+    tdee: tdee,
+    proteinGoal: totalProteinGrams,
+    carbGoal: totalCarbsGrams,
+    fatGoal: totalFatGrams,
+    navigator: navigator,
+    foodProgress: foodProgress,
+    mealProgress: mealProgress,
+    workoutProgress: workoutProgress,
+    runProgress: runProgress
+  }
   let a = useSignOut();
-
-  React.useEffect(() => {
-    if (weight) {
-      const progress =
-        (dao.today?.water || 0) > waterGoal
-          ? 1
-          : (dao.today?.water || 0) / waterGoal;
-      Animated.timing(waterRef.current, {
-        toValue: progress,
-        duration: 1000,
-        easing: Easing.linear,
-        useNativeDriver: false,
-      }).start();
-    }
-  }, [dao.today?.water || 0, weight]);
-
-  const lastRun = runs[runs.length - 1];
   const daysToDisplay = [0, 1, 2, 3, 4, 5, 6].map((x) =>
     moment(formattedDate).startOf("week").add(x, "days")
   );
@@ -176,8 +117,8 @@ export const SummaryScreen = () => {
                     backgroundColor: isSelected
                       ? _tokens.primary900
                       : dm
-                      ? _tokens.dark1
-                      : _tokens.gray200,
+                        ? _tokens.dark1
+                        : _tokens.gray200,
                   }}
                 >
                   <Text
@@ -199,141 +140,29 @@ export const SummaryScreen = () => {
             );
           })}
         </View>
+        <ManageButton viewStyle={tw`px-2`} title={"Daily Summary"} buttonText=" " 
+        // onPress={() => navigator.navigate('EditDashboard')} 
+        />
+        <Spacer />
+
         <ScrollView
-          style={[tw`px-2 h-12/12`]}
+          style={[tw`px-2`]}
+          nestedScrollEnabled
           showsVerticalScrollIndicator={false}
         >
-          <ManageButton title={"Daily Metrics"} buttonText=" " />
-          <Spacer />
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={{}}
-          >
-            <SummaryListItem onPress={() => {
-              const screen = getMatchingNavigationScreen(
-                "SummaryFoodList",
-                navigator
-              );
-              //@ts-ignore
-              navigator.navigate(screen);
-            }} title="Calories">
-              <AnimatedCircularProgress
-                size={100}
-                width={6}
-                rotation={270}
-                fill={0}
-                style={tw`self-center items-center justify-center`}
-                lineCap="round"
-                tintColor="#D22B2B"
-                backgroundColor={dm ? _tokens.dark2 : _tokens.gray100}
-                ref={cpRef}
-              >
-                {(fill) => (
-                  <View style={tw`items-center self-center`}>
-                    <Text h4 weight="semibold">
-                      {totalCalories <= caloriesFromFoodAndMeals
-                        ? 0
-                        : Math.round(
-                            totalCalories - caloriesFromFoodAndMeals
-                          ).toFixed()}
-                    </Text>
-                    <Text weight="semibold">kcal</Text>
-                  </View>
-                )}
-              </AnimatedCircularProgress>
-              <Spacer sm />
-              <Text sm style={tw`text-center`}>
-                remaining
-              </Text>
-            </SummaryListItem>
-            <Spacer horizontal />
-            <SummaryListItem title="Workouts">
-              <Spacer />
-              <YStack
-                alignItems="center"
-                justifyContent="space-between"
-                flex={1}
-              >
-                <Text h1 style={tw`text-center`} weight="bold">
-                  {workout_progress.length}
-                </Text>
-                <Text sm style={{ ...tw`text-center mb-1` }}>
-                  completed
-                </Text>
-              </YStack>
-            </SummaryListItem>
-            <Spacer horizontal />
-            <SummaryListItem title="Water" onPress={() => {
-              const screen = getMatchingNavigationScreen(
-                "LogWater",
-                navigator
-              );
-              //@ts-ignore
-              navigator.navigate(screen);
-            }}>
-              <Spacer />
-              <YStack
-                flex={1}
-                style={tw`items-center self-center`}
-              >
-                <Text h1 style={tw`text-center`} weight="bold">
-                  {dao.today?.water?.toFixed(0) || 0}
-                </Text>
-                <Text sm style={{ ...tw`text-center mb-1` }}>
-                  fl oz
-                </Text>
-              </YStack>
-              <Text sm style={{ ...tw`text-center mb-1` }}>{waterGoal.toFixed(0)} goal</Text>
-            </SummaryListItem>
-          </ScrollView>
-          <Spacer />
-         
+          <MasonryFlashList style={{alignItems: 'center', justifyContent: 'center', columnGap: 5}} numColumns={2} estimatedItemSize={158} data={[
+            {name: 'Workouts', type: 'Workout Amount', index: 0},
+            {name: 'Nutrition', type: 'Macros List', index: 1},
+            {name: 'Tasks', type: 'Tasks Preview', index: 2},
+            {name: 'Activity', type: 'Activity Preview', index: 3},
+            {name: 'Water', type: 'Intake Progress Bar', index: 4},
+          ]} renderItem={({item, index}) => {
+            //@ts-ignore
+            return presetDashboardComponents[item.name][item.type](obj, {index: item.index, color: item.backgroundColor, progressColor1: item.progressColor1, progressColor2: item.progressColor2  })
+          }} />
           
-          <View card style={tw`w-12/12 rounded-lg p-4 mt-4 mb-6`}>
-            <Text style={tw`text-lg text-center`} weight="semibold">
-              Personal Information
-            </Text>
-            <View style={tw`mt-4 flex-row items-center justify-around`}>
-              {/* @ts-ignore */}
-              <TouchableOpacity
-                onPress={() =>
-                  navigator.navigate("SummaryMetric", { weight: true })
-                }
-              >
-                <Text style={tw`text-xs text-gray-500`}>Weight</Text>
-                <Text style={tw`text-lg`} weight="semibold">
-                  {dao.today?.weight || "-"}{" "}
-                  {<Text style={tw`text-red-500 text-sm`}>lbs</Text>}
-                </Text>
-              </TouchableOpacity>
-              <View
-                style={[tw`h-15 bg-gray-${dm ? "600" : "400"}`, { width: 1 }]}
-              />
-              {/* @ts-ignore */}
-              <TouchableOpacity
-                onPress={() =>
-                  navigator.navigate("SummaryMetric", { weight: false })
-                }
-              >
-                <Text style={tw`text-xs text-gray-500`}>Body Fat</Text>
-                <Text style={tw`text-lg`} weight="semibold">
-                  {dao.today?.fat || "-"}{" "}
-                  {<Text style={tw`text-red-500 text-sm`}>%</Text>}
-                </Text>
-              </TouchableOpacity>
-              <View
-                style={[tw`h-15 bg-gray-${dm ? "600" : "400"}`, { width: 1 }]}
-              />
-              <View style={tw`bg-transparent`}>
-                <Text style={tw`text-xs text-gray-500`}>Goal</Text>
-                <Text style={tw`text-lg text-center`} weight="semibold">
-                  {titleCase(profile?.goal || "-")}
-                </Text>
-              </View>
-            </View>
-          </View>
-          <View style={tw`flex-row items-center justify-between w-12/12 mt-2`}>
+          <Spacer />
+          {/* <View style={tw`flex-row items-center justify-between w-12/12 mt-2`}>
             <Text style={tw`text-lg`} weight="semibold">
               Latest {lastRun?.type || "Run"} Activity
             </Text>
@@ -348,50 +177,22 @@ export const SummaryScreen = () => {
                 Start a Run
               </Text>
             </TouchableOpacity>
-          </View>
-          {runs.length === 0 && (
-            <Text style={tw`text-center my-6`}>No runs to display</Text>
-          )}
-          {lastRun && (
-            <RunListComponent
-              canScroll={false}
-              run={lastRun}
-              onPress={() => {
-                const screen = getMatchingNavigationScreen(
-                  "ListRun",
-                  navigator
-                );
-                //@ts-ignore
-                navigator.navigate(screen);
-              }}
-            />
-          )}
-          <View style={tw`flex-row items-center justify-between w-12/12 mt-6`}>
-            <Text style={tw`text-lg`} weight="semibold">
-              Workouts
-            </Text>
-            <TouchableOpacity
-              style={tw`p-3`}
-              onPress={() => {
+          </View> */}
+          <ManageButton title="Today's Workouts" buttonText="Search" onPress={() => {
                 const screen = getMatchingNavigationScreen(
                   "ListWorkout",
                   navigator
                 );
                 //@ts-ignore
                 navigator.navigate(screen, { progressId: progressId });
-              }}
-            >
-              <Text style={tw`text-red-500`} weight="semibold">
-                Search Workouts
-              </Text>
-            </TouchableOpacity>
-          </View>
-          {workout_progress.length === 0 && (
+              }} />
+          <Spacer sm/>
+          {workoutProgress.length === 0 && (
             <Text style={tw`text-center my-6`}>
               There are no workouts to display
             </Text>
           )}
-          {workout_progress.map((w, i) => {
+          {workoutProgress.map((w, i) => {
             return (
               <SwipeWithDelete
                 onDelete={async () => {
@@ -410,7 +211,6 @@ export const SummaryScreen = () => {
                   }}
                 >
                   <View
-                    card
                     style={tw`w-12/12 flex-row items-center p-4 mb-2 items-center rounded-xl`}
                   >
                     <SupabaseImage
@@ -418,17 +218,12 @@ export const SummaryScreen = () => {
                       style={`h-12 w-12 rounded-lg`}
                     />
                     <View style={tw`ml-2`}>
-                      <Text style={tw``} weight="semibold">
+                      <Text lg weight="bold">
                         {w.workout?.name || "Workout"}
                       </Text>
-                      <Text style={tw`text-gray-400 text-xs`}>
-                        by{" "}
-                        {
-                          <Text style={tw`text-xs text-red-500`}>
+                      <Text style={tw`text-red-500`}>
                             @{w.workout?.user?.username}
                           </Text>
-                        }
-                      </Text>
                     </View>
                   </View>
                 </TouchableOpacity>
@@ -444,20 +239,3 @@ export const SummaryScreen = () => {
   );
 };
 
-let SummaryListItem = (props: {
-  children: any;
-  title: string;
-  onPress?: () => void;
-}) => {
-  return (
-    <TouchableOpacity disabled={!props.onPress} onPress={props.onPress}>
-      <View card style={{ height: 160, width: 150, borderRadius: 10 }}>
-        <Text weight="semibold" style={tw`text-center pt-2`}>
-          {props.title}
-        </Text>
-        <Spacer sm />
-        {props.children}
-      </View>
-    </TouchableOpacity>
-  );
-};

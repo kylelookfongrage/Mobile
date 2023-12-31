@@ -71,6 +71,7 @@ import Spacer from '../components/base/Spacer';
 import Purchases from 'react-native-purchases';
 import { Env } from '../env';
 import { updateUserState } from '../redux/reducers/auth';
+import EditDashboard from '../screens/other/EditDashboard';
 
 
 function RootNavigator() {
@@ -136,6 +137,7 @@ function RootNavigator() {
       <Stack.Screen name="NewChat" component={NewChat} options={{ headerShown: false, presentation: 'transparentModal', gestureEnabled: true, gestureDirection: 'vertical', fullScreenGestureEnabled: true }} />
       <Stack.Screen name="SelectSprite" component={SelectSprite} options={{ headerShown: false }} />
       <Stack.Screen name='UserBio' component={Bio} options={{ headerShown: false }} />
+      <Stack.Screen name='EditDashboard' component={EditDashboard} options={{ headerShown: false }} />
       <Stack.Screen name="FinishedExercise" options={{ headerShown: false, gestureEnabled: false }}>
         {/* @ts-ignore */}
         {props => <FinishedExercise weight={props.route?.params?.weight} time={props.route?.params?.time} metric={props.route?.params?.metric} exercises={props.route?.params?.exercises} />}

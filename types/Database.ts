@@ -9,6 +9,83 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
+      agenda_task: {
+        Row: {
+          created_at: string
+          days_of_week: number[] | null
+          end_date: string | null
+          end_time: string | null
+          fitness_plan_id: number | null
+          id: number
+          meal_id: number | null
+          repeat_frequency: string | null
+          run: boolean | null
+          start_date: string | null
+          start_time: string | null
+          user_id: number | null
+          workout_id: number | null
+        }
+        Insert: {
+          created_at?: string
+          days_of_week?: number[] | null
+          end_date?: string | null
+          end_time?: string | null
+          fitness_plan_id?: number | null
+          id?: number
+          meal_id?: number | null
+          repeat_frequency?: string | null
+          run?: boolean | null
+          start_date?: string | null
+          start_time?: string | null
+          user_id?: number | null
+          workout_id?: number | null
+        }
+        Update: {
+          created_at?: string
+          days_of_week?: number[] | null
+          end_date?: string | null
+          end_time?: string | null
+          fitness_plan_id?: number | null
+          id?: number
+          meal_id?: number | null
+          repeat_frequency?: string | null
+          run?: boolean | null
+          start_date?: string | null
+          start_time?: string | null
+          user_id?: number | null
+          workout_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agenda_task_fitness_plan_id_fkey"
+            columns: ["fitness_plan_id"]
+            isOneToOne: false
+            referencedRelation: "fitness_plan"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agenda_task_meal_id_fkey"
+            columns: ["meal_id"]
+            isOneToOne: false
+            referencedRelation: "meal"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agenda_task_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "subscription"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agenda_task_workout_id_fkey"
+            columns: ["workout_id"]
+            isOneToOne: false
+            referencedRelation: "workout"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       chat_message: {
         Row: {
           chat_room_id: string | null

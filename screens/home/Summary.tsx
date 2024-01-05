@@ -43,6 +43,8 @@ export const SummaryScreen = () => {
     mealProgress,
     workoutProgress,
     runProgress,
+    tasks, 
+    plans
   } = useSelector((x) => x.progress);
   let progressId = today?.id;
   let weight = today?.weight || profile?.weight || 100
@@ -68,7 +70,9 @@ export const SummaryScreen = () => {
     foodProgress: foodProgress,
     mealProgress: mealProgress,
     workoutProgress: workoutProgress,
-    runProgress: runProgress
+    runProgress: runProgress,
+    tasksCompleted: 0,
+    tasksTotal: tasks.length
   }
   let a = useSignOut();
   const daysToDisplay = [0, 1, 2, 3, 4, 5, 6].map((x) =>
@@ -150,7 +154,7 @@ export const SummaryScreen = () => {
           nestedScrollEnabled
           showsVerticalScrollIndicator={false}
         >
-          <MasonryFlashList style={{alignItems: 'center', justifyContent: 'center', columnGap: 5}} numColumns={2} estimatedItemSize={158} data={[
+          <MasonryFlashList style={{alignItems: 'center', justifyContent: 'center', columnGap: 5}} numColumns={2} estimatedItemSize={163} data={[
             {name: 'Workouts', type: 'Workout Amount', index: 0},
             {name: 'Nutrition', type: 'Macros List', index: 1},
             {name: 'Tasks', type: 'Tasks Preview', index: 2},

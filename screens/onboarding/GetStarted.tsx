@@ -15,40 +15,10 @@ export default function GetStarted() {
   let state = useSelector(x => x.auth)
   let dispatch = useDispatch()
   console.log(state)
-  const { setSub, setUserId, setUsername, setUser, setProfile, setStatus, setSignedInWithEmail, setSubscribed, setHasSubscribedBefore, profile, userId } = useCommonAWSIds()
   const dao = UserQueries(false)  
   const [f, setF] = useState<boolean>(false)
 
   useOnLeaveScreen(() => setF(true))
-
-  useEffect(() => {
-    if (true) return;
-    let sub = supabase.auth.onAuthStateChange((e, s) => {
-      if(f)return;
-      if (s?.user) {
-        let u = s.user
-        if (!u) return;
-        if (profile || userId) return;
-        setSignedInWithEmail(u?.app_metadata?.provider === 'email')
-        console.log('Fetching profile from auth listener in getting started')
-        dao.fetchProfile(u.id).then(x => {
-          if (x?.id) {
-            setUserId(x.id)
-            setProfile(x)
-            setF(true)
-          } else {
-            setF(true)
-            navigator.navigate('Registration')
-          }
-        })
-        setSub(u.id)
-        setUser(u)
-      }
-    })
-    return () => {
-      sub.data?.subscription?.unsubscribe()
-    }
-  }, [])
 
   const width = Dimensions.get('screen').width
   const navigator = useNavigation()
@@ -60,27 +30,6 @@ export default function GetStarted() {
     }
   })
 
-
-  // useLayoutEffect(() => {
-  //   (async () => {
-  //     try {
-  //       dispatch(fetchUser())
-  //       if (Platform.OS === 'ios') {
-  //         const { granted } = await getTrackingPermissionsAsync();
-  //         if (!granted) {
-  //           await requestTrackingPermissionsAsync()
-  //         }
-  //       }
-  //       const consentInfo = await AdsConsent.requestInfoUpdate();
-  //       if (consentInfo.isConsentFormAvailable && consentInfo.status === AdsConsentStatus.REQUIRED) {
-  //         const { status } = await AdsConsent.showForm();
-  //       }
-  //       await SplashScreen.hideAsync();
-  //     } catch (error) {
-  //       await SplashScreen.hideAsync()
-  //     }
-  //   })()
-  // }, [])
 
   return (
     <View includeBackground safeAreaTop style={[tw``, { flex: 1, backgroundColor: _tokens.primary900 }]}>
@@ -145,14 +94,12 @@ import equiptment from '../../assets/animations/equiptment.json'
 import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 import { useNavigation } from '@react-navigation/native';
 import { UserQueries } from '../../types/UserDao';
-import { supabase } from '../../supabase';
 import useOnLeaveScreen from '../../hooks/useOnLeaveScreen';
 import Button from '../../components/base/Button';
 import { XStack } from 'tamagui';
 import Spacer from '../../components/base/Spacer';
 import { _tokens } from '../../tamagui.config';
 import { useDispatch, useSelector } from '../../redux/store';
-import { fetchProfile, fetchUser } from '../../redux/api/auth';
 
 const onboardingScreens: { name: string, description: string, animation: any }[] = [
   { name: 'Your Health Journey Starts Here', description: 'Log your workouts with ease! Rage make it very easy to create and keep track of your daily exercise routine', animation: crunches },

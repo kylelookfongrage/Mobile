@@ -1,9 +1,7 @@
 import React, { useMemo } from "react";
 import { Dimensions, ScrollView, TouchableOpacity, useColorScheme } from "react-native";
-import Spacer from "../base/Spacer";
 import { Text, View } from "../base/Themed";
 import tw from 'twrnc'
-import { Icon, ExpoIcon } from "../base/ExpoIcon";
 import { AnimatedCircularProgress } from "react-native-circular-progress";
 import { _tokens } from "../../tamagui.config";
 import { ProgressBar } from 'react-native-ui-lib';

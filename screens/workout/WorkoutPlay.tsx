@@ -213,6 +213,7 @@ export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
             navigator.navigate('FinishedExercise')
             return;
         }
+        setPaused(true)
         let newWorkout: Tables['workout_play']['Insert'] = {}
         if (thisWorkout) {
             newWorkout={...thisWorkout, time: time}

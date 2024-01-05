@@ -51,9 +51,6 @@ function App() {
   const isLoadingComplete = useCachedResources();
   const colorScheme = useColorScheme();
   let [appIsReady, setAppIsReady] = useState<boolean>(false);
-  const [date, setDate] = React.useState<Moment>(moment());
-
-  const [user, setUser] = useState<User | null>(null);
   let dm = useColorScheme() === 'dark'
 
   useEffect(() => {

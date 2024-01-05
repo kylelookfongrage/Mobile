@@ -1,13 +1,8 @@
-import { ScrollView, TextInput, TouchableOpacity, Platform, ActivityIndicator, Dimensions } from 'react-native'
+import { ScrollView, Platform } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { Text, SafeAreaView, View } from '../../components/base/Themed'
 import tw from 'twrnc'
-import { ExpoIcon } from '../../components/base/ExpoIcon'
-import useColorScheme from '../../hooks/useColorScheme'
 import { useNavigation } from '@react-navigation/native'
-import { ErrorMessage } from '../../components/base/ErrorMessage'
-import { useCommonAWSIds } from '../../hooks/useCommonContext'
-import { Checkbox } from 'react-native-paper'
 import { useAppleLogin, useAuthListener, useGoogleSignIn } from '../../supabase/auth'
 import Spacer from '../../components/base/Spacer'
 import { UserQueries } from '../../types/UserDao'
@@ -113,7 +108,7 @@ export default function Login() {
         <Spacer lg />
         <Text style={tw``} h3 weight='bold'>{'Login or Create Your Free Account'}</Text>
         <Spacer />
-        <Text xl weight='thin'>Sign in to access your personalized fitness plans! Send a code to your email.</Text>
+        <Text xl weight='thin'>Sign in to access your personalized fitness plans! We will send a sign-in link to your email.</Text>
         <Spacer lg />
         {/* <Text style={tw`text-center text-gray-500`} weight='semibold'>{message}</Text>
         <Spacer /> */}

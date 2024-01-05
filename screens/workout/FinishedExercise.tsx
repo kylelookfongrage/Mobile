@@ -156,47 +156,62 @@ export default function FinishedExercise(props: {
           />
         </XStack>
         <SaveButton safeArea onSave={save} title={`Finish`} />
+        <SubscriptionOverlay onNotNowPress={save} visible={show} onDismiss={() => setShow(false)} />
         <Spacer lg />
       </SafeAreaView>
-      <Overlay
-        visible={show}
-        onDismiss={() => setShow(false)}
-        dialogueHeight={45}
-      >
-        <Spacer sm />
-        <SupabaseImage
-          uri={defaultImage}
-          style={tw`h-20 w-20 rounded-full self-center`}
-        />
-        <Spacer />
-        <Text h4 weight="bold" style={tw`text-center`}>
-          Unlock Premium Benefits
-        </Text>
-        <Spacer sm />
-        <Text xl style={tw`text-center px-2`}>
-          Upgrade to Rage Premium to unlock more benefits and remove ads
-        </Text>
-        <Spacer lg divider />
-        <XStack alignItems="center" justifyContent="center">
-          <Button
-            onPress={save}
-            type="dark"
-            height={"$5"}
-            width={"45%"}
-            title="Not Now"
-            pill
-          />
-          <Spacer horizontal lg />
-          <Button
-            onPress={() => navigator.navigate("Subscription")}
-            type="primary"
-            height={"$5"}
-            width={"45%"}
-            title="Upgrade"
-            pill
-          />
-        </XStack>
-      </Overlay>
+     
     </View>
   );
+}
+
+
+
+export const SubscriptionOverlay = (props: {
+  visible: boolean;
+  onDismiss: () => void;
+  onNotNowPress: () => void;
+}) => {
+  let navigator = useNavigation()
+  return  <Overlay
+  visible={props.visible}
+  onDismiss={props.onDismiss}
+  dialogueHeight={45}
+>
+  <Spacer sm />
+  <SupabaseImage
+    uri={defaultImage}
+    style={tw`h-20 w-20 rounded-full self-center`}
+  />
+  <Spacer />
+  <Text h4 weight="bold" style={tw`text-center`}>
+    Unlock Premium Benefits
+  </Text>
+  <Spacer sm />
+  <Text xl style={tw`text-center px-2`}>
+    Upgrade to Rage Premium to unlock more benefits and remove ads
+  </Text>
+  <Spacer lg divider />
+  <XStack alignItems="center" justifyContent="center">
+    <Button
+      onPress={props.onNotNowPress}
+      type="dark"
+      height={"$5"}
+      width={"45%"}
+      title="Not Now"
+      pill
+    />
+    <Spacer horizontal lg />
+    <Button
+      onPress={() => {
+        props.onDismiss && props.onDismiss()
+        navigator.navigate("Subscription")
+      }}
+      type="primary"
+      height={"$5"}
+      width={"45%"}
+      title="Upgrade"
+      pill
+    />
+  </XStack>
+</Overlay>
 }

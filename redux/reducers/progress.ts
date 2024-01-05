@@ -3,7 +3,7 @@
 import moment, { Moment } from "moment"
 import type { Tables } from "../../supabase/dao"
 import { PayloadAction, createSlice } from "@reduxjs/toolkit"
-import { fetchProgressChildren, fetchToday } from "../api/progress"
+import { deleteTaskProgress, fetchProgressChildren, fetchToday, fetchTodaysTasks, saveTaskProgress } from "../api/progress"
 
 export type TFoodProgress = Tables['food_progress']['Row'] & { food: Tables['food']['Row'] }
 export type TMealProgress = Tables['meal_progress']['Row'] & {
@@ -12,6 +12,8 @@ export type TMealProgress = Tables['meal_progress']['Row'] & {
   }
 }
 export type TWorkoutPlay = Tables['workout_play']['Row'] & { workout: (Tables['workout']['Row'] & { user: Tables['user']['Row'] | null }) | null }
+export type TAgendaTask = Tables['agenda_task']['Row'] & {meal?: Tables['meal']['Row'] | null | undefined, workout?: Tables['workout']['Row'] | null | undefined, fitness_plan?: Tables['fitness_plan']['Row'] | null | undefined, progress: Tables['task_progress']['Row'] | null }
+export type TFitnessPlanSubscription = Tables['fitness_plan_subscription']['Row'] & {fitness_plan?: Tables['fitness_plan']['Row'] | null | undefined}
 
 const initialState = {
   today: null as Tables['progress']['Row'] | null,
@@ -19,7 +21,9 @@ const initialState = {
   foodProgress: [] as TFoodProgress[],
   mealProgress: [] as TMealProgress[],
   workoutProgress: [] as TWorkoutPlay[],
-  runProgress: [] as Tables['run_progress']['Row'][]
+  runProgress: [] as Tables['run_progress']['Row'][],
+  plans: [] as TFitnessPlanSubscription[],
+  tasks: [] as TAgendaTask[]
 }
 
 export type TProgress = typeof initialState;
@@ -114,6 +118,29 @@ let progressSlice = createSlice({
         state.mealProgress = meals;
         state.workoutProgress = workouts;
         state.runProgress = runs
+      })
+      .addCase(fetchTodaysTasks.fulfilled, (state, action) => {
+        let {plans, tasks} = action.payload
+        state.plans = plans || [];
+        state.tasks = tasks || []
+      })
+      .addCase(saveTaskProgress.fulfilled, (state, action) => {
+        let {task_progress} = action.payload
+        state.tasks = [...state.tasks.map(x => {
+          if (x.id === task_progress.task_id) {
+            return {...x, progress: task_progress}
+          }
+          return x
+        })]
+      })
+      .addCase(deleteTaskProgress.fulfilled, (state, action) => {
+        let {task_id} = action.payload
+        state.tasks = [...state.tasks.map(x => {
+          if (x.id === task_id) {
+            return {...x, progress: null}
+          }
+          return x
+        })]
       })
   }
 })

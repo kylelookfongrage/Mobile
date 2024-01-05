@@ -5,7 +5,7 @@ import moment from "moment"
 import { useDateContext } from "../screens/home/Calendar"
 import { supabase } from "../supabase"
 import { useDispatch, useSelector } from "../redux/store"
-import { fetchProgressChildren, fetchToday } from "../redux/api/progress"
+import { fetchProgressChildren, fetchToday, fetchTodaysTasks } from "../redux/api/progress"
 import { setProgressValue } from "../redux/reducers/progress"
 
 export function ProgressDao(listen=true){
@@ -22,6 +22,7 @@ export function ProgressDao(listen=true){
     useEffect(() => {
         if (!today) return;
         dispatch(fetchProgressChildren(today))
+        dispatch(fetchTodaysTasks(today))
     }, [today?.id])
 
     const saveProgress = async <T extends keyof Tables>(table: T, payload: Tables[T]['Insert']): Promise<Tables[T]['Insert'] | null> => {

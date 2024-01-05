@@ -294,7 +294,7 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
           </View>}
         </View>
       </ScrollViewWithDrag>
-      <SaveButton uploading={screen.uploading} title={screen.editMode ? 'Save Workout' : (canViewDetails ? (props.planId ? 'Save to Plan' : 'Start Workout') : 'Purchase Workout')} favoriteId={form.originalWorkout || form.id} favoriteType='workout' onSave={async () => {
+      <SaveButton discludeBackground uploading={screen.uploading} title={screen.editMode ? 'Save Workout' : (canViewDetails ? (props.planId ? 'Save to Plan' : 'Start Workout') : 'Purchase Workout')} favoriteId={form.originalWorkout || form.id} favoriteType='workout' onSave={async () => {
         if (screen.editMode) {
           await onWorkoutSave()
         } else if (canViewDetails && form.id) {

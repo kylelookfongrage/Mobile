@@ -45,7 +45,7 @@ export function PlanDao(){
         return null
     }
 
-    const subscribeToPlan = async (user_id: Tables['user']['Row']['id'], fitness_plan: Tables['fitness_plan']['Row'], details: PlanAdditions[], subscribeMacros: boolean=false, tdee: number=2000) => {
+    const subscribeToPlan = async (user_id: Tables['user']['Row']['id'], date: string, fitness_plan: Tables['fitness_plan']['Row'], details: PlanAdditions[], subscribeMeals=true, subscribeWorkouts=true, subscribeMacros: boolean=false, tdee: number=2000) => {
         let updates: Tables['user']['Update'] | null = null;
         if (subscribeMacros) {
             let _updates: Tables['user']['Update'] = {
@@ -64,17 +64,19 @@ export function PlanDao(){
         if (!fitness_plan_subscription) {
             throw Error(error?.message || 'There was a problem, please try again')
         }
-        let _agendaTasks: Tables['agenda_task']['Insert'][] = details.map(x => {
+        let _agendaTasks: Tables['agenda_task']['Insert'][] = details.filter(x => subscribeMeals ? true : !x.meal_id).filter(x => subscribeWorkouts ? true : !x.workout_id).map(x => {
             return {
-                repeat_frequency: undefined,
+                repeat_frequency: 'WEEKLY',
                 user_id,
                 fitness_plan_id: fitness_plan.id,
                 workout_id: x.workout_id,
                 meal_id: x.meal_id,
                 days_of_week: [x.day_of_week || 0],
-                subscription_id: fitness_plan_subscription.id
+                subscription_id: fitness_plan_subscription.id,
+                start_date: date
             }
         })
+        console.log(_agendaTasks)
         let {data: agendaTasks, error: agendaError} = await supabase.from('agenda_task').insert(_agendaTasks).select()
         if (!agendaTasks) {
             throw Error(agendaError?.message || 'There was a problem, please try to make agenda items again')

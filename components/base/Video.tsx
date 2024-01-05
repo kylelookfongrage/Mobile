@@ -1,15 +1,17 @@
-import { AVPlaybackStatus, ResizeMode } from "expo-av";
+import { AVPlaybackStatus, InterruptionModeAndroid, InterruptionModeIOS, ResizeMode } from "expo-av";
 import VideoPlayer from "expo-video-player";
 import React, { useRef, useState, useEffect } from "react";
 import { Audio, Video as OriginalVideo } from "expo-av";
 import { ActivityIndicator, Dimensions, Pressable } from "react-native";
-import { ExpoIcon } from "./ExpoIcon";
+import { ExpoIcon, Icon } from "./ExpoIcon";
 import { View, Text } from "./Themed";
 import tw from "twrnc";
 import * as Slider from "@miblanchard/react-native-slider";
 import { TouchableOpacity } from "react-native-gesture-handler";
 import { toHHMMSS } from "../../data";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
+import { _tokens } from "../../tamagui.config";
+import useAsync from "../../hooks/useAsync";
 
 interface DefaultVideoPlayerProps {
   style: any;
@@ -37,15 +39,17 @@ export const DefaultVideoPlayer = (props: DefaultVideoPlayerProps) => {
 };
 
 const triggerAudio = async (ref: React.MutableRefObject<null>) => {
-  await Audio.setAudioModeAsync({ playsInSilentModeIOS: true });
+  await Audio.setAudioModeAsync({ playsInSilentModeIOS: true, interruptionModeIOS: InterruptionModeIOS.MixWithOthers, interruptionModeAndroid: InterruptionModeAndroid.DuckOthers});
   ref.current.playAsync();
+  
 };
 
 
-type TVideoProps = OriginalVideo['props'] & {indicatorTopMargin?: number}
+type TVideoProps = OriginalVideo['props'] & {indicatorTopMargin?: number, defaultMuted?: boolean;}
 export const Video = ({ ...props }) => {
   const ref = useRef<OriginalVideo | null>(null);
   const [status, setStatus] = useState({});
+  const [muted, setMuted] = useState<boolean>(props.defaultMuted || false)
   const [visible, setVisible] = useState<boolean>(false);
   const [playbackInstanceInfo, setPlaybackInstanceInfo] = useState({
     position: 0,
@@ -121,6 +125,16 @@ export const Video = ({ ...props }) => {
     }
   };
 
+  useAsync(async () => {
+    if (!ref?.current) return;
+    console.log('toggling muted')
+    await ref.current.setIsMutedAsync(muted);
+  }, [muted])
+
+  const toggleMuted = async () => {
+    setMuted(m => !m)
+  }
+
   return (
     <Pressable onPress={() => setVisible(!visible)}>
       <OriginalVideo
@@ -138,14 +152,19 @@ export const Video = ({ ...props }) => {
           style={[
             {
               position: "absolute",
-              bottom: 50,
+              bottom: 0,
               zIndex: 1,
               flex: 1,
-              height: props.height,
-            },
+              height: '100%',
+            }, tw`justify-between`
           ]}
         >
-          <View style={tw`items-center justify-center self-center mb-${props.indicatorMarginTop || '20'}`}>
+          <View>
+          <Pressable style={tw`self-end px-2 py-3 mb-6`} onPress={toggleMuted}>
+              <Icon name={muted ? 'Volume-Off' : 'Volume-Up'} size={25} color={muted ? 'gray' : _tokens.primary900} weight="bold" />
+            </Pressable>
+          </View>
+          <View style={tw`items-center mt-6 justify-center self-center mb-${props.indicatorMarginTop || '20'}`}>
             <Pressable
               onPress={
                 playbackInstanceInfo.state === "Buffering" ? null : togglePlay
@@ -161,6 +180,7 @@ export const Video = ({ ...props }) => {
             playbackInstanceInfo={playbackInstanceInfo}
             setPlaybackInstanceInfo={setPlaybackInstanceInfo}
             togglePlay={togglePlay}
+            toggleMuted={toggleMuted}
             indicatorMarginBottom={props.indicatorMarginBottom}
           />
         </Animated.View>
@@ -191,6 +211,7 @@ const VideoControls = (props: {
   setPlaybackInstanceInfo: any;
   playbackInstance: any;
   toggleFullScreen: any;
+  toggleMuted: () => void;
   indicatorMarginBottom?: any
 }) => {
   const {

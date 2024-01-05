@@ -18,13 +18,14 @@ export interface Database {
           fitness_plan_id: number | null
           id: number
           meal_id: number | null
+          name: string | null
           repeat_frequency: string | null
           run: boolean | null
           start_date: string | null
           start_time: string | null
+          subscription_id: number | null
           user_id: string | null
           workout_id: number | null
-          subscription_id: number | undefined
         }
         Insert: {
           created_at?: string
@@ -34,13 +35,14 @@ export interface Database {
           fitness_plan_id?: number | null
           id?: number
           meal_id?: number | null
+          name?: string | null
           repeat_frequency?: string | null
           run?: boolean | null
           start_date?: string | null
           start_time?: string | null
+          subscription_id?: number | null
           user_id?: string | null
           workout_id?: number | null
-          subscription_id?: number | undefined
         }
         Update: {
           created_at?: string
@@ -50,13 +52,14 @@ export interface Database {
           fitness_plan_id?: number | null
           id?: number
           meal_id?: number | null
+          name?: string | null
           repeat_frequency?: string | null
           run?: boolean | null
           start_date?: string | null
           start_time?: string | null
+          subscription_id?: number | null
           user_id?: string | null
           workout_id?: number | null
-          subscription_id?: number | undefined
         }
         Relationships: [
           {
@@ -74,10 +77,17 @@ export interface Database {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "agenda_task_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "fitness_plan_subscription"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "agenda_task_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "subscription"
+            referencedRelation: "user"
             referencedColumns: ["id"]
           },
           {
@@ -1519,6 +1529,65 @@ export interface Database {
           },
           {
             foreignKeyName: "subscription_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      task_progress: {
+        Row: {
+          created_at: string
+          id: number
+          second_meal_id: number | null
+          second_workout_id: number | null
+          task_id: number | null
+          user_id: string | null
+          date: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          second_meal_id?: number | null
+          second_workout_id?: number | null
+          task_id?: number | null
+          user_id?: string | null
+          date?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          second_meal_id?: number | null
+          second_workout_id?: number | null
+          task_id?: number | null
+          user_id?: string | null
+          date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_progress_second_meal_id_fkey"
+            columns: ["second_meal_id"]
+            isOneToOne: false
+            referencedRelation: "meal"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_progress_second_workout_id_fkey"
+            columns: ["second_workout_id"]
+            isOneToOne: false
+            referencedRelation: "workout"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_progress_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "agenda_task"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_progress_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "user"

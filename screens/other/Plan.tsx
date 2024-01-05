@@ -28,11 +28,17 @@ import SwipeWithDelete from '../../components/base/SwipeWithDelete'
 import { ErrorMessage } from '../../components/base/ErrorMessage'
 import { PlanDao } from '../../types/PlanDao'
 import ManageButton from '../../components/features/ManageButton'
-import { useSelector } from '../../redux/store'
+import { useDispatch, useSelector } from '../../redux/store'
 import { useMultiPartForm } from '../../redux/api/mpf'
+import Overlay from '../../components/screens/Overlay'
+import { SettingItem } from '../home/Settings'
+import Button from '../../components/base/Button'
+import { SubscriptionOverlay } from '../workout/FinishedExercise'
+import { fetchProfile } from '../../redux/api/auth'
 
 export default function Plan(props: { id: Tables['fitness_plan']['Row']['id'] }) {
     let { profile } = useSelector(x => x.auth);
+    let {formattedDate} = useSelector(x => x.progress)
     let PlanForm = useForm<Tables['fitness_plan']['Insert']>({
         name: '', description: '', image: null, user_id: profile?.id
     }, async () => {
@@ -50,6 +56,7 @@ export default function Plan(props: { id: Tables['fitness_plan']['Row']['id'] })
     })
     let [f, setForm] = [PlanForm.state, PlanForm.setForm]
     let ScreenForm = useForm({ editMode: !props.id, uploading: false, errors: [] as string[] })
+    let dispatch = useDispatch()
     let [s, setScreen] = [ScreenForm.state, ScreenForm.setForm]
     let saveTitle = s.editMode ? 'Save Plan' : 'Subscribe to Plan'
     const deletePlan = async () => {
@@ -66,6 +73,9 @@ export default function Plan(props: { id: Tables['fitness_plan']['Row']['id'] })
     let dao = PlanDao()
     let navigator = useNavigation();
     let [showSubscription, setShowSubscription] = useState<boolean>(false)
+    let [fpd, setFpd] = useState({
+        useMacros: false, useMeals: false, useWorkouts: false, loading: false
+    })
     return (
         <View style={{ flex: 1 }} includeBackground>
             <ScrollViewWithDrag rerenderTopView={[s.editMode, f.image]} disableRounding TopView={() => <View>
@@ -220,6 +230,41 @@ export default function Plan(props: { id: Tables['fitness_plan']['Row']['id'] })
                     ]}
                 />
             </ScrollViewWithDrag>
+            <SubscriptionOverlay visible={(showSubscription && !canViewDetails)} onDismiss={() => setShowSubscription(false)} onNotNowPress={() => {}} />
+            <Overlay dialogueHeight={55} visible={(showSubscription && canViewDetails)} onDismiss={() => setShowSubscription(false)}>
+            <Text h4 weight='bold' style={tw`text-center`}>Subscribe to Plan</Text>
+            <Spacer xs />
+            <Text style={tw`text-center px-9 text-gray-400`} sm weight='semibold'>You can update settings, including start and end dates in your Agenda.</Text>
+                <Spacer divider sm />
+                <SettingItem setting={{title: 'Use Macros', description: 'Use the protein, carbs, fat, and calorie presets', switch: true, switchValue: fpd.useMacros, onSwitch: (b) => {
+                    setFpd(p => ({...p, useMacros: b}))
+                }}} disableMargin hideCarat/>
+                <Spacer sm/>
+                <SettingItem setting={{title: 'Use Workouts', description: 'Use the suggested workouts each day', switch: true, switchValue: fpd.useWorkouts, onSwitch: (b) => {
+                    setFpd(p => ({...p, useWorkouts: b}))
+                }}} disableMargin hideCarat/>
+                <Spacer sm/>
+                <SettingItem setting={{title: 'Use Meals', description: 'Use the suggested meals each day', switch: true, switchValue: fpd.useMeals, onSwitch: (b) => {
+                    setFpd(p => ({...p, useMeals: b}))
+                }}} disableMargin hideCarat/>
+                <Spacer xl/>
+                <Button uploading={fpd.loading} title='Subscribe' pill onPress={async () => {
+                    try {
+                        setFpd(x => ({...x, loading: true}))
+                    if (!profile?.id) return;
+                    //@ts-ignore
+                    let {fitness_plan_subscription, agendaTasks, updates} = await dao.subscribeToPlan(profile?.id, moment(formattedDate).format(), f, details, fpd.useMeals, fpd.useWorkouts, fpd.useMacros, f.calories || profile?.tdee)
+                    if (updates) {
+                        dispatch(fetchProfile(profile.id))
+                    }
+                    } catch (error) {
+                        
+                    } finally {
+                        setFpd(x => ({...x, loading: false}))
+                        setShowSubscription(false)
+                    }
+                }}/>
+            </Overlay>
             <SaveButton discludeBackground uploading={s.uploading} title={saveTitle} favoriteId={f.id} favoriteType='plan' onSave={async () => {
                 setScreen('uploading', true)
                 try {
@@ -238,7 +283,7 @@ export default function Plan(props: { id: Tables['fitness_plan']['Row']['id'] })
                             setScreen('editMode', false)
                         }
                     } else if (f.id) {
-                        // check if subscribed
+                        setShowSubscription(true)
 
                     }
                 } catch (error) {

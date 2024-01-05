@@ -460,6 +460,7 @@ export default function FoodDetail(props: FoodDetailProps) {
                 <View style={tw`h-60`} />
             </ScrollViewWithDrag>
             <SaveButton
+                discludeBackground
                 safeArea={props.grocery}
                 // hidden={props.src==='backend' && props.mealId ? true : false}
                 uploading={screenState.state.uploading}

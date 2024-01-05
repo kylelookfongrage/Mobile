@@ -321,7 +321,7 @@ export default function MealDetailScreen(props: MealDetailProps) {
             <Overlay visible={screen.showLogProgress} onDismiss={() => setScreen('showLogProgress', false)}>
 
             </Overlay>
-            <SaveButton favoriteId={form.id} title={screen.editMode ? 'Save Meal' : (canViewDetails ? (props.planId ? 'Save to Plan' : (props.idFromProgress ? 'Update Progress' : 'Log Meal')) : 'Purchase Meal')} favoriteType='meal' uploading={screen.uploading} onSave={saveMeal} />
+            <SaveButton discludeBackground favoriteId={form.id} title={screen.editMode ? 'Save Meal' : (canViewDetails ? (props.planId ? 'Save to Plan' : (props.idFromProgress ? 'Update Progress' : 'Log Meal')) : 'Purchase Meal')} favoriteType='meal' uploading={screen.uploading} onSave={saveMeal} />
         </View>
     )
 }

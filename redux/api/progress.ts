@@ -3,7 +3,6 @@ import { Tables } from "../../supabase/dao";
 import { supabase } from "../../supabase";
 
 
-
 export const fetchProgressChildren = createAsyncThunk('progress/fetchProgressChildren', async (today: Tables['progress']['Row']) => {
     let {data: food, error: foodError} = await supabase.from('food_progress').select('*, food(*)').filter('progress_id', 'eq', today.id)
     if (foodError) throw Error(foodError.message)
@@ -28,4 +27,31 @@ export const fetchToday = createAsyncThunk('progress/fetchToday', async (inp: {d
         if (newProgressError) throw Error(newProgressError.message)
         return newProgress?.[0]
     }
+})
+
+export const fetchTodaysTasks = createAsyncThunk('progress/fetchTodaysTasks', async (today: Tables['progress']['Row']) => {
+    let {data: plans, error: fpError} = await supabase.from('fitness_plan_subscription').select('*, fitness_plan(*)').filter('user_id', 'eq', today.user_id)
+    if (fpError || !plans) {
+        throw Error(fpError?.message)
+    }
+    let {data: tasks, error: atError} = await supabase.from('agenda_task').select('*, meal(*), workout(*), fitness_plan(*)').filter('user_id', 'eq', today.user_id).filter('start_date', 'lte', today.date).or(`end_date.is.null, end_date.gte.${today.date}`)
+    if (atError || !tasks) {
+        throw Error(atError?.message)
+    }
+    return {plans, tasks}
+})
+
+
+export const saveTaskProgress = createAsyncThunk('progress/saveTaskProgress', async (inp: {today: Tables['progress']['Insert'], task_progress: Tables['task_progress']['Insert']}) => {
+    let {today, task_progress} = inp;
+    let {data, error} = await supabase.from('task_progress').insert({...task_progress, date: today.date, user_id: today.user_id}).select().single()
+    if (error || !data) throw Error(error?.message || 'There was a problem, please try again.')
+    return {task_progress: data as Tables['task_progress']['Row']}
+})
+
+export const deleteTaskProgress = createAsyncThunk('progress/deleteTaskProgress', async (task_progress: Tables['task_progress']['Row']) => {
+    let {data, error} = await supabase.from('task_progress').delete().filter('id', 'eq', task_progress.id)
+    console.log(error)
+    if (error) throw Error(error?.message || 'There was a problem, please try again.')
+    return {task_id: task_progress.task_id}
 })

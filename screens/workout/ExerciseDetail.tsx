@@ -213,7 +213,7 @@ export default function ExerciseDetail(props: ExerciseDetailProps) {
                 </View>
                 <View style={tw`h-40`} />
             </ScrollViewWithDrag>
-            <SaveButton title={props.workoutId ? 'Add to Workout' : screenForm.editMode ? 'Save Exercise' : 'See Workouts'} uploading={screenForm.uploading} onSave={saveExercise} favoriteId={form.id} favoriteType='exercise' />
+            <SaveButton discludeBackground title={props.workoutId ? 'Add to Workout' : screenForm.editMode ? 'Save Exercise' : 'See Workouts'} uploading={screenForm.uploading} onSave={saveExercise} favoriteId={form.id} favoriteType='exercise' />
         </View>
     )
 }

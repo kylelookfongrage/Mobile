@@ -926,3 +926,21 @@ export function findLastIndex<T>(array: Array<T>, predicate: (value: T, index: n
 
 
 type RepeatFrequencies = 'DAILY' | 'MONTHLY' | 'BI-MONTHLY' | 'WEEKLY' | 'BI-WEEKLY' | 'ANNUALLY' | undefined | null
+
+
+export const ConversionChart = {
+    'Gram' : {value: 1, aliases: ['g', 'grams']},
+    'Milliliter': {value: 1, aliases: ['ml', 'mil', 'mi', 'milliliters']},
+    'Ounce': {value: 28.3495, aliases: ['oz', 'ounces']},
+    'Tablespoon (liquid)': {value: 15, aliases: []},
+    'Tablespoon': {value: 14.175, aliases: ['tbsp', 'tablespoons']},
+    'Teaspoon (liquid)': {value: 5, aliases: []},
+    'Teaspoon': {value: 4.725, aliases: ['tsp', 'teaspoons']},
+    'Fluid Ounce': {value: 29.5735, aliases: ['fl oz', 'floz', 'fluid ounces']},
+    'Pound': {value: 453.592, aliases: ['lb', 'lbs', 'pounds']},
+    'Cup (liquid)':  {value: 236.588, aliases: []},
+    'Cup': {value: 250, aliases: ['cups']},
+    'Gallon': {value: 3785.41, aliases: ['gallons']},
+    'Quart': {value: 946.353, aliases: ['q', 'quarts']},
+    'Pint': {value: 568.261, aliases: ['p', 'pints']}
+}

@@ -3,7 +3,7 @@ import React, { useState } from 'react'
 import { Text, View } from '../../components/base/Themed'
 import tw from 'twrnc'
 import { ExpoIcon, Icon } from '../../components/base/ExpoIcon'
-import { FetchEdamamParser, getMatchingNavigationScreen } from '../../data'
+import { FetchEdamamParser, getMatchingNavigationScreen, substringForLists, titleCase } from '../../data'
 import { useNavigation } from '@react-navigation/native'
 import Barcode from '@kichiyaki/react-native-barcode-generator'
 import { BarCodeScanner } from 'expo-barcode-scanner'
@@ -20,6 +20,8 @@ import { useSelector } from '../../redux/store'
 import { XGroup } from 'tamagui'
 import { _tokens } from '../../tamagui.config'
 import Selector from '../../components/base/Selector'
+import { USDAKeywordSearch } from '../../types/FoodApi'
+import SearchResult from '../../components/base/SearchResult'
 export const categoryMapping = {
   'generic foods': '🍎',
   'generic meals': '🍽',
@@ -29,28 +31,14 @@ export const categoryMapping = {
 
 
 interface ListFoodSearchResults {
-  id: string;
-  edamamId?: string;
-  fromEdamam?: boolean
+  id: string | number;
+  fromApi?: boolean
+  author?: { username: string };
   name: string;
+  category?: string;
   calories: number;
-  image: string;
-  createdAt?: Date,
-  foodContentsLabel: string;
-  category?: "Generic foods" | 'Generic meals' | 'Packaged foods' | 'Fast foods';
-  measures?: {
-    uri: string;
-    label: string;
-    weight: number
-    qualified?: {
-      qualifiers?: {
-        uri: string;
-        label: string;
-      }[]
-      weight: number;
-    }[]
-  }[]
-
+  servingSize: number;
+  servingUnit: string;
 }
 
 interface ListFoodProps {
@@ -76,42 +64,42 @@ export default function ListFood(props: ListFoodProps) {
   const [displaySearchState, setDisplaySearchState] = React.useState('Search for food!')
   let dao = SearchDao()
   let search = async (term: string | null) => {
+
     let _results: ListFoodSearchResults[] = []
     if (selectedOption == 'All' && term) {
       setDisplaySearchState('Searching....')
-      let res = await FetchEdamamParser({
-        ingr: term
-      })
-      if (res.hints && res.hints.length > 0 && !res?.error) {
-        let edamamResults: ListFoodSearchResults[] = res.hints.map((y) => ({
-          name: y.food.label,
-          image: y.food.image,
-          category: y.food.category,
-          id: y.food.foodId,
-          edamamId: y.food.foodId,
-          fromEdamam: true,
-          calories: y.food.nutrients.ENERC_KCAL,
-          measures: y.measures,
-          foodContentsLabel: y.food.foodContentsLabel || ''
+      let res = await USDAKeywordSearch(term)
+      console.log(res)
+      if (res && res.foods.length > 0) {
+        let apiResults: ListFoodSearchResults[] = res.foods.map((y) => ({
+          name: titleCase(`${y.brandOwner ? y.brandOwner + ' ' : ''}${y.commonNames || y.description}`),
+          category: y.foodCategory,
+          id: y.fdcId,
+          fromApi: true,
+          calories: y.foodNutrients.filter(x => x.nutrientNumber=='208')?.[0]?.value || -1,
+          servingSize: y.servingSize || '1',
+          servingUnit: y.servingSizeUnit || 'servings',
+          score: y.score || 0
         }))
         //@ts-ignore
-        _results = edamamResults
+        _results = apiResults
       }
     }
+
     let res = await dao.search('food', {
       keyword: term, keywordColumn: 'name', selectString: `
-        *, author: user_id(username)`,
+        *, author: user_id(username), calories, servingSize:quantity, servingUnit:servingSize`,
       belongsTo: selectedOption === 'My Foods' ? profile?.id : undefined,
       favorited: selectedOption === 'Favorites', user_id: profile?.id,
-      filters: [{column: 'public', value: true}]
-  })
-  if (res) {
-    //@ts-ignore
-    _results = [..._results, ...res.map(x => {
-      return {...x, foodContentsLabel: x.ingredients, createdAt: x.created_at}
-    })]
-  }
-  setResults(_results)
+      filters: [{ column: 'public', value: true }]
+    })
+    if (res) {
+      //@ts-ignore
+      _results = [..._results.sort((a,b) => b.score-a.score), ...res.map(x => {
+        return { ...x }
+      })].filter(x => x.calories !== -1)
+    }
+    setResults(_results)
   }
 
   useAsync(async () => {
@@ -161,7 +149,6 @@ export default function ListFood(props: ListFoodProps) {
   React.useEffect(() => {
     if (props.defaultSearch) {
       setSearchKey(props.defaultSearch)
-
     }
   }, [props.defaultSearch])
 
@@ -170,11 +157,12 @@ export default function ListFood(props: ListFoodProps) {
       <BackButton name='Food' />
       <Spacer />
       <View style={tw`px-2`}>
-      <SearchBar full onSearch={setSearchKey} />
+        <SearchBar full onSearch={setSearchKey} />
       </View>
       <Spacer />
       {/* @ts-ignore */}
       <Selector searchOptions={searchOptions} selectedOption={selectedOption} onPress={setSelectedOption} />
+      <Spacer />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[tw`px-4`]}>
         <Spacer />
         {showBarcode && <View>
@@ -193,38 +181,22 @@ export default function ListFood(props: ListFoodProps) {
           </View>}
         </View>}
         {(displaySearchState !== '' && results.length === 0) && <View style={tw`w-12/12 justify-center items-center mt-9`}><Text>{displaySearchState}</Text></View>}
-        {(results.length === 0 && selectedOption === 'Barcode' && barcode) && <View style={tw`w-12/12 justify-center items-center my-9`}><Text>{displaySearchState}</Text></View>}
         {results.map((r, idx) => {
-          const userIsAllergic = userAllergens.filter(x => `${r.name} ${r.foodContentsLabel}`.toLowerCase().includes(x)).length > 0
-          // TODO: some images are undefined, replace with icon in these cases
           return <TouchableOpacity
             key={`food item ${r.name} at index ${idx}`}
             onPress={() => {
               const foodDetailScreen = getMatchingNavigationScreen('FoodDetail', navigator)
               //@ts-ignore
               navigator.navigate(foodDetailScreen, {
-                id: r.id,
-                editable: true,
-                img: r.image,
-                name: r.name,
-                category: r.category,
-                src: r.edamamId ? 'api' : props.mealId ? 'edit' : 'backend',
-                edamamId: r.edamamId || null,
-                measures: r.fromEdamam ? r.measures : null,
-                foodContentsLabel: r.foodContentsLabel,
-                progressId: props.progressId,
-                mealId: props.mealId,
-                grocery: props.grocery
+                id: r.fromApi ? undefined : r.id,
+                api_id: r.fromApi ? r.id : undefined
               })
             }}
             style={tw`flex-row items-center px-2 my-3 w-12/12`}>
-            {r.image ? <SupabaseImage uri={r.image} style={tw`h-15 w-15 rounded-xl`} resizeMode='cover' /> : <View style={tw`h-15 w-15 items-center justify-center rounded-xl bg-gray-${dm ? '700' : '300'}`}>
-              {/* @ts-ignore */}
-              <Text style={tw`text-2xl`}>{categoryMapping['generic foods']}</Text></View>}
+           
             <View style={tw`w-12/12 items-start ml-2`}>
-              <Text style={tw`max-w-9/12`} weight='semibold'>{r.name} {userIsAllergic && <AllergenAlert size={15} />}</Text>
-              {selectedOption === 'My Foods' && <Text style={tw`text-xs`}>{r.createdAt && moment(r.createdAt).format('LL')}</Text>}
-              {(selectedOption !== 'My Foods' && r.author?.username) && <Text style={tw`text-xs text-red-500`}>@{r.author?.username}</Text>}
+              <Text style={tw`max-w-11/12`} lg weight='semibold'>{substringForLists(r.name, 100)}</Text>
+              <Text style={tw`text-gray-500`}>{r.calories.toFixed()} kcal per {r.servingSize.toFixed()} {r.servingUnit} • {r.author ? `@${r.author.username}` : r.fromApi ? 'USDA Food Database' : 'Menustat.org'}</Text>
             </View>
           </TouchableOpacity>
         })}
@@ -235,11 +207,13 @@ export default function ListFood(props: ListFoodProps) {
           return <ExpoIcon name='close' iconName='ion' color='white' size={23} />
         }
         return <Icon name='Scan' color='white' weight='bold' size={24} />
-        }} style={{...tw`bg-red-600 items-center justify-center`, width: 55, height: 55, position: 'absolute',
+      }} style={{
+        ...tw`bg-red-600 items-center justify-center`, width: 55, height: 55, position: 'absolute',
         margin: 15,
         right: 0,
         padding: 0,
-        bottom: 0,}} />
+        bottom: 0,
+      }} />
     </View>
   )
 }

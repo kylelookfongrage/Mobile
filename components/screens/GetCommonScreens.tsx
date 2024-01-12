@@ -23,6 +23,7 @@ import ListPlans from "../../screens/other/ListPlans"
 import React from 'react'
 import LogWater from "../../screens/home/LogWater"
 import TaskAgenda from "../../screens/other/TaskAgenda"
+import FoodDetail2 from "../../screens/diet/FoodDetail2"
 
 export const getCommonScreens = (prefix: string, Stack: any) => {
     return <Stack.Group>
@@ -44,7 +45,7 @@ export const getCommonScreens = (prefix: string, Stack: any) => {
             </Stack.Screen>
             <Stack.Screen name={prefix + 'FoodDetail'} options={{ headerShown: false }}>
                 {/* @ts-ignore */}
-                {props => <FoodDetail
+                {/* {props => <FoodDetail
                     {...props}
                     id={props.route?.params?.id}
                     editable={props.route?.params?.editable}
@@ -57,7 +58,9 @@ export const getCommonScreens = (prefix: string, Stack: any) => {
                     measures={props.route?.params?.measures}
                     foodContentsLabel={props.route?.params?.foodContentsLabel}
                     grocery={props.route?.params?.grocery}
-                />}
+                />} */}
+                {/* @ts-ignore */}
+                {props => <FoodDetail2 {...props?.route?.params} />}
             </Stack.Screen>
             <Stack.Screen name={prefix + 'Allergens'} component={Allergens} options={{ headerShown: false, presentation: 'transparentModal' }} />
             <Stack.Screen name={prefix + 'ListWorkout'} options={{ headerShown: false }}>

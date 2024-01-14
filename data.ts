@@ -369,13 +369,25 @@ export function toHHMMSS(duration: number, seperator: string = ':') {
 }
 
 
-
 export const titleCase = (str: string) => {
-    var sentence = str.toLowerCase().split(" ");
-    for (var i = 0; i < sentence.length; i++) {
-        sentence[i] = sentence[i][0].toUpperCase() + sentence[i].slice(1);
-    }
-    return sentence.join(' ')
+    return str.replace(
+        /([^\W_]+[^\s-]*) */g,
+        function(txt) {
+          return txt.charAt(0).toUpperCase() + txt.substring(1).toLowerCase();
+        }
+      );
+    // try {
+    //     var sentence = str.toLowerCase().split(" ");
+    //     for (var i = 0; i < sentence.length; i++) {
+    //         sentence[i] = sentence[i][0].toUpperCase() + sentence[i].slice(1);
+    //     }
+    //     return sentence.join(' ')
+    // } catch (error) {
+    //     console.log(error)
+    // } finally {
+    //     return str
+    // }
+
 }
 
 
@@ -588,7 +600,7 @@ import sleepy_sleep from './assets/animations/sleepy_sleep.json'
 import squirrel_sleep from './assets/animations/squirrel-sleeping.json'
 
 export const animationMapping = [
-    { name: 'Up Next Video', animation: null},
+    { name: 'Up Next Video', animation: null },
     { name: 'Dog Run', animation: timer },
     { name: 'Squirrel Sleep', animation: squirrel_sleep },
     { name: 'Pigeon Wait', animation: pigeon_wait },
@@ -929,18 +941,18 @@ type RepeatFrequencies = 'DAILY' | 'MONTHLY' | 'BI-MONTHLY' | 'WEEKLY' | 'BI-WEE
 
 
 export const ConversionChart = {
-    'Gram' : {value: 1, aliases: ['g', 'grams']},
-    'Milliliter': {value: 1, aliases: ['ml', 'mil', 'mi', 'milliliters']},
-    'Ounce': {value: 28.3495, aliases: ['oz', 'ounces']},
-    'Tablespoon (liquid)': {value: 15, aliases: []},
-    'Tablespoon': {value: 14.175, aliases: ['tbsp', 'tablespoons']},
-    'Teaspoon (liquid)': {value: 5, aliases: []},
-    'Teaspoon': {value: 4.725, aliases: ['tsp', 'teaspoons']},
-    'Fluid Ounce': {value: 29.5735, aliases: ['fl oz', 'floz', 'fluid ounces']},
-    'Pound': {value: 453.592, aliases: ['lb', 'lbs', 'pounds']},
-    'Cup (liquid)':  {value: 236.588, aliases: []},
-    'Cup': {value: 250, aliases: ['cups']},
-    'Gallon': {value: 3785.41, aliases: ['gallons']},
-    'Quart': {value: 946.353, aliases: ['q', 'quarts']},
-    'Pint': {value: 568.261, aliases: ['p', 'pints']}
+    'Gram': { value: 1, aliases: ['g', 'grams'] },
+    'Milliliter': { value: 1, aliases: ['ml', 'mil', 'mi', 'milliliters'] },
+    'Ounce': { value: 28.3495, aliases: ['oz', 'ounces'] },
+    'Tablespoon (liquid)': { value: 15, aliases: [] },
+    'Tablespoon': { value: 14.175, aliases: ['tbsp', 'tablespoons'] },
+    'Teaspoon (liquid)': { value: 5, aliases: [] },
+    'Teaspoon': { value: 4.725, aliases: ['tsp', 'teaspoons'] },
+    'Fluid Ounce': { value: 29.5735, aliases: ['fl oz', 'floz', 'fluid ounces'] },
+    'Pound': { value: 453.592, aliases: ['lb', 'lbs', 'pounds'] },
+    'Cup (liquid)': { value: 236.588, aliases: [] },
+    'Cup': { value: 250, aliases: ['cups'] },
+    'Gallon': { value: 3785.41, aliases: ['gallons'] },
+    'Quart': { value: 946.353, aliases: ['q', 'quarts'] },
+    'Pint': { value: 568.261, aliases: ['p', 'pints'] }
 }

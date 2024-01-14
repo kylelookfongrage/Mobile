@@ -20,7 +20,7 @@ import { useSelector } from '../../redux/store'
 import { XGroup } from 'tamagui'
 import { _tokens } from '../../tamagui.config'
 import Selector from '../../components/base/Selector'
-import { USDAKeywordSearch } from '../../types/FoodApi'
+import { USDAKeywordSearch, getEmojiByCategory } from '../../types/FoodApi'
 import SearchResult from '../../components/base/SearchResult'
 export const categoryMapping = {
   'generic foods': '🍎',
@@ -69,15 +69,15 @@ export default function ListFood(props: ListFoodProps) {
     if (selectedOption == 'All' && term) {
       setDisplaySearchState('Searching....')
       let res = await USDAKeywordSearch(term)
-      console.log(res)
       if (res && res.foods.length > 0) {
+        console.log(res.foods.map(x => x.foodCategory))
         let apiResults: ListFoodSearchResults[] = res.foods.map((y) => ({
-          name: titleCase(`${y.brandOwner ? y.brandOwner + ' ' : ''}${y.commonNames || y.description}`),
+          name: titleCase(`${y.brandOwner ? (y.brandOwner.toLowerCase() === 'not a branded item' ? '' : y.brandOwner + ' ') : ''}${y.commonNames || y.description}`),
           category: y.foodCategory,
           id: y.fdcId,
           fromApi: true,
           calories: y.foodNutrients.filter(x => x.nutrientNumber=='208')?.[0]?.value || -1,
-          servingSize: y.servingSize || '1',
+          servingSize: y.servingSize || 1,
           servingUnit: y.servingSizeUnit || 'servings',
           score: y.score || 0
         }))
@@ -193,10 +193,10 @@ export default function ListFood(props: ListFoodProps) {
               })
             }}
             style={tw`flex-row items-center px-2 my-3 w-12/12`}>
-           
+            <Text h4>{getEmojiByCategory(r.category)}</Text>
             <View style={tw`w-12/12 items-start ml-2`}>
               <Text style={tw`max-w-11/12`} lg weight='semibold'>{substringForLists(r.name, 100)}</Text>
-              <Text style={tw`text-gray-500`}>{r.calories.toFixed()} kcal per {r.servingSize.toFixed()} {r.servingUnit} • {r.author ? `@${r.author.username}` : r.fromApi ? 'USDA Food Database' : 'Menustat.org'}</Text>
+              <Text style={tw`text-gray-500`}>{r.calories.toFixed()} kcal per {r.servingSize?.toFixed()} {r.servingUnit} • {r.author ? `@${r.author.username}` : r.fromApi ? 'USDA Food Database' : 'Menustat.org'}</Text>
             </View>
           </TouchableOpacity>
         })}

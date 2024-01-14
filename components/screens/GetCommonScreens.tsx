@@ -43,7 +43,7 @@ export const getCommonScreens = (prefix: string, Stack: any) => {
                 {/* @ts-ignore */}
                 {props => <PostComments {...props} postId={props.route?.params?.postId} postType={props.route?.params?.postType} />}
             </Stack.Screen>
-            <Stack.Screen name={prefix + 'FoodDetail'} options={{ headerShown: false }}>
+            <Stack.Screen name={prefix + 'FoodDetail'} options={{ headerShown: false, presentation: 'modal' }}>
                 {/* @ts-ignore */}
                 {/* {props => <FoodDetail
                     {...props}

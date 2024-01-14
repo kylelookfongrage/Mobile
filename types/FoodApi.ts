@@ -194,3 +194,81 @@ interface USDAFoodComponent {
     percentWeight: number;
 }
 
+
+
+export const USDAFoodCategories = {
+    'Dairy and Egg Products': '🥛',
+    'Spices and Herbs': '🧂',
+    'Baby Foods': '🍼',
+    'Fats and Oils': '🧈',
+    'Poultry Products': '🍗',
+    'Soups, Sauces, and Gravies': '🍜',
+    'Sausages and Luncheon Meats': '🥓',
+    'Breakfast Cereals': '🥣',
+    'Fruits and Fruit Juices': '🍊',
+    'Pork Products': '🐖',
+    'Vegetables and Vegetable Products': '🥦',
+    'Nut and Seed Products': '🥜',
+    'Beef Products': '🥩',
+    'Beverages': '🧃',
+    'Finfish and Shellfish Products': '🍤',
+    'Legumes and Legume Products': '🫘',
+    'Lamb, Veal, and Game Products': '🍖',
+    'Baked Products': '🎂',
+    'Sweets': '🍰',
+    'Cereal Grains and Pasta': '🍝',
+    'Fast Foods': '🍕',
+    'Meals, Entrees, and Side Dishes': '🌭',
+    'Snacks': '🍪',
+    'Restaurant Foods': '👩‍🍳',
+    'Branded Food Products Database': '🛒',
+    'Alcoholic Beverages': '🍷'
+}
+
+const ExpandedUSDAFoodCategories = {
+    ...USDAFoodCategories,
+    'Oriental, Mexican & Ethnic Sauces': "🥫",
+    'FAST_FOOD': '🍟',
+    'Herbs & Spices' : '🧂',
+    "Pre-Packaged Fruit & Vegetables": '🍏',
+    'Soda' : '🥤',
+    'Jam, Jelly & Fruit Spreads': '🍯',
+    'Pickles, Olives, Peppers & Relishes' : "🥒",
+    'Water' : '💧',
+    'Baking Additives & Extracts': '🍦',
+    'Seasoning Mixes, Salts, Marinades & Tenderizers' : "🧂",
+    'Ketchup, Mustard, BBQ & Cheese Sauce' : '🥫',
+    'Vegetable and Lentil Mixes' : '🥗',
+    'Cereal' : '🥣',
+    'Croissants, Sweet Rolls, Muffins & Other Pastries': '🥐',
+    'Other Snacks' : "🍿",
+    'Mexican Dinner Mixes' : '🌮',
+    'Popcorn, Peanuts, Seeds & Related Snacks' : "🍿",
+    'Chips, Pretzels & Snacks' : "🥨",
+    'Canned Meat': '🥓',
+    'Other Meats' : '🥓',
+    'Other Deli' : '🥓',
+    'Breads & Buns': '🍞',
+    'Flours & Corn Meal' : '🍞',
+    'Ice Cream & Frozen Yogurt' : '🍨',
+    'Crackers & Biscotti' : "🍪",
+    'Baking Decorations & Dessert Toppings' : "🍨",
+    'Rice' : '🍚',
+    'Pizza Mixes & Other Dry Dinners' : '🍕',
+    'Entrees, Sides & Small Meals' : '🍱',
+    'Snack, Energy & Granola Bars' : '🍫',
+    'Pasta by Shape & Type' : '🍝',
+    'Prepared Pasta & Pizza Sauces' : '🍝',
+    'Pasta Dinners' : '🍝',
+    'Canned Fruit' : '🍌',
+    'Other Cooking Sauces' : "🥫",
+    'Liquid Water Enhancer' : '💦',
+    'Salad Dressing & Mayonnaise' : "🧈",
+    'Yogurt' : '🍦',
+    'Confectionery Products': '🍡'
+}
+
+export const getEmojiByCategory = (category: string | null|undefined): string => {
+    //@ts-ignore
+    return ExpandedUSDAFoodCategories[category] || '🍎'
+}

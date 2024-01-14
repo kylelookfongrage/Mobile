@@ -26,6 +26,21 @@ export const USDAKeywordSearch = async (keyword: string, pageNumber=1, pageSize=
     return json as USDASearchResult
 }
 
+export const USDAFoodDetails = async (id: string): Promise<USDABrandedFood | USDAFoundationFoodItem | null> => {
+    let url = new URL(get_food_details_uri(id))
+    let params = {
+        api_key: apiKey
+    }
+    url.search = new URLSearchParams(params).toString()
+    let result = await fetch(url, {
+        headers: {
+            'accept': 'application/json'
+        }
+    })
+    let json = await result.json()
+    return json;
+}
+
 
 type USDASearchType = 'Branded' | 'Foundation' | 'Survey (FNDDS)' | 'SR Legacy';
 export interface USDASearchResult {

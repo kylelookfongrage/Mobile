@@ -40,6 +40,10 @@ export function useForm<T extends object>(initialState: T, fetch?: () => Promise
                 //@ts-ignore
                 return resetWithValue(action.payload)
             }
+            case FormReducer.Update: {
+                let copy = {...draft}
+                return resetWithValue({...copy, ...action.payload})
+            }
             default: {
                 break;
             }

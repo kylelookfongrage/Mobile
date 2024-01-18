@@ -1,5 +1,5 @@
 
-let apiKey = ''
+let apiKey = 'Vovgzr9UZxb8AzGkYhM8IhuhWTIN8hwvEGv2lxVI'
 
 const BASE_URL = 'https://api.nal.usda.gov/fdc/v1/'
 const FOOD_SEARCH = BASE_URL + 'foods/search?'

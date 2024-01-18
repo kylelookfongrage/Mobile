@@ -34,6 +34,8 @@ interface INutritionKeyboardProps {
     onNumberChange?: (v: number) => void;
     onEnterPress?: () => void;
     initialValue?: number;
+    onOpen?: () => void;
+    onClose?: () => void;
 }
 
 export function KeyboardView(props: INutritionKeyboardProps) {
@@ -106,6 +108,14 @@ export const LogFoodKeyboardAccessory = (props: INutritionKeyboardProps) => {
         if (props.initialValue) {setStringValue(`${props.initialValue}`)}
     }, [props.initialValue])
     let s = Dimensions.get('screen')
+
+    useEffect(() => {
+        if (open) {
+            props.onOpen && props.onOpen()
+        } else {
+            props.onClose && props.onClose()
+        }
+    }, [open])
     
     return <KeyboardAccessoryView
     renderContent={() => {

@@ -941,18 +941,65 @@ type RepeatFrequencies = 'DAILY' | 'MONTHLY' | 'BI-MONTHLY' | 'WEEKLY' | 'BI-WEE
 
 
 export const ConversionChart = {
-    'Gram': { value: 1, aliases: ['g', 'grams'] },
-    'Milliliter': { value: 1, aliases: ['ml', 'mil', 'mi', 'milliliters'] },
-    'Ounce': { value: 28.3495, aliases: ['oz', 'ounces'] },
-    'Tablespoon (liquid)': { value: 15, aliases: [] },
-    'Tablespoon': { value: 14.175, aliases: ['tbsp', 'tablespoons'] },
-    'Teaspoon (liquid)': { value: 5, aliases: [] },
-    'Teaspoon': { value: 4.725, aliases: ['tsp', 'teaspoons'] },
-    'Fluid Ounce': { value: 29.5735, aliases: ['fl oz', 'floz', 'fluid ounces'] },
-    'Pound': { value: 453.592, aliases: ['lb', 'lbs', 'pounds'] },
+    'Gram': 1, 
+    'Milliliter': 1,
+    'Ounce': 28.3495, 
+    'Tablespoon (liquid)': 15,
+    'Tablespoon': 14.175,
+    'Teaspoon (liquid)': 5,
+    'Teaspoon': 4.725,
+    'Fluid Ounce': 29.5735,
+    'Pound': 453.592,
     'Cup (liquid)': { value: 236.588, aliases: [] },
-    'Cup': { value: 250, aliases: ['cups'] },
-    'Gallon': { value: 3785.41, aliases: ['gallons'] },
-    'Quart': { value: 946.353, aliases: ['q', 'quarts'] },
-    'Pint': { value: 568.261, aliases: ['p', 'pints'] }
+    'Cup': 250,
+    'Gallon': 3785.41,
+    'Quart': 946.353,
+    'Pint': 568.261
+}
+
+
+export const ExpandedConversionChart = {
+    ...ConversionChart,
+    'g': 1, 'grams': 1,
+    'ml': 1, 'mil': 1, 'mi': 1, 'milliliters': 1,
+    'oz': 28.3495, 'ounces': 28.3495,
+    'tbsp': 14.175, 'tablespoons': 14.175,
+    'tsp': 4.725, 'teaspoons': 4.725,
+    'fl oz': 29.5735, 'floz': 29.5735, 'fluid ounces': 29.5735,
+    'lb': 453.592, 'lbs': 453.592, 'pounds': 453.592,
+    'cups': 250,
+    'gallons' : 3785.41,
+    'q': 946.353, 'quarts': 946.353,
+    'p': 568.261, 'pints': 568.261
+} 
+
+
+function toDeci(fraction: string) {
+    if (!fraction) return fraction;
+    fraction = fraction.toString();
+    var result=fraction as string | number,wholeNum=0, frac, deci=0;
+    if(fraction.search('/') >=0){
+        if(fraction.search('-') >=0){
+            //@ts-ignore
+            wholeNum = fraction.split('-');
+            //@ts-ignore
+            frac = wholeNum[1];
+            //@ts-ignore
+            wholeNum = parseInt(wholeNum,10);
+        }else{
+            frac = fraction;
+        }
+        if(fraction.search('/') >=0){
+            frac =  frac.split('/');
+            deci = parseInt(frac[0], 10) / parseInt(frac[1], 10);
+        }
+        result = wholeNum+deci;
+    }else{
+        result = fraction
+    }
+    return result;
+}
+
+export const FractionInput = (str: string): number | null => {
+    return Number(toDeci(str)) || null
 }

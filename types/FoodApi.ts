@@ -5,12 +5,12 @@ const BASE_URL = 'https://api.nal.usda.gov/fdc/v1/'
 const FOOD_SEARCH = BASE_URL + 'foods/search?'
 const get_food_details_uri = (id: string) => BASE_URL + `food/${id}`;
 
-export const USDAKeywordSearch = async (keyword: string, pageNumber=1, pageSize=25, sortBy='publishedDate', sortOrder='asc'): Promise<USDASearchResult> => {
+export const USDAKeywordSearch = async (keyword: string, pageNumber = 1, pageSize = 25, sortBy = 'publishedDate', sortOrder = 'asc'): Promise<USDASearchResult> => {
     let params = {
         api_key: apiKey,
         query: `description:"${keyword}" commonNames:"${keyword}"`,
         dataType: 'Branded,Foundation',
-        pageSize:pageSize.toFixed(),
+        pageSize: pageSize.toFixed(),
         pageNumber: pageNumber.toFixed(),
         sortBy: sortBy,
         sortOrder: sortOrder
@@ -62,7 +62,6 @@ export interface USDASearchResult {
     };
     foods: USDASearchResultFood[]
 }
-
 
 interface USDANutritionType {
     nutrientId: number;
@@ -153,7 +152,7 @@ interface USDABrandedFood extends USDAAbridgedFood {
 }
 
 interface USDALabelNutrients {
-    fat: USDALabelNutrientObject 
+    fat: USDALabelNutrientObject
     saturatedFat: USDALabelNutrientObject
     transFat: USDALabelNutrientObject
     cholesterol: USDALabelNutrientObject
@@ -172,7 +171,7 @@ interface USDALabelNutrientObject {
     value: number
 }
 
-interface USDAFoundationFoodItem extends USDAAbridgedFood{
+interface USDAFoundationFoodItem extends USDAAbridgedFood {
     dataType: 'Foundation'
     foodClass: string;
     footNote: string;
@@ -244,46 +243,97 @@ const ExpandedUSDAFoodCategories = {
     ...USDAFoodCategories,
     'Oriental, Mexican & Ethnic Sauces': "🥫",
     'FAST_FOOD': '🍟',
-    'Herbs & Spices' : '🧂',
+    'Herbs & Spices': '🧂',
     "Pre-Packaged Fruit & Vegetables": '🍏',
-    'Soda' : '🥤',
+    'Soda': '🥤',
     'Jam, Jelly & Fruit Spreads': '🍯',
-    'Pickles, Olives, Peppers & Relishes' : "🥒",
-    'Water' : '💧',
+    'Pickles, Olives, Peppers & Relishes': "🥒",
+    'Water': '💧',
     'Baking Additives & Extracts': '🍦',
-    'Seasoning Mixes, Salts, Marinades & Tenderizers' : "🧂",
-    'Ketchup, Mustard, BBQ & Cheese Sauce' : '🥫',
-    'Vegetable and Lentil Mixes' : '🥗',
-    'Cereal' : '🥣',
+    'Seasoning Mixes, Salts, Marinades & Tenderizers': "🧂",
+    'Ketchup, Mustard, BBQ & Cheese Sauce': '🥫',
+    'Vegetable and Lentil Mixes': '🥗',
+    'Cereal': '🥣',
     'Croissants, Sweet Rolls, Muffins & Other Pastries': '🥐',
-    'Other Snacks' : "🍿",
-    'Mexican Dinner Mixes' : '🌮',
-    'Popcorn, Peanuts, Seeds & Related Snacks' : "🍿",
-    'Chips, Pretzels & Snacks' : "🥨",
+    'Other Snacks': "🍿",
+    'Mexican Dinner Mixes': '🌮',
+    'Popcorn, Peanuts, Seeds & Related Snacks': "🍿",
+    'Chips, Pretzels & Snacks': "🥨",
     'Canned Meat': '🥓',
-    'Other Meats' : '🥓',
-    'Other Deli' : '🥓',
+    'Other Meats': '🥓',
+    'Other Deli': '🥓',
     'Breads & Buns': '🍞',
-    'Flours & Corn Meal' : '🍞',
-    'Ice Cream & Frozen Yogurt' : '🍨',
-    'Crackers & Biscotti' : "🍪",
-    'Baking Decorations & Dessert Toppings' : "🍨",
-    'Rice' : '🍚',
-    'Pizza Mixes & Other Dry Dinners' : '🍕',
-    'Entrees, Sides & Small Meals' : '🍱',
-    'Snack, Energy & Granola Bars' : '🍫',
-    'Pasta by Shape & Type' : '🍝',
-    'Prepared Pasta & Pizza Sauces' : '🍝',
-    'Pasta Dinners' : '🍝',
-    'Canned Fruit' : '🍌',
-    'Other Cooking Sauces' : "🥫",
-    'Liquid Water Enhancer' : '💦',
-    'Salad Dressing & Mayonnaise' : "🧈",
-    'Yogurt' : '🍦',
+    'Flours & Corn Meal': '🍞',
+    'Ice Cream & Frozen Yogurt': '🍨',
+    'Crackers & Biscotti': "🍪",
+    'Baking Decorations & Dessert Toppings': "🍨",
+    'Rice': '🍚',
+    'Pizza Mixes & Other Dry Dinners': '🍕',
+    'Entrees, Sides & Small Meals': '🍱',
+    'Snack, Energy & Granola Bars': '🍫',
+    'Pasta by Shape & Type': '🍝',
+    'Prepared Pasta & Pizza Sauces': '🍝',
+    'Pasta Dinners': '🍝',
+    'Canned Fruit': '🍌',
+    'Other Cooking Sauces': "🥫",
+    'Liquid Water Enhancer': '💦',
+    'Salad Dressing & Mayonnaise': "🧈",
+    'Yogurt': '🍦',
     'Confectionery Products': '🍡'
 }
 
-export const getEmojiByCategory = (category: string | null|undefined): string => {
+export const getEmojiByCategory = (category: string | null | undefined): string => {
     //@ts-ignore
     return ExpandedUSDAFoodCategories[category] || '🍎'
+}
+
+let map = new Map()
+map.set(208, { name: 'Calories', unit: 'kcal', bolded: true, xl: true, border: 4 })
+map.set(204, { name: 'Total Fat', unit: 'g', bolded: true })
+map.set(606, { name: 'Saturated Fat', unit: 'g', indented: 1 })
+map.set(605, { name: 'Trans Fat', unit: 'g', indented: 1 })
+map.set(646, { name: 'Polyunsaturated Fat', unit: 'g', indented: 1 })
+map.set(645, { name: 'Monounsaturated Fat', unit: 'g', indented: 1 })
+map.set(601, { name: 'Cholesterol', unit: 'mg', bolded: true })
+map.set(307, { name: 'Sodium', unit: 'mg', bolded: true })
+map.set(205, { name: 'Total Carbohydrate', unit: 'g', bolded: true })
+map.set(291, { name: 'Total Fiber', unit: 'g', indented: 1 })
+map.set(269, { name: 'Total Sugars', unit: 'g', indented: 1 })
+map.set(539, { name: 'Added Sugars', unit: 'g', indented: 2 })
+map.set(203, { name: 'Protein', unit: 'g', border: 4, bolded: true })
+map.set(382, { name: 'Vitamin D', unit: 'µg' })
+map.set(301, { name: 'Calcium', unit: 'mg' })
+map.set(303, { name: 'Iron', unit: 'mg' })
+map.set(306, { name: 'Potassium', unit: 'mg' })
+
+export const USDAMacroMappingKeys: number[] = [208, 204, 606, 605, 646, 645, 601, 307, 205, 291, 269, 539, 203, 382, 301, 303, 306] 
+
+export const USDAMacroMapping = map;
+
+
+export const USDANutrientToOtherNutrition = (n: USDANutritionType[]) => {
+    console.log(n)
+    let calories = 0;
+    let fat = 0;
+    let protein = 0;
+    let carbs = 0;
+    let otherNutrition = Object.fromEntries(USDAMacroMappingKeys.map(x => [x, 0]))
+    let ignore = [208, 204, 205, 203]
+    
+    for (var _nutrient of n) {
+        //@ts-ignore
+        let nutrient = _nutrient.nutrient?.number
+        if (!nutrient) return;
+        //@ts-ignore
+        let amount = _nutrient?.amount || 0
+        otherNutrition[`${nutrient}`] = amount
+        if (nutrient == 208) {calories = amount}
+        if (nutrient == 204) {fat = amount}
+        if (nutrient == 205) {carbs = amount}
+        if (nutrient == 203) {protein = amount}
+    }
+    for (var i of ignore) {
+        delete otherNutrition[i];
+    }
+    return {calories, fat, protein, carbs, otherNutrition}
 }

@@ -32,6 +32,8 @@ interface InputProps {
     canClear?: boolean;
     type?: KeyboardType
     onSubmit?: () => void;
+    onOpen?: () => void;
+    onClose?: () => void;
 }
 
 export default function Input(props: InputProps) {
@@ -127,13 +129,14 @@ export function TextArea(props: InputProps) {
                 {/* @ts-ignore */}
                 <TamaguiTextArea
                     height={'100%'}
-                    width={'85%'}
+                    width={props.iconLeft || props.iconRight ? '85%' : '100%'}
                     ref={ref}
                     backgroundColor={'$colorTransparent'}
                     onFocus={() => setBorderColor(_tokens.primary900 + '60')}
                     onBlur={() => setBorderColor('transparent')}
                     borderColor={'transparent'}
                     borderWidth={0}
+                    
                     editable={props.editable !== false}
                     value={props.value?.toString() || undefined}
                     onChangeText={v => {

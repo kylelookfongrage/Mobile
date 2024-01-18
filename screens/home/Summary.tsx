@@ -154,7 +154,7 @@ export const SummaryScreen = () => {
           showsVerticalScrollIndicator={false}
         >
           <View style={{minHeight: 2}}>
-          <MasonryFlashList style={{alignItems: 'center', justifyContent: 'center', columnGap: 5}} numColumns={2} estimatedItemSize={163} data={[
+          {/* <MasonryFlashList style={{alignItems: 'center', justifyContent: 'center', columnGap: 5}} numColumns={2} estimatedItemSize={163} data={[
             {name: 'Workouts', type: 'Workout Amount', index: 0},
             {name: 'Nutrition', type: 'Macros List', index: 1},
             {name: 'Tasks', type: 'Tasks Preview', index: 2},
@@ -163,7 +163,7 @@ export const SummaryScreen = () => {
           ]} renderItem={({item, index}) => {
             //@ts-ignore
             return presetDashboardComponents[item.name][item.type](obj, {index: item.index, color: item.backgroundColor, progressColor1: item.progressColor1, progressColor2: item.progressColor2  })
-          }} />
+          }} /> */}
           </View>
           
           <Spacer />

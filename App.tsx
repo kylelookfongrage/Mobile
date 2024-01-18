@@ -44,7 +44,8 @@ import { getTrackingPermissionsAsync, requestTrackingPermissionsAsync } from "ex
 Colors.loadDesignTokens({ primaryColor: tw`bg-red-600`.backgroundColor });
 import * as SplashScreen from 'expo-splash-screen';
 import { fetchUser } from "./redux/api/auth";
-
+import KeyboardRegistry from "react-native-ui-lib/lib/components/Keyboard/KeyboardInput/KeyboardRegistry";
+import { KeyboardView } from "./components/features/Keyboard";
 
 SplashScreen.preventAutoHideAsync()
 function App() {
@@ -56,6 +57,7 @@ function App() {
   useEffect(() => {
     (async () => {
       try {
+        KeyboardRegistry.registerKeyboard('KeyboardView', () => KeyboardView);
         await store.dispatch(fetchUser())
         if (Platform.OS === 'ios') {
           const { granted } = await getTrackingPermissionsAsync();

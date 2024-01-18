@@ -189,7 +189,8 @@ export default function ListFood(props: ListFoodProps) {
               //@ts-ignore
               navigator.navigate(foodDetailScreen, {
                 id: r.fromApi ? undefined : r.id,
-                api_id: r.fromApi ? r.id : undefined
+                api_id: r.fromApi ? r.id : undefined,
+                category: r.category
               })
             }}
             style={tw`flex-row items-center px-2 my-3 w-12/12`}>

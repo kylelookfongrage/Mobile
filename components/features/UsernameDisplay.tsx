@@ -27,6 +27,9 @@ export default function UsernameDisplay(props: DefaultText['props'] & { disabled
         })
     }, [props.id])
     const navigator = useNavigation()
+    if (!username) {
+        return <View />
+    }
     if (props.image) {
         return <TouchableOpacity disabled={props.disabled} onPress={() => {
             if (!props.id) return;

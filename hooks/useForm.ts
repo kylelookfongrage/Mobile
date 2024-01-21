@@ -41,8 +41,9 @@ export function useForm<T extends object>(initialState: T, fetch?: () => Promise
                 return resetWithValue(action.payload)
             }
             case FormReducer.Update: {
-                let copy = {...draft}
-                return resetWithValue({...copy, ...action.payload})
+                console.log('draft')
+                let r = {...draft.state, ...action.payload}
+                return {didInitialize: true, state: r}
             }
             default: {
                 break;

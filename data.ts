@@ -950,7 +950,7 @@ export const ConversionChart = {
     'Teaspoon': 4.725,
     'Fluid Ounce': 29.5735,
     'Pound': 453.592,
-    'Cup (liquid)': { value: 236.588, aliases: [] },
+    'Cup (liquid)': 236.588,
     'Cup': 250,
     'Gallon': 3785.41,
     'Quart': 946.353,

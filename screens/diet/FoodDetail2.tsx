@@ -1,5 +1,5 @@
 import { View, Text } from '../../components/base/Themed'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { Tables } from '../../supabase/dao'
 import { FormReducer, useForm } from '../../hooks/useForm';
 import { BackButton } from '../../components/base/BackButton';
@@ -44,6 +44,20 @@ export default function FoodDetail2(props: {
     user_id: profile?.id,
     weight: 1
   })
+  
+  let servingSizes = useMemo(() => {
+    let obj = {...ConversionChart}
+    let data = form.servingSizes
+    if (data) {
+      if (data && typeof data === 'string') {
+        data = JSON.parse(data)
+      }
+      //@ts-ignore
+      obj = {...data, ...obj}
+    }
+    return obj
+  }, [form.servingSizes])
+  
   let [author, setAuthor] = useState('@' + profile?.username)
   let [initialValue, setInitialValue] = useState<number>(0)
   let [shouldShowKeyboard, setShouldShowKeyboard] = useState<boolean>(true)
@@ -61,6 +75,8 @@ export default function FoodDetail2(props: {
         //@ts-ignore
         setAuthor(data?.author?.username ? `@${data?.author?.username}` : "Menustat.org")
         setInitialValue(data?.quantity)
+        if (data.servingSizes && typeof data.servingSizes === 'string') {data.servingSizes = JSON.parse(data.servingSizes)}
+        if (data.otherNutrition && typeof data.otherNutrition === 'string') {data.otherNutrition = JSON.parse(data.otherNutrition)}
         formDispatch({ type: FormReducer.Set, payload: data })
       }
     } else if (props.api_id) {
@@ -113,22 +129,9 @@ export default function FoodDetail2(props: {
   }, [])
 
   useEffect(() => {
-  //   if (!Number.isNaN(Number(form.state.quantity)) && Number(form.state.quantity) > 0 && form.state.weight && form.state.servingSize) {
-  //     //@ts-ignore
-  //     const newWeight = form.state.servingSizes?.[form.state.servingSize] as number
-  //     if (!newWeight) return;
-  //     const nutritionCopy = nutritionInfo
-  //     const newNutrition = nutritionCopy.map((n) => {
-  //         const newFraction = (Number(n.value) * newWeight) / (form.state.weight || 1)
-  //         return { ...n, value: (newFraction * Number(form.state.quantity)).toFixed(2).toString() }
-  //     })
-  //     form.setForm('weight', newWeight * Number(form.state.quantity))
-  //     setNutritionInfo(newNutrition)
-  // }
+  
     let {weight, quantity, servingSize} = form;
-    console.log({weight, quantity, servingSize})
     //@ts-ignore
-    let servingSizes =  {...(form.servingSizes || {}), ...ConversionChart}
     let newWeight = servingSizes[servingSize] || 0
     if (!newWeight) return;
     if (!quantity) return;
@@ -146,7 +149,6 @@ export default function FoodDetail2(props: {
       otherNutrition: obj,
       weight: newWeight * quantity
     }
-    console.log(payload)
     formDispatch({type: FormReducer.Update, payload: payload})
   }, [form.servingSize, form.quantity])
 
@@ -204,7 +206,10 @@ export default function FoodDetail2(props: {
         <TextArea value={form.ingredients || ''} height={'$9'} textSize={16} id='ingredients' />
         <View style={tw`h-90`} />
       </ScrollView>
-      {(shouldShowInput || keyboardOpen) && <LogFoodKeyboardAccessory onOpen={() => setKeyboardOpen(true)} onClose={() => setKeyboardOpen(false)} initialValue={initialValue} onNumberChange={(v) => setForm('quantity', v)} value={form.quantity || 1} servingSizes={form.servingSizes} selectedServingSize={form.servingSize} onServingChange={(v) => setForm('servingSize', v)} />}
+      {(shouldShowInput || keyboardOpen) && <LogFoodKeyboardAccessory onOpen={() => setKeyboardOpen(true)} onClose={() => setKeyboardOpen(false)} initialValue={initialValue} onNumberChange={(v) => {
+        if (!keyboardOpen) return;
+        setForm('quantity', v)
+      }} value={form.quantity || 1} servingSizes={servingSizes} selectedServingSize={form.servingSize} onServingChange={(v) => setForm('servingSize', v)} />}
       {/* <SaveButton discludeBackground title='Save Food' safeArea /> */}
     </View>
   )

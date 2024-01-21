@@ -1,4 +1,4 @@
-import React, {Component, useEffect, useMemo, useRef, useState} from 'react';
+import React, {Component, useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import PropTypes, { string } from 'prop-types';
 import {TouchableOpacity, ScrollView, StyleSheet, Pressable, Dimensions, View as DView} from 'react-native';
 import { Keyboard } from 'react-native-ui-lib';
@@ -116,6 +116,7 @@ export const LogFoodKeyboardAccessory = (props: INutritionKeyboardProps) => {
             props.onClose && props.onClose()
         }
     }, [open])
+
     
     return <KeyboardAccessoryView
     renderContent={() => {

@@ -9,6 +9,7 @@ import tw from 'twrnc'
 import ThisAdHelpsKeepFree from '../../components/features/ThisAdHelpsKeepFree'
 import { useDispatch, useSelector } from '../../redux/store'
 import { changeDate } from '../../redux/reducers/progress'
+import { _tokens } from '../../tamagui.config'
 
 interface DateContextType {
     date: Moment;
@@ -57,7 +58,7 @@ export default function Calendar() {
                     [markedDate]: {
                         customStyles: {
                             container: {
-                                backgroundColor: 'red'
+                                backgroundColor: _tokens.primary900,
                             },
                             text: {
                                 color: 'white',

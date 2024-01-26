@@ -2,33 +2,49 @@ import { View, Text } from '../../components/base/Themed'
 import React, { useEffect, useMemo, useState } from 'react'
 import { Tables } from '../../supabase/dao'
 import { FormReducer, useForm } from '../../hooks/useForm';
-import { BackButton } from '../../components/base/BackButton';
 import useAsync from '../../hooks/useAsync';
 import { supabase } from '../../supabase';
 import { useSelector } from '../../redux/store';
-import { USDAFoodDetails, USDAMacroMapping, USDAMacroMappingKeys, USDANutrientToOtherNutrition, getEmojiByCategory } from '../../types/FoodApi';
-import { ConversionChart, ExpandedConversionChart, titleCase } from '../../data';
+import { USDAFoodCategories, USDAFoodDetails, USDAMacroMapping, USDAMacroMappingKeys, USDANutrientToOtherNutrition, getEmojiByCategory } from '../../types/FoodApi';
+import { ConversionChart, ExpandedConversionChart, MenuStatOtherNutritionToUSDANutrition, foodToFoodProgressAndMealIngredients, getMacroTargets, titleCase } from '../../data';
 import { XStack, YStack } from 'tamagui';
 import Spacer from '../../components/base/Spacer';
 import tw from 'twrnc'
-import UsernameDisplay from '../../components/features/UsernameDisplay';
-import SaveButton from '../../components/base/SaveButton';
 import { ScrollView, TextInput, TouchableWithoutFeedback } from 'react-native-gesture-handler';
-import { Dimensions, Keyboard, useColorScheme } from 'react-native';
+import { Dimensions, Keyboard, Pressable, useColorScheme } from 'react-native';
 import ManageButton from '../../components/features/ManageButton';
 import { TextArea } from '../../components/base/Input';
-import { KeyboardView, LogFoodKeyboardAccessory } from '../../components/features/Keyboard';
-import KeyboardAccessoryView from 'react-native-ui-lib/lib/components/Keyboard/KeyboardInput/KeyboardAccessoryView';
+import { LogFoodKeyboardAccessory } from '../../components/features/Keyboard';
+import { TouchableOpacity } from 'react-native-ui-lib';
+import { ExpoIcon } from '../../components/base/ExpoIcon';
+import { useNavigation } from '@react-navigation/native';
+import Selector from '../../components/base/Selector';
+import { MacronutrientBarProgress } from '../../components/features/MacronutrientBar';
+import { aggregateFoodAndMeals } from '../../redux/reducers/progress';
+import { _tokens } from '../../tamagui.config';
+import { ProgressDao } from '../../types/ProgressDao';
+import { ImpactGridItem } from '../../components/base/InputGridItem';
+import { formToIngredient, useMultiPartForm } from '../../redux/api/mpf';
+//@ts-ignore
+import { v4 as uuidv4 } from 'uuid';
+import NutritionLabel from '../../components/features/NutritionLabel';
+import Overlay from '../../components/screens/Overlay';
 
 export default function FoodDetail2(props: {
   id?: Tables['food']['Row']['id'];
   progress_id?: Tables['food_progress']['Row']
-  ingredient_id?: Tables['meal_ingredients']['Row']
+  ingredient_id?: Tables['meal_ingredients']['Row'];
+  tempId?: string;
+  mealId?: string;
   api_id?: string;
   category?: string
 }) {
-  let { id, progress_id, ingredient_id, api_id } = props;
   let { profile } = useSelector(x => x.auth)
+  let {foodProgress, mealProgress} = useSelector(x => x.progress)
+  let { protein: proteinConsumed, carbs: carbsConsumed, fat: fatConsumed, calories: caloriesConsumed } = aggregateFoodAndMeals(foodProgress, mealProgress) 
+  let {tdee, totalCarbsGrams, totalFatGrams, totalProteinGrams} = getMacroTargets(profile);
+  let [initialized, setInitialized] = useState<boolean>(false)
+  let isNewFood = (!props.id && !props.mealId && !props.api_id && !props.ingredient_id)
   let { state: form, setForm, dispatch: formDispatch } = useForm<Tables['food']['Insert']>({
     name: '',
     calories: 0,
@@ -59,11 +75,11 @@ export default function FoodDetail2(props: {
   }, [form.servingSizes])
   
   let [author, setAuthor] = useState('@' + profile?.username)
-  let [initialValue, setInitialValue] = useState<number>(0)
+  let [initialValue, setInitialValue] = useState<number>(1)
   let [shouldShowKeyboard, setShouldShowKeyboard] = useState<boolean>(true)
   let [keyboardOpen, setKeyboardOpen] = useState<boolean>(false)
   useAsync(async () => {
-    if (props.id || props.ingredient_id || props.progress_id) {
+    if ((props.id || props.ingredient_id || props.progress_id)) {
       // fetch food from database
       let selectString = '*, author:user_id(username)'
       if (props.ingredient_id) { }
@@ -75,8 +91,9 @@ export default function FoodDetail2(props: {
         //@ts-ignore
         setAuthor(data?.author?.username ? `@${data?.author?.username}` : "Menustat.org")
         setInitialValue(data?.quantity)
+        if (data.serving) {data.servingSize = data.serving} 
         if (data.servingSizes && typeof data.servingSizes === 'string') {data.servingSizes = JSON.parse(data.servingSizes)}
-        if (data.otherNutrition && typeof data.otherNutrition === 'string') {data.otherNutrition = JSON.parse(data.otherNutrition)}
+        data.otherNutrition = MenuStatOtherNutritionToUSDANutrition(data.otherNutrition)
         formDispatch({ type: FormReducer.Set, payload: data })
       }
     } else if (props.api_id) {
@@ -111,13 +128,29 @@ export default function FoodDetail2(props: {
         formDispatch({ type: FormReducer.Set, payload: payload })
         setAuthor('USDA Food Database')
         setInitialValue(y.servingSize || 1,)
-
-      }
-    }
+      } 
+    } else if (props.mealId && props.tempId) {
+        console.log('fetching data')
+        let potentialData = (multiPartForm.data || []).filter(x => x.tempId == props.tempId)?.[0]
+        console.log('potential data', potentialData)
+        if (potentialData) {
+            //@ts-ignore
+            if (potentialData.serving) {potentialData.servingSize = potentialData.serving} 
+            if (potentialData.servingSizes && typeof potentialData.servingSizes === 'string') {potentialData.servingSizes = JSON.parse(potentialData.servingSizes)}
+            console.log('setting form')
+            formDispatch({ type: FormReducer.Set, payload: potentialData })
+            console.log('form set to', potentialData)
+            setInitialValue(potentialData.quantity || 1,)
+        }
+    } 
+    setInitialized(true)
   }, [])
   let dm = useColorScheme() === 'dark'
+  let s = Dimensions.get('screen')
   let [shouldShowInput, setShouldShowInput] = useState<boolean>(true);
-
+  let searchOptions = isNewFood ? [] : ['Overview', 'Nutrition Facts']
+  let [selectedOption, setSelectedOption] = useState<typeof searchOptions[number]>(searchOptions[0])
+  console.log('protein', form.protein)
   useEffect(() => {
     let sub = Keyboard.addListener('keyboardWillShow', () => {
       setShouldShowInput(false)
@@ -125,11 +158,11 @@ export default function FoodDetail2(props: {
     let sub2 = Keyboard.addListener('keyboardWillHide', () => {
       setShouldShowInput(true)
     })
-    return () => {Keyboard.removeAllListeners('keyboardWillShow'); Keyboard.removeAllListeners('keyboardWillHide');}
+    return () => {Keyboard.removeAllListeners('keyboardWillShow')}
   }, [])
 
   useEffect(() => {
-  
+    if (!initialized) return;
     let {weight, quantity, servingSize} = form;
     //@ts-ignore
     let newWeight = servingSizes[servingSize] || 0
@@ -149,64 +182,139 @@ export default function FoodDetail2(props: {
       otherNutrition: obj,
       weight: newWeight * quantity
     }
+    console.log('updating form with ', payload)
     formDispatch({type: FormReducer.Update, payload: payload})
   }, [form.servingSize, form.quantity])
+
+
+  let n = useNavigation()
+  let pdao = ProgressDao(false)
+  let multiPartForm = useMultiPartForm('meals', props.mealId || '')
+  let [showCategory, setShowCategory] = useState(false)
+
+  const onSubmit = async () => {
+    let logging = props.progress_id || ((props.api_id || props.id) && !props.mealId)
+    if (logging) {
+        //@ts-ignore -- Will create or update a food progress
+        let obj: Tables['food_progress']['Insert'] = foodToFoodProgressAndMealIngredients(form, profile)
+        if (props.progress_id) {obj.id = props.progress_id}
+        let res = await pdao.saveProgress('food_progress', obj)
+        if (res) {
+            n.pop()
+        }
+        
+    } else if (props.mealId) {
+        let existingIngredients = [...(multiPartForm.data|| [])]
+        if (props.tempId) {
+            // update existing meal ingredient
+            existingIngredients = existingIngredients.map(x => {
+                if (x.tempId === props.tempId) {
+                    return formToIngredient({ ...form, id: (Number(props.id) || undefined) }, { calories: form.calories || 0, protein: form.protein || 0, carbs: form.carbs || 0, fat: form.fat || 0, otherNutrition: form.otherNutrition || {}, tempId: props.tempId || '' })
+                }
+                return x
+            })
+        } else {
+            existingIngredients.push(formToIngredient({ ...form }, { calories: form.calories || 0, protein: form.protein || 0, carbs: form.carbs || 0, fat: form.fat || 0, otherNutrition: form.otherNutrition || {}, tempId: uuidv4() }))
+        }
+        multiPartForm.upsert(existingIngredients)
+        n.pop()
+    } else {
+        let {data, error} = await supabase.from('food').insert(form).select().single()
+        if (data) {
+            n.pop()
+        }
+    }
+  }
 
   return (
     <View includeBackground style={{ flex: 1 }}>
       <Spacer />
-      <XStack alignItems='flex-start' w={'100%'} px='$3'>
-        <Text h2>{getEmojiByCategory(form?.category || undefined)}</Text>
+      <XStack alignItems='flex-start' justifyContent='space-between' px='$3'>
+        <XStack alignItems='flex-start' w='93%'>
+        <Text onPress={() => {
+          setShowCategory(true)
+        }} h2>{getEmojiByCategory(form?.category || undefined)}</Text>
         <YStack ml='$2'>
-          <TextInput value={form.name} multiline numberOfLines={3} onChangeText={v => setForm('name', v)} placeholder='New Food' style={{ ...tw`text-${dm ? 'white' : "black"}`, fontFamily: 'Urbanist_700Bold', fontSize: 20, width: Dimensions.get('screen').width * 0.8 }} />
+          <TextInput placeholderTextColor={'gray'} value={form.name} multiline numberOfLines={3} onChangeText={v => setForm('name', v)} placeholder='New Food' style={{ ...tw`text-${dm ? 'white' : "black"}`, fontFamily: 'Urbanist_700Bold', fontSize: 18, width: Dimensions.get('screen').width * 0.7 }} />
           <Text style={tw`text-gray-500`}>{author}</Text>
         </YStack>
+        </XStack>
+        <TouchableOpacity onPress={() => n.pop()} style={tw`h-7 w-7 rounded-full bg-gray-500/50 items-center justify-center`}>
+            <ExpoIcon name='close' iconName='ion' color='black' size={20}/>
+        </TouchableOpacity>
       </XStack>
       <Spacer />
-      <Text>{form.quantity}</Text>
-      <ScrollView style={tw`px-4`} showsVerticalScrollIndicator={false}>
-        <YStack>
-          {USDAMacroMappingKeys.map(x => {
-            let obj = USDAMacroMapping.get(x)
-            if (!obj) return <View key={x} />
-            let amount: number | null | undefined = null
-            if (x == 208) { amount = form.calories }
-            else if (x == 204) { amount = form.fat }
-            else if (x == 205) { amount = form.carbs }
-            else if (x == 203) { amount = form.protein }
-            else {
-              //@ts-ignore
-              amount = (form?.otherNutrition || {})[x]
-            }
-            let border = obj.border ? `border-b-${obj.border} ` + (dm ? "border-white" : 'border-black') : ''
-            return <View key={x} style={tw`${border} py-1 flex-row items-center justify-between`}>
-              <Text h4={obj.xl} xl={!obj.xl} weight={obj.bolded ? 'bold' : 'thin'}>{Array((obj.indented || 0) * 5).fill(' ').join('')}{obj.name} </Text>
-              <XStack alignItems='center' justifyContent='flex-start'>
-                <TextInput onChangeText={(_v) => {
-                  let v = _v.replace(/[^0-9]/g, '')
-                  let nv = Number(v) || undefined
-                  if (x == 208) { setForm('calories', nv) }
-                  else if (x == 204) { setForm('fat', nv) }
-                  else if (x == 205) { setForm('carbs', nv) }
-                  else if (x == 203) { setForm('protein', nv) }
-                  else {
-                    let obj = form.otherNutrition ? {...form.otherNutrition} : {}
-                    obj[x] = nv 
-                    setForm('otherNutrition', obj)
-                  }
-                }} placeholder='0' value={amount ? amount.toFixed() : ''} keyboardType='numeric' style={{ ...tw`p-.5 text-${dm ? 'white' : 'black'}`, fontFamily: 'Urbanist_700Bold', fontSize: obj.xl ? 24 : 18 }} />
-                <Text lg={obj.xl} style={tw`text-gray-500`}> {obj.unit}</Text>
-              </XStack>
-            </View>
-          })}
-
-        </YStack>
+      <Selector searchOptions={searchOptions} selectedOption={selectedOption} onPress={setSelectedOption} />
+      <Spacer />
+      {(selectedOption === 'Overview') && <ScrollView showsVerticalScrollIndicator={false}>
+      <ManageButton viewStyle={tw`px-4`} title='Nutrition Overview' buttonText=' '/>
+      <Spacer sm/>
+        <XStack justifyContent='space-between' alignItems='center' px='$4'>
+            <YStack alignItems='center'>
+                <Text h1={(form.calories || 0) < 10000} h2={(form.calories || 0) > 9999} weight='bold'>{form.calories?.toFixed()}</Text>
+                <Text lg weight='semibold' style={tw`text-gray-500`}>Calories</Text>
+            </YStack>
+            <YStack px='$2'>
+                        <MacronutrientBarProgress protein weight={(form.protein) || 0} totalEnergy={form.calories || 1} />
+                        <MacronutrientBarProgress carbs weight={(form.carbs) || 0} totalEnergy={(form.calories) || 1} />
+                        <MacronutrientBarProgress fat weight={(form.fat) || 0} totalEnergy={(form.calories) || 1} />
+            </YStack>
+        </XStack>
+        <Spacer divider />
+        <ManageButton viewStyle={tw`px-4`} title='Impact to Progress' buttonText=' '/>
+        <Spacer sm />
+        <ImpactGridItem header t2='Limit' t3='Old' t4='New' />
+        <ImpactGridItem t1='Calories (kcal)' t2={(tdee || 0).toFixed()} t3={(caloriesConsumed || 0).toFixed()} t3Color={caloriesConsumed > tdee ? _tokens.red : undefined} t4={((caloriesConsumed || 0) + (form.calories || 0)).toFixed()} t4Color={((caloriesConsumed || 0) + (form.calories || 0)) > tdee ? _tokens.red : _tokens.green} />
+        <ImpactGridItem t1='Protein (g)' t2={(totalProteinGrams || 0).toFixed()} t3={(proteinConsumed || 0).toFixed()} t3Color={proteinConsumed > totalProteinGrams ? _tokens.red : undefined} t4={((proteinConsumed || 0) + (form.protein || 0)).toFixed()} t4Color={((proteinConsumed || 0) + (form.protein || 0)) > totalProteinGrams ? _tokens.red : _tokens.green} />
+        <ImpactGridItem t1='Carbs (g)' t2={(totalCarbsGrams || 0).toFixed()} t3={(carbsConsumed || 0).toFixed()} t3Color={carbsConsumed > totalCarbsGrams ? _tokens.red : undefined} t4={((carbsConsumed || 0) + (form.carbs || 0)).toFixed()} t4Color={((carbsConsumed || 0) + (form.carbs || 0)) > totalCarbsGrams ? _tokens.red : _tokens.green} />
+        <ImpactGridItem t1='Fats (g)' t2={(totalFatGrams || 0).toFixed()} t3={(fatConsumed || 0).toFixed()} t3Color={fatConsumed > totalFatGrams ? _tokens.red : undefined} t4={((fatConsumed || 0) + (form.fat || 0)).toFixed()} t4Color={((fatConsumed || 0) + (form.fat || 0)) > totalFatGrams ? _tokens.red : _tokens.green} />
+        <Spacer />
+        </ScrollView>}
+     {(selectedOption === 'Nutrition Facts' || isNewFood) &&  <ScrollView style={tw`px-4`} showsVerticalScrollIndicator={false}>
+        <NutritionLabel
+          calories={form.calories}
+          protein={form.protein}
+          carbs={form.carbs}
+          fat={form.fat}
+          otherNutrition={form.otherNutrition}
+          onCaloriesChange={v => setForm('calories', v)}
+          onProteinChange={v => setForm('protein', v)}
+          onCarbsChange={v => setForm('carbs', v)}
+          onFatChange={v => setForm('fat', v)}
+          onOtherNutritionChange={v => setForm('otherNutrition', v)}
+         />
         <Spacer />
         <ManageButton title='Ingredients' buttonText=' ' />
         <TextArea value={form.ingredients || ''} height={'$9'} textSize={16} id='ingredients' />
         <View style={tw`h-90`} />
-      </ScrollView>
-      {(shouldShowInput || keyboardOpen) && <LogFoodKeyboardAccessory onOpen={() => setKeyboardOpen(true)} onClose={() => setKeyboardOpen(false)} initialValue={initialValue} onNumberChange={(v) => {
+      </ScrollView>}
+      <Overlay excludeBanner visible={showCategory} onDismiss={() => setShowCategory(false)}>
+        <ManageButton buttonText='Done' title='Food Category' onPress={() => setShowCategory(false)} />
+        <Spacer sm/>
+        <ScrollView showsVerticalScrollIndicator={false}>
+        {Object.keys(USDAFoodCategories).map(x => {
+          let selected = form.category === x
+          return <Pressable onPress={() => {
+            setForm('category', x)
+          }} style={tw`py-1 flex-row items-center justify-between`} key={x}>
+            <XStack alignItems='center'>
+            <Text lg>{USDAFoodCategories[x]}</Text>
+            <Spacer horizontal sm/>
+            <Text weight={selected ? 'bold' : 'regular'}>{x}</Text>
+            </XStack>
+            {selected && <ExpoIcon name='check' iconName='feather' size={20} color={_tokens.primary900} />}
+          </Pressable>
+        })}
+        <Spacer xl/>
+        <Spacer xl/>
+        </ScrollView>
+      </Overlay>
+      {(shouldShowInput || keyboardOpen) && <LogFoodKeyboardAccessory onEnterPress={onSubmit} onOpen={() => setKeyboardOpen(true)} onClose={() => {
+        let amt = form.quantity || 0
+        setInitialValue(Math.round(amt) < amt ? Number(amt.toFixed(2)) : amt)
+        setKeyboardOpen(false)
+      }} initialValue={initialValue} onNumberChange={(v) => {
+        console.log(keyboardOpen, v)
         if (!keyboardOpen) return;
         setForm('quantity', v)
       }} value={form.quantity || 1} servingSizes={servingSizes} selectedServingSize={form.servingSize} onServingChange={(v) => setForm('servingSize', v)} />}
@@ -214,3 +322,4 @@ export default function FoodDetail2(props: {
     </View>
   )
 }
+

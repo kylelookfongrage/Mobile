@@ -700,6 +700,7 @@ export interface Database {
           barcode: string | null
           calories: number | null
           carbs: number | null
+          category: string | null
           created_at: string
           edamamId: string | null
           fat: number | null
@@ -722,6 +723,7 @@ export interface Database {
           barcode?: string | null
           calories?: number | null
           carbs?: number | null
+          category?: string | null
           created_at?: string
           edamamId?: string | null
           fat?: number | null
@@ -744,6 +746,7 @@ export interface Database {
           barcode?: string | null
           calories?: number | null
           carbs?: number | null
+          category?: string | null
           created_at?: string
           edamamId?: string | null
           fat?: number | null
@@ -776,10 +779,13 @@ export interface Database {
         Row: {
           calories: number | null
           carbs: number | null
+          category: string | null
           created_at: string
           fat: number | null
           food_id: number | null
           id: number
+          ingredients: string | null
+          name: string | null
           otherNutrition: Json | null
           progress_id: string
           protein: number | null
@@ -792,10 +798,13 @@ export interface Database {
         Insert: {
           calories?: number | null
           carbs?: number | null
+          category?: string | null
           created_at?: string
           fat?: number | null
           food_id?: number | null
           id?: number
+          ingredients?: string | null
+          name?: string | null
           otherNutrition?: Json | null
           progress_id: string
           protein?: number | null
@@ -808,10 +817,13 @@ export interface Database {
         Update: {
           calories?: number | null
           carbs?: number | null
+          category?: string | null
           created_at?: string
           fat?: number | null
           food_id?: number | null
           id?: number
+          ingredients?: string | null
+          name?: string | null
           otherNutrition?: Json | null
           progress_id?: string
           protein?: number | null
@@ -955,11 +967,14 @@ export interface Database {
         Row: {
           calories: number | null
           carbs: number | null
+          category: string | null
           created_at: string
           fat: number | null
           food_id: number | null
           id: number
+          ingredients: string | null
           meal_id: number | null
+          name: string | null
           otherNutrition: Json | null
           protein: number | null
           quantity: number | null
@@ -970,11 +985,14 @@ export interface Database {
         Insert: {
           calories?: number | null
           carbs?: number | null
+          category?: string | null
           created_at?: string
           fat?: number | null
           food_id?: number | null
           id?: number
+          ingredients?: string | null
           meal_id?: number | null
+          name?: string | null
           otherNutrition?: Json | null
           protein?: number | null
           quantity?: number | null
@@ -985,11 +1003,14 @@ export interface Database {
         Update: {
           calories?: number | null
           carbs?: number | null
+          category?: string | null
           created_at?: string
           fat?: number | null
           food_id?: number | null
           id?: number
+          ingredients?: string | null
           meal_id?: number | null
+          name?: string | null
           otherNutrition?: Json | null
           protein?: number | null
           quantity?: number | null
@@ -1539,30 +1560,30 @@ export interface Database {
       task_progress: {
         Row: {
           created_at: string
+          date: string | null
           id: number
           second_meal_id: number | null
           second_workout_id: number | null
           task_id: number | null
           user_id: string | null
-          date: string | null
         }
         Insert: {
           created_at?: string
+          date?: string | null
           id?: number
           second_meal_id?: number | null
           second_workout_id?: number | null
           task_id?: number | null
           user_id?: string | null
-          date?: string | null
         }
         Update: {
           created_at?: string
+          date?: string | null
           id?: number
           second_meal_id?: number | null
           second_workout_id?: number | null
           task_id?: number | null
           user_id?: string | null
-          date?: string | null
         }
         Relationships: [
           {

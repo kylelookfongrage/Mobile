@@ -7,6 +7,7 @@ import tw from 'twrnc'
 import { TouchableOpacity } from "react-native-gesture-handler";
 import { defaultImage, getMatchingNavigationScreen, substringForLists, toHHMMSS } from "../../data";
 import SupabaseImage from "../base/SupabaseImage";
+import { _tokens } from "../../tamagui.config";
 
 export interface UserInputs {
     backgroundColor?: string;
@@ -39,11 +40,11 @@ const presetDashboardComponents = {
         },
         "Intake Progress": (props1: DashboardInputs, props: UserInputs) => {
             let { water, waterGoal } = props1;
-            return <SummaryListItem title='Water' type='circle-progress' screen='LogWater' {...props} progressValue={(water || 0)} progressTotal={(waterGoal || 1)} suffix='fl oz' description={`Goal: ${waterGoal?.toFixed()} fl oz`} />
+            return <SummaryListItem title='Water' type='circle-progress' screen='LogWater' {...props} progressColor={_tokens.blue} progressValue={(water || 0)} progressTotal={(waterGoal || 1)} suffix='fl oz' description={`Goal: ${waterGoal?.toFixed()} fl oz`} />
         },
         "Intake Progress Bar": (props1: DashboardInputs, props: UserInputs) => {
             let { water, waterGoal } = props1;
-            return <SummaryListItem title='Water' type='progress' screen='LogWater' {...props} progressValue={(water || 0)} progressTotal={(waterGoal || 1)} suffix='Total (fl oz)' description={`Goal: ${waterGoal?.toFixed()} fl oz`} />
+            return <SummaryListItem title='Water' type='progress' screen='LogWater' {...props} progressColor={_tokens.blue} progressValue={(water || 0)} progressTotal={(waterGoal || 1)} suffix='Total (fl oz)' description={`Goal: ${waterGoal?.toFixed()} fl oz`} />
         }
     },
     'Nutrition': {

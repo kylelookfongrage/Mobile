@@ -99,7 +99,7 @@ const MealSearchResult = (props: { idx: number, item: Tables['meal']['Row'], onP
     }}>
         {/* @ts-ignore */}
         <View>
-            <Text style={tw`text-red-500 text-xs`}>@{r?.author?.username || 'rage'}</Text>
+            <Text style={tw`text-gray-500 text-xs`}>@{r?.author?.username || 'rage'}</Text>
             <View style={tw`flex-row items-center justify-between w-12/12`}>
                 <Text weight='semibold' style={tw`text-xs text-gray-500`}>{r.calories?.toFixed()} kcal</Text>
                 <Text weight='semibold' style={tw`text-xs text-gray-500`}>P: {r.protein?.toFixed()}g</Text>

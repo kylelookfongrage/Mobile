@@ -37,7 +37,7 @@ export default function Subscribees(props: SubscribeesProps) {
         <Spacer />
        <SearchBar onSearch={fetchSubscribees} />
         {users.length === 0 && <Text style={tw`text-center mt-9`}>There are no subscribers</Text>}
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={tw`px-4 mt-6 pb-40`}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={tw`px-4 mt-1 pb-40`}>
         {users.map((item) => {
             if (!item.user) return <View key={item.id}/>
             let usernameText = item.user.username + ' '

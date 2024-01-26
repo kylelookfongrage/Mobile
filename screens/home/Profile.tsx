@@ -224,7 +224,7 @@ export default function Profile(props: ProfileProps) {
             </XStack>
             <Spacer />
             <XStack alignItems='center' justifyContent='center'>
-                <Button pill width={'60%'} 
+                <Button pill width={'60%'} height={'$4'} 
                     onPress={isCurrentUsersProfile ? () => navigator.navigate('UserBio') : onFollowingPress} 
                     title={!isCurrentUsersProfile ? (isFollowing ? 'Unsubscribe' : 'Subscribe') : "Edit Profile"} 
                     type={!isCurrentUsersProfile ? (isFollowing ? 'outline' : 'primary') : 'light'} />
@@ -232,7 +232,7 @@ export default function Profile(props: ProfileProps) {
                 <IconButton iconName='Send' circle size={'$4'} type='dark' />
             </XStack>
             <Spacer />
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{minHeight: 50, ...tw`ml-3 mr-3`}}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{minHeight: 50, ...tw`px-1`}}>
             {Object.keys(options).map(x => {
                 let selected = selectedOption === x
                 return <TouchableOpacity key={x} style={tw`mr-2`} onPress={() => setSelectedOption(x)}>
@@ -256,7 +256,7 @@ export default function Profile(props: ProfileProps) {
                 </YStack>}
             {/* @ts-ignore */}
             {options[selectedOption].map(x => {
-                return <SearchResult style={tw`px-3 flex-row items-center`} key={x.id} name={x.title || x.name} img={x.img || x.preview || x.image || defaultImage} onPress={() => {
+                return <SearchResult style={tw`px-1 flex-row items-center`} key={x.id} name={x.title || x.name} img={x.img || x.preview || x.image || defaultImage} onPress={() => {
                     if (!screen[0]) return;
                     let s = getMatchingNavigationScreen(screen[0], navigator)
                     //@ts-ignore

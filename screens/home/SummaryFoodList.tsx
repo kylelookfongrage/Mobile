@@ -13,10 +13,15 @@ import { categoryMapping } from '../diet/ListFood'
 import ThisAdHelpsKeepFree from '../../components/features/ThisAdHelpsKeepFree'
 import { ProgressDao } from '../../types/ProgressDao'
 import SupabaseImage from '../../components/base/SupabaseImage'
+import { getEmojiByCategory } from '../../types/FoodApi'
+import ManageButton from '../../components/features/ManageButton'
+import Spacer from '../../components/base/Spacer'
+import { ImpactGridItem } from '../../components/base/InputGridItem'
+import { _tokens } from '../../tamagui.config'
 
 export default function SummaryFoodList() {
     const { progressId, userId, profile } = useCommonAWSIds()
-    const totalCalories = profile?.tdee || 2000
+    const tdee = profile?.tdee || 2000
     const dm = useColorScheme() === 'dark'
     const dao = ProgressDao()
     const [food_progress, meal_progress] = [dao.foodProgress, dao.mealProgress]
@@ -25,145 +30,41 @@ export default function SummaryFoodList() {
         return {...x, meal_ingredients: x.meal_ingredients.map(z => ({...z,consumed_weight: x.consumedWeight, total_weight: x.totalWeight}))}
     })
     let ingredients=__ingredients.flatMap(x => x.meal_ingredients)
-    const caloriesFromFoodAndMeals = food_progress.reduce((prev, c) => prev + (c.calories || 0), 0) + ingredients.reduce((prev, curr) => prev + (curr.calories || 0) * ((curr.consumed_weight || 1) / (curr.total_weight || 1)), 0)
-    const proteinFromFoodAndMeals = food_progress.reduce((prev, c) => prev + (c.protein || 0), 0) + ingredients.reduce((prev, curr) => prev + (curr.protein || 0) * ((curr.consumed_weight || 1) / (curr.total_weight || 1)), 0)
-    const carbsFromFoodAndMeals = food_progress.reduce((prev, c) => prev + (c.carbs || 0), 0) + ingredients.reduce((prev, curr) => prev + (curr.carbs || 0) * ((curr.consumed_weight || 1) / (curr.total_weight || 1)), 0)
-    const fatFromFoodAndMeals = food_progress.reduce((prev, c) => prev + (c.fat || 0), 0) + ingredients.reduce((prev, curr) => prev + (curr.fat || 0) * ((curr.consumed_weight || 1) / (curr.total_weight || 1)), 0)
+    const caloriesConsumed = food_progress.reduce((prev, c) => prev + (c.calories || 0), 0) + ingredients.reduce((prev, curr) => prev + (curr.calories || 0) * ((curr.consumed_weight || 1) / (curr.total_weight || 1)), 0)
+    const proteinConsumed = food_progress.reduce((prev, c) => prev + (c.protein || 0), 0) + ingredients.reduce((prev, curr) => prev + (curr.protein || 0) * ((curr.consumed_weight || 1) / (curr.total_weight || 1)), 0)
+    const carbsConsumed = food_progress.reduce((prev, c) => prev + (c.carbs || 0), 0) + ingredients.reduce((prev, curr) => prev + (curr.carbs || 0) * ((curr.consumed_weight || 1) / (curr.total_weight || 1)), 0)
+    const fatConsumed = food_progress.reduce((prev, c) => prev + (c.fat || 0), 0) + ingredients.reduce((prev, curr) => prev + (curr.fat || 0) * ((curr.consumed_weight || 1) / (curr.total_weight || 1)), 0)
   
     const navigator = useNavigation()
 
-    const totalProteinGrams = profile?.proteinLimit || (totalCalories * 0.4) / 4
-    const totalFatGrams = profile?.fatLimit || (totalCalories * 0.3) / 9
-    const totalCarbsGrams = profile?.carbLimit || (totalCalories * 0.3) / 4
-    const cpRef = React.useRef<AnimatedCircularProgress | null>(null)
-    const proteinRef = React.useRef<AnimatedCircularProgress | null>(null)
-    const carbsRef = React.useRef<AnimatedCircularProgress | null>(null)
-    const fatRef = React.useRef<AnimatedCircularProgress | null>(null)
-    React.useEffect(() => {
-        cpRef.current?.animate((caloriesFromFoodAndMeals / totalCalories) * 100, 800)
-        proteinRef.current?.animate((totalProteinGrams ? proteinFromFoodAndMeals / totalProteinGrams : 0) * 100, 800)
-        carbsRef.current?.animate((totalCarbsGrams ? carbsFromFoodAndMeals / totalProteinGrams : 0) * 100, 800)
-        fatRef.current?.animate((totalFatGrams ? fatFromFoodAndMeals / totalProteinGrams : 0) * 100, 800)
+    const totalProteinGrams = profile?.proteinLimit || (tdee * 0.4) / 4
+    const totalFatGrams = profile?.fatLimit || (tdee * 0.3) / 9
+    const totalCarbsGrams = profile?.carbLimit || (tdee * 0.3) / 4
+    const caloriePercent = (caloriesConsumed / tdee) * 100
+    const totalProteinPercent = (proteinConsumed / totalProteinGrams) * 100
+    const totalCarbsPercent = (carbsConsumed / totalCarbsGrams) * 100
+    const totalFatPercent = (fatConsumed / totalFatGrams) * 100
 
-    }, [caloriesFromFoodAndMeals, totalCalories])
+    
     return (
         <View style={{ flex: 1 }} includeBackground>
             <BackButton name='Food and Meals' />
-            <ScrollView style={tw`px-4 mt-4`} showsVerticalScrollIndicator={false}>
-                <View card style={[tw`w-12/12 h-90 shadow-xl rounded-lg items-center justify-evenly`]}>
-                    <Text style={tw`text-lg mt-3`} weight='semibold'>Daily Macros</Text>
-                    {/* {presetMacros && <Text style={tw`text-gray-500`} weight='semibold'>{presetMacros} Diet</Text>} */}
-                    <AnimatedCircularProgress
-                        size={170}
-                        width={6}
-                        rotation={270}
-                        fill={0}
-                        arcSweepAngle={180}
-                        lineCap='round'
-                        tintColor="#D22B2B"
-                        backgroundColor={!dm ? '#C0C0C0': '#808080'}
-                        ref={cpRef}
-                    >
-                        {
-                            (fill) => (
-                                <View style={tw`items-center -mt-9`}>
-                                    <View style={tw`flex-row items-center`}>
-                                        <Text style={tw`text-lg`} weight='semibold'>{Math.round(caloriesFromFoodAndMeals).toFixed()}{<Text style={tw`text-xs`} weight='semibold'>kcal</Text>}</Text>
-                                    </View>
-                                    <Text>consumed</Text>
-                                </View>
-                            )
-                        }
-                    </AnimatedCircularProgress>
-                    <View style={tw`flex-row items-center justify-around w-12/12 -mt-12 mb-4`}>
-                        <View>
-                        <AnimatedCircularProgress
-                            size={80}
-                            width={3}
-                            rotation={0}
-                            fill={0}
-                            lineCap='round'
-                            tintColor="#F17112"
-                            backgroundColor={!dm ? '#B2BEB5' : '#B2BEB5'}
-                            ref={proteinRef}
-                        >
-                            {
-                                (fill) => (
-                                    <View style={tw`items-center`}>
-                                        <View style={tw`flex-row items-center`}>
-                                            <Text h3>{Math.round(proteinFromFoodAndMeals).toFixed()}</Text>
-                                            <Text xs>g</Text>
-                                        </View>
-                                        <Text xs>{fill.toFixed()}%</Text>
-                                    </View>
-                                )
-                            }
-                        </AnimatedCircularProgress>
-                        <Text style={tw`text-center mt-4`} weight='semibold'>Protein</Text>
-                        </View>
-                        <View>
-                        <AnimatedCircularProgress
-                            size={80}
-                            width={3}
-                            rotation={0}
-                            fill={0}
-                            lineCap='round'
-                            tintColor="#0FC40F"
-                            backgroundColor={!dm ? '#B2BEB5' : '#B2BEB5'}
-                            ref={carbsRef}
-                        >
-                            {
-                                (fill) => (
-                                    <View style={tw`items-center`}>
-                                        <View style={tw`flex-row items-center`}>
-                                            <Text h3>{Math.round(carbsFromFoodAndMeals).toFixed()}</Text>
-                                            <Text xs>g</Text>
-                                        </View>
-                                        <Text xs>{fill.toFixed()}%</Text>
-                                    </View>
-                                )
-                            }
-                        </AnimatedCircularProgress>
-                        <Text style={tw`text-center mt-4`} weight='semibold'>Carbs</Text>
-                        </View>
-                        <View>
-                        <AnimatedCircularProgress
-                            size={80}
-                            width={3}
-                            rotation={0}
-                            fill={0}
-                            lineCap='round'
-                            tintColor="#E8BC19"
-                            backgroundColor={!dm ? '#B2BEB5' : '#B2BEB5'}
-                            ref={fatRef}
-                        >
-                            {
-                                (fill) => (
-                                    <View style={tw`items-center`}>
-                                        <View style={tw`flex-row items-center`}>
-                                            <Text h3>{Math.round(fatFromFoodAndMeals).toFixed()}</Text>
-                                            <Text xs>g</Text>
-                                        </View>
-                                        <Text xs>{fill.toFixed()}%</Text>
-                                    </View>
-                                )
-                            }
-                        </AnimatedCircularProgress>
-                        <Text style={tw`text-center mt-4`} weight='semibold'>Fat</Text>
-                        </View>
-                    </View>
+            <Spacer />
+            <View style={[tw`shadow-xl rounded-lg items-center justify-center self-center bg-transparent`]}>
+                <ImpactGridItem header t2='Goal' t3='Consumed' t4='%' />
+        <ImpactGridItem t1='Calories (kcal)' t2={(tdee || 0).toFixed()} t3={(caloriesConsumed || 0).toFixed()} t3Color={caloriesConsumed > tdee ? _tokens.red : undefined} t4={caloriePercent.toFixed()} t4Color={caloriesConsumed > tdee ? _tokens.red : _tokens.green} />
+        <ImpactGridItem t1='Protein (g)' t2={(totalProteinGrams || 0).toFixed()} t3={(proteinConsumed || 0).toFixed()} t3Color={proteinConsumed > totalProteinGrams ? _tokens.red : undefined} t4={totalProteinPercent.toFixed()} t4Color={proteinConsumed > totalProteinGrams ? _tokens.red : _tokens.green} />
+        <ImpactGridItem t1='Carbs (g)' t2={(totalCarbsGrams || 0).toFixed()} t3={(carbsConsumed || 0).toFixed()} t3Color={carbsConsumed > totalCarbsGrams ? _tokens.red : undefined} t4={totalCarbsPercent.toFixed()} t4Color={carbsConsumed > totalCarbsGrams ? _tokens.red : _tokens.green} />
+        <ImpactGridItem t1='Fats (g)' t2={(totalFatGrams || 0).toFixed()} t3={(fatConsumed || 0).toFixed()} t3Color={fatConsumed > totalFatGrams ? _tokens.red : undefined} t4={totalFatPercent.toFixed()} t4Color={fatConsumed > totalFatGrams ? _tokens.red : _tokens.green} />
                 </View>
-
-                <View style={tw`flex-row items-center justify-between mt-4`}>
-                    <Text style={tw`text-lg`} weight='semibold'>Food</Text>
-                    <TouchableOpacity style={tw`py-4`} onPress={() => {
+            <ScrollView style={tw`px-4 mt-4`} showsVerticalScrollIndicator={false}>
+                
+                <Spacer />
+                <ManageButton title='Food' buttonText='Add Food'  onPress={() => {
                         const screen = getMatchingNavigationScreen('ListFood', navigator)
                         //@ts-ignore
                         navigator.navigate(screen, { progressId: progressId })
-                    }}>
-                        <Text style={tw`text-red-500`} weight='semibold'>Add Food</Text>
-                    </TouchableOpacity>
-                </View>
+                    }} />
                 {food_progress.length === 0 && <Text style={tw`text-center my-6`}>There is no food to display, add some!</Text>}
                 {food_progress.map(ingr => {
                     return <Swipeable renderRightActions={() => {
@@ -181,15 +82,11 @@ export default function SummaryFoodList() {
                             <TouchableOpacity onPress={() => {
                                 const screen = getMatchingNavigationScreen('FoodDetail', navigator)
                                 //@ts-ignore
-                                navigator.navigate(screen, { id: ingr.food_id, progressId: ingr.id, img: ingr.img })
+                                navigator.navigate(screen, { progress_id: ingr.id })
                             }} style={tw`flex-row items-center`}>
-                                {ingr.food.image && <SupabaseImage uri={ingr.food.image} style='items-center justify-center h-12 w-12 rounded-lg' />}
-                                {(!ingr.food.image) && <View style={[tw`items-center h-12 w-12 rounded-lg justify-center ${dm ? 'bg-gray-400' : 'bg-gray-200'}`]}>
-                                    {/* @ts-ignore */}
-                                    <Text style={tw`text-2xl`}>{categoryMapping['generic foods']}</Text>
-                                    </View>}
+                                <Text h3 style={tw`mr-2`}>{getEmojiByCategory(ingr.category)}</Text>
                                 <View style={tw`ml-2 max-w-10/12`}>
-                                    <Text weight='semibold' style={tw`mb-1`}>{ingr.food.name}</Text>
+                                    <Text weight='semibold' lg style={tw`mb-1`}>{ingr.name}</Text>
                                     <View style={tw`flex-row items-center`}>
                                         <Text style={tw`pr-2 text-gray-500`}>{(ingr.calories || 0).toFixed()}kcal</Text>
                                         <Text style={tw`px-2 text-gray-500`}>P: {(ingr.protein || 0).toFixed()}g</Text>
@@ -202,17 +99,13 @@ export default function SummaryFoodList() {
                         </View>
                     </Swipeable>
                 })}
-
-                <View style={tw`flex-row items-center justify-between mt-4`}>
-                    <Text style={tw`text-lg`} weight='semibold'>Meals</Text>
-                    <TouchableOpacity style={tw`py-4`} onPress={() => {
+                <Spacer />
+                <ManageButton title='Meals' buttonText='Add Meals' onPress={() => {
                         const screen = getMatchingNavigationScreen('ListMeal', navigator)
                         //@ts-ignore
                         navigator.navigate(screen, { progressId: progressId })
-                    }}>
-                        <Text style={tw`text-red-500`} weight='semibold'>Add Meals</Text>
-                    </TouchableOpacity>
-                </View>
+                    }} />
+                
                 {meal_progress.length === 0 && <Text style={tw`text-center my-6`}>There are no meals to display, add one!</Text>}
                 {meal_progress.map((ingr, i) => {//@ts-ignore
                     const r = getMacrosFromIngredients(ingr.meal.meal_ingredients)
@@ -236,8 +129,8 @@ export default function SummaryFoodList() {
                             }} style={tw`flex-row items-center`}>
                                 <SupabaseImage uri={ingr.meal.preview || defaultImage} style={`items-center justify-center h-12 w-12 rounded-lg`} />
                                 <View style={tw`ml-2 max-w-9/12`}>
-                                    <Text weight='semibold'>{ingr.meal.name}</Text>
-                                    <View style={tw`flex-row items-center`}>
+                                    <Text lg weight='semibold'>{ingr.meal.name}</Text>
+                                    <View style={tw`flex-row items-center mt-1`}>
                                         <Text style={tw`pr-2 text-gray-500`}>{(r.calories * ((ingr.consumed_weight || 1) / (ingr.total_weight || 1))).toFixed()}kcal</Text>
                                         <Text style={tw`px-2 text-gray-500`}>P: {(r.protein * ((ingr.consumed_weight || 1) / (ingr.total_weight || 1))).toFixed()}g</Text>
                                         <Text style={tw`px-2 text-gray-500`}>C: {(r.carbs * ((ingr.consumed_weight || 1) / (ingr.total_weight || 1))).toFixed()}g</Text>

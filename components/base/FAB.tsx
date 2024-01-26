@@ -4,6 +4,7 @@ import { IconSource } from 'react-native-paper/lib/typescript/components/Icon';
 import tw from 'twrnc'
 import useColorScheme from '../../hooks/useColorScheme';
 import { FlatList } from 'react-native-gesture-handler';
+import { _tokens } from '../../tamagui.config';
 
 interface FloatingActionButtonProps {
     options: {
@@ -12,6 +13,7 @@ interface FloatingActionButtonProps {
         onPress?: () => void
     }[],
     bgColor?: string;
+    hexBgColor?: string;
     initialIcon: IconSource;
     openIcon: IconSource;
     color?: string;
@@ -24,7 +26,6 @@ export const FloatingActionButton = (props: FloatingActionButtonProps) => {
 
   const { open } = state;
   const dm = useColorScheme() === 'dark'
-  const fabBgColor = props.bgColor ? props.bgColor : (dm ? 'red-700' : 'red-500')
   const fabColor = props.color || 'white'
   return (
     <Provider>
@@ -32,7 +33,7 @@ export const FloatingActionButton = (props: FloatingActionButtonProps) => {
         <FAB.Group
           open={open}
           visible
-          fabStyle={tw`bg-${fabBgColor}`}
+          fabStyle={{backgroundColor: _tokens.primary900}}
           icon={open ? props.openIcon : props.initialIcon}
           actions={(props.options||[]).map((x) => ({label: x.name, style:tw`flex-row px-0 items-center justify-center pl-1`, icon: x.icon, onPress: () => {
             x.onPress && x.onPress()

@@ -39,6 +39,6 @@ const PlanSearchResult = (props: { idx: number, item: Tables['fitness_plan']['Ro
         if (onPress) onPress(r.id)
     }}>
         {/* @ts-ignore */}
-        <Text style={tw`text-red-500 text-xs`}>@{r?.author?.username || 'rage'}</Text>
+        <Text style={tw`text-gray-500 text-xs`}>@{r?.author?.username || 'rage'}</Text>
     </SearchResult>
 }

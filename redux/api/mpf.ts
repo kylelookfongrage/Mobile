@@ -45,6 +45,8 @@ export const formToIngredient = (form: Tables['food']['Insert'], payload: {calor
         name: form.name,
         img: form.image || defaultImage,
         weight: form.weight,
+        category: form.category,
+        ingredients: form.ingredients,
         tempId,
     }
 }

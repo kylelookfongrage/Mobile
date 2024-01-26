@@ -740,6 +740,8 @@ export const inchesToFeet = (_inches: number, min = -1000): string => {
 import moment from 'moment';
 import { IngredientAdditions } from './hooks/useMultipartForm';
 import { Tables } from './supabase/dao';
+import { Json } from './types/Database';
+import { USDAMacroMapping } from './types/FoodApi';
 
 function calculateTDEE(male: boolean, weight: number, height: number, age: number, activity: 'sedentary' | 'light' | 'average' | 'active', metric: boolean = false): number {
     const heightMultiplier = metric ? 1 : 2.54; // Convert inches to cm if not using metric units
@@ -879,30 +881,28 @@ export const validate = function (textFieldValuesAndOptions: ValidationObject[])
 
 
 
-export const getMacrosFromIngredients = (ingrs: IngredientAdditions[]): { protein: number, carbs: number; calories: number; fat: number, otherNutrition: { [k: string]: { value: number; } } } => {
+export const getMacrosFromIngredients = (ingrs: IngredientAdditions[]): { protein: number, carbs: number; calories: number; fat: number, otherNutrition: { [k: string]: number } } => {
     let protein: number = 0;
     let calories: number = 0;
     var carbs: number = 0;
     var fat: number = 0;
-    let otherNutrition: { [k: string]: { value: number } } = {}
+    let otherNutrition: { [k: string]: number } = {}
     ingrs.forEach((i) => {
         calories += Number(i.calories)
         protein += Number(i.protein)
         carbs += Number(i.carbs)
         fat += Number(i.fat)
+        let obj = MenuStatOtherNutritionToUSDANutrition((i.otherNutrition || {}))
         try {
-            if (i.otherNutrition) {
-                Object.keys(i.otherNutrition).forEach(k => {
-                    const potential = otherNutrition[k]?.['value']
+            if (obj) {
+                Object.keys(obj).forEach(k => {
+                    const potential = otherNutrition[k]
                     //@ts-ignore
-                    const value = i.otherNutrition[k]
-                    if (value.hidden) return;
+                    const value = obj[k]
                     if (potential) {
-                        otherNutrition[k]['value'] = (potential || 0) + (Number(value.value) || 0)
+                        otherNutrition[k] = (potential || 0) + (Number(value) || 0)
                     } else {
-                        otherNutrition[k] = {
-                            value: (Number(value.value) || 0)
-                        }
+                        otherNutrition[k] = Number(value) || 0
                     }
                 })
             }
@@ -1002,4 +1002,68 @@ function toDeci(fraction: string) {
 
 export const FractionInput = (str: string): number | null => {
     return Number(toDeci(str)) || null
+}
+
+export const getMacroTargets = (profile: Tables['user']['Row'] | null | undefined) => {
+    let tdee = profile?.tdee || 2000
+    const totalProteinGrams = profile?.proteinLimit || (tdee * 0.4) / 4
+    const totalFatGrams = profile?.fatLimit || (tdee * 0.3) / 9
+    const totalCarbsGrams = profile?.carbLimit || (tdee * 0.3) / 4
+    return {tdee, totalProteinGrams, totalCarbsGrams, totalFatGrams}
+}
+
+export const foodToFoodProgressAndMealIngredients = (f: Tables['food']['Insert'], profile: Tables['user']['Row'] | undefined | null): (Tables['food_progress']['Insert'] | Tables['meal_ingredients']['Insert']) => {
+        let obj = {...f}
+        delete obj['barcode']
+        delete obj['created_at']
+        delete obj['edamamId']
+        delete obj['healthLabels']
+        delete obj['id']
+        delete obj['image']
+        delete obj['tags']
+        //@ts-ignore
+        delete obj['author']
+        delete obj['public']
+        obj['serving'] = obj['servingSize']
+        delete obj['servingSize']
+        obj['user_id'] = profile?.id
+        return obj
+}
+/*
+map.set(208, { name: 'Calories', unit: 'kcal', bolded: true, xl: true, border: 4 })
+map.set(204, { name: 'Total Fat', unit: 'g', bolded: true })
+map.set(606, { name: 'Saturated Fat', unit: 'g', indented: 1 })
+map.set(605, { name: 'Trans Fat', unit: 'g', indented: 1 })
+map.set(646, { name: 'Polyunsaturated Fat', unit: 'g', indented: 1 })
+map.set(645, { name: 'Monounsaturated Fat', unit: 'g', indented: 1 })
+map.set(601, { name: 'Cholesterol', unit: 'mg', bolded: true })
+map.set(307, { name: 'Sodium', unit: 'mg', bolded: true })
+map.set(205, { name: 'Total Carbohydrate', unit: 'g', bolded: true })
+map.set(291, { name: 'Total Fiber', unit: 'g', indented: 1 })
+map.set(269, { name: 'Total Sugars', unit: 'g', indented: 1 })
+map.set(539, { name: 'Added Sugars', unit: 'g', indented: 2 })
+map.set(203, { name: 'Protein', unit: 'g', border: 4, bolded: true })
+map.set(382, { name: 'Vitamin D', unit: 'µg' })
+map.set(301, { name: 'Calcium', unit: 'mg' })
+map.set(303, { name: 'Iron', unit: 'mg' })
+map.set(306, { name: 'Potassium', unit: 'mg' })
+
+{"cholesterol":30,"fiber":2,"potassium":0,"sat_fat":6,"sodium":820,"sugar":4,"trans_fat":0}
+*/
+export const MenuStatOtherNutritionToUSDANutrition = (otherNutrition: string | Json) => {
+    let copy = otherNutrition
+    let mapping = {'cholesterol' : 601, 'fiber': 291, 'potassium': 306, 'sat_fat': 606, 'sodium': 307, 'sugar': 269, 'trans_fat': 204}
+    if (typeof otherNutrition==='string') {copy = JSON.parse(otherNutrition)}
+    //@ts-ignore
+    let obj = {...copy}
+    for (var k of Object.keys(mapping)) {
+        //@ts-ignore
+        let v = mapping[k]
+        //@ts-ignore
+        if (copy[k]) {
+            //@ts-ignore
+            obj[v] = copy[k]
+        }
+    }
+    return obj;
 }

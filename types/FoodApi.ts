@@ -231,7 +231,7 @@ export const USDAFoodCategories = {
     'Baked Products': '🎂',
     'Sweets': '🍰',
     'Cereal Grains and Pasta': '🍝',
-    'Fast Foods': '🍕',
+    'Fast Foods': '🍟',
     'Meals, Entrees, and Side Dishes': '🌭',
     'Snacks': '🍪',
     'Restaurant Foods': '👩‍🍳',

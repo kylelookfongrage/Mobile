@@ -9,6 +9,7 @@ import { AnimatedCircularProgress } from "react-native-circular-progress";
 import { useNavigation } from "@react-navigation/native";
 import {
   defaultImage,
+  getMacroTargets,
   getMatchingNavigationScreen,
   titleCase,
 } from "../../data";
@@ -33,6 +34,7 @@ import { YStack } from "tamagui";
 import SummaryListItem from "../../components/features/SummaryListItem";
 import { MasonryFlashList } from "@shopify/flash-list";
 import presetDashboardComponents, { UserInputs } from "../../components/features/PresetSummaryListItems";
+import { Timeline } from "react-native-ui-lib";
 
 export const SummaryScreen = () => {
   let { profile } = useSelector((x) => x.auth);
@@ -48,10 +50,7 @@ export const SummaryScreen = () => {
   } = useSelector((x) => x.progress);
   let progressId = today?.id;
   let weight = today?.weight || profile?.weight || 100
-  let tdee = profile?.tdee || 2000
-  const totalProteinGrams = profile?.proteinLimit || (tdee * 0.4) / 4
-  const totalFatGrams = profile?.fatLimit || (tdee * 0.3) / 9
-  const totalCarbsGrams = profile?.carbLimit || (tdee * 0.3) / 4
+  let {tdee, totalCarbsGrams, totalFatGrams, totalProteinGrams} = getMacroTargets(profile)
   let waterGoal = Number(weight * 0.5);
   let dispatch = useDispatch();
   let setDate = (_date: string) => dispatch(changeDate({ date: _date }));
@@ -148,23 +147,23 @@ export const SummaryScreen = () => {
         // onPress={() => navigator.navigate('EditDashboard')} 
         />
         <Spacer />
-
+        {presetDashboardComponents['Tasks']['Tasks Preview'](obj, {index: 1  })}
         <ScrollView
-          style={[tw`px-2`]}
+          style={[tw``]}
           showsVerticalScrollIndicator={false}
         >
-          <View style={{minHeight: 2}}>
-          {/* <MasonryFlashList style={{alignItems: 'center', justifyContent: 'center', columnGap: 5}} numColumns={2} estimatedItemSize={163} data={[
+          {/* <View style={{minHeight: 2}}>
+          <MasonryFlashList style={{alignItems: 'center', justifyContent: 'center', columnGap: 5}} numColumns={2} estimatedItemSize={163} data={[
             {name: 'Workouts', type: 'Workout Amount', index: 0},
             {name: 'Nutrition', type: 'Macros List', index: 1},
             {name: 'Tasks', type: 'Tasks Preview', index: 2},
             {name: 'Activity', type: 'Activity Preview', index: 3},
-            {name: 'Water', type: 'Intake Progress Bar', index: 4},
+            {name: 'Water', type: 'Intake Progress', index: 4},
           ]} renderItem={({item, index}) => {
             //@ts-ignore
             return presetDashboardComponents[item.name][item.type](obj, {index: item.index, color: item.backgroundColor, progressColor1: item.progressColor1, progressColor2: item.progressColor2  })
-          }} /> */}
-          </View>
+          }} />
+          </View> */}
           
           <Spacer />
           {/* <View style={tw`flex-row items-center justify-between w-12/12 mt-2`}>

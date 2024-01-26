@@ -17,7 +17,7 @@ export function MealDao() {
     }
     type TIngredientAddition = Tables['meal_ingredients']['Row'] & {food: {name: string, image: string, servingSizes: any}}
     const getIngredients = async (id: Tables['meal']['Row']['id']): Promise<TIngredientAddition[]> => {
-        let res = await supabase.from('meal_ingredients').select('*, food(name, image, servingSizes)').filter('meal_id', 'eq', id)
+        let res = await supabase.from('meal_ingredients').select('*').filter('meal_id', 'eq', id)
         return res?.data || []
     }
 
@@ -33,7 +33,10 @@ export function MealDao() {
             quantity: i.quantity,
             servingSize: i.servingSize,
             servingSizes: i.servingSizes,
-            weight: i.weight
+            weight: i.weight,
+            name: i.name,
+            category: i.category,
+            ingredients: i.ingredients
         }
     }
 
@@ -42,23 +45,9 @@ export function MealDao() {
         await supabase.from('meal_ingredients').delete().filter('meal_id', 'eq', meal.id)
         let ingrs: Tables['meal_ingredients']['Insert'][] = []
         for (var i of ingredients) {
-            let newFood = i.food_id
-            if (!newFood) {
-                let copy = {...i, image: i.img}
-                delete copy['img'] //@ts-ignore
-                delete copy['tempId']
-                delete copy['id']
-                console.log('saving new food')
-                newFood = (await dao.save('food', {...copy, otherNutrition: copy.otherNutrition || undefined, public: false}))?.id
-            }
-            console.log(newFood)
-            if (!newFood) return null;
-            ingrs.push(getIngredientFromIngredientAddition({...i, food_id: newFood, meal_id: meal.id}))
+            ingrs.push(getIngredientFromIngredientAddition({...i, meal_id: meal.id}))
         }
-        console.log(ingrs)
         const res = await supabase.from('meal_ingredients').insert(ingrs.map(x => ({ meal_id: meal.id, ...x }))).select()
-        console.log('inserting details')
-        console.log(res)
         return res?.data || null;
     }
 

@@ -2,8 +2,8 @@ import { useColorScheme, Dimensions } from 'react-native'
 import React from 'react'
 import { XGroup } from 'tamagui'
 import tw from 'twrnc'
-import { TouchableOpacity } from 'react-native'
-import { Text } from './Themed'
+import { TouchableOpacity, View as DView } from 'react-native'
+import { Text, View } from './Themed'
 import { _tokens } from '../../tamagui.config'
 
 export default function Selector(props: {searchOptions: string[], onPress?: (o: string) => void, selectedOption?: string}) {
@@ -30,4 +30,9 @@ export default function Selector(props: {searchOptions: string[], onPress?: (o: 
         })}
     </XGroup>
   )
+}
+
+export const HideView = (props: {hidden?: boolean} & DView['props']) => {
+    if (props.hidden) return <View aria-hidden={true} />
+    return <View {...props} />
 }

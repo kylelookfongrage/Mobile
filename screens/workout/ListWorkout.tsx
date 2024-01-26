@@ -63,6 +63,6 @@ const WorkoutSearchResult = (props: { idx: number, item: Tables['workout']['Row'
     if (onPress) onPress(r.id)
   }}>
     {/* @ts-ignore */}
-    <Text style={tw`text-red-500`}>@{r?.author?.username || 'rage'}</Text>
+    <Text style={tw`text-gray-500`}>@{r?.author?.username || 'rage'}</Text>
   </SearchResult>
 }

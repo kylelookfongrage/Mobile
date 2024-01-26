@@ -100,13 +100,13 @@ export const FoodAndMeals = () => {
 
 
     //@ts-ignore
-    return <SafeAreaView style={[tw`px-3`, { flex: 1 }]} edges={['top']} includeBackground>
+    return <SafeAreaView style={[tw``, { flex: 1 }]} edges={['top']} includeBackground>
         <Spacer />
         <TopBar iconLeft='Search' title='Search' />
         <Spacer />
-        <SearchBar full onSearch={search} />
+        <View style={tw`px-2`}><SearchBar full onSearch={search} /></View>
         <Spacer sm />
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{minHeight: 50}}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{minHeight: 50, ...tw`px-2`}}>
         {searchOptions.map(obj => {
             let key = Object.keys(obj)[0]
             let screen = getMatchingNavigationScreen(Object.values(obj)[0], navigator)
@@ -118,7 +118,7 @@ export const FoodAndMeals = () => {
         
         
         {loading && <ActivityIndicator style={{alignSelf: 'stretch', paddingTop: 30}} />}
-        <ScrollView contentContainerStyle={[tw``]} showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={[tw`px-1`]} showsVerticalScrollIndicator={false}>
             {(loading ? [] : results).map((x, i) => {
                 return <TouchableOpacity key={`Search Result ${x.identifier} - ${i}`} onPress={() => {
                     let screenName = 'FoodDetail'
@@ -139,7 +139,7 @@ export const FoodAndMeals = () => {
                             <SupabaseImage style='h-13 w-13 mr-2 rounded-lg' uri={x.image || defaultImage} />
                             <View>
                                 <Text lg weight='bold'>{substringForLists(x.name, 27)}</Text>
-                                <Text sm style={tw`text-red-500`} weight='semibold'>@{substringForLists(x.username, 40)}</Text>
+                                <Text sm style={tw`text-gray-500`} weight='semibold'>@{substringForLists(x.username, 40)}</Text>
                             </View>
                         </View>
                         <Text sm style={tw`text-gray-500`}>{titleCase(x.type)}</Text>
@@ -184,7 +184,7 @@ export const FoodAndMeals = () => {
                     navigator.navigate('FTFitnessPlan', { id: null, editable: true })
                 }
             },
-        ]} initialIcon={'plus'} bgColor='red-600' openIcon={() => {
+        ]} initialIcon={'plus'} bgColor={_tokens.primary900} openIcon={() => {
             return <ExpoIcon name='close' iconName='ion' color='white' size={23} />
         }} />
     </SafeAreaView>

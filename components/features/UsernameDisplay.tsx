@@ -42,7 +42,7 @@ export default function UsernameDisplay(props: DefaultText['props'] & { disabled
             <Spacer horizontal sm/>
             <View>
                 <Text style={tw``} lg weight='bold'>{name}</Text>
-                <Text style={tw`text-red-500 text-xs`} weight='regular'>@{username}</Text>
+                <Text style={tw`text-gray-500 text-xs`} weight='regular'>@{username}</Text>
             </View>
         </TouchableOpacity>
     }

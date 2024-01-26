@@ -130,7 +130,6 @@ export const ImagePickerView = (props: ImagePickerViewProps) => {
     }
   }, [props.srcs]);
 
-  console.log(mediaSources)
 
   const onDelete = (uri: string) => {
     props.onChange && props.onChange((props.srcs || []).filter((x) => x.uri !== uri));

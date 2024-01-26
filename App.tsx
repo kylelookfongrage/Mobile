@@ -37,14 +37,13 @@ import { Provider as ReduxProvider } from "react-redux";
 import { registerRootComponent } from "expo";
 import { Env } from "./env";
 import moment, { Moment } from "moment";
-import { Colors } from "react-native-ui-lib";
+import { Colors, Keyboard } from "react-native-ui-lib";
 import tw from "twrnc";
 import { getTrackingPermissionsAsync, requestTrackingPermissionsAsync } from "expo-tracking-transparency";
 //@ts-ignore
 Colors.loadDesignTokens({ primaryColor: tw`bg-red-600`.backgroundColor });
 import * as SplashScreen from 'expo-splash-screen';
 import { fetchUser } from "./redux/api/auth";
-import KeyboardRegistry from "react-native-ui-lib/lib/components/Keyboard/KeyboardInput/KeyboardRegistry";
 import { KeyboardView } from "./components/features/Keyboard";
 
 SplashScreen.preventAutoHideAsync()
@@ -53,11 +52,11 @@ function App() {
   const colorScheme = useColorScheme();
   let [appIsReady, setAppIsReady] = useState<boolean>(false);
   let dm = useColorScheme() === 'dark'
+  let [loadedKeyboard, setLoadedKeyboard] = useState(false);
 
   useEffect(() => {
     (async () => {
       try {
-        KeyboardRegistry.registerKeyboard('KeyboardView', () => KeyboardView);
         await store.dispatch(fetchUser())
         if (Platform.OS === 'ios') {
           const { granted } = await getTrackingPermissionsAsync();
@@ -76,6 +75,8 @@ function App() {
       }
     })()
   }, [])
+
+  
 
   let onLayout = useCallback(async () => {
     if (appIsReady) {
@@ -102,6 +103,13 @@ function App() {
 
     Iconly: require('./assets/fonts/Iconly.ttf'),
   });
+
+  useEffect(() => {
+    if (loadedKeyboard || !fontsLoaded) return;
+    Keyboard.KeyboardRegistry.registerKeyboard('KeyboardView', () => KeyboardView)
+    setLoadedKeyboard(true)
+    
+  }, [fontsLoaded])
 
   if (!fontsLoaded || !isLoadingComplete) {
     return null;

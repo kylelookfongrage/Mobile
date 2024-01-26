@@ -34,6 +34,10 @@ import { IngredientAdditions, PlanAdditions } from '../../redux/reducers/multifo
 import { useMultiPartForm } from '../../redux/api/mpf';
 import Description from '../../components/base/Description';
 import { XStack } from 'tamagui';
+import { getEmojiByCategory } from '../../types/FoodApi';
+import { _tokens } from '../../tamagui.config';
+import Selector, { HideView } from '../../components/base/Selector';
+import NutritionLabel from '../../components/features/NutritionLabel';
 
 
 export interface MealDetailProps {
@@ -69,10 +73,7 @@ export default function MealDetailScreen(props: MealDetailProps) {
                 delete copy['food']
                 return {
                     ...copy,
-                    tempId: z.food_id,
-                    name: z.food.name,
-                    img: z.food.image,
-                    servingSizes: z.food.servingSizes || {}
+                    tempId: z.id,
                 }
             })
             ingrs.upsert(ing)
@@ -103,6 +104,8 @@ export default function MealDetailScreen(props: MealDetailProps) {
     let pdao = ProgressDao(false)
     const { logProgress } = useBadges(false)
     let [uuid, setUuid] = useState<string>(uuidv4())
+    let searchOptions = screen.editMode ? [] : ['Overview', 'Log Meal', 'Nutrition Label']
+    let [selectedOption, setSelectedOption] = useState<typeof searchOptions[number]>(searchOptions[0])
     let ingrs = useMultiPartForm('meals', uuid)
     let ingredients = ingrs.data
     const { protein, carbs, calories, fat, otherNutrition } = getMacrosFromIngredients(ingredients)
@@ -186,9 +189,8 @@ export default function MealDetailScreen(props: MealDetailProps) {
 
     return (
         <View style={{ flex: 1 }} includeBackground>
-
             {/* @ts-ignore */}
-            <ScrollViewWithDrag disableRounding rerenderTopView={[screen.editMode, (imageSource || []), form.user_id]} TopView={() => <View>
+            <ScrollViewWithDrag keyboardDismissMode='interactive' disableRounding rerenderTopView={[screen.editMode, (imageSource || []), form.user_id]} TopView={() => <View>
                 <BackButton inplace Right={() => {
                     if (screen.editMode || !props.id || !Number(props.id) || props.idFromProgress || props.planId) return <View />
                     return <ShowMoreDialogue meal_id={Number(props.id)} options={[
@@ -203,7 +205,8 @@ export default function MealDetailScreen(props: MealDetailProps) {
                 }} type='all' />
             </View>} style={{ flex: 1, }} showsVerticalScrollIndicator={false}>
 
-                <View style={[tw`pt-4 px-6 pb-60`]}>
+                <View style={[tw`pt-4 pb-60`]}>
+                    <View style={tw`px-2`}>
                     <ErrorMessage errors={screen.errors} onDismissTap={() => setScreen('errors', [])} />
                     <TitleInput
                         value={form.name || ''}
@@ -215,10 +218,83 @@ export default function MealDetailScreen(props: MealDetailProps) {
                     <UsernameDisplay image disabled={(screen.editMode || screen.uploading || (props.idFromProgress ? true : false))} id={form.user_id} username={form.id ? null : profile?.username} />
                     {/* @ts-ignore */}
                     <Spacer />
-                    <Description editable={screen.editMode} placeholder='The description of your meal' value={form.description || ''} onChangeText={x => setForm('description', x)}  />
+                    </View>
+                    <Selector searchOptions={searchOptions} selectedOption={selectedOption} onPress={setSelectedOption} />
+                    <Spacer />
+                    <HideView hidden={selectedOption !== 'Overview' && !screen.editMode} style={tw`px-2`}>
+                        <Description editable={screen.editMode} placeholder='The description of your meal' value={form.description || ''} onChangeText={x => setForm('description', x)} />
+                        <Spacer divider />
+                        <ManageButton title='Ingredients' buttonText='Add New' hidden={!screen.editMode} onPress={() => {
+                            const screen = getMatchingNavigationScreen('ListFood', navigator)
+                            //@ts-ignore
+                            navigator.navigate(screen, {
+                                mealId: uuid
+                            })
+                        }} />
+                        <Spacer sm />
+                        {(ingredients).map((ingr, i) => {
+                            return <SwipeWithDelete onDelete={() => {
+                                let copy = [...ingredients]
+                                copy.splice(i, 1)
+                                ingrs.upsert(copy)
+                            }} key={`${ingr.food_id} - ${i}`}>
+                                <TouchableOpacity onPress={() => {
+                                    const s = getMatchingNavigationScreen('FoodDetail', navigator)
+                                    //@ts-ignore
+                                    navigator.navigate(s, { tempId: ingr.tempId, mealId: uuid, src: 'edit' })
+                                }}>
+                                    <View card style={{ ...tw`px-3 py-2 flex-row items-center rounded-xl mb-2` }}>
+                                        <Text h3>{getEmojiByCategory(ingr.category)}</Text>
+                                        <Spacer horizontal />
+                                        <View style={tw`w-10/12`}>
+                                            <View style={tw`flex-row items-center justify-between`}>
+                                                <Text lg weight='semibold' style={tw``}>{ingr.name?.substring(0, 25)}{ingr.name?.length > 24 ? '...' : ''}</Text>
+                                                <Text style={tw`text-gray-500`}>{ingr?.quantity ? (Math.round(ingr.quantity) < ingr.quantity ? ingr.quantity?.toFixed(2) : ingr.quantity?.toFixed()) : 0} {ingr.servingSize}</Text>
+                                            </View>
+                                            <Spacer xs />
+                                            <View style={tw`flex-row items-center justify-between`}>
+                                                <Text style={tw`text-gray-500`}>{ingr.calories?.toFixed(0)} kcal</Text>
+                                                <Text style={tw`text-gray-500`}>P: {ingr.protein?.toFixed(0)}g</Text>
+                                                <Text style={tw`text-gray-500`}>C: {ingr.carbs?.toFixed(0)}g</Text>
+                                                <Text style={tw`text-gray-500`}>F: {ingr.fat?.toFixed(0)}g</Text>
+                                            </View>
+                                        </View>
+                                    </View>
+                                </TouchableOpacity>
+                            </SwipeWithDelete>
+                        })}
+                        <Spacer divider />
+                        <ManageButton title='Directions' buttonText=' ' />
+                        <Spacer sm />
+                        {(form.steps || []).map((x, i) => {
+                            return <SwipeWithDelete key={`step ${x} ${i}`} disabled={!screen.editMode} onDelete={() => {
+                                let copy = [...form.steps || []]
+                                copy.splice(i, 1)
+                                setForm('steps', copy)
+                            }}>
+                                <View style={tw`flex-row items-center mb-3`}>
+                                    <View style={{ ...tw`h-8 w-8 items-center justify-center rounded-full mr-2`, backgroundColor: _tokens.primary900 }}>
+                                        <Text lg style={tw`text-white`} weight='bold'>{i + 1}</Text>
+                                    </View>
+                                    <Text lg style={tw`max-w-10/12`}>{x}</Text>
+                                </View>
+                            </SwipeWithDelete>
+                        })}
+                        {screen.editMode && <Spacer sm />}
+                        {screen.editMode && <View style={tw`flex-row items-center mb-2`}>
+                            <View style={{ ...tw`h-8 w-8 items-center justify-center rounded-full mr-2`, backgroundColor: _tokens.primary900 + '80' }}>
+                                <Text lg style={tw`text-white`} weight='bold'>{(form.steps || []).length + 1}</Text>
+                            </View>
+                            <TextInput multiline numberOfLines={3} onSubmitEditing={() => {
+                                if (!screen.newStep!!) return;
+                                setForm('steps', [...(form.steps || []), screen.newStep])
+                                setScreen('newStep', '')
+                            }} placeholder='Your new step (press enter to add)' placeholderTextColor={'gray'} style={tw`text-${dm ? 'white' : 'black'} max-w-10/12`} value={screen.newStep} onChangeText={(v) => setScreen('newStep', v)} />
+                        </View>}
+                        <Spacer />
+                    </HideView>
 
-                    <Spacer divider />
-                    {(canViewDetails && props.id && !props.planId) && <View>
+                    <HideView style={tw`px-2`} hidden={!(canViewDetails && props.id && !props.planId) || selectedOption !== 'Log Meal'}>
                         <ManageButton title='Log Meal Details' buttonText=' ' />
                         <Spacer />
                         <QuantitySelect initialServingSize={consumed.servingSize} qty={consumed.consumed_weight} onQuantityChange={(x, y) => {
@@ -231,91 +307,20 @@ export default function MealDetailScreen(props: MealDetailProps) {
                             : <View />)
                         }
                         <Spacer divider />
-                    </View>}
-                    <View>
-                        <ManageButton title='Nutrition' buttonText=' ' />
-                        <Spacer />
-                        <XStack alignItems='center' justifyContent='space-evenly'>
-                        <MacronutrientBar calories weight={(calories * fx) || 0} totalEnergy={(calories * fx) || 1} />
-                        <MacronutrientBar protein weight={(protein * fx) || 0} totalEnergy={(calories * fx) || 1} />
-                        <MacronutrientBar carbs weight={(carbs * fx) || 0} totalEnergy={(calories * fx) || 1} />
-                        <MacronutrientBar fat weight={(fat * fx) || 0} totalEnergy={(calories * fx) || 1} />
-                        </XStack>
-                        
-                        <Spacer lg />
-                    </View>
-                    <ManageButton title='Ingredients' buttonText='Add New' hidden={!screen.editMode} onPress={() => {
-                        const screen = getMatchingNavigationScreen('ListFood', navigator)
-                        //@ts-ignore
-                        navigator.navigate(screen, {
-                            mealId: uuid
-                        })
-                    }} />
-                    <Spacer sm />
-                    {(ingredients).map((ingr, i) => {
-                        return <SwipeWithDelete disabled={!screen.editMode} onDelete={() => {
-                            let copy = [...ingredients]
-                            copy.splice(i, 1)
-                            ingrs.upsert(copy)
-                        }} key={`${ingr.food_id} - ${i}`}>
-                            <TouchableOpacity disabled={!screen.editMode} onPress={() => {
-                                if (!screen.editMode) return
-                                const s = getMatchingNavigationScreen('FoodDetail', navigator)
-                                //@ts-ignore
-                                navigator.navigate(s, { id: ingr.tempId, mealId: uuid, src: 'edit' })
-                            }}>
-                                <View card style={{ ...tw`px-4 py-2 flex-row items-center rounded-xl mb-2` }}>
-                                    {ingr.img && <SupabaseImage uri={ingr.img} style='h-15 w-15 rounded-lg' />}
-                                    {!ingr.img && <View style={tw`h-15 w-15 rounded-lg bg-gray-${dm ? '800' : '200'} items-center justify-center`}>
-                                        <Text style={tw`text-2xl`}>{'🍎'}</Text>
-                                    </View>}
-                                    <Spacer horizontal sm />
-                                    <View style={tw`w-9/12`}>
-                                        <View style={tw`flex-row items-center justify-between`}>
-                                            <Text lg weight='semibold' style={tw`max-w-9/12`}>{ingr.name.substring(0, 30)}{ingr.name.length > 29 ? '...' : ''}</Text>
-                                            <Text style={tw`text-gray-500`}>{ingr.quantity?.toFixed(0)} {ingr.servingSize}</Text>
-                                        </View>
-                                        <Spacer xs />
-                                        <View style={tw`flex-row items-center justify-between`}>
-                                            <Text style={tw`text-gray-500`}>{ingr.calories?.toFixed(0)} kcal</Text>
-                                            <Text style={tw`text-gray-500`}>P: {ingr.protein?.toFixed(0)}g</Text>
-                                            <Text style={tw`text-gray-500`}>C: {ingr.carbs?.toFixed(0)}g</Text>
-                                            <Text style={tw`text-gray-500`}>F: {ingr.fat?.toFixed(0)}g</Text>
-                                        </View>
-                                    </View>
-                                </View>
-                            </TouchableOpacity>
-                        </SwipeWithDelete>
-                    })}
-                    <Spacer divider />
-                    <ManageButton title='Directions' buttonText=' '  />
-                    <Spacer sm />
-                    {(form.steps || []).map((x, i) => {
-                        return <SwipeWithDelete key={`step ${x} ${i}`} disabled={!screen.editMode} onDelete={() => {
-                            let copy = [...form.steps || []]
-                            copy.splice(i, 1)
-                            setForm('steps', copy)
-                        }}>
-                            <View style={tw`flex-row items-center mb-2`}>
-                                <View style={tw`bg-red-${dm ? '600' : '500'} h-10 w-10 items-center justify-center rounded-full mr-2`}>
-                                    <Text style={tw`text-white`} weight='semibold'>{i + 1}</Text>
-                                </View>
-                                <Text>{x}</Text>
-                            </View>
-                        </SwipeWithDelete>
-                    })}
-                    {screen.editMode && <Spacer sm />}
-                    {screen.editMode && <View style={tw`flex-row items-center`}>
-                        <View style={tw`bg-red-${dm ? '600' : '500'}/50 h-10 w-10 items-center justify-center rounded-full mr-2`}>
-                            <Text style={tw`text-white`} weight='semibold'>{(form.steps || []).length + 1}</Text>
-                        </View>
-                        <TextInput onSubmitEditing={() => {
-                            if (!screen.newStep!!) return;
-                            setForm('steps', [...(form.steps || []), screen.newStep])
-                            setScreen('newStep', '')
-                        }} placeholder='Your new step (press enter to add)' placeholderTextColor={'gray'} style={tw`text-${dm ? 'white' : 'black'}`} value={screen.newStep} onChangeText={(v) => setScreen('newStep', v)} />
-                    </View>}
-                    <Spacer />
+                    </HideView>
+                    
+                    <HideView style={tw`px-2`} hidden={selectedOption !== 'Nutrition Label' || screen.editMode}>
+                        <NutritionLabel
+                            calories={calories}
+                            protein={protein}
+                            carbs={carbs}
+                            fat={fat}
+                            otherNutrition={otherNutrition}
+                            disabled
+                        />
+
+                    </HideView>
+
                 </View>
             </ScrollViewWithDrag>
             <Overlay visible={screen.showLogProgress} onDismiss={() => setScreen('showLogProgress', false)}>

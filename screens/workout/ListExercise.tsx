@@ -43,6 +43,6 @@ const ExerciseSearchResult = (props: { idx: number, item: Tables['exercise']['Ro
         if (onPress) onPress(r.id)
     }}>
         {/* @ts-ignore */}
-        <Text style={tw`text-red-500 text-xs`}>@{r?.author?.username || 'rage'}</Text>
+        <Text style={tw`text-gray-500 text-xs`}>@{r?.author?.username || 'rage'}</Text>
     </SearchResult>
 }

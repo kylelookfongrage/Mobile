@@ -164,7 +164,6 @@ export default function ListFood(props: ListFoodProps) {
       <Selector searchOptions={searchOptions} selectedOption={selectedOption} onPress={setSelectedOption} />
       <Spacer />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[tw`px-4`]}>
-        <Spacer />
         {showBarcode && <View>
           {!barcode && <BarcodeScannerView
             style={tw`h-50 w-12/12 rounded-xl border border-${dm ? 'white' : 'black'}`}
@@ -190,7 +189,7 @@ export default function ListFood(props: ListFoodProps) {
               navigator.navigate(foodDetailScreen, {
                 id: r.fromApi ? undefined : r.id,
                 api_id: r.fromApi ? r.id : undefined,
-                category: r.category
+                category: r.category, mealId: props.mealId
               })
             }}
             style={tw`flex-row items-center px-2 my-3 w-12/12`}>
@@ -209,11 +208,12 @@ export default function ListFood(props: ListFoodProps) {
         }
         return <Icon name='Scan' color='white' weight='bold' size={24} />
       }} style={{
-        ...tw`bg-red-600 items-center justify-center`, width: 55, height: 55, position: 'absolute',
+        ...tw`items-center justify-center`, width: 55, height: 55, position: 'absolute',
         margin: 15,
         right: 0,
         padding: 0,
         bottom: 0,
+        backgroundColor: _tokens.primary900
       }} />
     </View>
   )

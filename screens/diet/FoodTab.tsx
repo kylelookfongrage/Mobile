@@ -95,8 +95,8 @@ export const FoodAndMeals = () => {
         if (error || !data) return;
         setLoading(false)
         setResults(data)
-
     }
+    let dm = useColorScheme() === 'dark'
 
 
     //@ts-ignore
@@ -111,7 +111,7 @@ export const FoodAndMeals = () => {
             let key = Object.keys(obj)[0]
             let screen = getMatchingNavigationScreen(Object.values(obj)[0], navigator)
             return <TouchableOpacity key={key} style={tw`mr-2`} disabled={screen === null} onPress={() => navigator.navigate(screen)}>
-                <Tag type={key==='All' ? 'primary' : 'light'} color={key === 'All' ? 'primary900' : 'gray500'}>{key}</Tag>
+                <Tag type={key==='All' ? 'primary' : 'outline'} color={key === 'All' ? 'primary900' : (dm ? "white" : 'dark1')}>{key}</Tag>
             </TouchableOpacity>
         })}
         </ScrollView>

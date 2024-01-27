@@ -1,6 +1,6 @@
+import { Env } from "../env";
 
-let apiKey = 'Vovgzr9UZxb8AzGkYhM8IhuhWTIN8hwvEGv2lxVI'
-
+let apiKey = Env.FOOD_API_KEY;
 const BASE_URL = 'https://api.nal.usda.gov/fdc/v1/'
 const FOOD_SEARCH = BASE_URL + 'foods/search?'
 const get_food_details_uri = (id: string) => BASE_URL + `food/${id}`;

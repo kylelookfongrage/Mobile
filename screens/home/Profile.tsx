@@ -154,24 +154,25 @@ export default function Profile(props: ProfileProps) {
     }
 
     return <View includeBackground safeAreaTop style={{flex: 1}}>
-        <Spacer />
-        <TopBar title='Trainer Profile' iconLeftOnPress={props.id ? () => navigator.goBack() : undefined} iconLeft={props.id ? 'Arrow---Left' : 'Profile'} iconLeftWeight={props.id ? 'light' : 'bold'} iconLeftColor={props.id ? (dm ? _tokens.white : _tokens.black) : undefined} Right={() => {
+        <TopBar px={16} title='Trainer Profile' iconLeftOnPress={props.id ? () => navigator.goBack() : undefined} iconLeft={props.id ? 'Arrow---Left' : 'Profile'} iconLeftWeight={props.id ? 'light' : 'bold'} iconLeftColor={props.id ? (dm ? _tokens.white : _tokens.black) : undefined} Right={() => {
             if (id) {
-                return <ShowMoreDialogue user_id={id} />
+                return <ShowMoreDialogue px={'.5'} user_id={id} />
             }
-            return <TouchableOpacity style={tw``} onPress={() => {
+            return <TouchableOpacity style={tw`mr-.5`} onPress={() => {
                 navigator.navigate('Settings')
             }}>
                 <Icon name='Setting' size={25} color={dm ? 'white' : 'black'} />
             </TouchableOpacity>
-        }} />
-        <Spacer />
+        }} >
+            <YStack ml='$1' alignItems='center' justifyContent='center' alignSelf='center'>
+                <Text h5 weight='bold'>{name}</Text>
+                {profileName && <Text style={tw`text-gray-500`}>@{profileName}</Text>}
+                <Spacer xs />
+            </YStack>
+        </TopBar>
         <ScrollView refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchUserInfo} />} showsVerticalScrollIndicator={false}>
             <ProfilePicture uri={img || defaultImage} editable={false} />
-            <Spacer />
-            <Text style={tw`text-center`} h5 weight='bold'>{name}</Text>
             <Spacer xs/>
-            <Text style={{...tw`text-center`, color: _tokens.gray500}}>@{profileName}</Text>
             {profileLink && <Spacer xs/>}
             {profileLink && <TouchableOpacity onPress={async () => {
                 try {
@@ -224,7 +225,7 @@ export default function Profile(props: ProfileProps) {
             </XStack>
             <Spacer />
             <XStack alignItems='center' justifyContent='center'>
-                <Button pill width={'60%'} height={'$4'} 
+                <Button pill width={'76%'} height={'$4'} 
                     onPress={isCurrentUsersProfile ? () => navigator.navigate('UserBio') : onFollowingPress} 
                     title={!isCurrentUsersProfile ? (isFollowing ? 'Unsubscribe' : 'Subscribe') : "Edit Profile"} 
                     type={!isCurrentUsersProfile ? (isFollowing ? 'outline' : 'primary') : 'light'} />
@@ -232,11 +233,11 @@ export default function Profile(props: ProfileProps) {
                 <IconButton iconName='Send' circle size={'$4'} type='dark' />
             </XStack>
             <Spacer />
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{minHeight: 50, ...tw`px-1`}}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{minHeight: 50, ...tw`ml-3`}}>
             {Object.keys(options).map(x => {
                 let selected = selectedOption === x
                 return <TouchableOpacity key={x} style={tw`mr-2`} onPress={() => setSelectedOption(x)}>
-                <Tag type={selected ? 'primary' : 'light'} color={selected ? 'primary900' : 'gray500'}>{x}</Tag>
+                <Tag type={selected ? 'primary' : 'outline'} color={selected ? 'primary900' : (dm ? "white" : 'dark1')}>{x}</Tag>
             </TouchableOpacity>
             })}
             </ScrollView>

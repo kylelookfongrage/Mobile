@@ -12,16 +12,18 @@ export default function TopBar(props: {
     iconLeftOnPress?: () => void;
     iconLeftWeight?: string;
     title: string;
-    Right?: React.JSXElementConstructor<any>
+    Right?: React.JSXElementConstructor<any>;
+    children?: any;
+    px?: number;
 }) {
     let {iconLeft, title, Right} = props;
   return (
-    <XStack w='100%' justifyContent='space-between' alignItems='center' paddingHorizontal={16}>
+    <XStack w='100%' justifyContent='space-between' alignItems='center' paddingHorizontal={props.px !== undefined ? props.px : 16}>
             {iconLeft ? <Pressable disabled={!props.iconLeftOnPress} onPress={props.iconLeftOnPress}>
               {/* @ts-ignore */}
               <Icon name={iconLeft} size={26} weight={props.iconLeftWeight || 'bold'} color={props.iconLeftColor || _tokens.primary900} />
             </Pressable> : <Text> </Text>}
-            <Text h4 weight='bold' style={tw`text-center`}>{title}</Text>
+            {props.children ? props.children : <Text h4 weight='bold' style={tw`text-center`}>{title}</Text>}
             {Right ? <Right /> : <Text> </Text>}
         </XStack>
   )

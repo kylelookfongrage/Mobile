@@ -38,7 +38,8 @@ type TShowMoreDialogue = {
   post_id?: number;
   comment_id?: number;
   messgage_id?: string;
-  options?: TActionButton[]
+  options?: TActionButton[];
+  px?: number | string;
 }
 
 export const EditModeButton = (editing: boolean, onPress: () => void, user_id: string | null | undefined, current_user_id: string | null | undefined): TActionButton => {
@@ -101,7 +102,7 @@ export const ShowMoreDialogue = (props: TShowMoreDialogue) => {
       //@ts-ignore
       setShowDialogue(!showDialogue)
     }}>
-      <View style={[tw`p-2 rounded-full items-center justify-center mx-2`, { zIndex: 1, backgroundColor: dm ? _tokens.dark2 + '90' : _tokens.gray300 + '90'}]}>
+      <View style={[tw`p-2 rounded-full items-center justify-center mx-${props.px ? props.px : 2}`, { zIndex: 1, backgroundColor: dm ? _tokens.dark2 + '90' : _tokens.gray300 + '90'}]}>
         <ExpoIcon color='gray' size={20} iconName='feather' name={showDialogue ? 'x' : 'more-horizontal'} />
       </View>
       <Overlay excludeBanner style={{ ...tw`flex-row flex-wrap items-center` }} dialogueHeight={40} visible={showDialogue} onDismiss={() => setShowDialogue(false)}>

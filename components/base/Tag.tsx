@@ -36,7 +36,7 @@ const getTagStyle = (type: string, color: string, dm: boolean=false): {bg: strin
         bg = 'transparent'
     }
     if (type === 'outline') { //@ts-ignore
-        border = _tokens[color]
+        border = _tokens[color] + '40'
     }
     if (type === 'light') {
         bg = dm ? _tokens.dark2 : _tokens.gray300

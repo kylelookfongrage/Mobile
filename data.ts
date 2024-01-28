@@ -881,17 +881,17 @@ export const validate = function (textFieldValuesAndOptions: ValidationObject[])
 
 
 
-export const getMacrosFromIngredients = (ingrs: IngredientAdditions[]): { protein: number, carbs: number; calories: number; fat: number, otherNutrition: { [k: string]: number } } => {
+export const getMacrosFromIngredients = (ingrs: IngredientAdditions[], mul=1): { protein: number, carbs: number; calories: number; fat: number, otherNutrition: { [k: string]: number } } => {
     let protein: number = 0;
     let calories: number = 0;
     var carbs: number = 0;
     var fat: number = 0;
     let otherNutrition: { [k: string]: number } = {}
     ingrs.forEach((i) => {
-        calories += Number(i.calories)
-        protein += Number(i.protein)
-        carbs += Number(i.carbs)
-        fat += Number(i.fat)
+        calories += Number(i.calories) * mul
+        protein += Number(i.protein) * mul
+        carbs += Number(i.carbs) * mul
+        fat += Number(i.fat) * mul
         let obj = MenuStatOtherNutritionToUSDANutrition((i.otherNutrition || {}))
         try {
             if (obj) {
@@ -900,9 +900,9 @@ export const getMacrosFromIngredients = (ingrs: IngredientAdditions[]): { protei
                     //@ts-ignore
                     const value = obj[k]
                     if (potential) {
-                        otherNutrition[k] = (potential || 0) + (Number(value) || 0)
+                        otherNutrition[k] = (potential || 0) + ((Number(value) || 0) * mul)
                     } else {
-                        otherNutrition[k] = Number(value) || 0
+                        otherNutrition[k] = (Number(value) || 0) * mul
                     }
                 })
             }

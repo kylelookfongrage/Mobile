@@ -6,7 +6,7 @@ import useAsync from '../../hooks/useAsync';
 import { supabase } from '../../supabase';
 import { useSelector } from '../../redux/store';
 import { USDAFoodCategories, USDAFoodDetails, USDAMacroMapping, USDAMacroMappingKeys, USDANutrientToOtherNutrition, getEmojiByCategory } from '../../types/FoodApi';
-import { ConversionChart, ExpandedConversionChart, MenuStatOtherNutritionToUSDANutrition, foodToFoodProgressAndMealIngredients, getMacroTargets, titleCase } from '../../data';
+import { ConversionChart, ExpandedConversionChart, MenuStatOtherNutritionToUSDANutrition, foodToFoodProgressAndMealIngredients, getMacroTargets, getMacrosFromIngredients, titleCase } from '../../data';
 import { XStack, YStack } from 'tamagui';
 import Spacer from '../../components/base/Spacer';
 import tw from 'twrnc'
@@ -37,7 +37,12 @@ export default function FoodDetail2(props: {
   tempId?: string;
   mealId?: string;
   api_id?: string;
-  category?: string
+  category?: string;
+  meal_progress_meal: string;
+  meal_progress_id: Tables['meal_progress']['Row']['id'] | null | undefined;
+  meal_name?: string;
+  meal_author?: Tables['user']['Row']['id'];
+  meal_id?: number;
 }) {
   let { profile } = useSelector(x => x.auth)
   let {foodProgress, mealProgress} = useSelector(x => x.progress)
@@ -45,6 +50,8 @@ export default function FoodDetail2(props: {
   let {tdee, totalCarbsGrams, totalFatGrams, totalProteinGrams} = getMacroTargets(profile);
   let [initialized, setInitialized] = useState<boolean>(false)
   let isNewFood = (!props.id && !props.mealId && !props.api_id && !props.ingredient_id)
+  let multiPartForm = useMultiPartForm('meals', props.mealId ||'')
+
   let { state: form, setForm, dispatch: formDispatch } = useForm<Tables['food']['Insert']>({
     name: '',
     calories: 0,
@@ -79,7 +86,9 @@ export default function FoodDetail2(props: {
   let [shouldShowKeyboard, setShouldShowKeyboard] = useState<boolean>(true)
   let [keyboardOpen, setKeyboardOpen] = useState<boolean>(false)
   useAsync(async () => {
+    console.log(props)
     if ((props.id || props.ingredient_id || props.progress_id)) {
+      console.log('condition 1')
       // fetch food from database
       let selectString = '*, author:user_id(username)'
       if (props.ingredient_id) { }
@@ -97,6 +106,7 @@ export default function FoodDetail2(props: {
         formDispatch({ type: FormReducer.Set, payload: data })
       }
     } else if (props.api_id) {
+      console.log('condition 2')
       // use USDA Database to collect all info needed for food 
       let res = await USDAFoodDetails(props.api_id)
       if (res) {
@@ -142,7 +152,42 @@ export default function FoodDetail2(props: {
             console.log('form set to', potentialData)
             setInitialValue(potentialData.quantity || 1,)
         }
-    } 
+    } else if (props.mealId) {
+      console.log(props.meal_name)
+      console.log(multiPartForm.data)
+      let potentialData = (multiPartForm.data || []).filter(x => x.meal_id == props.meal_id)
+      let _quantity = 1;
+      let _weight = 100;
+      let _servingSizes = {'Serving': 100}
+      if (props.meal_progress_id) {
+        // get weight and quantity
+        let existingProgress = await supabase.from('meal_progress').select('*').filter('id', 'eq', props.meal_progress_id).single()
+        if (existingProgress.data) {
+          let _data = existingProgress.data as Tables['meal_progress']['Row']
+          _quantity = (_data.consumed_weight || 1) / (_data.total_weight || 1)
+          _weight = _data.consumed_weight || 100
+        }
+
+      }
+      let _nutrients = getMacrosFromIngredients(potentialData, _quantity)
+      let payload = {
+        name: props.meal_name,
+        otherNutrition: _nutrients?.otherNutrition || {},
+        calories: _nutrients?.calories || 0,
+        protein: _nutrients?.protein || 0,
+        carbs: _nutrients?.carbs || 0,
+        fat: _nutrients?.fat || 0,
+        weight: _weight,
+        quantity: _quantity,
+        servingSize: 'Serving',
+        servingSizes: _servingSizes,
+        category: '',
+        ingredients: potentialData.map(x => x.name).join('; ')
+      }
+      formDispatch({ type: FormReducer.Set, payload: payload })
+      setAuthor('Meal')
+      setInitialValue(Math.round(_quantity) < _quantity ? Number(_quantity.toFixed(2)) : _quantity)
+    }
     setInitialized(true)
   }, [])
   let dm = useColorScheme() === 'dark'
@@ -189,7 +234,6 @@ export default function FoodDetail2(props: {
 
   let n = useNavigation()
   let pdao = ProgressDao(false)
-  let multiPartForm = useMultiPartForm('meals', props.mealId || '')
   let [showCategory, setShowCategory] = useState(false)
 
   const onSubmit = async () => {
@@ -203,7 +247,7 @@ export default function FoodDetail2(props: {
             n.pop()
         }
         
-    } else if (props.mealId) {
+    } else if (props.mealId && !props.meal_id) {
         let existingIngredients = [...(multiPartForm.data|| [])]
         if (props.tempId) {
             // update existing meal ingredient
@@ -218,6 +262,17 @@ export default function FoodDetail2(props: {
         }
         multiPartForm.upsert(existingIngredients)
         n.pop()
+    } else if (props.meal_id) {
+       await pdao.saveProgress('meal_progress', {
+        meal_id: props.meal_id,
+        progress_id: null,
+        total_weight: 100,
+        consumed_weight: form.weight,
+        servingSize: form.servingSize,
+        id: Number(props.meal_progress_id) || undefined
+    })
+      n.goBack()
+      n.goBack()
     } else {
         let {data, error} = await supabase.from('food').insert(form).select().single()
         if (data) {
@@ -282,10 +337,11 @@ export default function FoodDetail2(props: {
           onCarbsChange={v => setForm('carbs', v)}
           onFatChange={v => setForm('fat', v)}
           onOtherNutritionChange={v => setForm('otherNutrition', v)}
+          disabled={props.meal_id ? true : false}
          />
         <Spacer />
         <ManageButton title='Ingredients' buttonText=' ' />
-        <TextArea value={form.ingredients || ''} height={'$9'} textSize={16} id='ingredients' />
+        <TextArea editable={!props.meal_id ? true : false} value={form.ingredients || ''} height={'$9'} textSize={16} id='ingredients' />
         <View style={tw`h-90`} />
       </ScrollView>}
       <Overlay excludeBanner visible={showCategory} onDismiss={() => setShowCategory(false)}>

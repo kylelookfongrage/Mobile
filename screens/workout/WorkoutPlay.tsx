@@ -53,7 +53,7 @@ export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
     let selectedWorkoutDetail = selectedWorkoutPlayDetail ? workoutDetails.find(x => x.id === selectedWorkoutPlayDetail.workout_detail_id) : undefined
     const [paused, setPaused] = React.useState<boolean>(true)
     let resting = (selectedWorkoutDetail && selectedWorkoutPlayDetail && selectedWorkoutPlayDetail.completed) ? (
-        (selectedWorkoutPlayDetail.rest || 0) < (selectedWorkoutDetail.rest || 0)
+        (selectedWorkoutPlayDetail.rest || 0) <= (selectedWorkoutDetail.rest || 0)
     ) : false
     const [originalDetails, setOriginalDetails] = React.useState<Tables['workout_play_details']['Row'][]>([])
     const [shouldShowMore, setShouldShowMore] = React.useState<boolean>(false)
@@ -143,6 +143,7 @@ export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
     const perSecondFunc = () => {
         if (paused || !selectedWorkoutPlayDetail) return;
         setTotalTime(totalTime + 1)
+
         // set the selected workout play details time + 1 if they are not completed, else add to the rest
         const timeToRest = selectedWorkoutPlayDetail.completed ? selectedWorkoutDetail?.rest || 0 : 0
         onSetUpdate({
@@ -155,7 +156,12 @@ export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
             if (timeToRest && (selectedWorkoutPlayDetail.rest || 0) < timeToRest) {
                 return;
             }
-            forwardBackwardPress()
+            setSelected(idx => {
+                if (idx + 1 < workoutPlayDetails.length) {
+                    return idx + 1
+                }
+                return idx
+            })
         }
         
     }
@@ -193,12 +199,13 @@ export default function WorkoutPlayScreen(props: WorkoutPlayProps) {
         })
     }
 
+    const [totalTime, setTotalTime] = React.useState<number>(0)
+
     React.useEffect(() => {
         const interval = setInterval(perSecondFunc, 1000)
         return () => clearInterval(interval)
-    })
+    }, [perSecondFunc])
 
-    const [totalTime, setTotalTime] = React.useState<number>(0)
 
     const updateAllSets = <T extends keyof Tables['workout_play_details']['Insert'], V extends Tables['workout_play_details']['Insert'][T]>(key:T, value: V) => {
         console.log(`Updating ${key} to ${value}`)

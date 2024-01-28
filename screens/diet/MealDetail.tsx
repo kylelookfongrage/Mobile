@@ -104,7 +104,7 @@ export default function MealDetailScreen(props: MealDetailProps) {
     let pdao = ProgressDao(false)
     const { logProgress } = useBadges(false)
     let [uuid, setUuid] = useState<string>(uuidv4())
-    let searchOptions = screen.editMode ? [] : ['Overview', 'Log Meal', 'Nutrition Label']
+    let searchOptions = screen.editMode ? [] : ['Overview', 'Nutrition Label']
     let [selectedOption, setSelectedOption] = useState<typeof searchOptions[number]>(searchOptions[0])
     let ingrs = useMultiPartForm('meals', uuid)
     let ingredients = ingrs.data
@@ -117,6 +117,31 @@ export default function MealDetailScreen(props: MealDetailProps) {
         if (!props.id || !Number(props.id)) return;
         await dao.remove(Number(props.id))
         navigator.pop()
+    }
+
+    const duplicateMeal = async () => {
+        let meal_id = form.id
+        if (ingrs.edited === true) { // make new meal & ingredients, linking old meal to new, then log progress
+            let copy = { ...form }
+            if (!props.idFromProgress) delete copy['id'];
+            let res = await dao.save({ ...copy, public: false, price: 0 })
+            if (res && res.id) {
+                meal_id=res.id
+                await dao.saveIngredients(res, ingredients)
+            }
+        }
+        return meal_id;
+    }
+
+    const logMeal = async (meal_id: Tables['meal_progress']['Insert']['meal_id']) => {
+        return await pdao.saveProgress('meal_progress', {
+            meal_id,
+            progress_id: null,
+            total_weight: consumed.total_weight,
+            consumed_weight: consumed.consumed_weight,
+            servingSize: consumed.servingSize,
+            id: Number(props.idFromProgress) || undefined
+        })
     }
 
 
@@ -133,23 +158,22 @@ export default function MealDetailScreen(props: MealDetailProps) {
                 //@ts-ignore
                 setScreen('errors', [message])
                 return;
-            } else {
-                setScreen('uploading', true)
-                try {
-                    let res = await dao.save(form)
-                    if (res && res?.id) {
-                        MealForm.dispatch({ type: FormReducer.Set, payload: res })
-                        let savedIngredients = await dao.saveIngredients(res, ingredients)
-                        if (!savedIngredients) {
-                            throw Error('There was an error saving your ingredients.')
-                        }
-                    }
-                    setScreen('editMode', false)
-                } catch (error) { //@ts-ignore
-                    setScreen('errors', [error.toString()])
-                }
-                setScreen('uploading', false)
             }
+            setScreen('uploading', true)
+            try {
+                let res = await dao.save(form)
+                if (res && res?.id) {
+                    MealForm.dispatch({ type: FormReducer.Set, payload: res })
+                    let savedIngredients = await dao.saveIngredients(res, ingredients)
+                    if (!savedIngredients) {
+                        throw Error('There was an error saving your ingredients.')
+                    }
+                }
+                setScreen('editMode', false)
+            } catch (error) { //@ts-ignore
+                setScreen('errors', [error.toString()])
+            }
+            setScreen('uploading', false)
         } else if (canViewDetails) {
             if (props.grocery) { // add to grocery list
 
@@ -159,33 +183,16 @@ export default function MealDetailScreen(props: MealDetailProps) {
                 ingrs.upsert_other('plans', props.planId, copy)
                 navigator.pop()
             } else { // add to progress
-                let meal_id = form.id
-                if (ingrs.edited === true) { // make new meal & ingredients, linking old meal to new, then log progress
-                    let copy = { ...form }
-                    delete copy['id']
-                    let res = await dao.save({ ...copy, public: false, price: 0 })
-                    if (res && res.id) {
-                        await dao.saveIngredients(res, ingredients)
-                        meal_id = res.id
-                    }
-                }
-                await pdao.saveProgress('meal_progress', {
-                    meal_id,
-                    progress_id: null,
-                    total_weight: consumed.total_weight,
-                    consumed_weight: consumed.consumed_weight,
-                    servingSize: consumed.servingSize,
-                    id: Number(props.idFromProgress) || undefined
-                })
-                navigator.pop()
+                // let meal_id = await duplicateMeal()
+                let s = getMatchingNavigationScreen('FoodDetail',navigator)
+                //@ts-ignores
+                navigator.navigate(s, {mealId: uuid, meal_progress_id: props.idFromProgress, meal_name: form.name, meal_id: form.id})
             }
 
         } else { // redirect to subscription page
             navigator.navigate('Subscription')
         }
     }
-
-    let fx = (consumed.consumed_weight || 1) / (consumed.total_weight || 1)
 
     return (
         <View style={{ flex: 1 }} includeBackground>
@@ -207,17 +214,17 @@ export default function MealDetailScreen(props: MealDetailProps) {
 
                 <View style={[tw`pt-4 pb-60`]}>
                     <View style={tw`px-2`}>
-                    <ErrorMessage errors={screen.errors} onDismissTap={() => setScreen('errors', [])} />
-                    <TitleInput
-                        value={form.name || ''}
-                        editable={screen.editMode}
-                        onChangeText={x => setForm('name', x)}
-                        placeholder='My Meal'
-                    />
-                    <Spacer />
-                    <UsernameDisplay image disabled={(screen.editMode || screen.uploading || (props.idFromProgress ? true : false))} id={form.user_id} username={form.id ? null : profile?.username} />
-                    {/* @ts-ignore */}
-                    <Spacer />
+                        <ErrorMessage errors={screen.errors} onDismissTap={() => setScreen('errors', [])} />
+                        <TitleInput
+                            value={form.name || ''}
+                            editable={screen.editMode}
+                            onChangeText={x => setForm('name', x)}
+                            placeholder='My Meal'
+                        />
+                        <Spacer />
+                        <UsernameDisplay image disabled={(screen.editMode || screen.uploading || (props.idFromProgress ? true : false))} id={form.user_id} username={form.id ? null : profile?.username} />
+                        {/* @ts-ignore */}
+                        <Spacer />
                     </View>
                     <Selector searchOptions={searchOptions} selectedOption={selectedOption} onPress={setSelectedOption} />
                     <Spacer />
@@ -308,7 +315,7 @@ export default function MealDetailScreen(props: MealDetailProps) {
                         }
                         <Spacer divider />
                     </HideView>
-                    
+
                     <HideView style={tw`px-2`} hidden={selectedOption !== 'Nutrition Label' || screen.editMode}>
                         <NutritionLabel
                             calories={calories}
@@ -320,7 +327,6 @@ export default function MealDetailScreen(props: MealDetailProps) {
                         />
 
                     </HideView>
-
                 </View>
             </ScrollViewWithDrag>
             <Overlay visible={screen.showLogProgress} onDismiss={() => setScreen('showLogProgress', false)}>

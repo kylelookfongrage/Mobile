@@ -147,7 +147,7 @@ export const SummaryScreen = () => {
         // onPress={() => navigator.navigate('EditDashboard')} 
         />
         <Spacer />
-        {presetDashboardComponents['Tasks']['Tasks Preview'](obj, {index: 1  })}
+        {presetDashboardComponents['Nutrition']['Macros List'](obj, {index: 1  })}
         <ScrollView
           style={[tw``]}
           showsVerticalScrollIndicator={false}

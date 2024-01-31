@@ -132,7 +132,12 @@ export const ImagePickerView = (props: ImagePickerViewProps) => {
 
 
   const onDelete = (uri: string) => {
-    props.onChange && props.onChange((props.srcs || []).filter((x) => x.uri !== uri));
+    console.log('deleting')
+    if (props.onChange) {
+      console.log(props.srcs)
+      console.log('updating to', (props.srcs || []).filter((x) => x.uri !== uri))
+      props.onChange((props.srcs || []).filter((x) => x.uri !== uri && x.awsId !== uri && x.supabaseID !== uri));
+    }
   };
 
   const styles = StyleSheet.create({
@@ -149,6 +154,7 @@ export const ImagePickerView = (props: ImagePickerViewProps) => {
   const scrollRef = useRef<ScrollView>(null);
   const navigator = useNavigation();
   const [showAction, setShowAction] = useState(false);
+  console.log('image source', mediaSources)
 
   return (
     <View style={[{ flex: 1 }, tw`bg-${dm ? "gray-800" : "gray-200"}`]}>

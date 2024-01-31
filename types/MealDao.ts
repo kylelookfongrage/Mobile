@@ -42,12 +42,13 @@ export function MealDao() {
 
     const saveIngredients = async (meal: Tables['meal']['Row'], ingredients: IngredientAdditions[]): Promise<Tables['meal_ingredients']['Row'][] | null> => {
         console.log('saving ingredients')
+        let ids = ingredients.map(x => x.id).filter(x => x ? true : false)
         await supabase.from('meal_ingredients').delete().filter('meal_id', 'eq', meal.id)
         let ingrs: Tables['meal_ingredients']['Insert'][] = []
         for (var i of ingredients) {
             ingrs.push(getIngredientFromIngredientAddition({...i, meal_id: meal.id}))
         }
-        const res = await supabase.from('meal_ingredients').insert(ingrs.map(x => ({ meal_id: meal.id, ...x }))).select()
+        const res = await supabase.from('meal_ingredients').upsert(ingrs.map(x => ({ meal_id: meal.id, ...x }))).select()
         return res?.data || null;
     }
 

@@ -10,6 +10,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TextInput } from 'react-native-gesture-handler';
 import { ConversionChart, FractionInput } from '../../data';
 import { ExpoIcon } from '../base/ExpoIcon';
+import { useFonts } from 'expo-font';
+import { Urbanist_400Regular, Urbanist_500Medium, Urbanist_600SemiBold, Urbanist_700Bold } from '@expo-google-fonts/urbanist';
+import { MaterialIcons } from '@expo/vector-icons';
 
 export enum EButton {
     SLASH, PERIOD, SPACE, BACK, ENTER
@@ -40,13 +43,20 @@ export function KeyboardView(props: INutritionKeyboardProps) {
     KeyboardRegistry.onItemSelected('KeyboardView', p);
   }
   let dm = useColorScheme() === 'dark'
+  let [fontsLoaded] = useFonts({
+    Urbanist_400Regular,
+    Urbanist_500Medium,
+    Urbanist_600SemiBold,
+    Urbanist_700Bold,
+    ...MaterialIcons.font,
+  });
 
   
   let SpaceIcon = () => (<ExpoIcon iconName='material' name='space-bar' size={25} color={dm ? 'white' : 'black'} />)
   let BackIcon = () => (<ExpoIcon iconName='material' name='backspace' size={25} color={dm ? 'white' : 'black'}  />)
   let LogButton = () => {
     return <DView style={[tw`items-center justify-center rounded-lg`, {backgroundColor: _tokens.primary900, width: (Dimensions.get('screen').width * 0.99) / (2.5), height: (Dimensions.get('screen').height * 0.26) / 4.5}]}>
-    <Text xl weight='bold' style={tw`text-white`}>Finish</Text>
+    <ExpoIcon iconName='material' name='keyboard-hide' size={25} color={'white'}  />
 </DView>
   }
   let ButtonMapping: {[k: keyof INutritionKeyboardButtonPress['buttonPress'] ]: () => React.JSXElementConstructor<any>} = {
@@ -54,13 +64,16 @@ export function KeyboardView(props: INutritionKeyboardProps) {
     'BACK': <BackIcon />,
     'ENTER': <LogButton />
   }
+  if (!fontsLoaded) return <DView />
   
     return (
-      <ScrollView scrollEnabled={false} contentContainerStyle={[{backgroundColor: dm ? _tokens.dark1 : _tokens.gray200, flex: 1}]}>
+      <ScrollView scrollEnabled={false} contentContainerStyle={[{backgroundColor: dm ? _tokens.dark1 : _tokens.gray50, flex: 1}]}>
         <DView style={tw`flex-wrap flex-row`}>
             {[1,2,3,'/',4,5,6,' ',7,8,9,'BACK','.', 0, 'ENTER'].map(x => {
                 return <TouchableOpacity onPress={() => {
-                    if (typeof x === 'string') {
+                    if (x === 'ENTER') {
+                        Keyboard.KeyboardUtils.dismiss()
+                    } else if (typeof x === 'string') {
                         //@ts-ignore
                         onButtonPress({buttonPress: x})
                     } else {
@@ -122,7 +135,7 @@ export const LogFoodKeyboardAccessory = (props: INutritionKeyboardProps) => {
     
     return <KeyboardAccessoryView
     renderContent={() => {
-        return <View style={{flex: 1, backgroundColor: dm ? _tokens.dark1 : _tokens.gray200, ...tw`px-2`}}>
+        return <View style={{flex: 1, backgroundColor: dm ? _tokens.dark1 : _tokens.gray50, ...tw`px-2`}}>
             <View style={{flex: 1, paddingTop: 16, paddingBottom: open ? 16 : insets.bottom + 10, ...tw`flex-row items-center justify-between`}}>
         <Pressable style={[tw`w-9/12 rounded-lg px-2 flex-row items-center`, {backgroundColor: dm ? _tokens.dark2 : _tokens.gray300, height: s.height * 0.055}]} onPress={() => {
             setOpen(true)
@@ -179,3 +192,6 @@ export const LogFoodKeyboardAccessory = (props: INutritionKeyboardProps) => {
 }
 
 
+
+
+Keyboard.KeyboardRegistry.registerKeyboard('KeyboardView', () => KeyboardView)

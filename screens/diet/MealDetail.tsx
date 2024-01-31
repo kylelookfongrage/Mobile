@@ -74,6 +74,7 @@ export default function MealDetailScreen(props: MealDetailProps) {
                 return {
                     ...copy,
                     tempId: z.id,
+                    meal_id: props.id
                 }
             })
             ingrs.upsert(ing)
@@ -90,14 +91,6 @@ export default function MealDetailScreen(props: MealDetailProps) {
         showLogProgress: false
     })
     let [screen, setScreen] = [ScreenForm.state, ScreenForm.setForm]
-    let ProgressForm = useForm<Tables['meal_progress']['Insert']>({ consumed_weight: null, servingSize: null, total_weight: null }, async () => {
-        if (props.idFromProgress && Number(props.idFromProgress)) {
-            let res = await supabase.from('meal_progress').select('*').filter('id', 'eq', Number(props.idFromProgress)).maybeSingle()
-            return res?.data
-        }
-        return null
-    })
-    let [consumed, setConsumed] = [ProgressForm.state, ProgressForm.setForm]
     const [imageSource, setImageSource] = React.useState<MediaType[]>([])
     const canViewDetails = !props.id || form.user_id === profile?.id || !form.price || false // if user purchased meal or subscribed to user
     const dm = useColorScheme() === 'dark'
@@ -132,19 +125,6 @@ export default function MealDetailScreen(props: MealDetailProps) {
         }
         return meal_id;
     }
-
-    const logMeal = async (meal_id: Tables['meal_progress']['Insert']['meal_id']) => {
-        return await pdao.saveProgress('meal_progress', {
-            meal_id,
-            progress_id: null,
-            total_weight: consumed.total_weight,
-            consumed_weight: consumed.consumed_weight,
-            servingSize: consumed.servingSize,
-            id: Number(props.idFromProgress) || undefined
-        })
-    }
-
-
 
     const saveMeal = async () => {
         if (screen.editMode) { // updating or creating
@@ -183,10 +163,11 @@ export default function MealDetailScreen(props: MealDetailProps) {
                 ingrs.upsert_other('plans', props.planId, copy)
                 navigator.pop()
             } else { // add to progress
+                ingrs.upsert(ingrs.data.map(x => ({...x, meal_id: form.id})))
                 // let meal_id = await duplicateMeal()
                 let s = getMatchingNavigationScreen('FoodDetail',navigator)
                 //@ts-ignores
-                navigator.navigate(s, {mealId: uuid, meal_progress_id: props.idFromProgress, meal_name: form.name, meal_id: form.id})
+                navigator.navigate(s, {mealId: uuid, meal_progress_id: props.idFromProgress, meal_name: form.name, meal_id: form.id, meal: form})
             }
 
         } else { // redirect to subscription page
@@ -208,6 +189,7 @@ export default function MealDetailScreen(props: MealDetailProps) {
                     ]} />
                 }} />
                 <ImagePickerView editable={screen.editMode} srcs={canViewDetails ? imageSource : imageSource.filter(x => x.type === 'image')} onChange={x => {
+                    console.log(x)
                     setImageSource(x)
                 }} type='all' />
             </View>} style={{ flex: 1, }} showsVerticalScrollIndicator={false}>
@@ -299,21 +281,6 @@ export default function MealDetailScreen(props: MealDetailProps) {
                             }} placeholder='Your new step (press enter to add)' placeholderTextColor={'gray'} style={tw`text-${dm ? 'white' : 'black'} max-w-10/12`} value={screen.newStep} onChangeText={(v) => setScreen('newStep', v)} />
                         </View>}
                         <Spacer />
-                    </HideView>
-
-                    <HideView style={tw`px-2`} hidden={!(canViewDetails && props.id && !props.planId) || selectedOption !== 'Log Meal'}>
-                        <ManageButton title='Log Meal Details' buttonText=' ' />
-                        <Spacer />
-                        <QuantitySelect initialServingSize={consumed.servingSize} qty={consumed.consumed_weight} onQuantityChange={(x, y) => {
-                            setConsumed('consumed_weight', x)
-                            setConsumed('servingSize', y)
-                        }} title='Consumed' />
-                        <Spacer />
-                        {((consumed.servingSize && consumed.consumed_weight) ?
-                            <QuantitySelect selectedServingSize={consumed.servingSize} qty={consumed.total_weight} onQuantityChange={(x, y) => setConsumed('total_weight', x)} title='Total Servings' />
-                            : <View />)
-                        }
-                        <Spacer divider />
                     </HideView>
 
                     <HideView style={tw`px-2`} hidden={selectedOption !== 'Nutrition Label' || screen.editMode}>

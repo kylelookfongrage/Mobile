@@ -106,7 +106,6 @@ function App() {
 
   useEffect(() => {
     if (loadedKeyboard || !fontsLoaded) return;
-    Keyboard.KeyboardRegistry.registerKeyboard('KeyboardView', () => KeyboardView)
     setLoadedKeyboard(true)
     
   }, [fontsLoaded])

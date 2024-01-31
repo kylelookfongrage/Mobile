@@ -924,6 +924,7 @@ export interface Database {
           tags: string[] | null
           user_id: string | null
           video: string | null
+          original_meal: number | null
         }
         Insert: {
           ai?: boolean | null
@@ -938,6 +939,7 @@ export interface Database {
           tags?: string[] | null
           user_id?: string | null
           video?: string | null
+          original_meal?: number | null
         }
         Update: {
           ai?: boolean | null
@@ -952,6 +954,7 @@ export interface Database {
           tags?: string[] | null
           user_id?: string | null
           video?: string | null
+          original_meal?: number | null
         }
         Relationships: [
           {

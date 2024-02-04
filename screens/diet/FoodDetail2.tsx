@@ -50,7 +50,7 @@ export default function FoodDetail2(props: {
   let { protein: proteinConsumed, carbs: carbsConsumed, fat: fatConsumed, calories: caloriesConsumed } = aggregateFoodAndMeals(foodProgress, mealProgress)
   let { tdee, totalCarbsGrams, totalFatGrams, totalProteinGrams } = getMacroTargets(profile);
   let [initialized, setInitialized] = useState<boolean>(false)
-  let isNewFood = (!props.id && !props.mealId && !props.api_id && !props.ingredient_id)
+  let isNewFood = (!props.id && !props.mealId && !props.api_id && !props.ingredient_id && !props.meal_progress_id)
   let multiPartForm = useMultiPartForm('meals', props.mealId || '')
 
   let { state: form, setForm, dispatch: formDispatch } = useForm<Tables['food']['Insert']>({

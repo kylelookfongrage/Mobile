@@ -112,20 +112,6 @@ export default function MealDetailScreen(props: MealDetailProps) {
         navigator.pop()
     }
 
-    const duplicateMeal = async () => {
-        let meal_id = form.id
-        if (ingrs.edited === true) { // make new meal & ingredients, linking old meal to new, then log progress
-            let copy = { ...form }
-            if (!props.idFromProgress) delete copy['id'];
-            let res = await dao.save({ ...copy, public: false, price: 0 })
-            if (res && res.id) {
-                meal_id=res.id
-                await dao.saveIngredients(res, ingredients)
-            }
-        }
-        return meal_id;
-    }
-
     const saveMeal = async () => {
         if (screen.editMode) { // updating or creating
             let e = validate([
@@ -149,6 +135,7 @@ export default function MealDetailScreen(props: MealDetailProps) {
                         throw Error('There was an error saving your ingredients.')
                     }
                 }
+                setSelectedOption('Overview')
                 setScreen('editMode', false)
             } catch (error) { //@ts-ignore
                 setScreen('errors', [error.toString()])

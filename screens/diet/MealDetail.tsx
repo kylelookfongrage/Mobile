@@ -78,6 +78,7 @@ export default function MealDetailScreen(props: MealDetailProps) {
                 }
             })
             ingrs.upsert(ing)
+            
             return res;
         }
         return null
@@ -126,8 +127,15 @@ export default function MealDetailScreen(props: MealDetailProps) {
                 return;
             }
             setScreen('uploading', true)
+            let copiedForm = {...form}
+            let media = imageSource?.[0]
+            if (media) {
+                if (media.type === 'video') {
+                    copiedForm['video'] = media.uri
+                } else { copiedForm['preview'] = media.uri }
+            }
             try {
-                let res = await dao.save(form)
+                let res = await dao.save(copiedForm, form.video || undefined, form.preview || undefined)
                 if (res && res?.id) {
                     MealForm.dispatch({ type: FormReducer.Set, payload: res })
                     let savedIngredients = await dao.saveIngredients(res, ingredients)
@@ -165,7 +173,7 @@ export default function MealDetailScreen(props: MealDetailProps) {
     return (
         <View style={{ flex: 1 }} includeBackground>
             {/* @ts-ignore */}
-            <ScrollViewWithDrag keyboardDismissMode='interactive' disableRounding rerenderTopView={[screen.editMode, (imageSource || []), form.user_id]} TopView={() => <View>
+            <ScrollViewWithDrag keyboardDismissMode='interactive' disableRounding rerenderTopView={[screen.editMode, (form.vi || []), form.user_id]} TopView={() => <View>
                 <BackButton inplace Right={() => {
                     if (screen.editMode || !props.id || !Number(props.id) || props.idFromProgress || props.planId) return <View />
                     return <ShowMoreDialogue meal_id={Number(props.id)} options={[

@@ -134,9 +134,10 @@ export const ImagePickerView = (props: ImagePickerViewProps) => {
   const onDelete = (uri: string) => {
     console.log('deleting')
     if (props.onChange) {
-      console.log(props.srcs)
-      console.log('updating to', (props.srcs || []).filter((x) => x.uri !== uri))
-      props.onChange((props.srcs || []).filter((x) => x.uri !== uri && x.awsId !== uri && x.supabaseID !== uri));
+      if (!props.multiple) {props.onChange([])}
+      else {
+        props.onChange((props.srcs || []).filter((x) => x.uri !== uri && x.supabaseID !== uri));
+      }
     }
   };
 

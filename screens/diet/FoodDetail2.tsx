@@ -196,7 +196,7 @@ export default function FoodDetail2(props: {
   let dm = useColorScheme() === 'dark'
   let s = Dimensions.get('screen')
   let [shouldShowInput, setShouldShowInput] = useState<boolean>(true);
-  let searchOptions = isNewFood ? [] : ['Overview', 'Nutrition Facts']
+  let searchOptions = (isNewFood) ? [] : (props.meal_id ? ['Overview'] : ['Overview', 'Nutrition Facts'])
   let [selectedOption, setSelectedOption] = useState<typeof searchOptions[number]>(searchOptions[0])
   console.log('protein', form.protein)
   useEffect(() => {
@@ -326,9 +326,9 @@ export default function FoodDetail2(props: {
       <Spacer />
       <XStack alignItems='flex-start' justifyContent='space-between' px='$3'>
         <XStack alignItems='flex-start' w='93%'>
-          <Text onPress={() => {
+          <Text disabled={props.meal_id ? true : false} onPress={() => {
             setShowCategory(true)
-          }} h2>{getEmojiByCategory(form?.category || undefined)}</Text>
+          }} h2>{props.meal_id ? '🍽️' : getEmojiByCategory(form?.category || undefined)}</Text>
           <YStack ml='$2'>
             <TextInput placeholderTextColor={'gray'} value={form.name} multiline numberOfLines={3} onChangeText={v => setForm('name', v)} placeholder='New Food' style={{ ...tw`text-${dm ? 'white' : "black"}`, fontFamily: 'Urbanist_700Bold', fontSize: 18, width: Dimensions.get('screen').width * 0.7 }} />
             <Text style={tw`text-gray-500`}>{author}</Text>

@@ -85,7 +85,7 @@ export default function ExerciseDetail(props: ExerciseDetailProps) {
                 setScreen('uploading', false)
                 return;
             }
-            let copiedForm = { ...form }
+            let copiedForm = { ...form, user_id: profile?.id }
             let media = video?.[0]
             if (media) {
                 if (media.type === 'video') {

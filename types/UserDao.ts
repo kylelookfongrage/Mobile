@@ -80,7 +80,9 @@ export function UserQueries(realtime: boolean=false){
         let tables = ['workout', 'meal', 'food', 'fitness_plan', 'exercise']
         for (var table of tables) {
             if (!exclude.includes(table)) {
-                let res = await supabase.from(table).select('*').filter('user_id', 'eq', user_id).order('created_at', {ascending: false}).range(0, 20)
+                let _res = supabase.from(table).select('*').filter('user_id', 'eq', user_id).order('created_at', {ascending: false}).range(0, 20)
+                if (table === 'meal') _res = _res.filter('public', 'eq', true)
+                let res = await _res
                 if (res.data) {
                     //@ts-ignore
                     result[table] = res.data

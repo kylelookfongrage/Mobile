@@ -37,8 +37,9 @@ const multipartformSlice = createSlice({
     reducers: {
         upsert: <K extends keyof TMultiPartForm, T extends keyof TMultiPartForm[K], Z extends TMultiPartForm[K][T]>(state: TMultiPartForm, action: PayloadAction<{ingredients: Z, uuid: string, type: K}>) => {
             let {ingredients, uuid, type} = action.payload;
+            let og = state[type][uuid]
             state[type][uuid] = ingredients
-            state['edited'][uuid] = true
+            state['edited'][uuid] = og ? true : false
         },
         remove: <K extends keyof TMultiPartForm>(state: TMultiPartForm, action: PayloadAction<{uuid: string, type: K}>) => {
             let {uuid, type} = action.payload;

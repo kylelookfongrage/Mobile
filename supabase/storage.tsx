@@ -64,7 +64,7 @@ export function useStorage() {
             console.log('getting vt')
             if (isStorageUri(video)) uri = constructUrl(video)?.data?.publicUrl
             let {uri: thumbnail} = await VT.getThumbnailAsync(video, {time: 0, quality: 0.7})
-            previewUri = (await upload({type: 'image', uri: thumbnail, supabaseID: originalPreviewId}))?.uri
+            previewUri = (await upload({type: 'image', uri: thumbnail}))?.uri
             uri = (await upload({type: 'video', uri: video, supabaseID: originalVideoId}))?.uri
         } else if (preview && !isStorageUri(preview)) {
             console.log('uploading preview')

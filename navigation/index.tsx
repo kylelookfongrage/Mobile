@@ -223,30 +223,15 @@ function BottomTabNavigator() {
         name="Home"
         // @ts-ignore
         component={TabOneScreen}
-        options={({ navigation }: RootTabScreenProps<'Home'>) => ({
-          headerRight: () => (
-            <Pressable
-              onPress={() => navigation.navigate('Modal')}
-              style={({ pressed }) => ({
-                opacity: pressed ? 0.5 : 1,
-              })}>
-              <FontAwesome
-                name="info-circle"
-                size={25}
-                color={Colors[colorScheme].text}
-                style={{ marginRight: 15 }}
-              />
-            </Pressable>
-          ),
-        })}
+        options={{tabBarShowLabel: false}}
       />
-      <BottomTab.Screen
+      {/* <BottomTab.Screen
         name="Exercise"
         component={WorkoutTab}
         options={{
           tabBarShowLabel: false
         }}
-      />
+      /> */}
       <BottomTab.Screen
         name="Food"
         component={FoodTab}

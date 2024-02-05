@@ -194,9 +194,9 @@ export default function Profile(props: ProfileProps) {
             <Spacer />
             <XStack justifyContent='space-evenly' alignItems='center'>
                 <YStack justifyContent='center' alignItems='center'>
-                    <Text h4 weight='bold'>{followers}</Text>
+                    <Text h4 weight='bold'>{workouts.length + exercises.length + meals.length + food.length + plans.length}</Text>
                     <Spacer xs />
-                    <Text>   Rating   </Text>
+                    <Text>   Posts   </Text>
                 </YStack>
                 <YStack width={'$0.25'} height={'$2'} borderRadius={'$2'} backgroundColor={dm ? _tokens.gray900 : _tokens.gray300} />
                 <YStack justifyContent='center' alignItems='center'>

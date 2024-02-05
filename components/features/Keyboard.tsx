@@ -144,7 +144,7 @@ export const LogFoodKeyboardAccessory = (props: INutritionKeyboardProps) => {
             <TextInput style={{width: 0}} ref={ref} />
         </Pressable>
         <Pressable onPress={open ? Keyboard.KeyboardUtils.dismiss :  onEnterPress} style={[tw`w-2.5/12 px-1 items-center justify-center rounded-lg`, {height: s.height * 0.055}, !open && {backgroundColor: _tokens.primary900}]}>
-            <Text lg weight='bold' style={tw`text-${(open && !dm) ? 'black' : 'white'}`}>{open ? 'Done' : 'Log'}</Text>
+            <Text lg weight='bold' style={tw`text-${(open && !dm) ? 'black' : 'white'}`}>{open ? 'Done' : 'Save'}</Text>
         </Pressable>
     </View>
     {open && <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{maxHeight: 40, marginBottom: 5}}>

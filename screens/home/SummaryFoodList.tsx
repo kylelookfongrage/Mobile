@@ -18,6 +18,7 @@ import ManageButton from '../../components/features/ManageButton'
 import Spacer from '../../components/base/Spacer'
 import { ImpactGridItem } from '../../components/base/InputGridItem'
 import { _tokens } from '../../tamagui.config'
+import SwipeWithDelete from '../../components/base/SwipeWithDelete'
 
 export default function SummaryFoodList() {
     const { progressId, userId, profile } = useCommonAWSIds()
@@ -67,18 +68,12 @@ export default function SummaryFoodList() {
                     }} />
                 {food_progress.length === 0 && <Text style={tw`text-center my-6`}>There is no food to display, add some!</Text>}
                 {food_progress.map(ingr => {
-                    return <Swipeable renderRightActions={() => {
-                        return <View style={tw`flex items-center justify-center ml-2`}>
-                            <TouchableOpacity onPress={async () => {
-                        }} style={[tw`items-center my-2 justify-center p-4 rounded-lg bg-red-${dm ? '700' : '300'}`]}>
-                            <ExpoIcon name='x' iconName='feather' size={20} color='gray' />
-                            <Text>Delete</Text>
-                        </TouchableOpacity>
-                        </View>
+                    return <SwipeWithDelete onDelete={async () => {
+                        await dao.deleteProgress(ingr.id, 'food_progress')
                     }} key={ingr.id}>
                         <View
                             card
-                            style={tw`w-12/12 my-2 flex-row justify-between items-center rounded-2xl py-4 px-3`}>
+                            style={tw`w-12/12 my-1 flex-row justify-between items-center rounded-2xl py-2 px-3`}>
                             <TouchableOpacity onPress={() => {
                                 const screen = getMatchingNavigationScreen('FoodDetail', navigator)
                                 //@ts-ignore
@@ -97,7 +92,7 @@ export default function SummaryFoodList() {
                             </TouchableOpacity>
                             <ExpoIcon style={tw``} name='chevron-right' iconName='feather' size={20} color={dm ? 'white' : 'black'} />
                         </View>
-                    </Swipeable>
+                    </SwipeWithDelete>
                 })}
                 <Spacer />
                 <ManageButton title='Meals' buttonText='Add Meals' onPress={() => {
@@ -109,19 +104,12 @@ export default function SummaryFoodList() {
                 {meal_progress.length === 0 && <Text style={tw`text-center my-6`}>There are no meals to display, add one!</Text>}
                 {meal_progress.map((ingr, i) => {//@ts-ignore
                     const r = getMacrosFromIngredients(ingr.meal.meal_ingredients)
-                    
-                    return <Swipeable renderRightActions={() => {
-                        return <View style={tw`flex items-center justify-center ml-2`}>
-                            <TouchableOpacity onPress={async () => {
-                        }} style={[tw`items-center my-2 justify-center p-4 rounded-lg bg-red-${dm ? '700' : '300'}`]}>
-                            <ExpoIcon name='x' iconName='feather' size={20} color='gray' />
-                            <Text>Delete</Text>
-                        </TouchableOpacity>
-                        </View>
-                    }} key={ingr.id + `${i}`}>
-                        <View
+                    return <SwipeWithDelete onDelete={async () => {
+                        await dao.deleteProgress(ingr.id, 'meal_progress')
+                    }} key={'meal_progress_'+ `${ingr.id}` + `${i}`}>
+                         <View
                             card
-                            style={tw`w-12/12 my-2 flex-row justify-between items-center  rounded-2xl py-4 px-3`}>
+                            style={tw`w-12/12 my-1 flex-row justify-between items-center  rounded-2xl py-2 px-3`}>
                             <TouchableOpacity onPress={() => {
                                 const screen = getMatchingNavigationScreen('MealDetail', navigator)
                                 //@ts-ignore
@@ -140,7 +128,7 @@ export default function SummaryFoodList() {
                             </TouchableOpacity>
                             <ExpoIcon style={tw``} name='chevron-right' iconName='feather' size={20} color={dm ? 'white' : 'black'} />
                         </View>
-                    </Swipeable>
+                    </SwipeWithDelete>
                 })}
                 <View style={tw`h-12`} />
                 <ThisAdHelpsKeepFree />

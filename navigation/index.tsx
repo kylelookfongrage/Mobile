@@ -72,6 +72,9 @@ import Purchases from 'react-native-purchases';
 import { Env } from '../env';
 import { updateUserState } from '../redux/reducers/auth';
 import EditDashboard from '../screens/other/EditDashboard';
+import ScanBarcode from '../screens/diet/ScanBarcode';
+import FoodDetail2 from '../screens/diet/FoodDetail2';
+import History from '../screens/other/History';
 
 
 function RootNavigator() {
@@ -90,10 +93,10 @@ function RootNavigator() {
       if (!x) return;
       Purchases.addCustomerInfoUpdateListener((info) => {
         if (info?.entitlements?.active["pro"]?.isActive) {
-          dispatch(updateUserState({key: 'subscribed', value: true}))
+          dispatch(updateUserState({ key: 'subscribed', value: true }))
         }
         if (Object.keys(info?.entitlements?.all).length > 0) {
-          dispatch(updateUserState({key: 'hasSubscribedBefore', value: true}))
+          dispatch(updateUserState({ key: 'hasSubscribedBefore', value: true }))
         }
       });
     });
@@ -106,7 +109,7 @@ function RootNavigator() {
         {props => <ImageDetailView uris={props.route?.params?.uris} defaultIndex={props.route?.params?.defaultIndex} />}
       </Stack.Screen>
       <Stack.Screen name='Video' options={{ headerShown: false, presentation: 'containedModal' }}>
-        {props => <VideoScreen uri={props.route?.params?.uri}/>}
+        {props => <VideoScreen uri={props.route?.params?.uri} />}
       </Stack.Screen>
       <Stack.Screen name='WorkoutPlay' options={{ headerShown: false, gestureEnabled: false }}>
         {(props) => <WorkoutPlayScreen {...props} id={props.route.params.id} workoutId={props.route?.params?.workoutId} />}
@@ -170,23 +173,23 @@ function RootNavigator() {
         {/* @ts-ignore */}
         {props => <SummaryMetric {...props} weight={props.route?.params?.weight} />}
       </Stack.Screen>
-      <Stack.Screen name='MakePost' options={{headerShown: false, gestureEnabled: true, gestureDirection: 'vertical', fullScreenGestureEnabled: true}}>
-          {props => <MakePost 
-            //@ts-ignore
-            workoutId={props.route?.params?.workoutId}
-            //@ts-ignore
-            mealId={props.route?.params?.mealId}
-            //@ts-ignore
-            exerciseId={props.route?.params?.exerciseId}
-            //@ts-ignore
-            runProgressId={props.route?.params?.runProgressId}
-            //@ts-ignore
-            description={props.route?.params?.description}
-            //@ts-ignore
-            media={props.route?.params?.media}
-            
-          />}
-      </Stack.Screen> 
+      <Stack.Screen name='MakePost' options={{ headerShown: false, gestureEnabled: true, gestureDirection: 'vertical', fullScreenGestureEnabled: true }}>
+        {props => <MakePost
+          //@ts-ignore
+          workoutId={props.route?.params?.workoutId}
+          //@ts-ignore
+          mealId={props.route?.params?.mealId}
+          //@ts-ignore
+          exerciseId={props.route?.params?.exerciseId}
+          //@ts-ignore
+          runProgressId={props.route?.params?.runProgressId}
+          //@ts-ignore
+          description={props.route?.params?.description}
+          //@ts-ignore
+          media={props.route?.params?.media}
+
+        />}
+      </Stack.Screen>
     </Stack.Navigator>
   }
   return (
@@ -223,7 +226,7 @@ function BottomTabNavigator() {
         name="Home"
         // @ts-ignore
         component={TabOneScreen}
-        options={{tabBarShowLabel: false}}
+        options={{ tabBarShowLabel: false }}
       />
       {/* <BottomTab.Screen
         name="Exercise"
@@ -241,7 +244,7 @@ function BottomTabNavigator() {
       />
       <BottomTab.Screen
         name="History"
-        component={FoodTab}
+        component={History}
         options={{
           tabBarShowLabel: false,
         }}
@@ -272,11 +275,11 @@ function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
       label: 'Discover',
       color: dm ? "red-600" : "red-500"
     },
-    'History' : {
+    'History': {
       icon: 'Chart',
       label: 'History',
       color: dm ? 'white' : 'black',
-      onPress: () => {}
+      onPress: () => { }
     },
     'Profile': {
       icon: "Profile",
@@ -291,7 +294,7 @@ function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   };
   const insets = useSafeAreaInsets()
   return (
-    <View includeBackground style={[{ flexDirection: 'row', paddingBottom: insets.bottom}, tw`pt-3 items-center justify-between w-12/12`]}>
+    <View includeBackground style={[{ flexDirection: 'row', paddingBottom: insets.bottom }, tw`pt-3 items-center justify-between w-12/12`]}>
       {state.routes.map((route, index) => {
         // @ts-ignore
         const { icon, color: c, label } = (iconsAndColors[route.name]) || { icon: 'home', color: 'red-500', label: 'Home' }
@@ -333,15 +336,15 @@ function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
             style={[{ flex: 1 }, tw`p-2`]}
           >
             <View style={tw`items-center`}>
-            <Icon name={icon} weight={isFocused ? 'bold' : 'light'} size={20} 
-              // style={tw`text-${color}`}
-              color={color(isFocused)}
-               />
-               <Spacer xs />
-              <Text xs weight={isFocused ? 'bold' : 'semibold'} style={{...tw`text-center`, color: color(isFocused)}}>
-                  {/* @ts-ignore */}
-                  {label}
-                </Text>
+              <Icon name={icon} weight={isFocused ? 'bold' : 'light'} size={20}
+                // style={tw`text-${color}`}
+                color={color(isFocused)}
+              />
+              <Spacer xs />
+              <Text xs weight={isFocused ? 'bold' : 'semibold'} style={{ ...tw`text-center`, color: color(isFocused) }}>
+                {/* @ts-ignore */}
+                {label}
+              </Text>
             </View>
           </TouchableOpacity>
         );

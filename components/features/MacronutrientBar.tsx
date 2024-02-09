@@ -35,7 +35,7 @@ export default function MacronutrientBar(props: {protein?: boolean; carbs?: bool
 
 // REMADE: No progress bar
 
-export const MacronutrientBarProgress = (props: {protein?: boolean; carbs?: boolean; fat?: boolean; calories?: boolean; totalEnergy: number; weight: number}) => {
+export const MacronutrientBarProgress = (props: {protein?: boolean; carbs?: boolean; fat?: boolean; calories?: boolean; totalEnergy: number; weight: number; disableMultiplier?: boolean}) => {
     let name = 'Protein'
     let multiplier = 4
     let color=_tokens.purple
@@ -50,6 +50,7 @@ export const MacronutrientBarProgress = (props: {protein?: boolean; carbs?: bool
         name='Calories'
         color=tw`bg-gray-700`.backgroundColor as string
     }
+    if (props.disableMultiplier) multiplier = 1
     let caloriesFromValue = props.weight * multiplier
     let percentage = caloriesFromValue / props.totalEnergy
     if (props.calories) percentage = 1

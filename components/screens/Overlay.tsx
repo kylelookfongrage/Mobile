@@ -5,7 +5,7 @@ import Colors from '../../constants/Colors';
 import tw from 'twrnc'
 import { View } from '../base/Themed';
 
-export default function Overlay(props: {visible?: boolean; onDismiss?: () => void, excludeBanner?: boolean, dialogueHeight?: number, dynamicHeight?: boolean} & DefaultView['props']) {
+export default function Overlay(props: {visible?: boolean; disablePadding?: boolean; onDismiss?: (b?: boolean) => void, excludeBanner?: boolean, dialogueHeight?: number, dynamicHeight?: boolean} & DefaultView['props']) {
     const dm = useColorScheme() === 'dark'
     const color = dm ? Colors.dark : Colors.light
     return (
@@ -14,10 +14,10 @@ export default function Overlay(props: {visible?: boolean; onDismiss?: () => voi
             height={`${props.dialogueHeight ? props.dialogueHeight : (props.dynamicHeight ? undefined : 60)}%`}
             bottom
             visible={props?.visible}
-            containerStyle={{ bottom: 0, backgroundColor: color.background, marginBottom: -5, padding: 20 }}
+            containerStyle={{ bottom: 0, backgroundColor: color.background, marginBottom: -5, paddingVertical: 20, paddingHorizontal: props.disablePadding ? 0 : 20 }}
             modalProps={{}}
             onDismiss={() => {
-                if (props?.onDismiss) props.onDismiss()
+                if (props?.onDismiss) props.onDismiss(false)
             }}
         >
             <View style={props.style} >

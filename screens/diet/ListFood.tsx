@@ -1,4 +1,4 @@
-import { ScrollView, useColorScheme, TouchableOpacity, Image, TextInput, Dimensions } from 'react-native'
+import { ScrollView, useColorScheme, TouchableOpacity, Image, TextInput, Dimensions, Pressable } from 'react-native'
 import React, { useState } from 'react'
 import { Text, View } from '../../components/base/Themed'
 import tw from 'twrnc'
@@ -20,8 +20,10 @@ import { useSelector } from '../../redux/store'
 import { XGroup } from 'tamagui'
 import { _tokens } from '../../tamagui.config'
 import Selector from '../../components/base/Selector'
-import { USDAKeywordSearch, getEmojiByCategory } from '../../types/FoodApi'
+import { USDABarcodeSearch, USDAKeywordSearch, getEmojiByCategory } from '../../types/FoodApi'
 import SearchResult from '../../components/base/SearchResult'
+import Overlay from '../../components/screens/Overlay'
+import Animated, { Easing, interpolate, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated'
 export const categoryMapping = {
   'generic foods': '🍎',
   'generic meals': '🍽',
@@ -51,9 +53,8 @@ interface ListFoodProps {
 export default function ListFood(props: ListFoodProps) {
   const navigator = useNavigation()
   const { profile } = useSelector(x => x.auth)
-  let w = Dimensions.get('screen').width
+  let s = Dimensions.get('screen')
   const dm = useColorScheme() === 'dark'
-  const color = dm ? 'white' : 'black'
   const [searchKey, setSearchKey] = React.useState<string>('')
   const searchOptions = ['All', 'My Foods', 'Favorites'] as const
   const [showBarcode, setShowBarcode] = useState<boolean>(false)
@@ -62,9 +63,9 @@ export default function ListFood(props: ListFoodProps) {
   const userAllergens = profile?.allergens || []
   const [results, setResults] = React.useState<ListFoodSearchResults[]>([])
   const [displaySearchState, setDisplaySearchState] = React.useState('Search for food!')
+  let [barcodeError, setBarcodeError] = useState<boolean>(false)
   let dao = SearchDao()
   let search = async (term: string | null) => {
-
     let _results: ListFoodSearchResults[] = []
     if (selectedOption == 'All' && term) {
       setDisplaySearchState('Searching....')
@@ -76,7 +77,7 @@ export default function ListFood(props: ListFoodProps) {
           category: y.foodCategory,
           id: y.fdcId,
           fromApi: true,
-          calories: y.foodNutrients.filter(x => x.nutrientNumber=='208')?.[0]?.value || -1,
+          calories: y.foodNutrients.filter(x => x.nutrientNumber == '208')?.[0]?.value || -1,
           servingSize: y.servingSize || 1,
           servingUnit: y.servingSizeUnit || 'servings',
           score: y.score || 0
@@ -95,7 +96,7 @@ export default function ListFood(props: ListFoodProps) {
     })
     if (res) {
       //@ts-ignore
-      _results = [..._results.sort((a,b) => b.score-a.score), ...res.map(x => {
+      _results = [..._results.sort((a, b) => b.score - a.score), ...res.map(x => {
         return { ...x }
       })].filter(x => x.calories !== -1)
     }
@@ -105,40 +106,29 @@ export default function ListFood(props: ListFoodProps) {
   useAsync(async () => {
     search(searchKey)
   }, [searchKey, selectedOption])
+  console.log('barcode', barcode)
 
-
-
-  React.useEffect(() => {
-    if (barcode) {
-      FetchEdamamParser({
-        upc: barcode
-      }).then((x) => {
-        if (x?.error) {
-          setDisplaySearchState('No matches found')
-          setResults([])
-          return;
-        }
-        if (x?.hints?.length > 0) {
-          setResults(x.hints.map((y) => ({
-            name: y.food.label,
-            image: y.food.image,
-            id: y.food.foodId,
-            category: y.food.category,
-            calories: y.food.nutrients.ENERC_KCAL,
-            measures: y.measures,
-            fromEdamam: true,
-            edamamId: y.food.foodId,
-            foodContentsLabel: y.food.foodContentsLabel || ''
-          })))
-        } else {
-          setDisplaySearchState('There is no food to display, please refine your search')
-        }
-      }).catch(e => {
-        alert(e.toString())
-      })
+  let searchBarcode = async (_barcode: string) => {
+    if (barcode) return;
+    if (!_barcode) return;
+    let res = await USDABarcodeSearch(_barcode)
+    if (res && res.foods && res.foods[0]) {
+      let apiResults: ListFoodSearchResults[] = res.foods.map((y) => ({
+        name: titleCase(`${y.brandOwner ? (y.brandOwner.toLowerCase() === 'not a branded item' ? '' : y.brandOwner + ' ') : ''}${y.commonNames || y.description}`),
+        category: y.foodCategory,
+        id: y.fdcId,
+        fromApi: true,
+        calories: y.foodNutrients.filter(x => x.nutrientNumber == '208')?.[0]?.value || -1,
+        servingSize: y.servingSize || 1,
+        servingUnit: y.servingSizeUnit || 'servings',
+        score: y.score || 0
+      }))
+      setResults(apiResults)
+      setShowBarcode(false)
+    } else {
+      setBarcodeError(true)
     }
-  }, [barcode])
-
+  }
 
   React.useLayoutEffect(() => {
     setSearchKey('')
@@ -164,7 +154,7 @@ export default function ListFood(props: ListFoodProps) {
       <Selector searchOptions={searchOptions} selectedOption={selectedOption} onPress={setSelectedOption} />
       <Spacer />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[tw`px-4`]}>
-        {showBarcode && <View>
+        {/* {showBarcode && <View>
           {!barcode && <BarcodeScannerView
             style={tw`h-50 w-12/12 rounded-xl border border-${dm ? 'white' : 'black'}`}
             onBarcodeScanned={(code) => {
@@ -178,7 +168,7 @@ export default function ListFood(props: ListFoodProps) {
               <Text>Scan Again</Text>
             </TouchableOpacity>
           </View>}
-        </View>}
+        </View>} */}
         {(displaySearchState !== '' && results.length === 0) && <View style={tw`w-12/12 justify-center items-center mt-9`}><Text>{displaySearchState}</Text></View>}
         {results.map((r, idx) => {
           return <TouchableOpacity
@@ -202,7 +192,26 @@ export default function ListFood(props: ListFoodProps) {
         })}
         <View style={tw`pb-40`} />
       </ScrollView>
-      <FAB onPress={() => setShowBarcode(!showBarcode)} icon={() => {
+      {/* @ts-ignore */}
+      <Overlay disablePadding visible={showBarcode} onDismiss={setShowBarcode}>
+        <BarcodeScannerView
+          onScanAgain={() => {
+            setBarcode(null)
+            setBarcodeError(false)
+          }}
+          barcode={barcode}
+          style={{ ...tw``, width: s.width, height: s.height * 0.35 }}
+          onBarcodeScanned={async (code) => {
+            if (!code) return;
+            setBarcode(code || null)
+            await searchBarcode(code)
+          }} />
+          {barcodeError && <Text lg weight='bold' style={{alignSelf: 'center', color: _tokens.error}}>No results found for barcode</Text>}
+      </Overlay>
+      <FAB onPress={() => {
+        setShowBarcode(true)
+        setBarcodeError(false)
+      }} icon={() => {
         if (showBarcode) {
           return <ExpoIcon name='close' iconName='ion' color='white' size={23} />
         }
@@ -225,6 +234,8 @@ interface BarcodeScannerViewProps {
   shouldStillScan?: boolean;
   waitBetweenScans?: number;
   onBarcodeScanned: (code: string | undefined) => void;
+  barcode?: string | null | undefined;
+  onScanAgain?: () => void;
 }
 const BarcodeScannerView = (props: BarcodeScannerViewProps) => {
   const [hasPermission, setHasPermission] = React.useState<boolean>(false)
@@ -238,17 +249,26 @@ const BarcodeScannerView = (props: BarcodeScannerViewProps) => {
 
   }, [])
   const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+  let isScanning = !props.barcode
 
   //@ts-ignore
   const handleBarCodeScanned = async ({ type, data }) => {
-    if (props.shouldStillScan !== false && data) {
+    if (!props.barcode) {
       props.onBarcodeScanned && props.onBarcodeScanned(data)
-      if (props.waitBetweenScans) {
-        await delay(props.waitBetweenScans)
-      }
     }
 
+
   };
+  const opacity = useSharedValue(0);
+
+  // Set the opacity value to animate between 0 and 1
+  opacity.value = withRepeat(
+    withTiming(0.8, { duration: 2000, easing: Easing.ease }),
+    isScanning ? -1 : 0,
+    true
+  );
+
+  const avStyle = useAnimatedStyle(() => isScanning ? ({ opacity: opacity.value }) : ({ opacity: 1 }), [isScanning]);
   if (hasPermission === null) {
     return <Text style={tw`text-center mt-6`}>Requesting for camera permission</Text>;
   }
@@ -256,15 +276,21 @@ const BarcodeScannerView = (props: BarcodeScannerViewProps) => {
     return <Text style={tw`text-center mt-6`}>We don't have your camera access, please go to your settings and grant permission!</Text>;
   }
 
-
-  return <View style={[{ flex: 1 }, tw`flex`]}>
+  return <View style={[{ flex: 1 }, tw``]}>
     <BarCodeScanner
-      style={props.style || tw`h-50 w-12/12`}
+      style={props.style || tw`h-50 w-12/12 self-center`}
       onBarCodeScanned={handleBarCodeScanned}
     />
-    <View style={[{ position: 'absolute', top: 1 }, tw`w-12/12 h-12/12 items-center justify-center`]}>
-      <ActivityIndicator color='red' size={'large'} />
-    </View>
+    <Animated.View style={[{ position: 'absolute', alignSelf: 'center', top: isScanning ? 70 : 40 }, avStyle]}>
+      {!isScanning && <Text style={tw`text-white text-center`} weight='bold' xl>Scanned!</Text>}
+      <ExpoIcon name='barcode' iconName='matc' size={150} color={_tokens.white} />
+      {!isScanning && <TouchableOpacity style={tw`self-center flex-row items-center`} onPress={props.onScanAgain}>
+            <Icon name='Scan' weight='bold' color='white' size={30} />
+            <Text style={tw`text-white`} weight='bold' lg> Scan Again</Text>
+          </TouchableOpacity>}
+    </Animated.View>
+    
+
   </View>
 
 }

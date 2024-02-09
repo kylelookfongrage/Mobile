@@ -55,6 +55,7 @@ export type RootStackParamList = {
   ChatDetail: {id: string};
   Setup: undefined;
   OnboardingComplete: undefined;
+  ScanBarcode: undefined;
 };
 
 

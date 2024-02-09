@@ -6,17 +6,18 @@ import { TouchableOpacity, View as DView } from 'react-native'
 import { Text, View } from './Themed'
 import { _tokens } from '../../tamagui.config'
 
-export default function Selector(props: {searchOptions: string[], onPress?: (o: string) => void, selectedOption?: string}) {
+export default function Selector(props: {searchOptions: string[], onPress?: (o: string) => void, selectedOption?: string; px?: number}) {
     let dm = useColorScheme() === 'dark'
     let w = Dimensions.get('screen').width
     let {searchOptions, selectedOption, onPress} = props
+    let p = props.px || 12
   return (
-    <XGroup w={'100%'} minWidth={'100%'} justifyContent='space-around' alignItems='center' paddingHorizontal={12}>
+    <XGroup w={'100%'} minWidth={'100%'} justifyContent='space-around' alignItems='center' paddingHorizontal={p}>
     {searchOptions.map((o, i) => {
             const selected = selectedOption === o
             return <XGroup.Item key={i}>
                 <TouchableOpacity
-                style={{...tw`items-center justify-center`, height: 40, width: ((w - 12) / searchOptions.length), backgroundColor: selected ? _tokens.primary900: (dm ? _tokens.dark1 : _tokens.gray300)}}
+                style={{...tw`items-center justify-center`, height: 40, width: ((w - p) / searchOptions.length), backgroundColor: selected ? _tokens.primary900: (dm ? _tokens.dark1 : _tokens.gray300)}}
                 key={`Search option ${o} at idx ${i}`}
                 onPress={() => {
                     if (onPress) {

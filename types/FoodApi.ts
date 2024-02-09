@@ -5,6 +5,25 @@ const BASE_URL = 'https://api.nal.usda.gov/fdc/v1/'
 const FOOD_SEARCH = BASE_URL + 'foods/search?'
 const get_food_details_uri = (id: string) => BASE_URL + `food/${id}`;
 
+export const USDABarcodeSearch = async (code: string) => {
+    let params = {
+        api_key: apiKey,
+        query: `gtinUpc:${code}`,
+        dataType: 'Branded,Foundation',
+        pageSize: '25',
+        pageNumber: '1',
+    }
+    let url = new URL(FOOD_SEARCH)
+    url.search = new URLSearchParams(params).toString()
+    let result = await fetch(url, {
+        headers: {
+            'accept': 'application/json'
+        }
+    })
+    let json = await result.json()
+    return json as USDASearchResult
+}
+
 export const USDAKeywordSearch = async (keyword: string, pageNumber = 1, pageSize = 25, sortBy = 'publishedDate', sortOrder = 'asc'): Promise<USDASearchResult> => {
     let params = {
         api_key: apiKey,

@@ -1,22 +1,16 @@
-import { ScrollView, TouchableOpacity, Animated, Easing } from "react-native";
+import { ScrollView, TouchableOpacity } from "react-native";
 import React from "react";
 import { Text, View } from "../../components/base/Themed";
 import { SafeAreaView } from "react-native-safe-area-context";
 import tw from "twrnc";
-import { ExpoIcon, Icon } from "../../components/base/ExpoIcon";
+import { Icon } from "../../components/base/ExpoIcon";
 import useColorScheme from "../../hooks/useColorScheme";
-import { AnimatedCircularProgress } from "react-native-circular-progress";
 import { useNavigation } from "@react-navigation/native";
 import {
   defaultImage,
   getMacroTargets,
   getMatchingNavigationScreen,
-  titleCase,
 } from "../../data";
-import * as Haptics from "expo-haptics";
-import RunListComponent from "../../components/features/RunListComponent";
-import AnimatedLottieView from "lottie-react-native";
-import drinkWater from "../../assets/animations/drinkwater.json";
 import moment from "moment";
 import ThisAdHelpsKeepFree from "../../components/features/ThisAdHelpsKeepFree";
 import { useBadges } from "../../hooks/useBadges";
@@ -30,11 +24,7 @@ import TopBar from "../../components/base/TopBar";
 import { _tokens } from "../../tamagui.config";
 import Spacer from "../../components/base/Spacer";
 import ManageButton from "../../components/features/ManageButton";
-import { YStack } from "tamagui";
-import SummaryListItem from "../../components/features/SummaryListItem";
-import { MasonryFlashList } from "@shopify/flash-list";
 import presetDashboardComponents, { UserInputs } from "../../components/features/PresetSummaryListItems";
-import { Timeline } from "react-native-ui-lib";
 
 export const SummaryScreen = () => {
   let { profile } = useSelector((x) => x.auth);

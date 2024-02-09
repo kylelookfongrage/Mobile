@@ -24,7 +24,7 @@ export default function TopBar(props: {
               <Icon name={iconLeft} size={26} weight={props.iconLeftWeight || 'bold'} color={props.iconLeftColor || _tokens.primary900} />
             </Pressable> : <Text> </Text>}
             {props.children ? props.children : <Text h4 weight='bold' style={tw`text-center`}>{title}</Text>}
-            {Right ? <Right /> : <Text> </Text>}
+            {Right ? <Right /> : <Text>     </Text>}
         </XStack>
   )
 }

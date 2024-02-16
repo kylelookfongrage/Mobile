@@ -30,7 +30,7 @@ export default function Settings() {
         return [
             { title: 'Account & Security', icon: 'Shield-Done', screen: 'Account' },
             { title: 'Edit Profile', icon: 'Edit-Square', screen: 'UserBio' },
-            { title: 'Subscriptions', icon: 'Star', screen: 'Subscription' },
+            { title: 'Rage Premium', icon: 'Star', screen: 'Subscription' },
             { title: 'Content Creator Hub', icon: 'Wallet', screen: 'Apply', description: (profile?.stripeId ? 'View and manage your business on Rage' : 'Sign up for the Content Creator Program at Rage') },
             // {title: 'Video Workout Mode', icon: 'grid', switch: true, switchValue: (profile?.workoutMode === 'MUSIC')  ? true : false, onSwitch: async (b) => {
             //     if (!profile) return;

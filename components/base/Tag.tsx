@@ -14,7 +14,7 @@ export default function Tag(props: {
     let dm = useColorScheme() === 'dark'
     let s = getTagStyle(props.type || 'primary', props.color || 'success', dm)
   return (
-    <YStack maxWidth={props.width} minHeight={42} alignItems='center' justifyContent='center' backgroundColor={s.bg} paddingHorizontal='$4' borderRadius={'$11'} borderColor={s.border ? s.border : undefined} borderWidth={s.border ? 2 : 0}>
+    <YStack maxWidth={props.width} minHeight={42} alignItems='center' justifyContent='center' backgroundColor={s.bg} paddingHorizontal='$4' borderRadius={'$11'} borderColor={s.border ? s.border : undefined} borderWidth={s.border ? 1 : 0}>
       <Text fontSize={props.textSize || 16} fontWeight={'600'} textAlign='center' color={s.text}>
       {props.children}
       </Text>
@@ -36,7 +36,7 @@ const getTagStyle = (type: string, color: string, dm: boolean=false): {bg: strin
         bg = 'transparent'
     }
     if (type === 'outline') { //@ts-ignore
-        border = _tokens[color] + '40'
+        border = _tokens[color] + '10'
     }
     if (type === 'light') {
         bg = dm ? _tokens.dark2 : _tokens.gray300

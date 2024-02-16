@@ -131,6 +131,7 @@
     "tamagui": "^1.7.2",
     "twrnc": "^3.4.1",
     "use-immer": "^0.9.0",
+    "victory-native": "^36.9.1",
     "yarn": "^1.22.19"
   },
   "devDependencies": {

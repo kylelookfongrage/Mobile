@@ -13,11 +13,16 @@ import { ActivityIndicator } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import { useDispatch, useSelector } from '../../redux/store'
 import { updateUserState } from '../../redux/reducers/auth'
+import { _tokens } from '../../tamagui.config'
+import { useGet } from '../../hooks/useGet'
+import { XStack } from 'tamagui'
+import Spacer from '../../components/base/Spacer'
 
 export default function Subscription() {
   const navigator = useNavigation()
   const { subscribed, hasSubscribedBefore } = useSelector(x => x.auth)
   let dispatch = useDispatch()
+  let g = useGet()
   let setSubscribed = (b: boolean) => dispatch(updateUserState({key: 'subscribed', value: b}))
   const freeTier: PurchasesPackage = {
     identifier: 'free-tier',
@@ -93,7 +98,7 @@ export default function Subscription() {
   
   return (
     <View style={{ flex: 1 }} includeBackground>
-      <BackButton name='Subscription' Right={() => {
+      <BackButton name='Rage Premium' Right={() => {
         return <TouchableOpacity disabled={(subscribed || uploading)} onPress={async () => {
           setUploading(true)
           try {
@@ -104,15 +109,15 @@ export default function Subscription() {
           }
           setUploading(false)
         }}>
-          {!uploading && <Text style={tw`text-red-500`} weight='semibold'>{subscribed ? '': 'Restore Purchases'}</Text>}
+          {!uploading && <Text style={{color: _tokens.primary900, paddingRight: 12}} weight='bold'>{subscribed ? '': 'Restore Purchases'}</Text>}
           {(uploading && !subscribed) && <ActivityIndicator />}
         </TouchableOpacity>
       }} />
-      <ScrollView style={tw`px-4 pt-6`} showsVerticalScrollIndicator={false} contentContainerStyle={tw`items-center`}>
+      <ScrollView style={tw`px-4 pt-2`} showsVerticalScrollIndicator={false} contentContainerStyle={tw`items-center`}>
         {!subscribed && <View style={tw`justify-center w-12/12 items-center`}>
-          <AnimatedLottieView autoPlay loop source={team} style={tw`h-50 w-50 mb-9`} />
-        <Text style={tw`text-xl text-center my-4`} weight='semibold'>Support Food Professionals, Personal Trainers, and Yourself</Text>
-        <View style={tw`flex-row items-center`}>
+          <AnimatedLottieView autoPlay loop source={team} style={tw`h-50 w-50 mb-2`} />
+        <Text style={tw`text-center mb-4`} h4 weight='semibold'>Support Food Professionals, Personal Trainers, and Yourself</Text>
+        <View style={tw`items-center`}>
           {[freeTier, ...purchasePackages].map(t => {
             const selected = t.identifier === selectedTier?.identifier
             const description = t.product.description
@@ -128,8 +133,9 @@ export default function Subscription() {
                 discount = {numPeriods: duration, period: unitOfTime, price: discountPrice}
               }
             }
-            const unselectedColor = dm ? 'gray-700' : 'gray-300'
-            const selectedColor = dm ? 'red-500' : 'red-600'
+            const unselectedColor = dm ? _tokens.dark1 : _tokens.gray300
+            const selectedColor = _tokens.primary900
+            let showDiscount = (discount && !hasSubscribedBefore) 
             return <TouchableOpacity onPress={() => { 
               if (discount) {
                 setDiscountedProduct(t.product)
@@ -137,17 +143,16 @@ export default function Subscription() {
                 setDiscountedProduct(null)
               }
               setSelectedTier(t)
-             }} style={tw`py-3 px-1 h-12/12 mx-1 max-w-4/12 justify-between rounded-xl bg-${selected ? selectedColor : unselectedColor}`} key={t.identifier}>
-              <View style={tw`items-center justify-between`}>
+             }} style={{...tw`py-3 px-1 mx-1 justify-between rounded-xl`, backgroundColor: selected ? selectedColor : unselectedColor, width: g.s.width * 0.90, marginBottom: 10}} key={t.identifier}>
+              <View style={tw`px-4 justify-between`}>
                 <View>
-                  <Text weight='bold' style={tw`${selected ? 'text-white' : ''} text-center`}>{title}</Text>
-                  <Text weight='semibold' style={tw`text-center text-xs ${selected ? 'text-white' : ''} ${(discount && !hasSubscribedBefore) ? 'line-through' : ''}`}>{price}</Text>
-                  {/* @ts-ignore */}
-                  {(discount && !hasSubscribedBefore) && <View style={tw`items-center justify-center`}>
-                    <Text weight='bold' style={tw`text-center text-xs ${selected ? 'text-white' : ''}`}>{discount.price}</Text>
-                    <Text style={tw`text-center text-xs`}>for {discount.numPeriods} {discount.period}</Text>
-                    </View>}
-                  <Text style={tw`${selected ? 'text-white' : ''} mt-1 text-center`}>{description}</Text>
+                  <Text xl weight='bold' style={tw`${selected ? 'text-white' : ''}`}>{title}</Text>
+                  <Spacer xs/>
+                 <XStack>
+                 {(price && price !== 'Free') && <Text weight='semibold' style={tw`${selected ? 'text-white' : ''} ${showDiscount ? 'line-through' : ''}`}>{price} </Text>}
+                  {(showDiscount && discount) && <Text weight='bold' style={{color: selected ? _tokens.white : _tokens.primary900}}>{discount?.price} ({discount.numPeriods} {discount.period})</Text>}
+                 </XStack>
+                  <Text style={tw`${selected ? 'text-white' : ''}`}>{description}</Text>
                 </View>
               </View>
             </TouchableOpacity>

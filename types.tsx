@@ -56,6 +56,7 @@ export type RootStackParamList = {
   Setup: undefined;
   OnboardingComplete: undefined;
   ScanBarcode: undefined;
+  LineChartData: undefined;
 };
 
 

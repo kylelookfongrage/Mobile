@@ -28,6 +28,7 @@ import ExerciseProgress from '../../components/features/ExerciseProgress';
 import { useMultiPartForm } from '../../redux/api/mpf';
 import Description from '../../components/base/Description';
 import { useSelector } from '../../redux/store';
+import { useGet } from '../../hooks/useGet';
 
 
 export interface ExerciseDetailProps {
@@ -49,12 +50,20 @@ export default function ExerciseDetail(props: ExerciseDetailProps) {
         user_id: null,
     }, async () => {
         if (!props.id) return null;
-        let res = await dao.find(props.id)
-        if (res) {
-            setVideo(res.video ? [{ type: 'video', uri: res.video, supabaseID: res.video }] : [{ type: 'image', uri: res.preview || defaultImage, supabaseID: res.preview || undefined }])
-            let eq = await equiptmentDao.byExercise(res.id)
-            setEquiptment(eq?.map(x => x.equiptment) || [])
-            return res;
+        try {
+            // g.set('loading', true)
+            let res = await dao.find(props.id)
+            if (res) {
+                setVideo(res.video ? [{ type: 'video', uri: res.video, supabaseID: res.video }] : [{ type: 'image', uri: res.preview || defaultImage, supabaseID: res.preview || undefined }])
+                let eq = await equiptmentDao.byExercise(res.id)
+                setEquiptment(eq?.map(x => x.equiptment) || [])
+                // g.set('loading', false)
+                return res;
+            }
+        } catch (error) {
+            g.set('error', error.toString())
+        } finally {
+            // g.set('loading', false)
         }
         return null;
     })
@@ -74,15 +83,18 @@ export default function ExerciseDetail(props: ExerciseDetailProps) {
     const [video, setVideo] = React.useState<MediaType[]>([])
     const [errors, setErrors] = React.useState<string[]>([])
     let multiPartForm = useMultiPartForm('workouts', props.workoutId || '')
+    let g = useGet()
     const navigator = useNavigation()
     const saveExercise = async () => {
         setScreen('uploading', true)
+        g.set('loading', true)
         if (screenForm.editMode) {
             console.log('editing')
             setErrors([])
             if (!form.name!! || !form.description!!) {
                 setErrors(['Your exercise must have a name and description'])
                 setScreen('uploading', false)
+                g.set('loading', false)
                 return;
             }
             let copiedForm = { ...form, user_id: profile?.id }
@@ -95,15 +107,21 @@ export default function ExerciseDetail(props: ExerciseDetailProps) {
             try {
                 let newExercise = await dao.save(copiedForm, form.video || undefined, form.preview || undefined)
                 console.log(newExercise)
-            if (!newExercise) return;
+            if (!newExercise) {
+                g.set('loading', false);
+                return;
+            }
             ExerciseForm.dispatch({ type: FormReducer.Set, payload: newExercise })
             await dao.saveEquiptment(newExercise, equiptment)
             } catch (error) {
                 setScreen('uploading', false)
-                setErrors([error.toString()])
+                g.set('error', error.toString())
+            } finally {
+                setScreen('uploading', false)
+                setScreen('editMode', false)
+                g.set('loading', false)
             }
-            setScreen('uploading', false)
-            setScreen('editMode', false)
+            
         } else if (props.workoutId) {
             let potentialWorkout = [...(multiPartForm.data || [])]
             potentialWorkout.push({ reps: 0, rest: 0, time: 0, index: potentialWorkout.length, tempId: props.id, equiptment, name: form.name || '', img: form.preview || defaultImage, sets: 1 })
@@ -111,6 +129,7 @@ export default function ExerciseDetail(props: ExerciseDetailProps) {
             navigator.pop()
         } else {
             setScreen('uploading', false)
+            g.set('loading', false)
             setScreen('editMode', false)
             const screen = getMatchingNavigationScreen('ListWorkout', navigator)
             //@ts-ignore
@@ -123,10 +142,17 @@ export default function ExerciseDetail(props: ExerciseDetailProps) {
         slug: x, intensity: 1, color: ''
     }))
     const deleteExercise = async () => {
-        if (!props.id) return;
-        await dao.remove(Number(props.id))
-        //@ts-ignore
-        navigator.pop()
+        try {
+            if (!props.id) return;
+            g.set('loading', true)
+            await dao.remove(Number(props.id))
+            //@ts-ignore
+            navigator.pop()
+        } catch (error) {
+            g.set('error', error.toString())
+        } finally {
+            g.set('loading', false)
+        }
     }
 
     console.log(form)

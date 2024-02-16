@@ -1,6 +1,6 @@
 import { CalendarList } from 'react-native-calendars'
 import React from 'react'
-import { View } from '../../components/base/Themed'
+import { View, Text } from '../../components/base/Themed'
 import { useNavigation } from '@react-navigation/native'
 import useColorScheme from '../../hooks/useColorScheme'
 import moment, { Moment } from 'moment'
@@ -10,6 +10,7 @@ import ThisAdHelpsKeepFree from '../../components/features/ThisAdHelpsKeepFree'
 import { useDispatch, useSelector } from '../../redux/store'
 import { changeDate } from '../../redux/reducers/progress'
 import { _tokens } from '../../tamagui.config'
+import { TouchableOpacity } from 'react-native'
 
 interface DateContextType {
     date: Moment;
@@ -36,7 +37,12 @@ export default function Calendar() {
     const dm = useColorScheme() === 'dark'
     return (
         <View style={{flex: 1}} includeBackground>
-            <BackButton name='My Agenda' />
+            <BackButton name='Calendar' Right={() => {
+                //@ts-ignore
+                return <TouchableOpacity onPress={() => navigator.navigate('TaskAgenda')} style={tw`px-4`}>
+                    <Text lg weight='bold' style={{color: _tokens.primary900}}>Agenda</Text>
+                </TouchableOpacity>
+            }} />
             <CalendarList
                 // Callback which gets executed when visible months change in scroll view. Default = undefined
                 // Max amount of months allowed to scroll to the past. Default = 50

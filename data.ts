@@ -578,7 +578,8 @@ export const defaultRunTypes: RunType[] = [
 
 
 export const formatCash = (n: number) => {
-    if (n < 1e3) return n;
+    if (!n) return '0'
+    if (n < 1e3) return n.toFixed(0);
     if (n >= 1e3 && n < 1e6) return +(n / 1e3).toFixed(1) + "K";
     if (n >= 1e6 && n < 1e9) return +(n / 1e6).toFixed(1) + "M";
     if (n >= 1e9 && n < 1e12) return +(n / 1e9).toFixed(1) + "B";
@@ -598,6 +599,9 @@ import sloth_sleeping from './assets/animations/sloth_sleeping.json'
 import bear_sleep from './assets/animations/bear_sleep.json'
 import sleepy_sleep from './assets/animations/sleepy_sleep.json'
 import squirrel_sleep from './assets/animations/squirrel-sleeping.json'
+
+
+export const animations = {timer, meditation, pigeon_wait, sleepy_sleep, sloth_sleep, sloth_sleeping, bear_sleep, squirrel_sleep}
 
 export const animationMapping = [
     { name: 'Up Next Video', animation: null },

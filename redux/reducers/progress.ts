@@ -47,47 +47,33 @@ export const aggregateFoodAndMeals = (foodProgress: TFoodProgress[] | undefined,
     };
   });
   let ingredients = __ingredients.flatMap((x) => x.meal_ingredients);
-  const caloriesFromFoodAndMeals =
-    food_progress.reduce((prev, c) => prev + (c.calories || 0), 0) +
-    ingredients.reduce(
-      (prev, curr) =>
-        prev +
-        (curr.calories || 0) *
-        ((curr.consumed_weight || 1) / (curr.total_weight || 1)),
-      0
-    );
-  const proteinFromFoodAndMeals =
-    food_progress.reduce((prev, c) => prev + (c.protein || 0), 0) +
-    ingredients.reduce(
-      (prev, curr) =>
-        prev +
-        (curr.protein || 0) *
-        ((curr.consumed_weight || 1) / (curr.total_weight || 1)),
-      0
-    );
-  const carbsFromFoodAndMeals =
-    food_progress.reduce((prev, c) => prev + (c.carbs || 0), 0) +
-    ingredients.reduce(
-      (prev, curr) =>
-        prev +
-        (curr.carbs || 0) *
-        ((curr.consumed_weight || 1) / (curr.total_weight || 1)),
-      0
-    );
-  let fatFromFoodAndMeals = food_progress.reduce((prev, c) => prev + (c.fat || 0), 0) +
-    ingredients.reduce(
-      (prev, curr) =>
-        prev +
-        (curr.fat || 0) *
-        ((curr.consumed_weight || 1) / (curr.total_weight || 1)),
-      0
-    );
+  let [calories, protein, carbs, fat, otherNutrition] = [0,0,0,0,{}]
+  for (var food of food_progress) {
+    calories += food.calories || 0;
+    protein += food.protein || 0;
+    carbs += food.carbs || 0;
+    fat += food.fat || 0;
+    for (var k of Object.keys(food.otherNutrition || {})) {
+      //@ts-ignore
+      otherNutrition[k] = (otherNutrition[k] || 0) + (Number(food.otherNutrition[k]) || 0)
+    }
+
+  }
+  for (var ingr of ingredients) {
+    let fx = ((ingr.consumed_weight || 1) / (ingr.total_weight || 1))
+    calories += (ingr.calories || 0) * fx;
+    protein += (ingr.protein || 0) * fx;
+    carbs += (ingr.carbs || 0) * fx;
+    fat += (ingr.fat || 0) * fx;
+    for (var k of Object.keys(ingr.otherNutrition || {})) {
+      //@ts-ignore
+      otherNutrition[k] = (otherNutrition[k] || 0) + ((Number(ingr.otherNutrition[k]) || 0) * fx)
+    }
+
+  }
 
   return {
-    protein: proteinFromFoodAndMeals,
-    carbs: carbsFromFoodAndMeals,
-    calories: caloriesFromFoodAndMeals,
-    fat: fatFromFoodAndMeals
+    protein, carbs, fat, calories, otherNutrition
   }
 
 }

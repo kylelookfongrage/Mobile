@@ -63,7 +63,7 @@ export default function FoodTab() {
 
 const searchOptions = [
     {'All': 'null'},
-    {'Users': 'null' },
+    // {'Users': 'null' },
     {'Plans' : 'ListPlan'},
     {'Meals': 'ListMeals'}, 
     {'Workouts': 'ListWorkout'}, 
@@ -106,7 +106,7 @@ export const FoodAndMeals = () => {
         <Spacer />
         <View style={tw`px-2`}><SearchBar full onSearch={search} /></View>
         <Spacer sm />
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{minHeight: 50, ...tw`px-2`}}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{minHeight: 50, maxHeight: 50, ...tw`px-2`}}>
         {searchOptions.map(obj => {
             let key = Object.keys(obj)[0]
             let screen = getMatchingNavigationScreen(Object.values(obj)[0], navigator)

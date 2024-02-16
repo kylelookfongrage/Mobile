@@ -75,6 +75,8 @@ import EditDashboard from '../screens/other/EditDashboard';
 import ScanBarcode from '../screens/diet/ScanBarcode';
 import FoodDetail2 from '../screens/diet/FoodDetail2';
 import History from '../screens/other/History';
+import { useGet } from '../hooks/useGet';
+import { LineChartDataView } from '../components/features/LineChart';
 
 
 function RootNavigator() {
@@ -172,6 +174,10 @@ function RootNavigator() {
       <Stack.Screen name={'SummaryMetric'} options={{ headerShown: false, presentation: 'transparentModal' }}>
         {/* @ts-ignore */}
         {props => <SummaryMetric {...props} weight={props.route?.params?.weight} />}
+      </Stack.Screen>
+      <Stack.Screen name={'LineChartData'} options={{ headerShown: false, presentation: 'modal' }}>
+        {/* @ts-ignore */}
+        {props => <LineChartDataView {...props} />}
       </Stack.Screen>
       <Stack.Screen name='MakePost' options={{ headerShown: false, gestureEnabled: true, gestureDirection: 'vertical', fullScreenGestureEnabled: true }}>
         {props => <MakePost

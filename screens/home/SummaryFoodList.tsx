@@ -1,9 +1,9 @@
 import { useColorScheme } from 'react-native'
-import React from 'react'
+import React, { useState } from 'react'
 import { Text, View } from '../../components/base/Themed'
 import { BackButton } from '../../components/base/BackButton'
 import { useCommonAWSIds } from '../../hooks/useCommonContext'
-import { defaultImage, getMacrosFromIngredients, getMatchingNavigationScreen } from '../../data'
+import { defaultImage, getMacroTargets, getMacrosFromIngredients, getMatchingNavigationScreen } from '../../data'
 import { ScrollView, Swipeable, TouchableOpacity } from 'react-native-gesture-handler'
 import tw from 'twrnc'
 import { useNavigation } from '@react-navigation/native'
@@ -19,40 +19,44 @@ import Spacer from '../../components/base/Spacer'
 import { ImpactGridItem } from '../../components/base/InputGridItem'
 import { _tokens } from '../../tamagui.config'
 import SwipeWithDelete from '../../components/base/SwipeWithDelete'
+import { useGet } from '../../hooks/useGet'
+import Overlay from '../../components/screens/Overlay'
+import NutritionLabel from '../../components/features/NutritionLabel'
+import { aggregateFoodAndMeals } from '../../redux/reducers/progress'
 
 export default function SummaryFoodList() {
     const { progressId, userId, profile } = useCommonAWSIds()
-    const tdee = profile?.tdee || 2000
+    let {tdee, totalCarbsGrams, totalFatGrams, totalProteinGrams} = getMacroTargets(profile)
     const dm = useColorScheme() === 'dark'
     const dao = ProgressDao()
     const [food_progress, meal_progress] = [dao.foodProgress, dao.mealProgress]
-    let _ingredients = meal_progress.map(x => ({...x.meal, consumedWeight: x.consumed_weight, totalWeight: x.total_weight}))
-    let __ingredients = _ingredients.map(x => {
-        return {...x, meal_ingredients: x.meal_ingredients.map(z => ({...z,consumed_weight: x.consumedWeight, total_weight: x.totalWeight}))}
-    })
-    let ingredients=__ingredients.flatMap(x => x.meal_ingredients)
-    const caloriesConsumed = food_progress.reduce((prev, c) => prev + (c.calories || 0), 0) + ingredients.reduce((prev, curr) => prev + (curr.calories || 0) * ((curr.consumed_weight || 1) / (curr.total_weight || 1)), 0)
-    const proteinConsumed = food_progress.reduce((prev, c) => prev + (c.protein || 0), 0) + ingredients.reduce((prev, curr) => prev + (curr.protein || 0) * ((curr.consumed_weight || 1) / (curr.total_weight || 1)), 0)
-    const carbsConsumed = food_progress.reduce((prev, c) => prev + (c.carbs || 0), 0) + ingredients.reduce((prev, curr) => prev + (curr.carbs || 0) * ((curr.consumed_weight || 1) / (curr.total_weight || 1)), 0)
-    const fatConsumed = food_progress.reduce((prev, c) => prev + (c.fat || 0), 0) + ingredients.reduce((prev, curr) => prev + (curr.fat || 0) * ((curr.consumed_weight || 1) / (curr.total_weight || 1)), 0)
-  
+    let {calories: caloriesConsumed, protein: proteinConsumed, carbs: carbsConsumed, fat: fatConsumed, otherNutrition} = aggregateFoodAndMeals(food_progress, meal_progress)
     const navigator = useNavigation()
-
-    const totalProteinGrams = profile?.proteinLimit || (tdee * 0.4) / 4
-    const totalFatGrams = profile?.fatLimit || (tdee * 0.3) / 9
-    const totalCarbsGrams = profile?.carbLimit || (tdee * 0.3) / 4
     const caloriePercent = (caloriesConsumed / tdee) * 100
     const totalProteinPercent = (proteinConsumed / totalProteinGrams) * 100
     const totalCarbsPercent = (carbsConsumed / totalCarbsGrams) * 100
     const totalFatPercent = (fatConsumed / totalFatGrams) * 100
+    let [showNutrition, setShowNutrition] = useState<boolean>(false)
+    let g = useGet()
 
     
     return (
         <View style={{ flex: 1 }} includeBackground>
-            <BackButton name='Food and Meals' />
+            <BackButton name='Food and Meals' Right={() => {
+                return <TouchableOpacity onPress={() => setShowNutrition(p => !p)} style={tw`px-4`}>
+                    <Text lg weight='bold' style={{color: _tokens.primary900}}>Nutrition Label</Text>
+                </TouchableOpacity>
+            }} />
             <Spacer />
-            <View style={[tw`shadow-xl rounded-lg items-center justify-center self-center bg-transparent`]}>
-                <ImpactGridItem header t2='Goal' t3='Consumed' t4='%' />
+            <Overlay visible={showNutrition} onDismiss={() => setShowNutrition(false)}>
+                <ScrollView showsVerticalScrollIndicator={false}>
+                <NutritionLabel disabled calories={caloriesConsumed} protein={proteinConsumed} fat={fatConsumed} carbs={carbsConsumed} otherNutrition={otherNutrition}/>
+                <Spacer xl/>
+                <Spacer xl/>
+                </ScrollView>
+            </Overlay>
+            <View style={[tw`shadow-xl rounded-lg items-center justify-center self-center bg-transparent w-12/12`]}>
+               <ImpactGridItem header t2='Goal' t3='Consumed' t4='%' />
         <ImpactGridItem t1='Calories (kcal)' t2={(tdee || 0).toFixed()} t3={(caloriesConsumed || 0).toFixed()} t3Color={caloriesConsumed > tdee ? _tokens.red : undefined} t4={caloriePercent.toFixed()} t4Color={caloriesConsumed > tdee ? _tokens.red : _tokens.green} />
         <ImpactGridItem t1='Protein (g)' t2={(totalProteinGrams || 0).toFixed()} t3={(proteinConsumed || 0).toFixed()} t3Color={proteinConsumed > totalProteinGrams ? _tokens.red : undefined} t4={totalProteinPercent.toFixed()} t4Color={proteinConsumed > totalProteinGrams ? _tokens.red : _tokens.green} />
         <ImpactGridItem t1='Carbs (g)' t2={(totalCarbsGrams || 0).toFixed()} t3={(carbsConsumed || 0).toFixed()} t3Color={carbsConsumed > totalCarbsGrams ? _tokens.red : undefined} t4={totalCarbsPercent.toFixed()} t4Color={carbsConsumed > totalCarbsGrams ? _tokens.red : _tokens.green} />
@@ -69,7 +73,15 @@ export default function SummaryFoodList() {
                 {food_progress.length === 0 && <Text style={tw`text-center my-6`}>There is no food to display, add some!</Text>}
                 {food_progress.map(ingr => {
                     return <SwipeWithDelete onDelete={async () => {
-                        await dao.deleteProgress(ingr.id, 'food_progress')
+                        try {
+                            g.set('loading', true)
+                            await dao.deleteProgress(ingr.id, 'food_progress')
+                        } catch (error) {
+                            //@ts-ignore
+                            g.setFn(prev => ({...prev, error: error.toString(), loading: false}))
+                        } finally {
+                            g.set('loading', false)
+                        }
                     }} key={ingr.id}>
                         <View
                             card
@@ -105,7 +117,15 @@ export default function SummaryFoodList() {
                 {meal_progress.map((ingr, i) => {//@ts-ignore
                     const r = getMacrosFromIngredients(ingr.meal.meal_ingredients)
                     return <SwipeWithDelete onDelete={async () => {
-                        await dao.deleteProgress(ingr.id, 'meal_progress')
+                        try {
+                            g.set('loading', true)
+                            await dao.deleteProgress(ingr.id, 'meal_progress')
+                        } catch (error) {
+                            //@ts-ignore
+                            g.setFn(prev => ({...prev, error: error.toString(), loading: false}))
+                        } finally {
+                            g.set('loading', false)
+                        }
                     }} key={'meal_progress_'+ `${ingr.id}` + `${i}`}>
                          <View
                             card

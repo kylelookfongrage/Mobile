@@ -9,7 +9,7 @@ import Purchases from "react-native-purchases";
 import { Platform } from "react-native";
 import { User } from "@supabase/supabase-js";
 import { useFonts } from "expo-font";
-import { store } from "./redux/store";
+import { store, useDispatch } from "./redux/store";
 import {
   Ionicons,
   Feather,
@@ -45,6 +45,8 @@ Colors.loadDesignTokens({ primaryColor: tw`bg-red-600`.backgroundColor });
 import * as SplashScreen from 'expo-splash-screen';
 import { fetchUser } from "./redux/api/auth";
 import { KeyboardView } from "./components/features/Keyboard";
+import { set } from "./redux/reducers/get";
+import { GlobalLoader, GlobalToastView } from "./components/base/Toast";
 
 SplashScreen.preventAutoHideAsync()
 function App() {
@@ -120,6 +122,8 @@ function App() {
             <Theme name={dm ? 'dark' : 'light'}>
               <Navigation colorScheme={colorScheme} />
               <StatusBar />
+              <GlobalToastView />
+              <GlobalLoader />
             </Theme>
           </TamaguiProvider>
         </ReduxProvider>

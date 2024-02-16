@@ -30,6 +30,8 @@ import { v4 as uuidv4 } from 'uuid';
 import NutritionLabel from '../../components/features/NutritionLabel';
 import Overlay from '../../components/screens/Overlay';
 import { MealDao } from '../../types/MealDao';
+import { PostgrestSingleResponse } from '@supabase/supabase-js';
+import { useGet } from '../../hooks/useGet';
 
 export default function FoodDetail2(props: {
   id?: Tables['food']['Row']['id'];
@@ -50,8 +52,9 @@ export default function FoodDetail2(props: {
   let { protein: proteinConsumed, carbs: carbsConsumed, fat: fatConsumed, calories: caloriesConsumed } = aggregateFoodAndMeals(foodProgress, mealProgress)
   let { tdee, totalCarbsGrams, totalFatGrams, totalProteinGrams } = getMacroTargets(profile);
   let [initialized, setInitialized] = useState<boolean>(false)
-  let isNewFood = (!props.id && !props.mealId && !props.api_id && !props.ingredient_id && !props.meal_progress_id)
+  let isNewFood = (!props.id && !props.mealId && !props.api_id && !props.ingredient_id && !props.meal_progress_id && !props.progress_id)
   let multiPartForm = useMultiPartForm('meals', props.mealId || '')
+  let g = useGet()
 
   let { state: form, setForm, dispatch: formDispatch } = useForm<Tables['food']['Insert']>({
     name: '',
@@ -84,8 +87,8 @@ export default function FoodDetail2(props: {
 
   let [author, setAuthor] = useState('@' + profile?.username)
   let [initialValue, setInitialValue] = useState<number>(1)
-  let [shouldShowKeyboard, setShouldShowKeyboard] = useState<boolean>(true)
   let [keyboardOpen, setKeyboardOpen] = useState<boolean>(false)
+  let [totalAlreadyConsumed, setTotalAlreadyConsumed] = useState({protein: 0, carbs: 0, calories: 0, fat: 0})
   useAsync(async () => {
     console.log(props)
     if ((props.id || props.ingredient_id || props.progress_id)) {
@@ -94,13 +97,18 @@ export default function FoodDetail2(props: {
       let selectString = '*, author:user_id(username)'
       if (props.ingredient_id) { }
       if (props.progress_id) { }
-      let { data, error } = await supabase.from(props.id ? "food" : props.ingredient_id ? 'meal_ingredients' : 'food_progress').select(selectString).filter('id', 'eq', props.id || props.ingredient_id || props.progress_id).single().throwOnError()
+      //@ts-ignore
+      let { data, error }: PostgrestSingleResponse<Tables['food_progress']['Row']> = await supabase.from(props.id ? "food" : props.ingredient_id ? 'meal_ingredients' : 'food_progress').select(selectString).filter('id', 'eq', props.id || props.ingredient_id || props.progress_id).single().throwOnError()
       if (data) {
         if (props.ingredient_id) { }
         if (props.progress_id) { }
         //@ts-ignore
         setAuthor(data?.author?.username ? `@${data?.author?.username}` : "Menustat.org")
+        //@ts-ignore
         setInitialValue(data?.quantity)
+        if (props.progress_id) {
+          setTotalAlreadyConsumed({calories: data.calories || 0, protein: data.protein || 0, carbs: data.carbs || 0, fat: data.fat || 0})
+        }
         if (data.serving) { data.servingSize = data.serving }
         if (data.servingSizes && typeof data.servingSizes === 'string') { data.servingSizes = JSON.parse(data.servingSizes) }
         data.otherNutrition = MenuStatOtherNutritionToUSDANutrition(data.otherNutrition)
@@ -154,8 +162,6 @@ export default function FoodDetail2(props: {
         setInitialValue(potentialData.quantity || 1,)
       }
     } else if (props.mealId) {
-      console.log(props.meal_name)
-      console.log(multiPartForm.data)
       let potentialData = (multiPartForm.data || []).filter(x => x.meal_id == props.meal_id)
       let _quantity = 1;
       let _weight = 100;
@@ -171,6 +177,7 @@ export default function FoodDetail2(props: {
 
       }
       let _nutrients = getMacrosFromIngredients(potentialData, _quantity)
+      if (props.meal_progress_id) {setTotalAlreadyConsumed(_nutrients)}
       let payload = {
         name: props.meal_name,
         otherNutrition: _nutrients?.otherNutrition || {},
@@ -264,60 +271,69 @@ export default function FoodDetail2(props: {
 
 
   const onSubmit = async () => {
+    g.set('loading', true)
     let logging = props.progress_id || ((props.api_id || props.id) && !props.mealId)
-    if (logging) {
-      //@ts-ignore -- Will create or update a food progress
-      let obj: Tables['food_progress']['Insert'] = foodToFoodProgressAndMealIngredients(form, profile)
-      if (props.progress_id) { obj.id = props.progress_id }
-      let res = await pdao.saveProgress('food_progress', obj)
-      if (res) {
-        n.pop()
-      }
-
-    } else if (props.mealId && !props.meal_id) {
-      let existingIngredients = [...(multiPartForm.data || [])]
-      if (props.tempId) {
-        // update existing meal ingredient
-        existingIngredients = existingIngredients.map(x => {
-          if (x.tempId === props.tempId) {
-            return {
-              ...formToIngredient({
-                ...form,
-                id: (Number(props.id) || undefined)
-              },
-                { calories: form.calories || 0, 
-                  protein: form.protein || 0, 
-                  carbs: form.carbs || 0, 
-                  fat: form.fat || 0, 
-                  otherNutrition: form.otherNutrition || {}, 
-                  tempId: props.tempId || '' }
-              ),
+    try {
+      if (logging) {
+        //@ts-ignore -- Will create or update a food progress
+        let obj: Tables['food_progress']['Insert'] = foodToFoodProgressAndMealIngredients(form, profile)
+        if (props.progress_id) { obj.id = props.progress_id }
+        let res = await pdao.saveProgress('food_progress', obj)
+        if (res) {
+          n.pop()
+        }
+  
+      } else if (props.mealId && !props.meal_id) {
+        let existingIngredients = [...(multiPartForm.data || [])]
+        if (props.tempId) {
+          // update existing meal ingredient
+          existingIngredients = existingIngredients.map(x => {
+            if (x.tempId === props.tempId) {
+              return {
+                ...formToIngredient({
+                  ...form,
+                  id: (Number(props.id) || undefined)
+                },
+                  { calories: form.calories || 0, 
+                    protein: form.protein || 0, 
+                    carbs: form.carbs || 0, 
+                    fat: form.fat || 0, 
+                    otherNutrition: form.otherNutrition || {}, 
+                    tempId: props.tempId || '' }
+                ),
+              }
             }
-          }
-          return x
-        })
-      } else {
-        existingIngredients.push(formToIngredient({ ...form }, { calories: form.calories || 0, protein: form.protein || 0, carbs: form.carbs || 0, fat: form.fat || 0, otherNutrition: form.otherNutrition || {}, tempId: uuidv4() }))
-      }
-      multiPartForm.upsert(existingIngredients)
-      n.pop()
-    } else if (props.meal_id) {
-      let meal_id = await duplicateMeal()
-      await pdao.saveProgress('meal_progress', {
-        meal_id: meal_id,
-        progress_id: null,
-        total_weight: 100,
-        consumed_weight: form.weight,
-        servingSize: form.servingSize,
-        id: Number(props.meal_progress_id) || undefined
-      })
-      n.pop(2)
-
-    } else {
-      let { data, error } = await supabase.from('food').insert(form).select().single()
-      if (data) {
+            return x
+          })
+        } else {
+          existingIngredients.push(formToIngredient({ ...form }, { calories: form.calories || 0, protein: form.protein || 0, carbs: form.carbs || 0, fat: form.fat || 0, otherNutrition: form.otherNutrition || {}, tempId: uuidv4() }))
+        }
+        multiPartForm.upsert(existingIngredients)
         n.pop()
+      } else if (props.meal_id) {
+        let meal_id = await duplicateMeal()
+        await pdao.saveProgress('meal_progress', {
+          meal_id: meal_id,
+          progress_id: null,
+          total_weight: 100,
+          consumed_weight: form.weight,
+          servingSize: form.servingSize,
+          id: Number(props.meal_progress_id) || undefined
+        })
+        n.pop(2)
+  
+      } else {
+        let { data, error } = await supabase.from('food').insert(form).select().single()
+        if (data) {
+          n.pop()
+        } else {
+          g.setFn(p => ({...p, loading: false, error: error?.message.toString() || null}))
+        }
       }
+    } catch (error) {
+      g.setFn(p => ({...p, loading: false, error: error.toString()}))
+    } finally {
+      g.set('loading', false)
     }
   }
 
@@ -339,7 +355,7 @@ export default function FoodDetail2(props: {
         </TouchableOpacity>
       </XStack>
       <Spacer />
-      <Selector searchOptions={searchOptions} selectedOption={selectedOption} onPress={setSelectedOption} />
+      {searchOptions.length > 1 && <Selector searchOptions={searchOptions} selectedOption={selectedOption} onPress={setSelectedOption} />}
       <Spacer />
       {(selectedOption === 'Overview') && <ScrollView showsVerticalScrollIndicator={false}>
         <ManageButton viewStyle={tw`px-4`} title='Nutrition Overview' buttonText=' ' />
@@ -359,10 +375,10 @@ export default function FoodDetail2(props: {
         <ManageButton viewStyle={tw`px-4`} title='Impact to Progress' buttonText=' ' />
         <Spacer sm />
         <ImpactGridItem header t2='Limit' t3='Old' t4='New' />
-        <ImpactGridItem t1='Calories (kcal)' t2={(tdee || 0).toFixed()} t3={(caloriesConsumed || 0).toFixed()} t3Color={caloriesConsumed > tdee ? _tokens.red : undefined} t4={((caloriesConsumed || 0) + (form.calories || 0)).toFixed()} t4Color={((caloriesConsumed || 0) + (form.calories || 0)) > tdee ? _tokens.red : _tokens.green} />
-        <ImpactGridItem t1='Protein (g)' t2={(totalProteinGrams || 0).toFixed()} t3={(proteinConsumed || 0).toFixed()} t3Color={proteinConsumed > totalProteinGrams ? _tokens.red : undefined} t4={((proteinConsumed || 0) + (form.protein || 0)).toFixed()} t4Color={((proteinConsumed || 0) + (form.protein || 0)) > totalProteinGrams ? _tokens.red : _tokens.green} />
-        <ImpactGridItem t1='Carbs (g)' t2={(totalCarbsGrams || 0).toFixed()} t3={(carbsConsumed || 0).toFixed()} t3Color={carbsConsumed > totalCarbsGrams ? _tokens.red : undefined} t4={((carbsConsumed || 0) + (form.carbs || 0)).toFixed()} t4Color={((carbsConsumed || 0) + (form.carbs || 0)) > totalCarbsGrams ? _tokens.red : _tokens.green} />
-        <ImpactGridItem t1='Fats (g)' t2={(totalFatGrams || 0).toFixed()} t3={(fatConsumed || 0).toFixed()} t3Color={fatConsumed > totalFatGrams ? _tokens.red : undefined} t4={((fatConsumed || 0) + (form.fat || 0)).toFixed()} t4Color={((fatConsumed || 0) + (form.fat || 0)) > totalFatGrams ? _tokens.red : _tokens.green} />
+        <ImpactGridItem t1='Calories (kcal)' t2={(tdee || 0).toFixed()} t3={(caloriesConsumed || 0).toFixed()} t3Color={caloriesConsumed > tdee ? _tokens.red : undefined} t4={((caloriesConsumed || 0) + (form.calories || 0) - totalAlreadyConsumed.calories).toFixed()} t4Color={((caloriesConsumed || 0) + (form.calories || 0) - totalAlreadyConsumed.calories) > tdee ? _tokens.red : _tokens.green} />
+        <ImpactGridItem t1='Protein (g)' t2={(totalProteinGrams || 0).toFixed()} t3={(proteinConsumed || 0).toFixed()} t3Color={proteinConsumed > totalProteinGrams ? _tokens.red : undefined} t4={((proteinConsumed || 0) + (form.protein || 0) - totalAlreadyConsumed.protein).toFixed()} t4Color={((proteinConsumed || 0) + (form.protein || 0) - totalAlreadyConsumed.protein) > totalProteinGrams ? _tokens.red : _tokens.green} />
+        <ImpactGridItem t1='Carbs (g)' t2={(totalCarbsGrams || 0).toFixed()} t3={(carbsConsumed || 0).toFixed()} t3Color={carbsConsumed > totalCarbsGrams ? _tokens.red : undefined} t4={((carbsConsumed || 0) + (form.carbs || 0) - totalAlreadyConsumed.carbs).toFixed()} t4Color={((carbsConsumed || 0) + (form.carbs || 0) - totalAlreadyConsumed.carbs) > totalCarbsGrams ? _tokens.red : _tokens.green} />
+        <ImpactGridItem t1='Fats (g)' t2={(totalFatGrams || 0).toFixed()} t3={(fatConsumed || 0).toFixed()} t3Color={fatConsumed > totalFatGrams ? _tokens.red : undefined} t4={((fatConsumed || 0) + (form.fat || 0) - totalAlreadyConsumed.fat).toFixed()} t4Color={((fatConsumed || 0) + (form.fat || 0) - totalAlreadyConsumed.fat) > totalFatGrams ? _tokens.red : _tokens.green} />
         <Spacer />
       </ScrollView>}
       {(selectedOption === 'Nutrition Facts' || isNewFood) && <ScrollView style={tw`px-4`} showsVerticalScrollIndicator={false}>

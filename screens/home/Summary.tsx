@@ -25,6 +25,7 @@ import { _tokens } from "../../tamagui.config";
 import Spacer from "../../components/base/Spacer";
 import ManageButton from "../../components/features/ManageButton";
 import presetDashboardComponents, { UserInputs } from "../../components/features/PresetSummaryListItems";
+import { useGet } from "../../hooks/useGet";
 
 export const SummaryScreen = () => {
   let { profile } = useSelector((x) => x.auth);
@@ -67,6 +68,8 @@ export const SummaryScreen = () => {
   const daysToDisplay = [0, 1, 2, 3, 4, 5, 6].map((x) =>
     moment(formattedDate).startOf("week").add(x, "days")
   );
+  let g = useGet()
+  console.log(today)
   return (
     <View style={{ flex: 1 }} includeBackground>
       <SafeAreaView edges={["top"]} style={[{ flex: 1 }, tw`h-12/12`]}>
@@ -78,7 +81,10 @@ export const SummaryScreen = () => {
             return (
               <TouchableOpacity
                 style={tw`p-.5`}
-                onPress={() => navigator.navigate("Calendar")}
+                onPress={() => {
+                  navigator.navigate("Calendar")
+                  // g.set('error', 'testing this')
+                }}
               >
                 <Icon
                   name="Calendar"

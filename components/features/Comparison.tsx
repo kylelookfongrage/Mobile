@@ -21,6 +21,9 @@ const Comparison = (props: {
     tertiaryValue?: number | string;
     tertiaryDesc?: string;
     tertiarySuffix?: string;
+    currentValue?: string | number;
+    currentValueSuffix?: string
+
 }) => {
     let dm = useColorScheme() === 'dark'
     let s = Dimensions.get('screen')
@@ -39,7 +42,8 @@ const Comparison = (props: {
         {(props.secondaryDesc && props.secondaryValue) && <Tile desc={props.secondaryDesc} value={props.secondaryValue} suffix={props.secondarySuffix} />}
         {(props.tertiaryDesc && props.tertiaryValue) && <Tile desc={props.tertiaryDesc} value={props.tertiaryValue} suffix={props.tertiarySuffix} />}
     </XStack>
-    <Spacer lg />
+    {props.currentValue && <Text weight='semibold' style={tw`text-center mt-4 text-gray-500`}>{props.currentValue} {props.currentValueSuffix ? `(${props.currentValueSuffix})` : ''}</Text>}
+    <Spacer />
 </View>
   )
 }

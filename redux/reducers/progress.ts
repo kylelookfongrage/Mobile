@@ -88,7 +88,6 @@ let progressSlice = createSlice({
     },
     setProgressValue: <T extends keyof TProgress['today'], V extends TProgress['today'][T]>(state: TProgress, action: PayloadAction<{ key: T, value: V }>) => {
       let { key, value } = action.payload
-      console.log('Updating ', key, ' to ', value)
       //@ts-ignore
       state['today'][key] = value;
     }

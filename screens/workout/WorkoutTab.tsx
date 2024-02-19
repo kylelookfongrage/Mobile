@@ -1,23 +1,16 @@
-import { ScrollView, TouchableOpacity, Image, ImageBackground, RefreshControl, TextInput, ActivityIndicator, Pressable } from 'react-native'
+import { ScrollView, TouchableOpacity, RefreshControl } from 'react-native'
 import React from 'react'
 import { Text, View } from '../../components/base/Themed'
 import useColorScheme from '../../hooks/useColorScheme'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import tw from 'twrnc'
 import { ExpoIcon, Icon } from '../../components/base/ExpoIcon'
-import { FloatingActionButton } from '../../components/base/FAB'
 import { useNavigation } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
-import { DataStore, Storage } from 'aws-amplify'
-import { Comments, Exercise, Favorite, Follower, Meal, Post, User, Workout } from '../../aws/models'
-import { defaultImage, formatCash, getMatchingNavigationScreen, isStorageUri } from '../../data'
+import { defaultImage, getMatchingNavigationScreen } from '../../data'
 import { getCommonScreens } from '../../components/screens/GetCommonScreens'
-import { useDebounce } from '../../hooks/useDebounce'
-import { useCommonAWSIds } from '../../hooks/useCommonContext'
-import { MediaType } from '../../types/Media'
 import moment from 'moment'
-import { FavoriteType } from '../../aws/models'
-import { ShowMoreButton, ShowMoreDialogue } from '../home/ShowMore'
+import { ShowMoreDialogue } from '../home/ShowMore'
 import { Colors, FAB } from 'react-native-paper'
 import { PostMedia } from '../../components/features/PostMedia'
 import ThisAdHelpsKeepFree from '../../components/features/ThisAdHelpsKeepFree'
@@ -45,17 +38,6 @@ export default function WorkoutTab() {
     <Stack.Screen name='WorkoutAndExercises' component={WorkoutAndExercises} options={{ headerShown: false }} />
     {getCommonScreens('WT', Stack)}
   </Stack.Navigator>
-}
-
-
-interface PostDisplay extends Post {
-  username: string;
-  profileName?: string;
-  likes: number;
-  favorited: boolean;
-  following: boolean;
-  pfp: string;
-  comments?: number;
 }
 
 export const WorkoutAndExercises = () => {

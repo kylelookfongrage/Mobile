@@ -3,16 +3,12 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { Text, View } from '../../components/base/Themed'
 import tw from 'twrnc'
 import useColorScheme from '../../hooks/useColorScheme';
-import { ExpoIcon, Icon } from '../../components/base/ExpoIcon';
+import { Icon } from '../../components/base/ExpoIcon';
 import { useNavigation } from '@react-navigation/native';
-import { MediaType } from '../../types/Media';
 import * as WebBrowser from 'expo-web-browser'
-import { useCommonAWSIds } from '../../hooks/useCommonContext';
-import { defaultImage, formatCash, getMatchingNavigationScreen, substringForLists } from '../../data';
-import { BackButton } from '../../components/base/BackButton';
+import { defaultImage, formatCash, getMatchingNavigationScreen } from '../../data';
 import { ShowMoreDialogue } from './ShowMore';
 import { UserQueries } from '../../types/UserDao';
-import SupabaseImage from '../../components/base/SupabaseImage';
 import { Tables } from '../../supabase/dao';
 import Spacer from '../../components/base/Spacer';
 import ManageButton from '../../components/features/ManageButton';

@@ -76,7 +76,6 @@ export function PlanDao(){
                 start_date: date
             }
         })
-        console.log(_agendaTasks)
         let {data: agendaTasks, error: agendaError} = await supabase.from('agenda_task').insert(_agendaTasks).select()
         if (!agendaTasks) {
             throw Error(agendaError?.message || 'There was a problem, please try to make agenda items again')

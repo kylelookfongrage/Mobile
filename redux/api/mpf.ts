@@ -24,9 +24,9 @@ export const useMultiPartForm = <K extends keyof TMultiPartForm, T extends keyof
     }
 
     return {remove, upsert, edited, data, upsert_other, q}
-
-
 }
+
+export type MPFType = ReturnType<typeof useMultiPartForm>
 
 
 

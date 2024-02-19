@@ -1,9 +1,5 @@
-import { useEffect, useState } from "react"
-import { Tables, useDao, useRealtime } from "../supabase/dao"
-import { useCommonAWSIds } from "../hooks/useCommonContext"
-import moment from "moment"
-import { useDateContext } from "../screens/home/Calendar"
-import { supabase } from "../supabase"
+import { useEffect } from "react"
+import { Tables, useDao } from "../supabase/dao"
 import { useDispatch, useSelector } from "../redux/store"
 import { fetchProgressChildren, fetchToday, fetchTodaysTasks } from "../redux/api/progress"
 import { setProgressValue } from "../redux/reducers/progress"
@@ -39,6 +35,7 @@ export function ProgressDao(listen=true){
     }
 
     const deleteProgress = async <T extends keyof Tables>(id: Tables[T]['Row']['id'], table: T) => {
+        //@ts-ignore
         await dao.remove(table, id)
         await log()
     }

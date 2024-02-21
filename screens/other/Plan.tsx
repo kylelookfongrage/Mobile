@@ -35,10 +35,11 @@ import { SettingItem } from '../home/Settings'
 import Button from '../../components/base/Button'
 import { SubscriptionOverlay } from '../workout/FinishedExercise'
 import { fetchProfile } from '../../redux/api/auth'
+import { fetchTodaysTasks } from '../../redux/api/progress'
 
 export default function Plan(props: { id: Tables['fitness_plan']['Row']['id'] }) {
     let { profile } = useSelector(x => x.auth);
-    let {formattedDate} = useSelector(x => x.progress)
+    let {formattedDate, today} = useSelector(x => x.progress)
     let PlanForm = useForm<Tables['fitness_plan']['Insert']>({
         name: '', description: '', image: null, user_id: profile?.id
     }, async () => {
@@ -251,12 +252,15 @@ export default function Plan(props: { id: Tables['fitness_plan']['Row']['id'] })
                 <Button uploading={fpd.loading} title='Subscribe' pill onPress={async () => {
                     try {
                         setFpd(x => ({...x, loading: true}))
-                    if (!profile?.id) return;
-                    //@ts-ignore
-                    let {fitness_plan_subscription, agendaTasks, updates} = await dao.subscribeToPlan(profile?.id, moment(formattedDate).format(), f, details, fpd.useMeals, fpd.useWorkouts, fpd.useMacros, f.calories || profile?.tdee)
-                    if (updates) {
-                        dispatch(fetchProfile(profile.id))
-                    }
+                        if (!profile?.id) return;
+                        //@ts-ignore
+                        let {fitness_plan_subscription, agendaTasks, updates} = await dao.subscribeToPlan(profile?.id, moment(formattedDate).format(), f, details, fpd.useMeals, fpd.useWorkouts, fpd.useMacros, f.calories || profile?.tdee)
+                        if (updates) {
+                            dispatch(fetchProfile(profile.id))
+                        }
+                        if (agendaTasks?.length > 0 && today) {
+                            dispatch(fetchTodaysTasks(today))
+                        }
                     } catch (error) {
                         
                     } finally {

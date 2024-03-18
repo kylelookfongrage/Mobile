@@ -18,7 +18,7 @@ export interface ListWorkoutSearchResultsType {
   favorited: boolean;
   userID: string;
   numberOfExercises: number;
-  premium?: boolean | null | undefined
+  premium?: boolean | null | undefined;
 }
 
 
@@ -28,8 +28,10 @@ interface ListWorkoutProps {
   fromExerciseId?: number;
   planId?: string;
   dow?: number
+  task_id?: string;
 }
 export default function ListWorkout(props: ListWorkoutProps) {
+  console.log(props)
   const { profile } = useSelector(x => x.auth)
   const navigator = useNavigation()
   let dao = SearchDao()
@@ -52,7 +54,7 @@ export default function ListWorkout(props: ListWorkoutProps) {
     return <WorkoutSearchResult item={p.item} idx={p.index} onPress={(id) => {
       let screen = getMatchingNavigationScreen('WorkoutDetail', navigator)
       if (!screen) return; //@ts-ignore
-      navigator.navigate(screen, { id, dow: props.dow, planId: props.planId })
+      navigator.navigate(screen, { id, dow: props.dow, planId: props.planId, task_id: props.task_id, fromList: true })
     }} />
   }} />
 }

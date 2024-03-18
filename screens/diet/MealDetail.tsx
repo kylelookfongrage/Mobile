@@ -42,6 +42,8 @@ export interface MealDetailProps {
     idFromProgress?: string;
     planId?: string;
     dow?: number
+    task_id?: string;
+    fromList?: boolean;
 }
 
 export default function MealDetailScreen(props: MealDetailProps) {
@@ -145,7 +147,10 @@ export default function MealDetailScreen(props: MealDetailProps) {
             }
             setScreen('uploading', false)
         } else if (canViewDetails) {
-            if (props.grocery) { // add to grocery list
+            if (props.task_id) {
+                ingrs.upsert_other('tasks', props.task_id, {meal: form})
+                navigator.pop(props.fromList ? 2 : 1)
+            } else if (props.grocery) { // add to grocery list
 
             } else if (props.planId) {
                 let c = ingrs.q('plans', props.planId)
@@ -289,7 +294,7 @@ export default function MealDetailScreen(props: MealDetailProps) {
             <Overlay visible={screen.showLogProgress} onDismiss={() => setScreen('showLogProgress', false)}>
 
             </Overlay>
-            <SaveButton discludeBackground favoriteId={form.id} title={screen.editMode ? 'Save Meal' : (canViewDetails ? (props.planId ? 'Save to Plan' : (props.idFromProgress ? 'Update Progress' : 'Log Meal')) : 'Purchase Meal')} favoriteType='meal' uploading={screen.uploading} onSave={saveMeal} />
+            <SaveButton discludeBackground favoriteId={form.id} title={screen.editMode ? 'Save Meal' : (canViewDetails ? (props.planId ? 'Save to Plan' : (props.idFromProgress ? 'Update Progress' : (props.task_id ? 'Add to Task' : 'Log Meal'))) : 'Purchase Meal')} favoriteType='meal' uploading={screen.uploading} onSave={saveMeal} />
         </View>
     )
 }

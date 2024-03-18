@@ -10,8 +10,9 @@ import { TamaguiComponent, TamaguiComponentPropsBase, Text as TamaguiText } from
 import Colors from '../../constants/Colors';
 import useColorScheme from '../../hooks/useColorScheme';
 import tw from 'twrnc'
-import React from 'react';
+import React, { useMemo } from 'react';
 import { _tokens } from '../../tamagui.config';
+import { useGet } from '../../hooks/useGet';
 
 export function useThemeColor(
   props: { light?: string; dark?: string },
@@ -34,6 +35,7 @@ type ThemeProps = {
 
 interface WeightProps{
   weight?: 'thin' | 'extralight' | 'regular' | 'medium' | 'semibold' | 'bold' | 'extrabold' | 'black'
+  primary?: boolean; gray?: boolean; error?: boolean; warning?: boolean; inverted?: boolean
 }
 
 interface HeadlingProps {
@@ -91,7 +93,15 @@ export function Text(props: TextProps) {
     default: 
       break;
   }
-  const color = useThemeColor({ light: lightColor, dark: darkColor }, 'text');
+  let g = useGet();
+  let color = useMemo(() => {
+    if (props.primary) return _tokens.primary900;
+    if (props.gray) return _tokens.gray500
+    if (props.error) return _tokens.error;
+    if (props.warning) return _tokens.warning;
+    if (props.inverted) return g.dm ? _tokens.black : _tokens.white
+    return g.dm ? _tokens.white : _tokens.black
+  }, [props.primary, props.gray, props.warning, props.error, props.inverted, g.dm])
   let fontSize = 14
   if (props.xs) fontSize=10
   if (props.sm) fontSize=12

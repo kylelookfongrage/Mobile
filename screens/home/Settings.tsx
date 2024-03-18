@@ -73,7 +73,7 @@ export const SettingItem = (props: {setting: AppSetting, hideCarat?: boolean, di
         }
     }}
      disabled={!setting.screen!! && !setting.onPress} style={{...tw` pt-2 pb-1 ${props.disableMargin ? '' : 'my-2'} flex-row items-center justify-between`}}>
-    <View style={tw`flex-row ${(setting.description ? '' : 'items-center')}`}>
+    <View style={tw`flex-row max-w-11.5/12 ${(setting.description ? '' : 'items-center')}`}>
         {setting.icon && <Icon name={setting.icon} size={25} color={dm ? _tokens.white : _tokens.black}/>}
         {setting.icon && <Spacer horizontal/>}
         <View style={tw`${setting.icon ? 'w-9/12' : 'w-10.5/12'}`}>
@@ -81,7 +81,7 @@ export const SettingItem = (props: {setting: AppSetting, hideCarat?: boolean, di
         {setting.description && <Text style={tw`max-w-11/12 mt-1 text-gray-${dm ? '400' : '500'}`}>{setting.description}</Text>}
         </View>
     </View>
-    {(setting.switch || setting.onSwitch) && <Switch style={{...tw`pr-10`}} trackColor={{false: undefined, true: _tokens.primary900}} value={setting.switchValue} onValueChange={setting.onSwitch} />}
+    {(setting.switch || setting.onSwitch) && <Switch style={{...tw`pr-19`}} trackColor={{false: undefined, true: _tokens.primary900}} value={setting.switchValue} onValueChange={setting.onSwitch} />}
     {!(props.hideCarat || setting.switch) && <ExpoIcon name='chevron-right' iconName={'feather'} size={25} color='gray' />}
 </TouchableOpacity>
 }

@@ -47,6 +47,8 @@ import { fetchUser } from "./redux/api/auth";
 import { KeyboardView } from "./components/features/Keyboard";
 import { set } from "./redux/reducers/get";
 import { GlobalLoader, GlobalToastView } from "./components/base/Toast";
+import { GestureHandlerRootView } from 'react-native-gesture-handler'
+import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 
 SplashScreen.preventAutoHideAsync()
 function App() {
@@ -78,7 +80,7 @@ function App() {
     })()
   }, [])
 
-  
+
 
   let onLayout = useCallback(async () => {
     if (appIsReady) {
@@ -109,7 +111,7 @@ function App() {
   useEffect(() => {
     if (loadedKeyboard || !fontsLoaded) return;
     setLoadedKeyboard(true)
-    
+
   }, [fontsLoaded])
 
   if (!fontsLoaded || !isLoadingComplete) {
@@ -120,10 +122,12 @@ function App() {
         <ReduxProvider store={store}>
           <TamaguiProvider config={config}>
             <Theme name={dm ? 'dark' : 'light'}>
-              <Navigation colorScheme={colorScheme} />
-              <StatusBar />
-              <GlobalToastView />
-              <GlobalLoader />
+              <GestureHandlerRootView style={{ flex: 1 }}>
+                <Navigation colorScheme={colorScheme} />
+                <StatusBar />
+                <GlobalToastView />
+                <GlobalLoader />
+              </GestureHandlerRootView>
             </Theme>
           </TamaguiProvider>
         </ReduxProvider>

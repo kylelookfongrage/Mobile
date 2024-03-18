@@ -1,5 +1,7 @@
+import moment, { Moment } from "moment";
 import { isStorageUri } from "../data";
 import { PlanAdditions } from "../hooks/useMultipartForm";
+import { TAgendaTask } from "../redux/reducers/progress";
 import { supabase } from "../supabase";
 import { Tables, useDao } from "../supabase/dao";
 import { useStorage } from "../supabase/storage";
@@ -84,5 +86,90 @@ export function PlanDao(){
 
     }
 
-    return {find, save, saveDetails, getDetails, subscribeToPlan}
+    let createOrUpdatePlan = async (t: TAgendaTaskAppended) => {
+        console.log('new task', t)
+        let id = t.task_id || t.id || undefined;
+        let obj = {
+            days_of_week: t.repeat_frequency === 'WEEKLY' ?  t.days_of_week || [] : null,
+            end_date: t.end_date,
+            meal_id: t.meal?.id || t.meal_id,
+            name: t.name, 
+            description: t.description,
+            repeat_frequency: t.repeat_frequency,
+            start_date: t.start_date || moment().format(),
+            start_time: t.start_time,
+            workout_id: t.workout?.id || t.workout_id,
+            days_of_month: t.repeat_frequency === 'MONTHLY' ? t.days_of_month : null
+        }
+        if (id) {
+            let res = await dao.update('agenda_task', id, {...obj, id: id})
+            return res;
+        } else {
+            let res = await dao.save('agenda_task', {...obj, user_id: t.user_id})
+            return res;
+        }
+    }
+
+    return {find, save, saveDetails, getDetails, subscribeToPlan, createOrUpdatePlan, remove: dao.remove}
 }
+
+
+
+export const def = {
+    task_id: undefined as undefined | Tables['agenda_task']['Row']['id'],
+    type: 'Task',
+    screen: undefined as string | undefined,
+    child_id: undefined as string | number | undefined,
+    related: undefined as string | undefined | null,
+    completed: false,
+  }
+  
+export type TAgendaTaskAppended = typeof def & TAgendaTask;
+
+export const isTaskCompleted = (x: TAgendaTask) => {
+    return (x.progress) ? (Array.isArray(x.progress) ? x.progress.length > 0 : x.progress ? true : false) : false
+}
+
+
+export const agendaTaskToAppended = (selectedTask: TAgendaTask) => {
+    //@ts-ignore
+    let _def: TAgendaTaskAppended = { ...def }
+    _def = { ...selectedTask, completed: isTaskCompleted(selectedTask), task_id: undefined, type: 'Task', screen: undefined, child_id: undefined, related: undefined}
+    _def.fitness_plan = selectedTask.fitness_plan || undefined
+    if (selectedTask.meal) {
+      _def.meal = selectedTask.meal
+      _def.name = selectedTask.name || selectedTask.meal.name || ''
+      _def.screen = 'MealDetail'
+      _def.child_id = selectedTask.meal.id
+      _def.description = selectedTask.description || 'Log Meal: ' + selectedTask.meal
+      _def.type = 'Meal'
+      _def.related = selectedTask.meal.name || ''
+    }
+    if (selectedTask.workout) {
+      _def.workout = selectedTask.workout
+      _def.name = selectedTask.name || selectedTask.workout.name || ''
+      _def.screen = 'WorkoutDetail'
+      _def.child_id = selectedTask.workout.id
+      _def.description = selectedTask.description || 'Complete Workout: ' + selectedTask.workout.name
+      _def.type = 'Workout'
+      _def.related = selectedTask.workout.name || ''
+    }
+    if (selectedTask.run) {
+      _def.name = selectedTask.name || 'Run'
+      _def.description =  selectedTask.description || 'Complete a Run!'
+      _def.screen = 'RunProgress'
+      _def.type = 'Activity'
+      _def.related = 'Run Activity'
+    }
+    return _def
+}
+
+
+// let taskIncludesToday = (task: TAgendaTask, today: Moment=moment()): boolean => {
+//     if (!task.start_date) return false;
+//     let start = recur(task.start_date)
+
+//     return start.matches(today)
+
+// }
+

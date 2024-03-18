@@ -25,7 +25,9 @@ export interface Database {
           start_time: string | null
           subscription_id: number | null
           user_id: string | null
+          description: string | null
           workout_id: number | null
+          days_of_month: number[] | null
         }
         Insert: {
           created_at?: string
@@ -43,6 +45,8 @@ export interface Database {
           subscription_id?: number | null
           user_id?: string | null
           workout_id?: number | null
+          description?: string | null
+          days_of_month?: number[] | null
         }
         Update: {
           created_at?: string
@@ -60,6 +64,8 @@ export interface Database {
           subscription_id?: number | null
           user_id?: string | null
           workout_id?: number | null
+          description?: string | null
+          days_of_month?: number[] | null
         }
         Relationships: [
           {

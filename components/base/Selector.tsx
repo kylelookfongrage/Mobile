@@ -33,7 +33,7 @@ export default function Selector(props: {searchOptions: string[], onPress?: (o: 
   )
 }
 
-export const HideView = (props: {hidden?: boolean} & DView['props']) => {
-    if (props.hidden) return <View aria-hidden={true} />
+export const HideView = (props: {hidden?: boolean; visible?: boolean} & DView['props']) => {
+    if (props.hidden || (props.visible === false)) return <View aria-hidden={true} />
     return <View {...props} />
 }

@@ -98,7 +98,7 @@ export function useDao<T>(predicate: Predicate | null = null, fetch: boolean=fal
         }
     }
 
-    const remove = async <T extends keyof Tables, K extends Tables[T]['Update']>(table: T, id: string): Promise<K | null> => {
+    const remove = async <T extends keyof Tables, K extends Tables[T]['Update']>(table: T, id: Tables[T]['Row']['id']): Promise<K | null> => {
         try {
             const res = await supabase.from(table).delete().filter('id', 'eq', id).select()
             if (res.error) {

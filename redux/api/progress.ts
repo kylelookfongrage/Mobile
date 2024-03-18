@@ -34,10 +34,11 @@ export const fetchTodaysTasks = createAsyncThunk('progress/fetchTodaysTasks', as
     if (fpError || !plans) {
         throw Error(fpError?.message)
     }
-    let {data: tasks, error: atError} = await supabase.from('agenda_task').select('*, meal(*), workout(*), fitness_plan(*)').filter('user_id', 'eq', today.user_id).filter('start_date', 'lte', today.date).or(`end_date.is.null, end_date.gte.${today.date}`)
+    let {data: tasks, error: atError} = await supabase.from('agenda_task').select('*, meal(*), workout(*), fitness_plan(*), progress:task_progress(*)').filter('user_id', 'eq', today.user_id).eq('progress.date', today.date).filter('start_date', 'lte', today.date).or(`end_date.is.null, end_date.gte.${today.date}`)
     if (atError || !tasks) {
         throw Error(atError?.message)
     }
+    console.log(tasks)
     return {plans, tasks}
 })
 

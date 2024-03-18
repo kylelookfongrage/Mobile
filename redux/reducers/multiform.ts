@@ -24,7 +24,8 @@ const initialState = {
     edited : {} as {[k: string]: boolean},
     meals: {} as {[k: string]: IngredientAdditions[]},
     workouts: {} as {[k: string]: WorkoutAdditions[]},
-    plans: {} as {[k: string]: PlanAdditions[]}
+    plans: {} as {[k: string]: PlanAdditions[]},
+    tasks: {} as {[k: string] : {workout?: Tables['workout']['Insert'], meal?: Tables['meal']['Insert'], task?: Tables['agenda_task']['Insert']}}
 };
 
 

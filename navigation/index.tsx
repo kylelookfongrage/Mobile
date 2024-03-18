@@ -30,7 +30,9 @@ export default function Navigation({ colorScheme }: { colorScheme: ColorSchemeNa
     <NavigationContainer
       linking={LinkingConfiguration}
       theme={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+      <BottomSheetModalProvider>
       <RootNavigator />
+      </BottomSheetModalProvider>
     </NavigationContainer>
   );
 }
@@ -77,6 +79,7 @@ import FoodDetail2 from '../screens/diet/FoodDetail2';
 import History from '../screens/other/History';
 import { useGet } from '../hooks/useGet';
 import { LineChartDataView } from '../components/features/LineChart';
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 
 
 function RootNavigator() {

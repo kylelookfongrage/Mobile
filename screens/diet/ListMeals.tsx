@@ -29,7 +29,8 @@ interface ListMealsProps {
     grocery?: string;
     userId?: string;
     planId?: string;
-    dow?: number
+    dow?: number;
+    task_id?: string;
 }
 
 export default function ListMeals(props: ListMealsProps) {
@@ -84,7 +85,7 @@ export default function ListMeals(props: ListMealsProps) {
         return <MealSearchResult item={p.item} idx={p.index} onPress={(id) => {
             const screen = getMatchingNavigationScreen('MealDetail', navigator)
             //@ts-ignore
-            navigator.navigate(screen, { id: id, grocery: props.grocery, dow: props.dow, planId: props.planId })
+            navigator.navigate(screen, { id: id, grocery: props.grocery, dow: props.dow, planId: props.planId, task_id: props.task_id, fromList: true })
         }} />
     }}>
 

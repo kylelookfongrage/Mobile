@@ -49,6 +49,8 @@ interface WorkoutDetailProps {
   editable?: boolean;
   planId?: string;
   dow?: number;
+  task_id?: string;
+  fromList?: boolean;
 }
 
 export default function WorkoutDetail(props: WorkoutDetailProps) {
@@ -152,6 +154,7 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
     await dao.remove(Number(props.id))
     navigator.pop()
   }
+  console.log(props)
   return (
     <View style={{ flex: 1 }} includeBackground>
       <ScrollViewWithDrag disableRounding keyboardDismissMode='interactive' rerenderTopView={[screen.editMode, form.image, form.user_id]} showsVerticalScrollIndicator={false} TopView={() => {
@@ -180,123 +183,126 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
           <Spacer />
           <XStack justifyContent='space-between' w={'100%'} alignItems='center'>
             <ExerciseTile iconName='fa5' icon='running' iconSize={20} title={(associatedExercises?.length || 0).toString()} desc='exercises' />
-            <ExerciseTile iconName='ion' icon='time-outline' iconSize={20} title={toHHMMSS((associatedExercises|| []).reduce((prev, curr) => prev + (curr?.time || 0), 0))} desc='time' />
-            <ExerciseTile iconName='feather' icon='zap' iconSize={20} title={(associatedExercises|| []).reduce((prev, curr) => prev + (curr?.sets || 1) * (curr.reps || 1), 0).toString()} desc='reps' />
+            <ExerciseTile iconName='ion' icon='time-outline' iconSize={20} title={toHHMMSS((associatedExercises || []).reduce((prev, curr) => prev + (curr?.time || 0), 0))} desc='time' />
+            <ExerciseTile iconName='feather' icon='zap' iconSize={20} title={(associatedExercises || []).reduce((prev, curr) => prev + (curr?.sets || 1) * (curr.reps || 1), 0).toString()} desc='reps' />
           </XStack>
-          <Spacer lg/>
+          <Spacer lg />
           <Selector searchOptions={options} selectedOption={selectedItem} onPress={setSelectedItem} />
           {selectedItem === 'Equipment' && <View>
             {associatedEquiptment.length === 0 && <Text lg weight='semibold' style={tw`text-gray-500 text-center mt-9`}>No equipment associated to this workout</Text>}
-            <Spacer lg/>
+            <Spacer lg />
             {associatedEquiptment.map(equ => {
               return <EquiptmentTile item={equ} key={`equiptment: ${equ.id}`} />
             })}
           </View>}
           {selectedItem === 'Overview' && <View>
             {screen.editMode && <Spacer />}
-          <ManageButton hidden={!screen.editMode} title={screen.editMode ? 'Exercises' : ' '} buttonText='Add New' onPress={() => {
-            setScreen('sorted', false)
-            const s = getMatchingNavigationScreen('ListExercise', navigator)
-            //@ts-ignore
-            navigator.navigate(s, { workoutId: uuid })
-          }} />
-          <Spacer />
-          <Overlay visible={screen.selectedExercise === null ? false : true} onDismiss={() => setScreen('selectedExercise', null)}>
-            <ManageButton hidden={!screen.editMode} title={selectedExercise?.name} buttonText='Save' onPress={() => {
-              const details = { sets: screen.newSets || 1, reps: screen.newReps || 0, time: valueToSeconds(screen.newTime || ''), rest: valueToSeconds(screen.newRest || ''), note: screen.newNote }
-              let copy = [...associatedExercises].map((x, i) => {
-                if (i === screen.selectedExercise) {
-                  return { ...x, ...details }
-                }
-                return x
-              })
-              multiPartForm.upsert(copy)
-              setScreen('newNote', null)
-              setScreen('newReps', null)
-              setScreen('newSets', null)
-              setScreen('newTime', null)
-              setScreen('newRest', null)
+            <ManageButton hidden={!screen.editMode} title={screen.editMode ? 'Exercises' : ' '} buttonText='Add New' onPress={() => {
               setScreen('sorted', false)
-              setScreen('selectedExercise', null)
-            }} />
-            <Spacer xs />
-            <TouchableOpacity onPress={() => {
-              const s = getMatchingNavigationScreen('ExerciseDetail', navigator)
-              navigator.navigate(s, { id: selectedExercise?.tempId })
-              setScreen('selectedExercise', null)
-            }}>
-              <Text lg weight='semibold' style={tw`text-red-600`}>Details</Text>
-            </TouchableOpacity>
-            <Spacer />
-            <TextInput editable={screen.editMode} numberOfLines={3} multiline value={screen.newNote || selectedExercise?.note || ''} placeholder='Any notes...' placeholderTextColor={'gray'} onChangeText={v => setScreen('newNote', v)} style={tw`text-${dm ? 'white' : 'black'}`} />
-            <Spacer />
-            <View style={tw`flex-row items-center justify-around w-12/12`}>
-              <View>
-                <Text style={tw`text-center text-gray-500`} weight='semibold'>Time</Text>
-                <TimeInput editable={screen.editMode} value={screen.newTime || toHHMMSS(selectedExercise?.time || 0, '')} onChange={v => {
-                  if (!screen.editMode) return;
-                  setScreen('newTime', parseInt(v).toFixed(0) || '')
-                }} />
-              </View>
-              <View>
-                <Text style={tw`text-center text-gray-500`} weight='semibold'>Rest</Text>
-                <TimeInput editable={screen.editMode} value={screen.newRest || toHHMMSS(selectedExercise?.rest || 0, '')} onChange={v => {
-                  if (!screen.editMode) return;
-                  setScreen('newRest', parseInt(v).toFixed(0) || '')
-                }} />
-              </View>
-            </View>
-            <Spacer xl />
-            <View style={tw`flex-row items-center justify-around w-12/12`}>
-              <StepperInput editable={screen.editMode} title='Reps' value={screen.newReps || selectedExercise?.reps} onChange={v => setScreen('newReps', v)} />
-              <StepperInput editable={screen.editMode} title='Sets' min={1} value={screen.newSets || selectedExercise?.sets} onChange={v => setScreen('newSets', v)} />
-            </View>
-            <Spacer lg />
-          </Overlay>
-          <ScrollView horizontal contentContainerStyle={{ alignItems: 'center', justifyContent: 'center', }} style={{ flex: 1, width: screen.s.width, height: screen.s.height * 0.09 * (associatedExercises.length) }} scrollEnabled={false}>
-            <SortableList contentContainerStyle={{ backgroundColor: dm ? Colors.dark.background : Colors.light.background }} scrollEnabled={screen.editMode} initialNumToRender={associatedExercises.length} scale={1.1} onOrderChange={onOrderChange} data={aEx} renderItem={(info) => {
-              const { index } = info
+              const s = getMatchingNavigationScreen('ListExercise', navigator)
               //@ts-ignore
-              let item = info.item as WorkoutAdditions
-              return <SwipeWithDelete disabled={!screen.editMode} includeBackground key={(item.tempId || '') + `3178${index}`} onDelete={() => {
-                multiPartForm.upsert(associatedExercises.filter((x, i) => i !== index))
+              navigator.navigate(s, { workoutId: uuid })
+            }} />
+            <Spacer />
+            <Overlay visible={screen.selectedExercise === null ? false : true} onDismiss={() => setScreen('selectedExercise', null)}>
+              <ManageButton hidden={!screen.editMode} title={selectedExercise?.name} buttonText='Save' onPress={() => {
+                const details = { sets: screen.newSets || 1, reps: screen.newReps || 0, time: valueToSeconds(screen.newTime || ''), rest: valueToSeconds(screen.newRest || ''), note: screen.newNote }
+                let copy = [...associatedExercises].map((x, i) => {
+                  if (i === screen.selectedExercise) {
+                    return { ...x, ...details }
+                  }
+                  return x
+                })
+                multiPartForm.upsert(copy)
+                setScreen('newNote', null)
+                setScreen('newReps', null)
+                setScreen('newSets', null)
+                setScreen('newTime', null)
+                setScreen('newRest', null)
+                setScreen('sorted', false)
+                setScreen('selectedExercise', null)
+              }} />
+              <Spacer xs />
+              <TouchableOpacity onPress={() => {
+                const s = getMatchingNavigationScreen('ExerciseDetail', navigator)
+                navigator.navigate(s, { id: selectedExercise?.tempId })
+                setScreen('selectedExercise', null)
               }}>
-                <View includeBackground style={{ ...tw`items-center self-center justify-center`, width: screen.s.width * 0.87, height: screen.s.height * 0.09 }}>
-                  <TouchableOpacity onPress={() => {
-                    if (screen.sorted) {
-                      multiPartForm.upsert(copiedExercises)
-                    }
-                    setScreen('selectedExercise', index)
-                    setScreen('newNote', item.note || null)
-                    setScreen('newReps', item.reps || null)
-                    setScreen('newSets', item.sets || null)
-                    setScreen('newTime', toHHMMSS(item.time || 0, ''))
-                    setScreen('newRest', toHHMMSS(item.rest || 0, ''))
-                  }}>
-                    <View style={{ ...tw`px-1 py-1 rounded-lg flex-row items-center`, width: screen.s.width * 0.86, height: screen.s.height * 0.08 }}>
-                      {screen.editMode ? <ExpoIcon name='drag-indicator' color={dm ? 'white' : 'black'} iconName='material' size={28} style={tw`mr-3`} /> : <SupabaseImage resizeMode='auto' uri={item.img} style={{ width: 60, height: 60, borderRadius: 10 }} />}
-                      <Spacer horizontal sm />
-                      <View>
-                        <Text xl weight='bold' style={tw`max-w-11/12`}>{item.name}</Text>
-                        <Spacer xs />
-                        <View style={{ ...tw`flex-row items-center justify-between w-10/12` }}>
-                          <Text style={tw`text-gray-500`}>Sets: {item.reps || 0} x {item.sets || 1}</Text>
-                          <Text style={tw`text-gray-500`}>Rest: {toHHMMSS(item.rest || 0)}</Text>
-                          <Text style={tw`text-gray-500`}>Time: {toHHMMSS(item.time || 0)}</Text>
+                <Text lg weight='semibold' style={tw`text-red-600`}>Details</Text>
+              </TouchableOpacity>
+              <Spacer />
+              <TextInput editable={screen.editMode} numberOfLines={3} multiline value={screen.newNote || selectedExercise?.note || ''} placeholder='Any notes...' placeholderTextColor={'gray'} onChangeText={v => setScreen('newNote', v)} style={tw`text-${dm ? 'white' : 'black'}`} />
+              <Spacer />
+              <View style={tw`flex-row items-center justify-around w-12/12`}>
+                <View>
+                  <Text style={tw`text-center text-gray-500`} weight='semibold'>Time</Text>
+                  <TimeInput editable={screen.editMode} value={screen.newTime || toHHMMSS(selectedExercise?.time || 0, '')} onChange={v => {
+                    if (!screen.editMode) return;
+                    setScreen('newTime', parseInt(v).toFixed(0) || '')
+                  }} />
+                </View>
+                <View>
+                  <Text style={tw`text-center text-gray-500`} weight='semibold'>Rest</Text>
+                  <TimeInput editable={screen.editMode} value={screen.newRest || toHHMMSS(selectedExercise?.rest || 0, '')} onChange={v => {
+                    if (!screen.editMode) return;
+                    setScreen('newRest', parseInt(v).toFixed(0) || '')
+                  }} />
+                </View>
+              </View>
+              <Spacer xl />
+              <View style={tw`flex-row items-center justify-around w-12/12`}>
+                <StepperInput editable={screen.editMode} title='Reps' value={screen.newReps || selectedExercise?.reps} onChange={v => setScreen('newReps', v)} />
+                <StepperInput editable={screen.editMode} title='Sets' min={1} value={screen.newSets || selectedExercise?.sets} onChange={v => setScreen('newSets', v)} />
+              </View>
+              <Spacer lg />
+            </Overlay>
+            <ScrollView horizontal contentContainerStyle={{ alignItems: 'center', justifyContent: 'center', }} style={{ flex: 1, width: screen.s.width, height: screen.s.height * 0.09 * (associatedExercises.length) }} scrollEnabled={false}>
+              <SortableList contentContainerStyle={{ backgroundColor: dm ? Colors.dark.background : Colors.light.background }} scrollEnabled={screen.editMode} initialNumToRender={associatedExercises.length} scale={1.1} onOrderChange={onOrderChange} data={aEx} renderItem={(info) => {
+                const { index } = info
+                //@ts-ignore
+                let item = info.item as WorkoutAdditions
+                return <SwipeWithDelete disabled={!screen.editMode} includeBackground key={(item.tempId || '') + `3178${index}`} onDelete={() => {
+                  multiPartForm.upsert(associatedExercises.filter((x, i) => i !== index))
+                }}>
+                  <View includeBackground style={{ ...tw`items-center self-center justify-center`, width: screen.s.width * 0.87, height: screen.s.height * 0.09 }}>
+                    <TouchableOpacity onPress={() => {
+                      if (screen.sorted) {
+                        multiPartForm.upsert(copiedExercises)
+                      }
+                      setScreen('selectedExercise', index)
+                      setScreen('newNote', item.note || null)
+                      setScreen('newReps', item.reps || null)
+                      setScreen('newSets', item.sets || null)
+                      setScreen('newTime', toHHMMSS(item.time || 0, ''))
+                      setScreen('newRest', toHHMMSS(item.rest || 0, ''))
+                    }}>
+                      <View style={{ ...tw`px-1 py-1 rounded-lg flex-row items-center`, width: screen.s.width * 0.86, height: screen.s.height * 0.08 }}>
+                        {screen.editMode ? <ExpoIcon name='drag-indicator' color={dm ? 'white' : 'black'} iconName='material' size={28} style={tw`mr-3`} /> : <SupabaseImage resizeMode='auto' uri={item.img} style={{ width: 60, height: 60, borderRadius: 10 }} />}
+                        <Spacer horizontal sm />
+                        <View>
+                          <Text xl weight='bold' style={tw`max-w-11/12`}>{item.name}</Text>
+                          <Spacer xs />
+                          <View style={{ ...tw`flex-row items-center justify-between w-10/12` }}>
+                            <Text style={tw`text-gray-500`}>Sets: {item.reps || 0} x {item.sets || 1}</Text>
+                            <Text style={tw`text-gray-500`}>Rest: {toHHMMSS(item.rest || 0)}</Text>
+                            <Text style={tw`text-gray-500`}>Time: {toHHMMSS(item.time || 0)}</Text>
+                          </View>
                         </View>
                       </View>
-                    </View>
-                  </TouchableOpacity>
-                </View>
-              </SwipeWithDelete>
-            }} />
-          </ScrollView>
+                    </TouchableOpacity>
+                  </View>
+                </SwipeWithDelete>
+              }} />
+            </ScrollView>
           </View>}
         </View>
       </ScrollViewWithDrag>
-      <SaveButton discludeBackground uploading={screen.uploading} title={screen.editMode ? 'Save Workout' : (canViewDetails ? (props.planId ? 'Save to Plan' : 'Start Workout') : 'Purchase Workout')} favoriteId={form.originalWorkout || form.id} favoriteType='workout' onSave={async () => {
+      <SaveButton discludeBackground uploading={screen.uploading} title={screen.editMode ? 'Save Workout' : (canViewDetails ? (props.planId ? 'Save to Plan' : (props.task_id ? 'Save to Task' : 'Start Workout')) : 'Purchase Workout')} favoriteId={form.originalWorkout || form.id} favoriteType='workout' onSave={async () => {
         if (screen.editMode) {
           await onWorkoutSave()
+        } else if (props.task_id) {
+          multiPartForm.upsert_other('tasks', props.task_id, { workout: form })
+          navigator.pop(props.fromList ? 2 : 1)
         } else if (canViewDetails && form.id) {
           if (props.planId) {
             setScreen('uploading', true)
@@ -322,15 +328,15 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
 
 
 
-export const ExerciseTile = (props: {icon: string; iconName: string; iconSize: number; title: string; desc: string }) => {
+export const ExerciseTile = (props: { icon: string; iconName: string; iconSize: number; title: string; desc: string }) => {
   let dm = useColorScheme() === 'dark'
   return <YStack justifyContent='center' alignItems='center' w='32%' backgroundColor={dm ? _tokens.dark1 : _tokens.gray200} borderRadius={'$3'} paddingVertical={'$2'}>
-              <Spacer sm/>
-              {/* @ts-ignore */}
-              <ExpoIcon name={props.icon} iconName={props.iconName} color={dm ? 'white' : 'black'} size={props.iconSize} />
-              <Spacer sm/>
-              <Text h5 weight='bold'>{props.title}</Text>
-              <Spacer sm/>
-              <Text>{props.desc}</Text>
-            </YStack>
+    <Spacer sm />
+    {/* @ts-ignore */}
+    <ExpoIcon name={props.icon} iconName={props.iconName} color={dm ? 'white' : 'black'} size={props.iconSize} />
+    <Spacer sm />
+    <Text h5 weight='bold'>{props.title}</Text>
+    <Spacer sm />
+    <Text>{props.desc}</Text>
+  </YStack>
 }

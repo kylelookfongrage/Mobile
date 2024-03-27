@@ -36,6 +36,8 @@ import Button from '../../components/base/Button'
 import { SubscriptionOverlay } from '../workout/FinishedExercise'
 import { fetchProfile } from '../../redux/api/auth'
 import { fetchTodaysTasks } from '../../redux/api/progress'
+import Description from '../../components/base/Description'
+import { _tokens } from '../../tamagui.config'
 
 export default function Plan(props: { id: Tables['fitness_plan']['Row']['id'] }) {
     let { profile } = useSelector(x => x.auth);
@@ -84,16 +86,16 @@ export default function Plan(props: { id: Tables['fitness_plan']['Row']['id'] })
                     if (s.editMode || !props.id || !Number(props.id)) return <View />
                     return <ShowMoreDialogue plan_id={Number(props.id)} options={[
                         EditModeButton(s.editMode, () => setScreen('editMode', !s.editMode), f.user_id, profile?.id),
-                        DeleteButton('Meal', deletePlan, f.user_id, profile?.id),
+                        DeleteButton('Plan', deletePlan, f.user_id, profile?.id),
                         // ShowUserButton(f.user_id, navigator),
-                        ShareButton({ meal_id: Number(props.id) })
+                        ShareButton({ plan_id: Number(props.id) })
                     ]} />
                 }} />
                 <ImagePickerView editable={s.editMode} srcs={s.editMode ? (f.image ? [{ type: 'image', uri: f.image }] : []) : [{ type: 'image', uri: f.image || defaultImage }]} onChange={x => {
                     setForm('image', x?.[0]?.uri)
                 }} type='image' />
             </View>} style={{ flex: 1, }} showsVerticalScrollIndicator={false}>
-                <View style={tw`pt-4 px-6 pb-60 -mt-10`} includeBackground>
+                <View style={tw`pt-4 px-2 pb-60 -mt-10`} includeBackground>
                 <ErrorMessage errors={s.errors} onDismissTap={() => setScreen('errors', [])} />
                     <TitleInput
                         value={f.name || ''}
@@ -105,16 +107,7 @@ export default function Plan(props: { id: Tables['fitness_plan']['Row']['id'] })
                     {/* @ts-ignore */}
                     <UsernameDisplay image disabled={(s.editMode || s.uploading)} id={f.user_id} username={f.id ? null : profile?.username} />
                     <Spacer lg />
-                    <TextInput
-                        value={f.description || ''}
-                        multiline
-                        numberOfLines={4}
-                        onChangeText={x => setForm('description', x)}
-                        editable={s.editMode}
-                        placeholder='The description of your fitness plan, both from a macronutrient and workout perspective'
-                        placeholderTextColor={'gray'}
-                        style={tw`max-w-11/12 text-${dm ? 'white' : 'black'}`}
-                    />
+                    <Description placeholder='a description of your fitness plan' value={f.description} editable={s.editMode} onChangeText={x => setForm('description', x)} />
                     <Spacer divider lg />
                     <Text h5 weight='bold'>Nutrition Goals</Text>
                     <Spacer sm />
@@ -139,7 +132,7 @@ export default function Plan(props: { id: Tables['fitness_plan']['Row']['id'] })
                     {[0,1,2,3,4,5,6].map((x) => {
                         let selected = dow == x
                         return <TouchableOpacity onPress={() => setDow(x)} key={`Day of week ${x}`}>
-                           <View card={!selected} style={tw`rounded-full h-10 w-10 items-center justify-center ${selected ? 'bg-red-600' : ''}`}>
+                           <View card={!selected} style={{...tw`rounded-full h-10 w-10 items-center justify-center`, ...(selected ? {backgroundColor: _tokens.secondary900} : {})}}>
                            <Text weight={'bold'} lg style={tw`text-center ${selected ? 'text-white' : ''}`}>{moment().local().weekday(x).format('dd')}</Text>
                            </View>
                         </TouchableOpacity>

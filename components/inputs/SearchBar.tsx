@@ -8,7 +8,7 @@ import Input from '../base/Input'
 //@ts-ignore
 import { v4 as uuidv4 } from 'uuid';
 
-export default function SearchBar(props: {onSearch?: (v: string) => void; full?: boolean}) {
+export default function SearchBar(props: {onSearch?: (v: string) => void; full?: boolean, bg?: string, height?: string | number, iconSize?: number; hideClear?: boolean; hideSearch?: boolean}) {
     const dm = useColorScheme() === 'dark'
     const [keyword, setKeyword] = useState<string>('')
     let [uuid] = useState(uuidv4())
@@ -19,5 +19,5 @@ export default function SearchBar(props: {onSearch?: (v: string) => void; full?:
         }
     }, [debouncedKeyword])
     console.log(keyword)
-    return <Input id={uuid} width={props.full ? '100%' : '95%'} placeholder='search...' iconLeft='Search' canClear value={keyword} textChange={setKeyword} />
+    return <Input id={uuid} bg={props.bg} iconSize={props.iconSize} height={props.height} width={props.full ? '100%' : '95%'} placeholder='search...' iconLeft={props.hideSearch ? undefined : 'Search'} canClear={!props.hideClear} value={keyword} textChange={setKeyword} />
 }

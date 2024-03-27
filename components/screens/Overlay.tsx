@@ -32,7 +32,7 @@ export default forwardRef(function Overlay(props: {bg?: string; disableClose?: b
         } else {return x}
 
     }
-    const color = g.modalBg;
+    const color = props.bg || g.modalBg;
     const bottomSheetRef = useRef<BottomSheet>(null);
     let dismiss = () => (props.onDismiss && props.onDismiss(false));
     let [disabled, setDisabled] = useState(false)
@@ -95,7 +95,7 @@ export default forwardRef(function Overlay(props: {bg?: string; disableClose?: b
             ref={bottomSheetRef}
             snapPoints={snapPoints}
             index={-1}
-            handleIndicatorStyle={props.excludeBanner ? {opacity: 0} : undefined}
+            handleIndicatorStyle={props.excludeBanner ? {opacity: 0} : {backgroundColor: g.dm ? _tokens.gray500 : _tokens.dark1}}
             enableHandlePanningGesture={!disabled}
             enableContentPanningGesture={!disabled}
             backgroundStyle={{backgroundColor: color}}

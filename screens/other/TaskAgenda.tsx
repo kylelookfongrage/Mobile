@@ -25,25 +25,16 @@ import { PlanDao, TAgendaTaskAppended, agendaTaskToAppended, def, isTaskComplete
 import Overlay, { TRefOverlay } from '../../components/screens/Overlay'
 import Button from '../../components/base/Button'
 import Description from '../../components/base/Description'
-import { Picker, timeStringToMoment } from '../../components/inputs/Picker'
+import { getTwentyFourHourTime, Picker, timeStringToMoment } from '../../components/inputs/Picker'
 import SwipeWithDelete, { TSwipeableWithDeleteRef } from '../../components/base/SwipeWithDelete'
 import { useMultiPartForm } from '../../redux/api/mpf'
 // @ts-ignore 
 import { v4 } from 'uuid';
 import useOnLeaveScreen from '../../hooks/useOnLeaveScreen'
 
-         /*
-        TODO: 
-        NA: only that day
-        DAILY: until end date
-        WEEKLY: on specific days or on same date as start date
-        MONTHLY: on specific day of month
-        ANNUALLY: on start date next x years 
-        */
-
-type TaskType = 'meal' | 'workout' | 'run' | undefined
+type TaskType = 'meal' | 'workout' | 'run' | 'task' | undefined
 let HOURS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23];
-let defaultObj = { food: [] as TFoodProgress[], meal: [] as TMealProgress[], run: [] as Tables['run_progress']['Row'][], workouts: [] as TWorkoutPlay[] }
+let defaultObj = { food: [] as TFoodProgress[], meal: [] as TMealProgress[], run: [] as Tables['run_progress']['Row'][], workouts: [] as TWorkoutPlay[], tasks: [] as TaskAgenda[] }
 
 
 export default function TaskAgenda() {
@@ -57,12 +48,22 @@ export default function TaskAgenda() {
     ref?.current?.snapTo(0, true);
     // ref.current?.disable(false);
   }
+  let todaysTasks = useMemo(() => {
+    return tasks.filter(x => taskIncludesToday(x, today?.date || moment().format()))
+  }, [tasks, today])
+
   let tasksGroupedByTime = useMemo(() => {
     let res: { [k: number]: typeof defaultObj } = {}
-    let appendToRes = <K extends keyof typeof defaultObj, V extends typeof defaultObj[K][number]>(type: keyof typeof defaultObj, f: V) => {
-      let h = moment(f.created_at).hour()
+    let appendToRes = <K extends keyof typeof defaultObj, V extends typeof defaultObj[K][number]>(type: keyof typeof defaultObj, f: V, key='created_at') => {
+      let h = -1
+      if (key === 'created_at') h = moment(f[key]).hour()
+      if (key === 'start_time') {
+        let r = getTwentyFourHourTime(f[key])
+        if (r.hour) h = r.hour
+      }
+      if (h === -1) return;
       if (res[h] === undefined) {
-        res[h] = { food: [], meal: [], workouts: [], run: [] }
+        res[h] = { food: [], meal: [], workouts: [], run: [], tasks: [] }
       }  //@ts-ignore
       res[h][type].push(f)
 
@@ -79,8 +80,11 @@ export default function TaskAgenda() {
     for (var workout of workoutProgress) {
       appendToRes('workouts', workout)
     }
+    for (var task of todaysTasks) {
+      appendToRes('tasks', task, 'start_time')
+    }
     return res;
-  }, [foodProgress, runProgress, workoutProgress, mealProgress])
+  }, [foodProgress, runProgress, workoutProgress, mealProgress, todaysTasks])
   let dispatch = useDispatch()
   let g = useGet()
   let _today = moment(today?.date)
@@ -100,7 +104,6 @@ export default function TaskAgenda() {
   let staged_update = mpf?.data
 
   useOnLeaveScreen(() => {
-    console.log('removing')
     mpf.remove()
   })
 
@@ -135,7 +138,11 @@ export default function TaskAgenda() {
     if (!isTaskCompleted(t)) {
       dispatch(saveTaskProgress({ today: today, task_progress: { task_id: t.id } }))
     } else {
-      dispatch(deleteTaskProgress(t.progress))
+      let _p = t.progress
+      if (Array.isArray(t.progress)) {
+        _p = t.progress[0]
+      }
+      dispatch(deleteTaskProgress(_p))
     }
     if (selectedTask) { setSelectedTask(null) }
   }
@@ -201,8 +208,16 @@ export default function TaskAgenda() {
       <HideView style={{ flex: 1 }} hidden={selectedOption !== 'Today'}>
         <Spacer sm />
         <ScrollView style={{ paddingBottom: 20, ...tw`px-2` }}>
+          <ManageButton title='Rage Tasks' buttonText=' ' />
+          <TaskBody taskType='task' name="Progress Pictures" completed={(today?.back || today?.left || today?.right || today?.front) ? true : false} onTap={() => n.navigate('ProgressPicture')} description='• All Day'  />
+          <TaskBody taskType='task' name={"Log weight"} completed={today?.weight ? true : false} onTap={() => n.navigate('SummaryMetric', {weight: true})} description='• All Day'  />
+          <TaskBody taskType='task' name="Log body fat %" completed={today?.fat ? true : false} description='• All Day' onTap={() => n.navigate('SummaryMetric', {weight: false})}  />
+          <Spacer divider sm />
+          <Spacer  />
           {/* TODO: Navigate to details  */}
-          {tasks.filter(x => taskIncludesToday(x, today?.date || moment().format())).map(x => {
+          <ManageButton title='Your Tasks' hidden />
+          {todaysTasks.length === 0 && <Text gray weight='bold' style={tw`text-center mt-6`}>No tasks for today</Text>}
+          {todaysTasks.map(x => {
             let taskType: TaskType = x.workout ? 'workout' : (x.meal ? 'meal' : x.run ? 'run' : undefined)
             return <TaskItem onDelete={async () => {
               g.set('loading', true)
@@ -319,9 +334,9 @@ export default function TaskAgenda() {
         ]} />
       </Overlay>
 
-      {selectedOption === 'Today' && <SaveButton onSave={() => {
+      {selectedOption === 'Today' && <SaveButton discludeBackground onSave={() => {
         _setNewTask(def)
-      }} title='Add Task' safeArea />}
+      }} title='Add Task' />}
 
 
     </View>
@@ -366,12 +381,24 @@ const TimelineItem = (props: {
     return res;
   }, [data])
   let n = useNavigation()
+  let g = useGet()
   return <Timeline point={{ type: isNow ? Timeline.pointTypes.BULLET : Timeline.pointTypes.CIRCLE, color: _tokens.primary900 }} bottomLine={{ type: Timeline.lineTypes.DASHED, color: _tokens.secondary900 }} topLine={{ type: Timeline.lineTypes.DASHED, color: _tokens.secondary900 }}>
     <YStack>
       <Text style={tw`${!isNow ? "text-gray-500" : ''}`} weight={isNow ? 'black' : 'semibold'}>{hour}</Text>
       <Spacer sm />
-      {(sortedTime && sortedTime.length > 0) && <YStack backgroundColor={_tokens.dark1} borderRadius={'$2'} px='$2' pt='$2'>
-        {sortedTime.map((x, i) => {
+      {((sortedTime && sortedTime.length > 0 || (data?.tasks && data.tasks.length))) && <YStack backgroundColor={g.dm ? _tokens.dark1 : _tokens.gray100} borderRadius={'$2'} px='$2' pt='$2'>
+        {(data?.tasks || []).map(x => {
+          return <View key={x.id + ' - task'} style={tw`mb-2`}>
+            <XStack justifyContent='space-between' alignItems='center'>
+              <View>
+                <Text lg bold>{x.name}</Text>
+                <Text>Task</Text>
+              </View>
+              {x?.progress?.[0] && <ExpoIcon name='checkbox' iconName='ion' size={25} color={_tokens.primary900} />}
+            </XStack>
+          </View>
+        })}
+        {(sortedTime || []).map((x, i) => {
           let [name, image, category, type, props, screen] = ['', '', '', '', {}, '' as string | undefined | null];
           //@ts-ignore
           if (x.otherNutrition) { //@ts-ignore
@@ -420,41 +447,49 @@ const TimelineItem = (props: {
 export const TaskItem = (props: { task: TAgendaTask, discludeCheckbox?: boolean; taskType: TaskType, completed?: boolean, onTap: (task: TAgendaTask) => void; onDetailsPress?: (task: TAgendaTask) => void; onDelete?: (task: TAgendaTask) => void; }) => {
   let { task, taskType } = props;
   let completed = props.completed
-  let title = titleCase(taskType || 'task')
   let name = task.name || (task.workout ? task.workout.name : (task.meal ? task.meal.name : task.run ? 'Run' : (task.name || 'Task')))
-  let id = task.workout ? task.workout.id : (task.meal ? task.meal.id : undefined)
+  let onDelete = () => props.onDelete && props.onDelete(task)
+  let onTap = () => props.onTap && props.onTap(task)
+  let onDetailsPress = () => props.onDetailsPress && props.onDetailsPress(task)
+  return <TaskBody completed={completed} discludeCheckbox={props.discludeCheckbox} taskType={taskType} onDelete={onDelete} onTap={onTap} onDetailsPress={onDetailsPress} name={name || ''} description={`${task.fitness_plan ? '• ' + task.fitness_plan.name : ""}• ${task.start_time ? '@'+ timeStringToMoment(task.start_time).format('hh:mm A') : 'All Day'}`} />
+}
+
+
+export const TaskBody = (props: { name: string, description?: string; discludeCheckbox?: boolean; taskType: TaskType, completed?: boolean, onTap?: () => void; onDetailsPress?: () => void; onDelete?: () => void; }) => {
+  let { taskType, completed, name, description } = props;
+  let title = titleCase(taskType || 'task')
   let dm = useColorScheme() === 'dark'
   let r = useRef<Swipeable>(null)
   return <Swipeable ref={r} renderRightActions={() => {
     if (!props.onDelete) return null;
     //@ts-ignore
     return <TouchableOpacity onPress={() => {
-      props.onDelete && props.onDelete(task);
+      props.onDelete && props.onDelete();
       r.current?.close()
-    }} style={{ ...tw`w-20 h-12/12 items-center justify-center px-2 rounded`, backgroundColor: _tokens.error }}>
+    }} style={{ ...tw`w-15 h-12/12 items-center justify-center px-1 rounded`, backgroundColor: _tokens.error }}>
       <ExpoIcon name='x' iconName='feather' size={23} color={'white'} />
-      <Text lg weight='bold' style={tw`text-center text-white`}>Delete</Text>
+      <Text weight='bold' style={tw`text-center text-white`}>Delete</Text>
     </TouchableOpacity>
   }} renderLeftActions={() => {
     if (!props.onDetailsPress) return null;
     //@ts-ignore
     return <TouchableOpacity onPress={() => {
-      props.onDetailsPress && props.onDetailsPress(task)
+      props.onDetailsPress && props.onDetailsPress()
       r?.current?.close();
-    }} style={{ ...tw`w-20 h-12/12 items-center justify-center px-2 rounded`, backgroundColor: _tokens.primary900 }}>
-      <Text lg weight='bold' style={tw`text-center text-white`}>View Details</Text>
+    }} style={{ ...tw`w-15 h-12/12 items-center justify-center px-1 rounded`, backgroundColor: _tokens.primary900 }}>
+      <Text weight='bold' style={tw`text-center text-white`}>View Details</Text>
     </TouchableOpacity>
   }}>
     <View includeBackground>
       <TouchableOpacity onLongPress={() => {
-        if (props.onDetailsPress) props.onDetailsPress(task)
-      }} onPress={() => { props.onTap(task) }}>
-        <XStack paddingVertical='$3' paddingHorizontal='$2' justifyContent='space-between' alignItems='center'>
+        if (props.onDetailsPress) props.onDetailsPress()
+      }} onPress={() => { props.onTap && props.onTap() }}>
+        <XStack paddingVertical='$2.5' paddingHorizontal='$1' justifyContent='space-between' alignItems='center'>
           <YStack>
-            <Text xl weight='bold' style={tw`${completed ? 'line-through ' + (dm ? 'text-gray-700' : 'text-gray-400') : ''}`}>{name} </Text>
-            <Text gray style={tw`${completed ? 'line-through ' : ''}`}>{title} {task.fitness_plan ? '• ' + task.fitness_plan.name : ""} • {task.start_time ? '@'+ timeStringToMoment(task.start_time).format('hh:mm A') : 'All Day'}</Text>
+            <Text lg weight='bold' style={tw`${completed ? 'line-through ' + (dm ? 'text-gray-700' : 'text-gray-400') : ''}`}>{name} </Text>
+            <Text gray style={tw`${completed ? 'line-through ' : ''}`}>{title} {description}</Text>
           </YStack>
-         {!props.discludeCheckbox &&  <Checkbox value={completed} color={_tokens.primary900} style={tw`${completed ? '' : "border-gray-500"}`} borderRadius={100} />}
+         {!props.discludeCheckbox &&  <Checkbox value={completed} color={_tokens.primary900} style={tw`${completed ? '' : "border-gray-500"} mr-2`} />}
         </XStack>
       </TouchableOpacity>
     </View>
@@ -465,8 +500,8 @@ export const TaskItem = (props: { task: TAgendaTask, discludeCheckbox?: boolean;
 
 
 
-
 import { datetime, Frequency, RRule, RRuleSet, rrulestr, Weekday } from 'rrule'
+import ManageButton from '../../components/features/ManageButton'
 
 
 

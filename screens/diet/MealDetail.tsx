@@ -173,7 +173,7 @@ export default function MealDetailScreen(props: MealDetailProps) {
     return (
         <View style={{ flex: 1 }} includeBackground>
             {/* @ts-ignore */}
-            <ScrollViewWithDrag keyboardDismissMode='interactive' disableRounding rerenderTopView={[screen.editMode, (form.vi || []), form.user_id]} TopView={() => <View>
+            <ScrollViewWithDrag keyboardDismissMode='interactive' disableRounding rerenderTopView={[screen.editMode,imageSource, canViewDetails, form.user_id]} TopView={() => <View>
                 <BackButton inplace Right={() => {
                     if (screen.editMode || !props.id || !Number(props.id) || props.idFromProgress || props.planId) return <View />
                     return <ShowMoreDialogue meal_id={Number(props.id)} options={[

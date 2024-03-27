@@ -34,6 +34,8 @@ interface InputProps {
     onSubmit?: () => void;
     onOpen?: () => void;
     onClose?: () => void;
+    bg?: string;
+    iconSize?: number;
 }
 
 export default function Input(props: InputProps) {
@@ -54,7 +56,7 @@ export default function Input(props: InputProps) {
             {props.name && <Label size={'$1'} fontWeight={'500'}>{props.name}</Label>}
             <Spacer size='$2' />
             <XStack alignItems='center' borderWidth={borderColor === 'transparent' ? 0 : 2} borderColor={borderColor} borderRadius={'$4'} space='$2' alignSelf='center' height={props.height || 65}
-                width={props.width || '100%'} backgroundColor={dm ? tokens.dark1 : tokens.gray200} paddingHorizontal={20}
+                width={props.width || '100%'} backgroundColor={props.bg || (dm ? tokens.dark1 : tokens.gray200)} paddingHorizontal={20}
                 paddingVertical={18} >
                 {(props.iconLeft) && <TouchableOpacity disabled={!props.leftOnPress} onPress={props.leftOnPress}>
                     <Icon name={props.iconLeft} size={20} color={_tokens.gray500} />
@@ -90,17 +92,17 @@ export default function Input(props: InputProps) {
                     {...props.otherProps}
                 />
                 {(props.iconRight && !props.password && !props.canClear) && <TouchableOpacity disabled={!props.rightOnPress} onPress={props.rightOnPress}>
-                    <Icon name={props.iconRight} size={20} color={_tokens.gray500} />
+                    <Icon name={props.iconRight} size={props.iconSize || 20} color={_tokens.gray500} />
                 </TouchableOpacity>}
                 {(props.password && !props.canClear) && <TouchableOpacity onPress={() => setObscureText(p => !p)}>
-                    <Icon name={obscureText ? 'Unlock' : 'Lock'} size={22} color={_tokens.gray500} />
+                    <Icon name={obscureText ? 'Unlock' : 'Lock'} size={props.iconSize || 22} color={_tokens.gray500} />
                 </TouchableOpacity>}
                 {(props.canClear) && <TouchableOpacity onPress={() => {
                     ref?.current?.clear()
                     if (props.textChange) props.textChange('')
                     if (props.numberChange) props.numberChange(undefined)
                 }}>
-                    <ExpoIcon name='close-outline' iconName='ion' size={25} color={_tokens.gray500} />
+                    <ExpoIcon name='close-outline' iconName='ion' size={props.iconSize || 25} color={_tokens.gray500} />
                 </TouchableOpacity>}
             </XStack>
             <Spacer size='$2' />

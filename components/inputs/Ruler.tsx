@@ -82,7 +82,7 @@ export const Ruler = (props: RulerProps) => {
                         backgroundColor: tenth ? '#333' : '#999',
                         marginHorizontal: 10
                     }} />
-                    {tenth && <Text style={tw`mt-2 text-red-500`}>{d}</Text>}
+                    {tenth && <Text gray weight="bold" style={tw`mt-2`}>{d}</Text>}
                 </View>
 
             })}

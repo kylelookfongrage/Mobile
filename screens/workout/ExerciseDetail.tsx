@@ -29,6 +29,7 @@ import { useMultiPartForm } from '../../redux/api/mpf';
 import Description from '../../components/base/Description';
 import { useSelector } from '../../redux/store';
 import { useGet } from '../../hooks/useGet';
+import { _tokens } from '../../tamagui.config';
 
 
 export interface ExerciseDetailProps {
@@ -39,7 +40,7 @@ export interface ExerciseDetailProps {
 
 export default function ExerciseDetail(props: ExerciseDetailProps) {
     const { id, workoutId } = props;
-    let {profile} = useSelector(x => x.auth)
+    let { profile } = useSelector(x => x.auth)
     const ExerciseForm = useForm<Tables['exercise']['Insert']>({
         description: '',
         video: '',
@@ -107,12 +108,12 @@ export default function ExerciseDetail(props: ExerciseDetailProps) {
             try {
                 let newExercise = await dao.save(copiedForm, form.video || undefined, form.preview || undefined)
                 console.log(newExercise)
-            if (!newExercise) {
-                g.set('loading', false);
-                return;
-            }
-            ExerciseForm.dispatch({ type: FormReducer.Set, payload: newExercise })
-            await dao.saveEquiptment(newExercise, equiptment)
+                if (!newExercise) {
+                    g.set('loading', false);
+                    return;
+                }
+                ExerciseForm.dispatch({ type: FormReducer.Set, payload: newExercise })
+                await dao.saveEquiptment(newExercise, equiptment)
             } catch (error) {
                 setScreen('uploading', false)
                 g.set('error', error.toString())
@@ -121,11 +122,12 @@ export default function ExerciseDetail(props: ExerciseDetailProps) {
                 setScreen('editMode', false)
                 g.set('loading', false)
             }
-            
+
         } else if (props.workoutId) {
             let potentialWorkout = [...(multiPartForm.data || [])]
             potentialWorkout.push({ reps: 0, rest: 0, time: 0, index: potentialWorkout.length, tempId: props.id, equiptment, name: form.name || '', img: form.preview || defaultImage, sets: 1 })
             multiPartForm.upsert(potentialWorkout) //@ts-ignore
+            g.set('loading', false)
             navigator.pop()
         } else {
             setScreen('uploading', false)
@@ -168,9 +170,9 @@ export default function ExerciseDetail(props: ExerciseDetailProps) {
                             DeleteButton('Exercise', deleteExercise, form.user_id, profile?.id),
                             // ShowUserButton(form.user_id, navigator),
                             ShareButton({ exercise_id: Number(id) }),
-                            {title: 'Preview AI Camera', icon: 'camera', onPress: () => navigator.navigate('Video', {uri: video?.[0]?.uri})}
+                            // { title: 'Preview AI Camera', icon: 'Video', onPress: () => navigator.navigate('Video', { uri: video?.[0]?.uri }) }
                         ]} />
-                        
+
                     }} />
                     <ImagePickerView type='all' editable={screenForm.editMode} srcs={video} onChange={x => {
                         setVideo(x)
@@ -218,17 +220,6 @@ export default function ExerciseDetail(props: ExerciseDetailProps) {
                     </View>
                     <Spacer lg divider />
                     <ManageButton title='Equipment' onPress={() => setScreen('showEquiptment', true)} hidden={!screenForm.editMode} />
-                    <Overlay dialogueHeight={90} style={{ ...tw``, flex: 1 }} visible={screenForm.showEquiptment} onDismiss={() => setScreen('showEquiptment', false)}>
-                        <Text h3>Add Equipment</Text>
-                        <Spacer />
-                        <SearchEquiptment selected={equiptment.map(x => x.id)} onSelect={(item, s) => {
-                            if (s) {
-                                setEquiptment([...equiptment].filter(z => z.id !== item.id))
-                            } else {
-                                setEquiptment([...equiptment, item])
-                            }
-                        }} />
-                    </Overlay>
                     <Spacer />
                     {equiptment.length === 0 && <Text style={tw`my-3 text-gray-500 text-center`} weight='semibold'>No equiptment to display</Text>}
                     {equiptment.map(equ => {
@@ -239,6 +230,17 @@ export default function ExerciseDetail(props: ExerciseDetailProps) {
                 </View>
                 <View style={tw`h-40`} />
             </ScrollViewWithDrag>
+            <Overlay dialogueHeight={70} bg={dm ? _tokens.dark1 : undefined} style={{ ...tw``, flex: 1 }} visible={screenForm.showEquiptment} onDismiss={() => setScreen('showEquiptment', false)}>
+                <ManageButton title='Manage Equipment' hidden />
+                <Spacer />
+                <SearchEquiptment selected={equiptment.map(x => x.id)} onSelect={(item, s) => {
+                    if (s) {
+                        setEquiptment([...equiptment].filter(z => z.id !== item.id))
+                    } else {
+                        setEquiptment([...equiptment, item])
+                    }
+                }} />
+            </Overlay>
             <SaveButton discludeBackground title={props.workoutId ? 'Add to Workout' : screenForm.editMode ? 'Save Exercise' : 'See Workouts'} uploading={screenForm.uploading} onSave={saveExercise} favoriteId={form.id} favoriteType='exercise' />
         </View>
     )

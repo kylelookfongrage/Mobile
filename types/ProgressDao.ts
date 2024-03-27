@@ -2,7 +2,7 @@ import { useEffect } from "react"
 import { Tables, useDao } from "../supabase/dao"
 import { useDispatch, useSelector } from "../redux/store"
 import { fetchProgressChildren, fetchToday, fetchTodaysTasks } from "../redux/api/progress"
-import { setProgressValue } from "../redux/reducers/progress"
+import { setProgressValue, updateProgressValues } from "../redux/reducers/progress"
 
 export function ProgressDao(listen=true){
     const dao = useDao()
@@ -52,5 +52,12 @@ export function ProgressDao(listen=true){
         dispatch(setProgressValue({key: column, value: value}))
     }
 
-    return {today, saveProgress, updateProgress, deleteProgress, foodProgress, mealProgress, runProgress, workoutProgress, log}
+    const update = async (id: Tables['progress']['Row']['id'], document: Tables['progress']['Update']) => {
+        let res = await dao.update('progress', id, document)
+        if (res) {
+            dispatch(updateProgressValues({obj: res}))
+        }
+    }
+
+    return {today, saveProgress, updateProgress, deleteProgress, foodProgress, mealProgress, runProgress, workoutProgress, log, update}
 }

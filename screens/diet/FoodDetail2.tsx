@@ -341,7 +341,7 @@ export default function FoodDetail2(props: {
     <View includeBackground style={{ flex: 1 }}>
       <Spacer />
       <XStack alignItems='flex-start' justifyContent='space-between' px='$3'>
-        <XStack alignItems='flex-start' w='93%'>
+        <XStack alignItems='flex-start' w='89%'>
           <Text disabled={props.meal_id ? true : false} onPress={() => {
             setShowCategory(true)
           }} h2>{props.meal_id ? '🍽️' : getEmojiByCategory(form?.category || undefined)}</Text>
@@ -350,9 +350,18 @@ export default function FoodDetail2(props: {
             <Text style={tw`text-gray-500`}>{author}</Text>
           </YStack>
         </XStack>
-        <TouchableOpacity onPress={() => n.pop()} style={tw`h-7 w-7 rounded-full bg-gray-500/50 items-center justify-center`}>
+        <YStack>
+        <TouchableOpacity onPress={() => n.pop()} style={tw`h-7 w-7 ml-2 rounded-full bg-gray-500/50 items-center justify-center`}>
           <ExpoIcon name='close' iconName='ion' color='black' size={20} />
         </TouchableOpacity>
+        <Spacer sm/>
+       {props.id &&  <TouchableOpacity onPress={() => {
+          n.pop();
+          n.navigate('Report', {food_id: props.id})
+        }} style={tw`self-center`}>
+          <Text gray semibold >Report</Text>
+        </TouchableOpacity>}
+        </YStack>
       </XStack>
       <Spacer />
       {searchOptions.length > 1 && <Selector searchOptions={searchOptions} selectedOption={selectedOption} onPress={setSelectedOption} />}

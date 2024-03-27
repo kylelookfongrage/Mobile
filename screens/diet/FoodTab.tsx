@@ -147,7 +147,7 @@ export const FoodAndMeals = () => {
                 </TouchableOpacity>
             })}
         </ScrollView>
-        <FloatingActionButton options={[
+        {/* <FloatingActionButton options={[
             {
                 name: 'New Food', icon: () => (<Text style={{ fontSize: 15 }}>🍎</Text>), onPress: () => {
                     //@ts-ignore
@@ -186,7 +186,7 @@ export const FoodAndMeals = () => {
             },
         ]} initialIcon={'plus'} bgColor={_tokens.primary900} openIcon={() => {
             return <ExpoIcon name='close' iconName='ion' color='white' size={23} />
-        }} />
+        }} /> */}
     </SafeAreaView>
 }
 

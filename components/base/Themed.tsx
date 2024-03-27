@@ -49,6 +49,8 @@ interface HeadlingProps {
   h3?: boolean; 
   h2?: boolean; 
   h1?: boolean
+  medium?: boolean; regular?: boolean; thin?: boolean; extralight?: boolean; semibold?: boolean; bold?: boolean; extrabold?: boolean; blackWeight?: boolean;
+  center?: boolean; left?: boolean; right?: boolean;
 }
 
 
@@ -68,31 +70,25 @@ export type ImageProps = ThemeProps & DefaultImage['props']
 export function Text(props: TextProps) {
   const { style, lightColor, darkColor, weight, ...otherProps } = props;
   let font = 'Urbanist_500Medium'
-  switch (weight) {
-    case 'thin': 
-      font = 'Urbanist_400Regular'
-      break;
-    case 'extralight': 
-      font = 'Urbanist_400Regular'
-      break;
-    case 'medium': 
-      font = "Urbanist_500Medium"
-      break;
-    case 'semibold': 
-      font = 'Urbanist_600SemiBold'
-      break;
-    case 'bold' : 
-      font = 'Urbanist_700Bold';
-      break;
-    case 'extrabold' : 
-      font = 'Urbanist_700Bold';
-      break;
-    case 'black': 
-      font = 'Urbanist_700Bold';
-      break;
-    default: 
-      break;
+
+  if (weight === 'thin' || props.thin) {
+    font = 'Urbanist_400Regular'
+  } else if (weight === 'extralight' || props.extralight) {
+    font = 'Urbanist_400Regular'
+  } else if (weight === 'medium' || props.medium) {
+    font = "Urbanist_500Medium"
+  } else if (weight === 'regular' || props.regular) {
+    font = "Urbanist_500Medium"
+  } else if (weight === 'semibold' || props.semibold) {
+    font = 'Urbanist_600SemiBold'
+  } else if (weight === 'bold' || props.bold){
+    font = 'Urbanist_700Bold';
+  } else if (weight === 'extrabold' || props.extrabold) {
+    font = 'Urbanist_700Bold';
+  } else if (weight === 'black' || props.blackWeight) {
+    font = 'Urbanist_700Bold';
   }
+
   let g = useGet();
   let color = useMemo(() => {
     if (props.primary) return _tokens.primary900;
@@ -113,7 +109,7 @@ export function Text(props: TextProps) {
   if (props.h3) fontSize=32
   if (props.h2) fontSize=40
   if (props.h1) fontSize=48
-  return <DefaultText style={[{ color, fontFamily: font, fontSize }, style]} {...otherProps} />;
+  return <DefaultText style={[{ color, fontFamily: font, fontSize, ...tw`${props.center ? 'text-center' : (props.right ? 'text-right' : (props.left ? 'text-left' : ''))}` }, style]} {...otherProps} />;
 }
 
 interface ViewProps2 extends ViewProps {

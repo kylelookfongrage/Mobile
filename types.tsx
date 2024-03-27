@@ -44,7 +44,7 @@ export type RootStackParamList = {
   Report: undefined;
   EditDashboard: undefined;
   SummaryEdit: undefined;
-  SummaryMetric: undefined;
+  SummaryMetric: {weight?: boolean};
   Quiz: undefined;
   SelectSprite: undefined;
   RegistrationEdit: undefined;
@@ -56,6 +56,7 @@ export type RootStackParamList = {
   OnboardingComplete: undefined;
   ScanBarcode: undefined;
   LineChartData: undefined;
+  ProgressPicture: undefined; 
 };
 
 

@@ -5,46 +5,40 @@ import { Image, useColorScheme } from 'react-native'
 import SearchBar from '../inputs/SearchBar'
 import { EquiptmentDao } from '../../types/EquiptmentDao'
 import { Tables } from '../../supabase/dao'
-import { FlatList } from 'react-native-gesture-handler'
+import { FlatList, ScrollView } from 'react-native-gesture-handler'
 import { Card, TouchableOpacity } from 'react-native-ui-lib'
 import Spacer from '../base/Spacer'
 import { ExpoIcon } from '../base/ExpoIcon'
+import { _tokens } from '../../tamagui.config'
+import { useGet } from '../../hooks/useGet'
 
-const testEquiptment: Tables['equiptment']['Row'][] = [
-    {name: 'Barbell', created_at: '', id: 123, description: '', gym: true, image: 'https://yorkbarbell.com/wp-content/uploads/2017/01/2021_100LBContourCastIronSpinlockSet.jpg', user_id: null},
-    {name: 'Dumbbell', created_at: '', id: 345, description: '', gym: false, image: 'https://yorkbarbell.com/wp-content/uploads/2017/01/2021_100LBContourCastIronSpinlockSet.jpg', user_id: null},
-    {name: 'Row Machine', created_at: '', id: 567, description: '', gym: true, image: 'https://yorkbarbell.com/wp-content/uploads/2017/01/55018_55019_low-row-machine2_low.jpg', user_id: null},
-]
+
 export default function SearchEquiptment(props: {onSelect?: (item: Tables['equiptment']['Row'], selected?: boolean) => void; selected?: number[]}) {
     const dm = useColorScheme() === 'dark'
     const dao = EquiptmentDao()
+    let g = useGet()
     const [equiptment, setEquiptment] = useState<Tables['equiptment']['Row'][]>([])
     return (
         <View style={{flex: 1}}>
-            <SearchBar onSearch={async k => {
+            <SearchBar bg={dm ? _tokens.dark2 : _tokens.gray300} hideSearch hideClear height={'$5'} onSearch={async k => {
                 let res = await dao.search(k)
                 if (!res) return;
                 setEquiptment(res as Tables['equiptment']['Row'][])
             }} />
             <Spacer />
             {equiptment.length === 0 && <Text>No equipment found</Text>}
-            <FlatList data={equiptment} renderItem={({item, index}) => {
+           <ScrollView horizontal>
+           <FlatList data={equiptment} renderItem={({item, index}) => {
                 const selected = (props.selected || []).includes(item.id)
-                return <TouchableOpacity onPress={() => {
+                return <TouchableOpacity style={{flex: 1, width: g.s.width * 0.95}} onPress={() => {
                     if (props.onSelect) {
                         props.onSelect(item, selected)
                     }
                 }} key={`Equiptment Search=` + item.id}>
                     <EquiptmentTile item={item} selected={selected} />
                 </TouchableOpacity>
-                
-                // <Card key={`Equiptment Search=` + item.id}>
-                //     <Card.Image source={{uri: item.image}} />
-                //     <Card.Section>
-                //         <Text>{item.name}</Text>
-                //     </Card.Section>
-                // </Card>
             }} />
+           </ScrollView>
         </View>
     )
 }

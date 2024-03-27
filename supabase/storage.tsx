@@ -42,7 +42,7 @@ export function useStorage() {
             setUploading(false)
         }
         if (data) {
-            return {...media, uri: data.path, supabaseID: data.path}
+            return {...media, uri: data.path, supabaseID: data.path, metadata: media.metadata}
         } else if (error) {
             console.log(error)
             throw Error('Cannot upload to server.')
@@ -101,5 +101,16 @@ export function useStorage() {
             return null
         }
     }
-    return {upload, uploading, download, constructUrl, uploadBulk, uploadBulkWithPreview, uploadWithPreview}
+
+    let deleteBulk = async (paths: string[]) => {
+        let x = await storage.from(BucketIds.public).remove(paths)
+        if (x.data) {
+            return x.data
+        }
+        if (x.error) {
+            throw Error(x.error.message)
+        }
+    }
+
+    return {upload, uploading, download, constructUrl, uploadBulk, uploadBulkWithPreview, uploadWithPreview, deleteBulk}
 }

@@ -1,6 +1,6 @@
 import { FontAwesome } from '@expo/vector-icons';
-import { BottomTabBarProps, createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { NavigationContainer, DefaultTheme, DarkTheme, useNavigation } from '@react-navigation/native';
+import { BottomTabBarProps, BottomTabNavigationOptions, createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { NavigationContainer, DefaultTheme, DarkTheme, useNavigation, Route, ParamListBase } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import * as React from 'react';
 import { Text, View } from '../components/base/Themed';
@@ -31,7 +31,7 @@ export default function Navigation({ colorScheme }: { colorScheme: ColorSchemeNa
       linking={LinkingConfiguration}
       theme={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <BottomSheetModalProvider>
-      <RootNavigator />
+        <RootNavigator />
       </BottomSheetModalProvider>
     </NavigationContainer>
   );
@@ -80,6 +80,9 @@ import History from '../screens/other/History';
 import { useGet } from '../hooks/useGet';
 import { LineChartDataView } from '../components/features/LineChart';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
+import ProgressPicture from '../screens/other/ProgressPicture';
+import Overlay from '../components/screens/Overlay';
+import { XStack } from 'tamagui';
 
 
 function RootNavigator() {
@@ -145,6 +148,7 @@ function RootNavigator() {
       <Stack.Screen name="NewChat" component={NewChat} options={{ headerShown: false, presentation: 'transparentModal', gestureEnabled: true, gestureDirection: 'vertical', fullScreenGestureEnabled: true }} />
       <Stack.Screen name="SelectSprite" component={SelectSprite} options={{ headerShown: false }} />
       <Stack.Screen name='UserBio' component={Bio} options={{ headerShown: false }} />
+      <Stack.Screen name='ProgressPicture' component={ProgressPicture} options={{ headerShown: false }} />
       <Stack.Screen name='EditDashboard' component={EditDashboard} options={{ headerShown: false }} />
       <Stack.Screen name="FinishedExercise" options={{ headerShown: false, gestureEnabled: false }}>
         {/* @ts-ignore */}
@@ -165,7 +169,7 @@ function RootNavigator() {
       {getCommonScreens('', Stack)}
       <Stack.Screen name={'Report'} options={{ headerShown: false }}>
         {/* @ts-ignore */}
-        {props => <Report {...props} // @ts-ignore
+        {props => <Report {...props.route?.params} {...props} // @ts-ignore
           name={props.route?.params?.name} type={props.route?.params?.type} id={props.route?.params?.id}
           // @ts-ignore
           desc={props.route?.params?.desc} img={props.route?.params?.img} userId={props.route?.params?.userId} />}
@@ -302,9 +306,27 @@ function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
     }
   };
   const insets = useSafeAreaInsets()
+  let [showCreateActions, setShowCreateActions] = React.useState(false);
+  let actions = [
+    {title: 'Create New', onPress: () => setShowCreateActions(true), icon: '📝'},
+    {title: 'Food Log', screen: 'Home', icon: '🥪', payload: {screen: 'SSummaryFoodList'}},
+    {title: 'Water Log', screen: 'LogWater', icon: '💧', },
+    // {title: 'Log Activity', screen: '', icon: ''},
+    {title: 'View Agenda', screen: 'TaskAgenda', icon: '📆'},
+
+
+  ]
+  let createNewActions = [
+    {title: 'Food', screen: 'SFoodDetail', icon: '🥦'},
+    {title: 'Meal', screen: 'SMealDetail', icon: '🥗'},
+    {title: 'Exercise', screen: 'SExerciseDetail', icon: '🏋️‍♀️'},
+    {title: 'Workout', screen: 'SWorkoutDetail', icon: '🏆'},
+    {title: 'Plan', screen: 'SFitnessPlan', icon: '📓'}
+  ]
+  let [showOverlay, setShowOverlay] = React.useState(false)
   return (
     <View includeBackground style={[{ flexDirection: 'row', paddingBottom: insets.bottom }, tw`pt-3 items-center justify-between w-12/12`]}>
-      {state.routes.map((route, index) => {
+      {state.routes.filter((x, i) => i < 2).map((route, index) => {
         // @ts-ignore
         const { icon, color: c, label } = (iconsAndColors[route.name]) || { icon: 'home', color: 'red-500', label: 'Home' }
         const { options } = descriptors[route.key];
@@ -333,32 +355,109 @@ function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
           });
         };
 
-        return (
-          <TouchableOpacity
-            key={route.name}
-            accessibilityRole="button"
-            accessibilityState={isFocused ? { selected: true } : {}}
-            accessibilityLabel={options.tabBarAccessibilityLabel}
-            testID={options.tabBarTestID}
-            onPress={onPress}
-            onLongPress={onLongPress}
-            style={[{ flex: 1 }, tw`p-2`]}
-          >
-            <View style={tw`items-center`}>
-              <Icon name={icon} weight={isFocused ? 'bold' : 'light'} size={20}
-                // style={tw`text-${color}`}
-                color={color(isFocused)}
-              />
-              <Spacer xs />
-              <Text xs weight={isFocused ? 'bold' : 'semibold'} style={{ ...tw`text-center`, color: color(isFocused) }}>
-                {/* @ts-ignore */}
-                {label}
-              </Text>
-            </View>
-          </TouchableOpacity>
-        );
+        return <Tab key={`Tab-${route.name}`} route={route} isFocused={isFocused} color={color} label={label} options={options} onLongPress={onLongPress} onPress={onPress} icon={icon} />
       })}
+      <TouchableOpacity onPress={() => setShowOverlay(true)}>
+        <Icon name='Plus' weight='bold' color={_tokens.primary900} size={50} style={tw`-mt-3 mx-5`} />
+      </TouchableOpacity>
+      {state.routes.filter((x, i) => i >= 2).map((route, index) => {
+        // @ts-ignore
+        const { icon, color: c, label } = (iconsAndColors[route.name]) || { icon: 'home', color: 'red-500', label: 'Home' }
+        const { options } = descriptors[route.key];
+        const isFocused = state.index === index + 2;
+        let color = (focused: boolean) => focused ? (dm ? _tokens.white : _tokens.primary900) : _tokens.gray500
+
+
+        const onPress = () => {
+          const event = navigation.emit({
+            type: 'tabPress',
+            target: route.key,
+            canPreventDefault: true,
+          });
+
+          if (!isFocused && !event.defaultPrevented) {
+            // The `merge: true` option makes sure that the params inside the tab screen are preserved
+            // @ts-ignore
+            navigation.navigate({ name: route.name, merge: true });
+          }
+        };
+
+        const onLongPress = () => {
+          navigation.emit({
+            type: 'tabLongPress',
+            target: route.key,
+          });
+        };
+
+        return <Tab key={`Tab-${route.name}`} route={route} isFocused={isFocused} color={color} label={label} options={options} onLongPress={onLongPress} onPress={onPress} icon={icon} />
+      })}
+       <Overlay excludeBanner id='create-menu' dialogueHeight={30} bg={_tokens.primary900} visible={showOverlay} onDismiss={() => setShowOverlay(false)}>
+        <Text center bold h4 style={tw`-mt-1.5`}>Quick Actions</Text>
+        <Spacer sm  />
+        <XStack flexWrap='wrap' w={'100%'} px='$4' alignItems='center'>
+        {actions.map(x => {
+          return <TouchableOpacity onPress={() => {
+            if (x.screen) { //@ts-ignore
+              navigation.navigate(x.screen, x.payload || {})
+            }
+            if (x.onPress) x.onPress()
+            setShowOverlay(false)
+          }} key={x.title + '-Action Button'} style={tw`w-4/12 mb-5`}>
+            <Text h3 style={tw`text-center`}>{x.icon}</Text>
+            <Text style={tw`text-center`} bold lg>{x.title}</Text>
+          </TouchableOpacity>
+        })}
+        </XStack>
+      </Overlay>
+      <Overlay excludeBanner id='create-menu' dialogueHeight={30} visible={showCreateActions} onDismiss={() => setShowCreateActions(false)}>
+        <Text center bold h4 style={tw`-mt-1.5`}>Create New</Text>
+        <Spacer sm  />
+        <XStack flexWrap='wrap' w={'100%'} px='$4' alignItems='center'>
+        {createNewActions.map(x => {
+          return <TouchableOpacity onPress={() => {
+            navigation.navigate('Home', {screen: x.screen})
+            setShowCreateActions(false)
+          }} key={x.title + '-Action Button'} style={tw`w-4/12 mb-5`}>
+            <Text h3 style={tw`text-center`}>{x.icon}</Text>
+            <Text style={tw`text-center`} bold lg>{x.title}</Text>
+          </TouchableOpacity>
+        })}
+        </XStack>
+      </Overlay>
     </View>
   );
 }
 
+
+let Tab = (props: {
+  route: Route<string, RootStackParamList>;
+  isFocused: boolean;
+  color: (f: boolean) => string;
+  options: BottomTabNavigationOptions;
+  onPress: () => void; onLongPress: () => void;
+  icon: string; label: string
+}) => {
+  let { route, isFocused, options, onPress, onLongPress, icon, color, label } = props;
+  return <TouchableOpacity
+    key={route.name}
+    accessibilityRole="button"
+    accessibilityState={isFocused ? { selected: true } : {}}
+    accessibilityLabel={options.tabBarAccessibilityLabel}
+    testID={options.tabBarTestID}
+    onPress={onPress}
+    onLongPress={onLongPress}
+    style={[{ flex: 1 }, tw`py-2`]}
+  >
+    <View style={tw`items-center`}>
+      <Icon name={icon} weight={isFocused ? 'bold' : 'light'} size={20}
+        // style={tw`text-${color}`}
+        color={color(isFocused)}
+      />
+      <Spacer xs />
+      <Text xs weight={isFocused ? 'bold' : 'semibold'} style={{ ...tw`text-center`, color: color(isFocused) }}>
+        {/* @ts-ignore */}
+        {label}
+      </Text>
+    </View>
+  </TouchableOpacity>
+}

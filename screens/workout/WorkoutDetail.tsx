@@ -168,8 +168,9 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
               ShareButton({ workout_id: Number(id) })
             ]} />
           }} />
-          <ImagePickerView editable={screen.editMode} srcs={form.image ? [{ type: 'image', uri: form.image }] : []} onChange={x => {
-            if (x[0]) { setForm('image', x[0].uri) }
+          <ImagePickerView editable={screen.editMode} srcs={screen.editMode ? (form.image ? [{ type: 'image', uri: form.image }] : []) : [{ type: 'image', uri: form.image || defaultImage }]} onChange={x => {
+            console.log('change')
+           setForm('image', x[0]?.uri) 
           }} type='image' />
         </View>
       }}>
@@ -204,7 +205,7 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
               navigator.navigate(s, { workoutId: uuid })
             }} />
             <Spacer />
-            <Overlay visible={screen.selectedExercise === null ? false : true} onDismiss={() => setScreen('selectedExercise', null)}>
+            <Overlay dialogueHeight={screen.editMode ? 60 : 40} visible={screen.selectedExercise === null ? false : true} onDismiss={() => setScreen('selectedExercise', null)}>
               <ManageButton hidden={!screen.editMode} title={selectedExercise?.name} buttonText='Save' onPress={() => {
                 const details = { sets: screen.newSets || 1, reps: screen.newReps || 0, time: valueToSeconds(screen.newTime || ''), rest: valueToSeconds(screen.newRest || ''), note: screen.newNote }
                 let copy = [...associatedExercises].map((x, i) => {
@@ -252,7 +253,7 @@ export default function WorkoutDetail(props: WorkoutDetailProps) {
               <Spacer xl />
               <View style={tw`flex-row items-center justify-around w-12/12`}>
                 <StepperInput editable={screen.editMode} title='Reps' value={screen.newReps || selectedExercise?.reps} onChange={v => setScreen('newReps', v)} />
-                <StepperInput editable={screen.editMode} title='Sets' min={1} value={screen.newSets || selectedExercise?.sets} onChange={v => setScreen('newSets', v)} />
+                <StepperInput editable={screen.editMode} title='Sets' min={screen.selectedExercise ? 1 : undefined} value={screen.newSets || selectedExercise?.sets} onChange={v => setScreen('newSets', v)} />
               </View>
               <Spacer lg />
             </Overlay>

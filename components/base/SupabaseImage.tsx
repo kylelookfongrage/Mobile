@@ -2,10 +2,10 @@ import React from 'react'
 import { useStorage } from '../../supabase/storage';
 import { View } from './Themed';
 import { defaultImage, isStorageUri } from '../../data';
-import { Image } from 'react-native';
+import { Image, ImageBackground } from 'react-native';
 import tw from 'twrnc'
 
-export default function SupabaseImage(props: { uri: string, style: string | any, resizeMode?: string; }){
+export default function SupabaseImage(props: { uri: string, style: string | any, resizeMode?: string; background?: boolean, children?: any }){
     let [src, setSrc] = React.useState<string>('')
     const s = useStorage()
     React.useEffect(() => {
@@ -18,6 +18,7 @@ export default function SupabaseImage(props: { uri: string, style: string | any,
         }
     }, [props.uri])
     if (!src) return <View />
+    let Component = props.background ? ImageBackground : Image
     //@ts-ignore
-    return <Image source={{ uri: src }} style={(typeof props.style === 'string') ? tw`${props.style}` : props.style} resizeMethod={props.resizeMode || 'scale'} />
+    return <Component {...(props.background ? props : {})} source={{ uri: src }} style={(typeof props.style === 'string') ? tw`${props.style}` : props.style} resizeMethod={props.resizeMode || 'scale'} />
 }

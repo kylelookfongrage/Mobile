@@ -46,7 +46,7 @@ export default function SaveButton(props: {secondary?: boolean, uploading?: bool
         {
             position: 'absolute',
             bottom: 0,
-            paddingBottom: props.safeArea ? insets.bottom + 20 : 10,
+            marginBottom: props.safeArea ? insets.bottom + 20 : 10,
             paddingTop: 10,
             flex: 1
         },

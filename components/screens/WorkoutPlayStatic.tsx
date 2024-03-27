@@ -85,7 +85,7 @@ export default function WorkoutPlayStatic(props: WorkoutPlayDisplayProps) {
             </XStack>
             <Spacer lg/>
             {(!resting || (resting && !animation)) && <YStack>
-               {exercise?.video && <Video defaultMuted autoPlay isLooping resizeMode='cover' indicatorMarginBottom={'0'} indicatorMarginTop={15} style={{ height: screen.height * 0.40, width: screen.width }} source={{ uri: isStorageUri(exercise?.video) ? s.constructUrl(exercise?.video)?.data?.publicUrl : exercise?.video }} />}
+               {exercise?.video && <Video defaultMuted autoPlay isLooping resizeMode='cover' indicatorMarginBottom={'0'} indicatorMarginTop={-1} style={{ height: screen.height * 0.40, width: screen.width }} source={{ uri: isStorageUri(exercise?.video) ? s.constructUrl(exercise?.video)?.data?.publicUrl : exercise?.video }} />}
                 {(!exercise?.video) && <SupabaseImage style={{ height: screen.height * 0.40, width: screen.width }} uri={exercise?.preview || defaultImage} />}
             </YStack> }
             {(resting && animation) && <YStack style={{ height: screen.height * 0.40, width: screen.width }} alignItems='center' justifyContent='center'>
@@ -156,7 +156,7 @@ export default function WorkoutPlayStatic(props: WorkoutPlayDisplayProps) {
             <Selector searchOptions={options} selectedOption={selectedOption} onPress={setSelectedOption} />
             <Spacer lg />
             {selectedOption === options[0] && <YStack>
-                {currentExercise.video && <Video defaultMuted autoPlay isLooping resizeMode='cover' indicatorMarginBottom={'6'} indicatorMarginTop={19} style={{ height: screen.height * 0.40, width: screen.width }} source={{ uri: isStorageUri(currentExercise.video) ? s.constructUrl(currentExercise.video)?.data?.publicUrl : currentExercise.video }} />}
+                {currentExercise.video && <Video defaultMuted autoPlay isLooping resizeMode='cover' indicatorMarginBottom={'6'} indicatorMarginTop={-1} style={{ height: screen.height * 0.40, width: screen.width }} source={{ uri: isStorageUri(currentExercise.video) ? s.constructUrl(currentExercise.video)?.data?.publicUrl : currentExercise.video }} />}
                 {(!currentExercise.video) && <SupabaseImage style={{ height: screen.height * 0.40, width: screen.width }} uri={currentExercise.preview || defaultImage} />}
 
             </YStack>}
@@ -232,7 +232,7 @@ export default function WorkoutPlayStatic(props: WorkoutPlayDisplayProps) {
                 </XStack>
             </YStack>
 
-            <Overlay dialogueHeight={45} visible={showExerciseDetails} onDismiss={() => setShowExerciseDetails(false)}>
+            <Overlay dialogueHeight={30} visible={showExerciseDetails} onDismiss={() => setShowExerciseDetails(false)}>
                 <Text h4 weight='bold'>{currentExercise.name}</Text>
                 <Spacer sm />
                 <XStack alignItems='center' justifyContent='space-around'>

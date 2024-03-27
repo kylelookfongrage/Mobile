@@ -104,7 +104,7 @@ const Select = (props: TSelector) => {
         <TouchableOpacity style={{flex: 1, paddingLeft: 10, maxWidth: g.s.width * 0.7}} disabled={props.disabled} onPress={props.disabled ? undefined : () => setShowSelect(true)}>
         <Text style={{...tw`self-end text-right mr-1 ${(props.disabled || !props.selected) ? 'text-gray-500': ''}`, flex: 1}}>{displayValue}</Text>
         </TouchableOpacity>
-        <Overlay bg={_tokens.dark3} dialogueHeight={45} visible={showSelect} onDismiss={() => setShowSelect(false)}>
+        <Overlay bg={g.dm ? _tokens.dark3 : _tokens.gray300} dialogueHeight={45} visible={showSelect} onDismiss={() => setShowSelect(false)}>
             <Text xl weight="bold">{props.title || 'Select'}</Text>
             <Spacer sm />
             {props.options.map(x => {

@@ -90,6 +90,12 @@ let progressSlice = createSlice({
       let { key, value } = action.payload
       //@ts-ignore
       state['today'][key] = value;
+    },
+    updateProgressValues: (state: TProgress, action: PayloadAction<{obj: Tables['progress']['Update']}>) => {
+      let {obj} = action.payload;
+      if (state['today']) {
+        state['today'] = {...state['today'], ...obj}
+      }
     }
   },
   extraReducers: _builder => {
@@ -132,4 +138,4 @@ let progressSlice = createSlice({
 
 
 export default progressSlice;
-export const { changeDate, setProgressValue } = progressSlice.actions
+export const { changeDate, setProgressValue, updateProgressValues } = progressSlice.actions

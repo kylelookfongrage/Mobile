@@ -160,9 +160,7 @@ export const Video = ({ ...props }) => {
           ]}
         >
           <View>
-          <Pressable style={tw`self-end px-2 py-3 mb-6`} onPress={toggleMuted}>
-              <Icon name={muted ? 'Volume-Off' : 'Volume-Up'} size={25} color={muted ? 'gray' : _tokens.primary900} weight="bold" />
-            </Pressable>
+          
           </View>
           <View style={tw`items-center mt-6 justify-center self-center mb-${props.indicatorMarginTop || '20'}`}>
             <Pressable
@@ -181,6 +179,7 @@ export const Video = ({ ...props }) => {
             setPlaybackInstanceInfo={setPlaybackInstanceInfo}
             togglePlay={togglePlay}
             toggleMuted={toggleMuted}
+            muted={muted}
             indicatorMarginBottom={props.indicatorMarginBottom}
           />
         </Animated.View>
@@ -213,6 +212,7 @@ const VideoControls = (props: {
   toggleFullScreen: any;
   toggleMuted: () => void;
   indicatorMarginBottom?: any
+  muted?: boolean
 }) => {
   const {
     state,
@@ -221,6 +221,7 @@ const VideoControls = (props: {
     setPlaybackInstanceInfo,
     playbackInstance,
     toggleFullScreen,
+    muted, toggleMuted
   } = props;
   const w = Dimensions.get("screen").width;
   const wm = 0.6;
@@ -281,6 +282,9 @@ const VideoControls = (props: {
             });
           }}
         />
+        <Pressable style={tw`self-end px-2 mb-2`} onPress={toggleMuted}>
+              <Icon name={muted ? 'Volume-Off' : 'Volume-Up'} size={25} color={muted ? 'gray' : _tokens.primary900} weight="bold" />
+            </Pressable>
         <Pressable onPress={toggleFullScreen}>
           <ExpoIcon
             name="maximize"

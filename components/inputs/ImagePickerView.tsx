@@ -1,11 +1,4 @@
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  useAnimatedScrollHandler,
-  interpolate,
-  Extrapolation,
-  Extrapolate,
-} from "react-native-reanimated";
+import Animated from "react-native-reanimated";
 import * as ImagePicker from "expo-image-picker";
 import React, { useMemo, useRef, useState } from "react";
 import {
@@ -20,12 +13,14 @@ import {
 import { ScrollView } from "react-native-gesture-handler";
 import { useNavigation } from "@react-navigation/native";
 import { Video } from "../base/Video";
-import { ExpoIcon } from "../base/ExpoIcon";
+import { ExpoIcon, Icon } from "../base/ExpoIcon";
 import tw from "twrnc";
 import { Text } from "../base/Themed";
 import { MediaType, defaultImage, isStorageUri } from "../../data";
 import { useStorage } from "../../supabase/storage";
 import { ActionSheet } from "react-native-ui-lib";
+import { useGet } from "../../hooks/useGet";
+import { _tokens } from "../../tamagui.config";
 
 interface ImagePickerViewProps {
   srcs?: MediaType[];
@@ -41,6 +36,7 @@ interface ImagePickerViewProps {
   snapTo?: number;
   height?: number;
   indicatorMarginTop?: number;
+  standalone?: boolean;
 }
 export const ImagePickerView = (props: ImagePickerViewProps) => {
   let mediaType = ImagePicker.MediaTypeOptions.All;
@@ -155,7 +151,7 @@ export const ImagePickerView = (props: ImagePickerViewProps) => {
   const scrollRef = useRef<ScrollView>(null);
   const navigator = useNavigation();
   const [showAction, setShowAction] = useState(false);
-  console.log('image source', mediaSources)
+  let g = useGet()
 
   return (
     <View style={[{ flex: 1 }, tw`bg-${dm ? "gray-800" : "gray-200"}`]}>
@@ -240,32 +236,25 @@ export const ImagePickerView = (props: ImagePickerViewProps) => {
               {imageSource && imageSource.type === "video" && (
                 <View style={tw``}>
                   <Video
-                    indicatorMarginTop={props.indicatorMarginTop}
+                    indicatorMarginTop={props.standalone ? undefined : props.indicatorMarginTop ? props.indicatorMarginTop : -20}
+                    indicatorMarginBottom={props.standalone ? undefined : 30}
                     source={{ uri: imageSource.uri }}
                     // @ts-ignore
                     resizeMode={props.resizeMode || "cover"}
                     style={styles.img}
+                    
                   />
                 </View>
               )}
               {props.editable === true && (
                 <TouchableOpacity
-                  style={[tw`p-1 px-4 -mt-40 items-start`]}
+                  style={[{position: 'absolute', alignItems: 'center', justifyContent: 'center', top: 50, right: 0, marginTop: -20, paddingTop: 20, paddingBottom: 15, paddingHorizontal: 10, zIndex: 40000000}]}
                   onPress={() => onDelete(imageSource.uri)}
                 >
-                  <View
-                    style={tw`items-center p-1.5 justify-center rounded-full`}
-                  >
-                    <ExpoIcon
-                      name="trash-bin"
-                      iconName="ion"
-                      size={28}
-                      color={"black"}
-                    />
-                    <Text style={tw`text-red-600`} xs weight="semibold">
-                      Replace
+                 <Icon name="Delete" weight="bold" size={25} color={_tokens.error} />
+                    <Text bold>
+                      Remove
                     </Text>
-                  </View>
                 </TouchableOpacity>
               )}
             </View>
@@ -282,7 +271,7 @@ export const ImagePickerView = (props: ImagePickerViewProps) => {
             ]}
           >
             <TouchableOpacity
-              style={tw`p-4 items-center justify-center`}
+              style={{position: 'absolute', justifyContent: 'center', alignItems: 'center', alignSelf: 'center', bottom: g.s.height * 0.38}}
               onPress={() => setShowAction(true)}
             >
               <Text style={tw``}>

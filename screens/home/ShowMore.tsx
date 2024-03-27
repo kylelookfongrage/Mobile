@@ -15,6 +15,7 @@ import { Tables } from '../../supabase/dao'
 import Overlay from '../../components/screens/Overlay'
 import Spacer from '../../components/base/Spacer'
 import { _tokens } from '../../tamagui.config'
+import { SettingItem } from './Settings'
 /*
 ShowMore Options: 
 Favorite
@@ -45,13 +46,13 @@ type TShowMoreDialogue = {
 export const EditModeButton = (editing: boolean, onPress: () => void, user_id: string | null | undefined, current_user_id: string | null | undefined): TActionButton => {
   console.log(user_id === current_user_id)
   return {
-    title: editing ? 'Stop Editing' : 'Edit', icon: editing ? 'backspace' : 'create', onPress: onPress, hidden: user_id !== current_user_id
+    title: editing ? 'Stop Editing' : 'Edit', icon: editing ? 'Close-Square' : 'Edit', onPress: onPress, hidden: user_id !== current_user_id
   }
 }
 
 export const ShowUserButton = (user_id: string | null | undefined, navigator: any): TActionButton => {
   return {
-    title: 'View User', icon: 'people', onPress: () => {
+    title: 'View User', icon: 'Profile', onPress: () => {
       const screen = getMatchingNavigationScreen('User', navigator)
       if (screen && user_id) {
         navigator.navigate(screen, { id: user_id })
@@ -61,12 +62,12 @@ export const ShowUserButton = (user_id: string | null | undefined, navigator: an
 }
 
 export const ShareButton = (props: TShowMoreDialogue): TActionButton => {
-  return { title: 'Share', icon: 'arrow-redo', onPress: () => {} }
+  return { title: 'Share', icon: '3-User', onPress: () => {}, hidden: true }
 }
 
 export const DeleteButton = (name: string, onDelete: () => Promise<any>, user_id: string | null | undefined, current_user_id: string | null | undefined): TActionButton => {
   return {
-    title: 'Delete ' + name, icon: 'close-circle', hidden: user_id !== current_user_id, onPress: () => {
+    title: 'Delete ' + name, icon: 'Delete', hidden: user_id !== current_user_id, onPress: () => {
       Alert.alert('You are deleting your ' + name.toLowerCase(), 'Are you sure?', [
         { text: 'Cancel' },
         {
@@ -85,14 +86,16 @@ export const ShowMoreDialogue = (props: TShowMoreDialogue) => {
   let options: TActionButton[] = (props.options || [])
   let dm = useColorScheme() === 'dark'
   let { workout_id, exercise_id, meal_id, messgage_id, post_id, plan_id, food_id, user_id, comment_id } = props;
+  let ids = {workout_id, exercise_id, meal_id, messgage_id, post_id, plan_id, food_id, user_id, comment_id}
   let canReport = workout_id || exercise_id || meal_id || messgage_id || plan_id || post_id || food_id || user_id || comment_id
   if (canReport) {
     options = [...options, {
       title: 'Report',
-      icon: 'warning',
+      icon: 'Danger',
+      hidden: false,
       onPress: () => {
         //@ts-ignore
-        navigator.navigate('Report', { ...props })
+        navigator.navigate('Report', { ...ids })
       }
     }]
   }
@@ -105,18 +108,12 @@ export const ShowMoreDialogue = (props: TShowMoreDialogue) => {
       <View style={[tw`p-2 rounded-full items-center justify-center mx-${props.px ? props.px : 2}`, { zIndex: 1, backgroundColor: dm ? _tokens.dark2 + '90' : _tokens.gray300 + '90'}]}>
         <ExpoIcon color='gray' size={20} iconName='feather' name={showDialogue ? 'x' : 'more-horizontal'} />
       </View>
-      <Overlay excludeBanner style={{ ...tw`flex-row flex-wrap items-center` }} dialogueHeight={40} visible={showDialogue} onDismiss={() => setShowDialogue(false)}>
+      <Overlay style={{ ...tw`` }} dialogueHeight={35} visible={showDialogue} onDismiss={() => setShowDialogue(false)}>
         {options.filter(x => !x.hidden).map((x, i) => {
-          return <TouchableOpacity onPress={() => {
-            x.onPress()
+          return <SettingItem key={x.title + 'Setting item -' + i} hideCarat setting={{title: x.title, dangerous: x.title.toLowerCase().includes('delete'), icon: x.icon, onPress: () => {
+            x.onPress && x.onPress();
             setShowDialogue(false)
-          }} key={`Button: ${x.title} - ${i}`} style={{ ...tw`items-center justify-center mb-3`, width: s.width * 0.29 }}>
-            <View card style={tw`px-6 py-5 rounded-xl items-center justify-center`}>
-              <ExpoIcon name={x.icon} iconName='ion' size={30} color='gray' />
-            </View>
-            <Spacer sm />
-            <Text weight='bold' xs>{x.title}</Text>
-          </TouchableOpacity>
+          }  }} />
         })}
       </Overlay>
     </TouchableOpacity>

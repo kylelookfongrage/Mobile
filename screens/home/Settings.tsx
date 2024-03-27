@@ -30,8 +30,8 @@ export default function Settings() {
         return [
             { title: 'Account & Security', icon: 'Shield-Done', screen: 'Account' },
             { title: 'Edit Profile', icon: 'Edit-Square', screen: 'UserBio' },
-            { title: 'Rage Premium', icon: 'Star', screen: 'Subscription' },
-            { title: 'Content Creator Hub', icon: 'Wallet', screen: 'Apply', description: (profile?.stripeId ? 'View and manage your business on Rage' : 'Sign up for the Content Creator Program at Rage') },
+            { title: 'Rage Premium', icon: 'Star', description: 'Coming soon...'}, // screen: 'Subscription' },
+            { title: 'Content Creator Hub', icon: 'Wallet', description: 'Coming soon...'}, // screen: 'Apply', description: (profile?.stripeId ? 'View and manage your business on Rage' : 'Sign up for the Content Creator Program at Rage') },
             // {title: 'Video Workout Mode', icon: 'grid', switch: true, switchValue: (profile?.workoutMode === 'MUSIC')  ? true : false, onSwitch: async (b) => {
             //     if (!profile) return;
             //     let res = await dao.update(profile.id, {workoutMode: b ? 'MUSIC' : 'DEFAULT'})
@@ -58,7 +58,7 @@ export default function Settings() {
 }
 
 
-export const SettingItem = (props: {setting: AppSetting, hideCarat?: boolean, disableMargin?: boolean}) => {
+export const SettingItem = (props: {setting: AppSetting, hideCarat?: boolean, disableMargin?: boolean; disabled?: boolean;}) => {
     let setting = useMemo(() => props.setting, [props.setting])
     let navigator = useNavigation()
     let dm = useColorScheme() === 'dark'
@@ -72,16 +72,16 @@ export const SettingItem = (props: {setting: AppSetting, hideCarat?: boolean, di
             setting.onPress(navigator)
         }
     }}
-     disabled={!setting.screen!! && !setting.onPress} style={{...tw` pt-2 pb-1 ${props.disableMargin ? '' : 'my-2'} flex-row items-center justify-between`}}>
+     disabled={(!setting.screen!! && !setting.onPress) || props.disabled} style={{...tw` pt-2 pb-1 ${props.disableMargin ? '' : 'my-2'} flex-row items-center justify-between`}}>
     <View style={tw`flex-row max-w-11.5/12 ${(setting.description ? '' : 'items-center')}`}>
         {setting.icon && <Icon name={setting.icon} size={25} color={dm ? _tokens.white : _tokens.black}/>}
         {setting.icon && <Spacer horizontal/>}
         <View style={tw`${setting.icon ? 'w-9/12' : 'w-10.5/12'}`}>
-        <Text lg weight='bold' style={tw`max-w-11/12 ${setting.dangerous ? 'text-red-500' : ''}`}>{setting.title}</Text>
-        {setting.description && <Text style={tw`max-w-11/12 mt-1 text-gray-${dm ? '400' : '500'}`}>{setting.description}</Text>}
+        <Text error={setting.dangerous && !props.disabled} gray={props.disabled} lg weight='bold' style={tw`max-w-11/12`}>{setting.title}</Text>
+        {setting.description && <Text style={tw`max-w-11/12 mt-1 text-gray-${dm ? '400' : '500'}${props.disabled ? '/30' : ""}`}>{setting.description}</Text>}
         </View>
     </View>
-    {(setting.switch || setting.onSwitch) && <Switch style={{...tw`pr-19`}} trackColor={{false: undefined, true: _tokens.primary900}} value={setting.switchValue} onValueChange={setting.onSwitch} />}
+    {(setting.switch || setting.onSwitch) && <Switch style={{...tw`pr-19`}} disabled={props.disabled} trackColor={{false: undefined, true: _tokens.primary900}} value={setting.switchValue} onValueChange={setting.onSwitch} />}
     {!(props.hideCarat || setting.switch) && <ExpoIcon name='chevron-right' iconName={'feather'} size={25} color='gray' />}
 </TouchableOpacity>
 }

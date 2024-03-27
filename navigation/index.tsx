@@ -40,7 +40,6 @@ export default function Navigation({ colorScheme }: { colorScheme: ColorSchemeNa
 const Stack = createNativeStackNavigator<RootStackParamList>();
 import Settings from '../screens/home/Settings';
 import ProfileScreen from '../screens/home/ProfileScreen';
-import PersonalInformation from '../screens/home/PersonalInformation';
 import Apply from '../screens/home/Apply';
 import Subscription from '../screens/home/Subscription';
 import Help from '../screens/home/Help';
@@ -49,20 +48,15 @@ import Account from '../screens/home/Account';
 import ChangePassword from '../screens/home/ChangePassword';
 import UpdateEmail from '../screens/home/UpdateEmail';
 import DeleteAccount from '../screens/home/DeleteAccount';
-import ForgotPassword from '../screens/onboarding/ForgotPassword';
 import FinishedExercise from '../screens/workout/FinishedExercise';
 import Bio from '../screens/home/Bio';
-import ShowMore from '../screens/home/ShowMore';
 import Profile from '../screens/home/Profile';
 import Report from '../screens/home/Report';
 import SummaryMetric from '../screens/home/SummaryMetric';
 import SelectSprite from '../screens/workout/SelectSprite';
 import MakePost from '../screens/workout/MakePost';
-import Inbox from '../screens/workout/Inbox';
-import Message from '../screens/workout/Message';
 import { getCommonScreens } from '../components/screens/GetCommonScreens';
 import NewChat from '../screens/workout/NewChat';
-import ChatDetail from '../screens/workout/ChatDetail';
 import Setup from '../screens/onboarding/Setup';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import OnboardingComplete from '../screens/onboarding/OnboardingComplete';
@@ -74,10 +68,7 @@ import Purchases from 'react-native-purchases';
 import { Env } from '../env';
 import { updateUserState } from '../redux/reducers/auth';
 import EditDashboard from '../screens/other/EditDashboard';
-import ScanBarcode from '../screens/diet/ScanBarcode';
-import FoodDetail2 from '../screens/diet/FoodDetail2';
 import History from '../screens/other/History';
-import { useGet } from '../hooks/useGet';
 import { LineChartDataView } from '../components/features/LineChart';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import ProgressPicture from '../screens/other/ProgressPicture';
@@ -116,7 +107,9 @@ function RootNavigator() {
       <Stack.Screen name='Image' options={{ headerShown: false, presentation: 'containedModal' }}>
         {props => <ImageDetailView uris={props.route?.params?.uris} defaultIndex={props.route?.params?.defaultIndex} />}
       </Stack.Screen>
+      {/* @ts-ignore */}
       <Stack.Screen name='Video' options={{ headerShown: false, presentation: 'containedModal' }}>
+        {/* @ts-ignore */}
         {props => <VideoScreen uri={props.route?.params?.uri} />}
       </Stack.Screen>
       <Stack.Screen name='WorkoutPlay' options={{ headerShown: false, gestureEnabled: false }}>
@@ -130,16 +123,8 @@ function RootNavigator() {
       <Stack.Screen name="ChangePassword" component={ChangePassword} options={{ headerShown: false }} />
       <Stack.Screen name="UpdateEmail" component={UpdateEmail} options={{ headerShown: false }} />
       <Stack.Screen name="DeleteAccount" component={DeleteAccount} options={{ headerShown: false }} />
-      <Stack.Screen name="PersonalInformation" component={PersonalInformation} options={{ headerShown: false }} />
       <Stack.Screen name="Apply" component={Apply} options={{ headerShown: false }} />
       <Stack.Screen name="Account" component={Account} options={{ headerShown: false }} />
-      <Stack.Screen name="Inbox" component={Inbox} options={{ headerShown: false }} />
-      <Stack.Screen name="Message" options={{ headerShown: false }}>
-        {props => <Message id={props.route?.params?.id} />}
-      </Stack.Screen>
-      <Stack.Screen name="ChatDetail" options={{ headerShown: false }}>
-        {props => <ChatDetail id={props.route?.params?.id} />}
-      </Stack.Screen>
       <Stack.Screen name="Subscription" component={Subscription} options={{ headerShown: false }} />
       <Stack.Screen name="Help" component={Help} options={{ headerShown: false }} />
       <Stack.Screen name="About" component={About} options={{ headerShown: false }} />
@@ -153,14 +138,6 @@ function RootNavigator() {
       <Stack.Screen name="FinishedExercise" options={{ headerShown: false, gestureEnabled: false }}>
         {/* @ts-ignore */}
         {props => <FinishedExercise weight={props.route?.params?.weight} time={props.route?.params?.time} metric={props.route?.params?.metric} exercises={props.route?.params?.exercises} />}
-      </Stack.Screen>
-      <Stack.Screen name="ShowMore" options={{ headerShown: false, presentation: 'transparentModal' }}>
-        {props => <ShowMore
-          // @ts-ignore
-          name={props.route?.params?.name} type={props.route?.params?.type} id={props.route?.params?.id}
-          // @ts-ignore
-          desc={props.route?.params?.desc} img={props.route?.params?.img} userId={props.route?.params?.userId}
-        />}
       </Stack.Screen>
       <Stack.Screen name={'Profile'} options={{ headerShown: false }}>
         {/* @ts-ignore */}
@@ -209,7 +186,6 @@ function RootNavigator() {
     <Stack.Navigator initialRouteName={'GetStarted'}>
       <Stack.Screen name="GetStarted" component={GetStarted} options={{ headerShown: false }} />
       <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />
-      <Stack.Screen name="ForgotPassword" component={ForgotPassword} options={{ headerShown: false }} />
       <Stack.Screen name="Registration" options={{ headerShown: false }}>
         {props => <Setup registration />}
       </Stack.Screen>

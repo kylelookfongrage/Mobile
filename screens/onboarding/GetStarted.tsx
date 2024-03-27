@@ -1,25 +1,12 @@
-import { Dimensions, Platform } from 'react-native'
+import { Dimensions } from 'react-native'
 import { View } from '../../components/base/Themed'
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import * as SplashScreen from 'expo-splash-screen';
-import { useCommonAWSIds } from '../../hooks/useCommonContext';
+import React, { useRef, useState } from 'react'
 import tw from 'twrnc'
-import { AdsConsent, AdsConsentStatus } from 'react-native-google-mobile-ads';
-import { getTrackingPermissionsAsync, requestTrackingPermissionsAsync } from 'expo-tracking-transparency'
 import {Image, YStack} from 'tamagui'
 import { Text } from '../../components/base/Themed';
 let img = require('../../assets/images/Groupmockup.png')
 
 export default function GetStarted() {
-  const [isReady, setIsReady] = React.useState<boolean>(false)
-  let state = useSelector(x => x.auth)
-  let dispatch = useDispatch()
-  console.log(state)
-  const dao = UserQueries(false)  
-  const [f, setF] = useState<boolean>(false)
-
-  useOnLeaveScreen(() => setF(true))
-
   const width = Dimensions.get('screen').width
   const navigator = useNavigation()
   const x = useSharedValue(0)
@@ -71,16 +58,6 @@ export default function GetStarted() {
               }
             }} />
             </XStack>
-            {/* <SaveButton safeArea title={i === onboardingScreens.length - 1 ? 'Get Started' : 'Next'} onSave={() => {
-              if (i !== onboardingScreens.length - 1) {
-                if (scrollRef.current) {
-                  //@ts-ignore
-                  scrollRef.current.scrollToIndex({ index: i + 1 })
-                }
-              } else {
-                navigator.navigate('Login')
-              }
-            }} /> */}
           </View>
         }}
       />
@@ -93,13 +70,10 @@ import crunches from '../../assets/animations/crunches.json'
 import equiptment from '../../assets/animations/equiptment.json'
 import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 import { useNavigation } from '@react-navigation/native';
-import { UserQueries } from '../../types/UserDao';
-import useOnLeaveScreen from '../../hooks/useOnLeaveScreen';
 import Button from '../../components/base/Button';
 import { XStack } from 'tamagui';
 import Spacer from '../../components/base/Spacer';
 import { _tokens } from '../../tamagui.config';
-import { useDispatch, useSelector } from '../../redux/store';
 
 const onboardingScreens: { name: string, description: string, animation: any }[] = [
   { name: 'Your Health Journey Starts Here', description: 'Log your workouts with ease! Rage make it very easy to create and keep track of your daily exercise routine', animation: crunches },

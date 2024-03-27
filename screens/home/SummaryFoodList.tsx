@@ -2,14 +2,11 @@ import { useColorScheme } from 'react-native'
 import React, { useState } from 'react'
 import { Text, View } from '../../components/base/Themed'
 import { BackButton } from '../../components/base/BackButton'
-import { useCommonAWSIds } from '../../hooks/useCommonContext'
 import { defaultImage, getMacroTargets, getMacrosFromIngredients, getMatchingNavigationScreen } from '../../data'
-import { ScrollView, Swipeable, TouchableOpacity } from 'react-native-gesture-handler'
+import { ScrollView, TouchableOpacity } from 'react-native-gesture-handler'
 import tw from 'twrnc'
 import { useNavigation } from '@react-navigation/native'
-import { AnimatedCircularProgress } from 'react-native-circular-progress'
 import { ExpoIcon } from '../../components/base/ExpoIcon'
-import { categoryMapping } from '../diet/ListFood'
 import ThisAdHelpsKeepFree from '../../components/features/ThisAdHelpsKeepFree'
 import { ProgressDao } from '../../types/ProgressDao'
 import SupabaseImage from '../../components/base/SupabaseImage'
@@ -23,9 +20,12 @@ import { useGet } from '../../hooks/useGet'
 import Overlay from '../../components/screens/Overlay'
 import NutritionLabel from '../../components/features/NutritionLabel'
 import { aggregateFoodAndMeals } from '../../redux/reducers/progress'
+import { useSelector } from '../../redux/store'
 
 export default function SummaryFoodList() {
-    const { progressId, userId, profile } = useCommonAWSIds()
+    let {profile} = useSelector(x => x.auth)
+    let {today} = useSelector(x => x.progress)
+    let progressId = today?.id 
     let {tdee, totalCarbsGrams, totalFatGrams, totalProteinGrams} = getMacroTargets(profile)
     const dm = useColorScheme() === 'dark'
     const dao = ProgressDao()

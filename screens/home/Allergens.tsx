@@ -4,14 +4,14 @@ import { Dimensions, Keyboard, Pressable, TouchableOpacity, useColorScheme } fro
 import { useNavigation } from '@react-navigation/native'
 import tw from 'twrnc'
 import { ExpoIcon } from '../../components/base/ExpoIcon'
-import { useCommonAWSIds } from '../../hooks/useCommonContext'
 import { titleCase } from '../../data'
 import { ScrollView, TextInput } from 'react-native-gesture-handler'
 import { UserQueries } from '../../types/UserDao'
+import { useSelector } from '../../redux/store'
 
 export default function Allergens() {
     const dm = useColorScheme() === 'dark'
-    const { profile, setProfile } = useCommonAWSIds()
+    let {profile} = useSelector(x => x.auth)
     const navigator = useNavigation()
     const [allergens, setAllergens] = useState<string[]>(profile?.allergens || [])
     let dao = UserQueries()
@@ -19,18 +19,8 @@ export default function Allergens() {
     const onPress = async () => {
         if (!profile) return;
         let res = await dao.update_profile({allergens: allergens}, profile)
-        if (res) setProfile(res)
+        //@ts-ignore
         navigator.pop()
-        // const user = await DataStore.query(User, userId)
-        // if (!user) {
-        //     Alert.alert('There was a problem updating your allergens, please try again')
-        //     return;
-        // }
-        // await DataStore.save(User.copyOf(user, x => {
-        //     x.allergens = allergens;
-        // }))
-        // //@ts-ignore
-        // navigator.pop()
     }
     const height = Dimensions.get('screen').height
     const [editMode, setEditMode] = useState<boolean>(false)

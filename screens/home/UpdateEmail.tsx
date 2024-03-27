@@ -1,11 +1,8 @@
-import { ActivityIndicator, TextInput, StyleSheet, TouchableOpacity, useColorScheme } from 'react-native'
+import { useColorScheme } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { Text, View } from '../../components/base/Themed'
-import { Auth } from 'aws-amplify'
 import { BackButton } from '../../components/base/BackButton'
 import tw from 'twrnc'
-import { ExpoIcon } from '../../components/base/ExpoIcon'
-import { CodeField, Cursor, useBlurOnFulfill, useClearByFocusCell } from 'react-native-confirmation-code-field'
 import { ErrorMessage } from '../../components/base/ErrorMessage'
 import { useNavigation } from '@react-navigation/native'
 import SaveButton from '../../components/base/SaveButton'
@@ -13,7 +10,6 @@ import { supabase } from '../../supabase'
 import { makeRedirectUri } from "expo-auth-session";
 import * as QueryParams from "expo-auth-session/build/QueryParams";
 import * as Linking from "expo-linking";
-import { useCommonAWSIds } from '../../hooks/useCommonContext'
 import Spacer from '../../components/base/Spacer'
 import { UserQueries } from '../../types/UserDao'
 import { useDispatch, useSelector } from '../../redux/store'
@@ -22,7 +18,6 @@ import Input from '../../components/base/Input'
 
 
 const redirectTo = makeRedirectUri({scheme: 'ragepersonalhealth'}) + 'email';
-console.log(redirectTo)
 
 const createSessionFromUrl = async (url: string, cb?: () => void | undefined=undefined) => {
   const { params, errorCode } = QueryParams.getQueryParams(url);
@@ -50,7 +45,6 @@ export default function UpdateEmail() {
   let {profile} = useSelector(x => x.auth)
   let dispatch = useDispatch()
   let setProfile = () => dispatch(fetchUser())
-  console.log(profile?.email)
   const [uploading, setUploading] = React.useState<boolean>(false)
   const [oldEmail, setOldEmail] = useState<string>('')
   const [errors, setErrors] = React.useState<string[]>([])
@@ -91,7 +85,7 @@ export default function UpdateEmail() {
       setMessage('We have sent an email to your new email address, please confirm to solidify the change.')
       // navigator.pop()
     } catch (error) {
-      setErrors([error.toString()])
+      setErrors([error?.toString() || 'There was a problem'])
     }
     setErrors([])
     setUploading(true)

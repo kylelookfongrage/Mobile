@@ -1,6 +1,5 @@
 import { supabase } from "../supabase";
 import { MediaType, defaultImage, isStorageUri } from "../data";
-import {decode} from 'base64-arrayBuffer';
 import { useState } from "react";
 //@ts-ignore
 import { v4 as randomUUID } from 'uuid';

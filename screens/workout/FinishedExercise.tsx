@@ -6,8 +6,6 @@ import tw from "twrnc";
 import AnimatedLottieView from "lottie-react-native";
 import trophy from "../../assets/animations/trophy.json";
 import { useNavigation } from "@react-navigation/native";
-import ThisAdHelpsKeepFree from "../../components/features/ThisAdHelpsKeepFree";
-import { useCommonAWSIds } from "../../hooks/useCommonContext";
 import { defaultImage, sleep, toHHMMSS } from "../../data";
 import SaveButton from "../../components/base/SaveButton";
 import { useSelector } from "../../redux/store";

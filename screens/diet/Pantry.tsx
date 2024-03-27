@@ -3,7 +3,6 @@ import React from 'react'
 import { Text, View } from '../../components/base/Themed'
 import { BackButton } from '../../components/base/BackButton'
 import tw from 'twrnc'
-import { useCommonAWSIds } from '../../hooks/useCommonContext'
 import { useNavigation } from '@react-navigation/native'
 import { getMatchingNavigationScreen } from '../../data'
 import { Tables } from '../../supabase/dao'
@@ -12,9 +11,10 @@ import { supabase } from '../../supabase'
 import ManageButton from '../../components/features/ManageButton'
 import Spacer from '../../components/base/Spacer'
 import { ExpoIcon } from '../../components/base/ExpoIcon'
+import { useSelector } from '../../redux/store'
 
 export default function Patry() {
-    const { profile } = useCommonAWSIds()
+    let {profile} = useSelector(x => x.auth)
     const [items, setItems] = React.useState<Tables['pantry_item']['Row'][]>([])
     const navigator = useNavigation()
     const dm = useColorScheme() === 'dark'

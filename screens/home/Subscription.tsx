@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 import { TouchableOpacity, useColorScheme, Platform } from 'react-native'
 import { Text, View } from '../../components/base/Themed'
-import { useCommonAWSIds } from '../../hooks/useCommonContext'
 import { BackButton } from '../../components/base/BackButton'
 import { ScrollView } from 'react-native-gesture-handler'
 import tw from 'twrnc'

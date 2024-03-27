@@ -9,8 +9,6 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ExpoIcon } from '../../components/base/ExpoIcon';
 import { useNavigation } from '@react-navigation/native';
 import { defaultRunTypes, getTotalDistance, RunType, toHHMMSS } from '../../data';
-import { useDateContext } from './Calendar';
-import { useCommonAWSIds } from '../../hooks/useCommonContext';
 import { useBadges } from '../../hooks/useBadges';
 import SaveButton from '../../components/base/SaveButton';
 import { ProgressDao } from '../../types/ProgressDao';
@@ -111,19 +109,6 @@ const RunTracker = (props: { id?: string }) => {
             coordinates,
             type: runType.name
         })
-        // if (id) {
-        //     const og = await DataStore.query(RunProgress, id)
-        //     if (og) {
-        //         await DataStore.save(RunProgress.copyOf(og, x => {
-        //             x.totalTime = totalTime;
-        //             x.runType = runType.name;
-        //             x.coordinates = coordinates;
-        //         }))
-        //     }
-        // } else {
-        //     await DataStore.save(new RunProgress({ date: AWSDate, userID: userId, totalTime: totalTime, coordinates: coordinates, runType: runType.name, progressID: progressId }))
-        //     logProgress(BadgeType.runs)
-        // }
         navigator.navigate('FinishedExercise')
     }
 

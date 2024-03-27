@@ -1,4 +1,3 @@
-import { TextInput } from 'react-native'
 import React, { useState } from 'react'
 import { Text, View } from '../../components/base/Themed'
 import useColorScheme from '../../hooks/useColorScheme';
@@ -7,9 +6,7 @@ import { useNavigation } from '@react-navigation/native';
 import { ImagePickerView } from '../../components/inputs/ImagePickerView';
 import { ErrorMessage } from '../../components/base/ErrorMessage';
 import { MediaType, defaultImage, getMatchingNavigationScreen, titleCase } from '../../data';
-import { useCommonAWSIds } from '../../hooks/useCommonContext';
 import { BackButton } from '../../components/base/BackButton';
-import { useExerciseAdditions } from '../../hooks/useExerciseAdditions';
 import { DeleteButton, EditModeButton, ShareButton, ShowMoreDialogue, ShowUserButton } from '../home/ShowMore';
 import Body from 'react-native-body-highlighter'
 import ScrollViewWithDrag from '../../components/screens/ScrollViewWithDrag';
@@ -148,16 +145,17 @@ export default function ExerciseDetail(props: ExerciseDetailProps) {
             if (!props.id) return;
             g.set('loading', true)
             await dao.remove(Number(props.id))
+            g.set('loading', false)
             //@ts-ignore
             navigator.pop()
         } catch (error) {
-            g.set('error', error.toString())
-        } finally {
-            g.set('loading', false)
-        }
+            g.setFn(p => {
+                let og = {...p}
+                return {...og, loading: false, error: error?.toString() || 'there was an issue'}
+            })
+        } 
     }
 
-    console.log(form)
 
     return (
         <View style={{ flex: 1 }} includeBackground>

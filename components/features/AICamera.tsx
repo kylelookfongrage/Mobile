@@ -20,14 +20,6 @@ const IS_ANDROID = Platform.OS === 'android';
 const IS_IOS = Platform.OS === 'ios';
 
 export default function VideoScreen() {
-    const modelJson = require('../../offline_model/model.json');
-    const modelWeights1 = require('../../offline_model/group1-shard1of2.bin');
-    const modelWeights2 = require('../../offline_model/group1-shard2of2.bin');
-    // let m = bundleResourceIO(modelJson, [
-    //     modelWeights1,
-    //     modelWeights2,
-    //   ]);
-    // let { ready, model, error, detector } = usePoses(tf, m)
     const CAM_PREVIEW_WIDTH = Dimensions.get('window').width;
     const CAM_PREVIEW_HEIGHT = CAM_PREVIEW_WIDTH / (IS_IOS ? 9 / 16 : 3 / 4);
     const OUTPUT_TENSOR_WIDTH = 180;

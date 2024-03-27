@@ -306,39 +306,10 @@ export const OpenFoodFactsBarcodeSearch = async (barcode: string) => {
 
 
 
-import { Storage } from 'aws-amplify';
 //@ts-ignore
 import { v4 as uuidv4 } from 'uuid';
 import { Coordinates } from './aws/models';
 import { Env } from './env';
-
-export const uploadImageAndGetID = async (imageSource: MediaType): Promise<string> => {
-    if (isStorageUri(imageSource.uri)) {
-        return imageSource.uri
-    }
-    const splits = imageSource.uri.split('.')
-    const extension = splits[splits.length - 1]
-    const fileName = uuidv4() + '.' + extension
-    const req = await fetch(imageSource.uri)
-    const blob = await req.blob()
-    const storageRes = await Storage.put(fileName, blob)
-    return storageRes.key
-}
-
-
-
-export const uploadMedias = async (imageSources: MediaType[]): Promise<MediaType[]> => {
-    let medias: MediaType[] = await Promise.all(imageSources.map(async (x) => {
-        if (isStorageUri(x.uri)) {
-            return { uri: x.uri, type: x.type }
-        }
-        if (x.uri === defaultImage) {
-            return { uri: defaultImage, type: 'image' }
-        }
-        return { uri: await uploadImageAndGetID(x), type: x.type }
-    }));
-    return medias
-}
 
 export const isStorageUri = (id: string): boolean => {
     if (!id || typeof id !== 'string') return false;

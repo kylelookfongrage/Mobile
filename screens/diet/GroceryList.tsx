@@ -2,7 +2,6 @@ import { ScrollView, Image, useColorScheme, ActivityIndicator, Alert } from 'rea
 import React from 'react'
 import { Text, View } from '../../components/base/Themed'
 import { BackButton } from '../../components/base/BackButton'
-import { useCommonAWSIds } from '../../hooks/useCommonContext'
 import { defaultImage, getMatchingNavigationScreen, isStorageUri } from '../../data'
 import tw from 'twrnc'
 import { ExpoIcon } from '../../components/base/ExpoIcon'
@@ -11,7 +10,6 @@ import { Swipeable, TouchableOpacity } from 'react-native-gesture-handler'
 
 
 export default function GroceryList() {
-    const { userId } = useCommonAWSIds()
     const [items, setItems] = React.useState<any[]>([])
     const navigator = useNavigation()
     const dm = useColorScheme() === 'dark'
@@ -60,19 +58,12 @@ export default function GroceryList() {
                 {items.map((item, idx) => {
                     return <PantryItemView key={item.id} item={item} 
                     onDeletePress={async (id) => {
-                        // await DataStore.delete(PantryItem, id)
                     }}
                     onItemPress={(id) => {
                         const screen = getMatchingNavigationScreen('FoodDetail', navigator)
                         //@ts-ignore
                         navigator.navigate(screen, {id, editable: false, src: 'backend', grocery: true})
                     }} onCheckPress={async (id) => {
-                        // const og = await DataStore.query(PantryItem, id)
-                        // if (og) {
-                        //     await DataStore.save(PantryItem.copyOf(og, x => {
-                        //         x.inCart = x.inCart ? false : true;
-                        //     }))
-                        // }
                     }} />
                 })}
                 <View style={tw`h-40`} />
@@ -112,13 +103,7 @@ export function PantryItemView(props: {item: any, onItemPress?: (id: string) => 
     const [ingredient, setIngredient] = React.useState<any | undefined>(undefined)
     const dm = useColorScheme() === 'dark'
     React.useEffect(() => {
-        // DataStore.query(Ingredient, ingredientID).then(async x => {
-        //     if (x) {
-        //         if (isStorageUri(x.img || defaultImage)) {
-        //             setIngredient({ ...x, img: await Storage.get(x.img || defaultImage) })
-        //         } else setIngredient(x)
-        //     }
-        // })
+
     }, [props.item])
     if (!ingredient) return null;
     return <Swipeable renderRightActions={(progress, dragX) => {

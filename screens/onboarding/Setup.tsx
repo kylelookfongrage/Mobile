@@ -3,7 +3,6 @@ import React, { useEffect, useRef, useState } from 'react'
 import tw from 'twrnc'
 import useColorScheme from '../../hooks/useColorScheme'
 import moment from 'moment';
-import { Goal, Tier, User } from '../../aws/models';
 import { BackButton } from '../../components/base/BackButton';
 import { ScrollView, TextInput } from 'react-native-gesture-handler';
 import { Dimensions, FlatList, KeyboardAvoidingView, Platform, TouchableOpacity } from 'react-native';
@@ -13,8 +12,6 @@ import { RulerPicker } from 'react-native-ruler-picker';
 import DatePicker from 'react-native-date-picker'
 import { calculateBodyFat, inchesToFeet, caloriesPerDay } from '../../data';
 import * as WebBrowser from 'expo-web-browser'
-import { useCommonAWSIds } from '../../hooks/useCommonContext';
-import { DataStore } from 'aws-amplify';
 import { useNavigation } from '@react-navigation/native';
 import { UserQueries } from '../../types/UserDao';
 import Colors from '../../constants/Colors';

@@ -1,4 +1,0 @@
-{
-  "CloudWatchRule": "cron(1 0 16 * ? *)",
-  "secretsPathAmplifyAppId": "d1hvc4yve37x56"
-}

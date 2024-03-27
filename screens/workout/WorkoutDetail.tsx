@@ -5,11 +5,10 @@ import tw from 'twrnc'
 import useColorScheme from '../../hooks/useColorScheme'
 import { useNavigation } from '@react-navigation/native'
 import { ImagePickerView } from '../../components/inputs/ImagePickerView'
-import { useCommonAWSIds } from '../../hooks/useCommonContext'
 import { defaultImage, getMatchingNavigationScreen, toHHMMSS, validate, MediaType, sleep } from '../../data'
 import { ErrorMessage } from '../../components/base/ErrorMessage'
 import { BackButton } from '../../components/base/BackButton'
-import { DeleteButton, EditModeButton, ShareButton, ShowMoreButton, ShowMoreDialogue, ShowUserButton } from '../home/ShowMore'
+import { DeleteButton, EditModeButton, ShareButton, ShowMoreDialogue } from '../home/ShowMore'
 //@ts-ignore
 import { v4 as uuidv4 } from 'uuid';
 import ScrollViewWithDrag from '../../components/screens/ScrollViewWithDrag'

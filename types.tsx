@@ -27,7 +27,6 @@ export type RootStackParamList = {
   Help: undefined;
   About: undefined;
   Login: undefined;
-  ForgotPassword: undefined;
   GetStarted: undefined;
   Registration: undefined;
   GenerateMeal: undefined;

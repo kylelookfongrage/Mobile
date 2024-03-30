@@ -1024,7 +1024,7 @@ map.set(306, { name: 'Potassium', unit: 'mg' })
 */
 export const MenuStatOtherNutritionToUSDANutrition = (otherNutrition: string | Json) => {
     let copy = otherNutrition
-    let mapping = {'cholesterol' : 601, 'fiber': 291, 'potassium': 306, 'sat_fat': 606, 'sodium': 307, 'sugar': 269, 'trans_fat': 204}
+    let mapping = {'cholesterol' : 601, 'fiber': 291, 'potassium': 306, 'sat_fat': 606, 'sodium': 307, 'sugar': 269, 'trans_fat': 204, 'monounsaturated_fat': 645, 'polyunsaturated_fat': 646, 'vitamin_d': 382, 'calcium': 301, 'iron': 303, 'added_sugar': 539 }
     if (typeof otherNutrition==='string') {copy = JSON.parse(otherNutrition)}
     //@ts-ignore
     let obj = {...copy}

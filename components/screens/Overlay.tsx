@@ -21,7 +21,7 @@ export type TRefOverlay = {
 
 }
 
-export default forwardRef(function Overlay(props: {bg?: string; disableClose?: boolean; id?: string; visible?: boolean; snapPoints?: string[]; disablePadding?: boolean; onDismiss?: (b?: boolean) => void, excludeBanner?: boolean, dialogueHeight?: number | string, dynamicHeight?: boolean} & DefaultView['props'], ref: ForwardedRef<TRefOverlay>) {
+export default forwardRef(function Overlay(props: {bg?: string; index?: number | undefined; disableScroll?: boolean; disableClose?: boolean; id?: string; visible?: boolean; snapPoints?: string[]; disablePadding?: boolean; onDismiss?: (b?: boolean) => void, excludeBanner?: boolean, dialogueHeight?: number | string, dynamicHeight?: boolean} & DefaultView['props'], ref: ForwardedRef<TRefOverlay>) {
     let g = useGet()
     let h = g.s.height
     const getTotalHeight = (x: string | number) => {
@@ -107,7 +107,7 @@ export default forwardRef(function Overlay(props: {bg?: string; disableClose?: b
             }}
         >
            <View style={[props.style, {flex: 1}]} >
-                <BottomSheetScrollView showsVerticalScrollIndicator={false} keyboardDismissMode={'interactive'}>
+                <BottomSheetScrollView scrollEnabled={!props.disableScroll} showsVerticalScrollIndicator={false} keyboardDismissMode={'interactive'}>
                 {props.children}
                 </BottomSheetScrollView>
             </View>

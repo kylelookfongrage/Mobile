@@ -26,6 +26,9 @@ import ImageDetailView from '../screens/home/ImageDetailView';
 
 
 export default function Navigation({ colorScheme }: { colorScheme: ColorSchemeName }) {
+  React.useEffect(() => {
+    RegisterKeyboard()
+  }, [])
   return (
     <NavigationContainer
       linking={LinkingConfiguration}
@@ -74,6 +77,7 @@ import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import ProgressPicture from '../screens/other/ProgressPicture';
 import Overlay from '../components/screens/Overlay';
 import { XStack } from 'tamagui';
+import { RegisterKeyboard } from '../components/features/Keyboard';
 
 
 function RootNavigator() {

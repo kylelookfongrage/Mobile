@@ -82,6 +82,7 @@ interface ISearchResult {
     type: 'WORKOUT' | 'MEAL' | 'EXERCISE' | 'FOOD' | 'PLAN' | 'USER';
     user_id: string;
     username: string;
+    category?: string;
 }
 
 export const FoodAndMeals = () => {

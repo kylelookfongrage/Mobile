@@ -1,14 +1,14 @@
-import { ScrollView, useColorScheme, TouchableOpacity, Image, TextInput, Dimensions, Pressable } from 'react-native'
+import { ScrollView, useColorScheme, TouchableOpacity, ActivityIndicator, Image, TextInput, Dimensions, Pressable } from 'react-native'
 import React, { useState } from 'react'
 import { Text, View } from '../../components/base/Themed'
 import tw from 'twrnc'
 import { ExpoIcon, Icon } from '../../components/base/ExpoIcon'
-import { FetchEdamamParser, getMatchingNavigationScreen, substringForLists, titleCase } from '../../data'
+import { getMatchingNavigationScreen, substringForLists, titleCase } from '../../data'
 import { useNavigation } from '@react-navigation/native'
 import Barcode from '@kichiyaki/react-native-barcode-generator'
 import { BarCodeScanner } from 'expo-barcode-scanner'
 import { BackButton } from '../../components/base/BackButton'
-import { ActivityIndicator, FAB } from 'react-native-paper'
+import { FAB } from 'react-native-paper'
 import moment from 'moment'
 import AllergenAlert from '../../components/features/AllergenAlert'
 import SearchBar from '../../components/inputs/SearchBar'
@@ -56,7 +56,7 @@ export default function ListFood(props: ListFoodProps) {
   let s = Dimensions.get('screen')
   const dm = useColorScheme() === 'dark'
   const [searchKey, setSearchKey] = React.useState<string>('')
-  const searchOptions = ['All', 'My Foods', 'Favorites'] as const
+  const searchOptions = ['All', 'My Foods'] as const
   const [showBarcode, setShowBarcode] = useState<boolean>(false)
   const [barcode, setBarcode] = React.useState<string | null>(null);
   const [selectedOption, setSelectedOption] = React.useState<typeof searchOptions[number]>(searchOptions[0])
@@ -125,6 +125,7 @@ export default function ListFood(props: ListFoodProps) {
       }))
       setResults(apiResults)
       setShowBarcode(false)
+      return apiResults.length;
     } else {
       setBarcodeError(true)
     }
@@ -193,18 +194,19 @@ export default function ListFood(props: ListFoodProps) {
         <View style={tw`pb-40`} />
       </ScrollView>
       {/* @ts-ignore */}
-      <Overlay disablePadding visible={showBarcode} onDismiss={setShowBarcode}>
+      <Overlay disablePadding visible={showBarcode} dialogueHeight={45} excludeBanner onDismiss={setShowBarcode}>
         <BarcodeScannerView
           onScanAgain={() => {
             setBarcode(null)
             setBarcodeError(false)
           }}
           barcode={barcode}
-          style={{ ...tw``, width: s.width, height: s.height * 0.35 }}
+          style={{ ...tw``, width: s.width, height: s.height * 0.38 }}
           onBarcodeScanned={async (code) => {
             if (!code) return;
             setBarcode(code || null)
-            await searchBarcode(code)
+            let num = await searchBarcode(code)
+            if ((num || 0) > 0) setShowBarcode(false)
           }} />
           {barcodeError && <Text lg weight='bold' style={{alignSelf: 'center', color: _tokens.error}}>No results found for barcode</Text>}
       </Overlay>
@@ -260,15 +262,22 @@ const BarcodeScannerView = (props: BarcodeScannerViewProps) => {
 
   };
   const opacity = useSharedValue(0);
+  let scale = useSharedValue(1)
+
 
   // Set the opacity value to animate between 0 and 1
   opacity.value = withRepeat(
-    withTiming(0.8, { duration: 2000, easing: Easing.ease }),
+    withTiming(0.5, { duration: 1800, easing: Easing.ease }),
     isScanning ? -1 : 0,
     true
   );
 
-  const avStyle = useAnimatedStyle(() => isScanning ? ({ opacity: opacity.value }) : ({ opacity: 1 }), [isScanning]);
+  scale.value = withRepeat(
+    withTiming(0.75, {duration: 2000, easing: Easing.ease}),
+    isScanning ? -1 : 0, true
+  )
+
+  const avStyle = useAnimatedStyle(() => isScanning ? ({ opacity: opacity.value, transform: [{scale: scale.value}] }) : ({ opacity: 1 }), [isScanning]);
   if (hasPermission === null) {
     return <Text style={tw`text-center mt-6`}>Requesting for camera permission</Text>;
   }
@@ -281,9 +290,10 @@ const BarcodeScannerView = (props: BarcodeScannerViewProps) => {
       style={props.style || tw`h-50 w-12/12 self-center`}
       onBarCodeScanned={handleBarCodeScanned}
     />
-    <Animated.View style={[{ position: 'absolute', alignSelf: 'center', top: isScanning ? 70 : 40 }, avStyle]}>
+    <Animated.View style={[{ position: 'absolute', alignSelf: 'center', top: isScanning ? 40 : 40, }, avStyle]}>
       {!isScanning && <Text style={tw`text-white text-center`} weight='bold' xl>Scanned!</Text>}
-      <ExpoIcon name='barcode' iconName='matc' size={150} color={_tokens.white} />
+      <ExpoIcon name='barcode' iconName='matc' size={200} color={_tokens.gray500} />
+      {isScanning && <ActivityIndicator size={'large'} />}
       {!isScanning && <TouchableOpacity style={tw`self-center flex-row items-center`} onPress={props.onScanAgain}>
             <Icon name='Scan' weight='bold' color='white' size={30} />
             <Text style={tw`text-white`} weight='bold' lg> Scan Again</Text>

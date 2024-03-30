@@ -1,12 +1,12 @@
 import { View, Text } from '../../components/base/Themed'
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { Tables } from '../../supabase/dao'
 import { FormReducer, useForm } from '../../hooks/useForm';
 import useAsync from '../../hooks/useAsync';
 import { supabase } from '../../supabase';
 import { useSelector } from '../../redux/store';
 import { USDAFoodCategories, USDAFoodDetails, USDAMacroMapping, USDAMacroMappingKeys, USDANutrientToOtherNutrition, getEmojiByCategory } from '../../types/FoodApi';
-import { ConversionChart, ExpandedConversionChart, MenuStatOtherNutritionToUSDANutrition, foodToFoodProgressAndMealIngredients, getMacroTargets, getMacrosFromIngredients, titleCase } from '../../data';
+import { ConversionChart, ExpandedConversionChart, MenuStatOtherNutritionToUSDANutrition, foodToFoodProgressAndMealIngredients, getMacroTargets, getMacrosFromIngredients, sleep, titleCase } from '../../data';
 import { XStack, YStack } from 'tamagui';
 import Spacer from '../../components/base/Spacer';
 import tw from 'twrnc'
@@ -15,9 +15,8 @@ import { Dimensions, Keyboard, Pressable, useColorScheme } from 'react-native';
 import ManageButton from '../../components/features/ManageButton';
 import { TextArea } from '../../components/base/Input';
 import { LogFoodKeyboardAccessory } from '../../components/features/Keyboard';
-import { TouchableOpacity } from 'react-native-ui-lib';
 import { ExpoIcon } from '../../components/base/ExpoIcon';
-import { useNavigation } from '@react-navigation/native';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
 import Selector from '../../components/base/Selector';
 import { MacronutrientBarProgress } from '../../components/features/MacronutrientBar';
 import { aggregateFoodAndMeals } from '../../redux/reducers/progress';
@@ -32,6 +31,9 @@ import Overlay from '../../components/screens/Overlay';
 import { MealDao } from '../../types/MealDao';
 import { PostgrestSingleResponse } from '@supabase/supabase-js';
 import { useGet } from '../../hooks/useGet';
+import { Icon } from '../../components/base/ExpoIcon';
+import { BackButton } from '../../components/base/BackButton';
+import { DeleteButton, ShowMoreDialogue } from '../home/ShowMore';
 
 export default function FoodDetail2(props: {
   id?: Tables['food']['Row']['id'];
@@ -196,25 +198,21 @@ export default function FoodDetail2(props: {
       formDispatch({ type: FormReducer.Set, payload: payload })
       setAuthor('Meal')
       setInitialValue(Math.round(_quantity) < _quantity ? Number(_quantity.toFixed(2)) : _quantity)
+    } else {
+      //todo: find way to make not have to sleep
+      await sleep(1000)
     }
+
     setInitialized(true)
+    
     return () => { setInitialized(false) }
   }, [])
+
   let dm = useColorScheme() === 'dark'
   let s = Dimensions.get('screen')
   let [shouldShowInput, setShouldShowInput] = useState<boolean>(true);
   let searchOptions = (isNewFood) ? [] : (props.meal_id ? ['Overview'] : ['Overview', 'Nutrition Facts'])
   let [selectedOption, setSelectedOption] = useState<typeof searchOptions[number]>(searchOptions[0])
-  console.log('protein', form.protein)
-  useEffect(() => {
-    let sub = Keyboard.addListener('keyboardWillShow', () => {
-      setShouldShowInput(false)
-    })
-    let sub2 = Keyboard.addListener('keyboardWillHide', () => {
-      setShouldShowInput(true)
-    })
-    return () => { Keyboard.removeAllListeners('keyboardWillShow') }
-  }, [])
 
   useEffect(() => {
     if (!initialized) return;
@@ -274,6 +272,9 @@ export default function FoodDetail2(props: {
     g.set('loading', true)
     let logging = props.progress_id || ((props.api_id || props.id) && !props.mealId)
     try {
+      if (!form.name) {
+        throw Error('Your food must have a name');
+      }
       if (logging) {
         //@ts-ignore -- Will create or update a food progress
         let obj: Tables['food_progress']['Insert'] = foodToFoodProgressAndMealIngredients(form, profile)
@@ -281,6 +282,7 @@ export default function FoodDetail2(props: {
         let res = await pdao.saveProgress('food_progress', obj)
         if (res) {
           n.pop()
+          g.set('loading', false)
         }
   
       } else if (props.mealId && !props.meal_id) {
@@ -310,6 +312,7 @@ export default function FoodDetail2(props: {
         }
         multiPartForm.upsert(existingIngredients)
         n.pop()
+        g.set('loading', false)
       } else if (props.meal_id) {
         let meal_id = await duplicateMeal()
         await pdao.saveProgress('meal_progress', {
@@ -320,28 +323,65 @@ export default function FoodDetail2(props: {
           servingSize: form.servingSize,
           id: Number(props.meal_progress_id) || undefined
         })
+        g.set('loading', false)
         n.pop(2)
   
       } else {
         let { data, error } = await supabase.from('food').insert(form).select().single()
         if (data) {
           n.pop()
+          g.set('loading', false)
         } else {
           g.setFn(p => ({...p, loading: false, error: error?.message.toString() || null}))
         }
       }
     } catch (error) {
-      g.setFn(p => ({...p, loading: false, error: error.toString()}))
-    } finally {
-      g.set('loading', false)
-    }
+      g.setFn(p => ({...p, loading: false, error: error?.toString() || 'there was an issue'}))
+    } 
   }
+
+  let deleteFood = useMemo(() => {
+    if (form.user_id === profile?.id) {
+      return async () => {
+        if (props.id) {
+          try {
+            g.set('loading', true)
+            let {error} = await supabase.from('food').delete().filter('id', 'eq', props.id)
+            if (error) throw Error(error.message)
+            n.pop()
+            g.set('loading', false)
+          } catch (error) {
+            g.setFn(p => {
+              let og = {...p, error: error?.toString() || 'there was a problem', loading: false}
+              return og;
+            })
+          }
+        }
+      }
+    }
+
+  }, [form.user_id, profile?.id, props.id]) 
+
+  let renderRight = useCallback(() => {
+    if (props.id) {
+      return <ShowMoreDialogue options={[
+        ...(deleteFood ? [DeleteButton('Food', deleteFood, form.user_id, profile?._user)] : [])
+      ]} food_id={props.id} onOpen={() => setShowingMenu(true)} onClose={() => setShowingMenu(false)}  />
+    }
+    return <View />
+  }, [props.id, deleteFood])
+
+
+
+  let [showingMenu, setShowingMenu] = useState(false)
+  let isFocused = useIsFocused()
+  console.log({initialized, isFocused, showCategory, showingMenu})
+
 
   return (
     <View includeBackground style={{ flex: 1 }}>
-      <Spacer />
-      <XStack alignItems='flex-start' justifyContent='space-between' px='$3'>
-        <XStack alignItems='flex-start' w='89%'>
+      <BackButton name='Food' Right={renderRight} />
+      <XStack alignItems='flex-start' w='99%'>
           <Text disabled={props.meal_id ? true : false} onPress={() => {
             setShowCategory(true)
           }} h2>{props.meal_id ? '🍽️' : getEmojiByCategory(form?.category || undefined)}</Text>
@@ -350,6 +390,8 @@ export default function FoodDetail2(props: {
             <Text style={tw`text-gray-500`}>{author}</Text>
           </YStack>
         </XStack>
+      {/* <XStack alignItems='flex-start' justifyContent='space-between' px='$3'>
+       
         <YStack>
         <TouchableOpacity onPress={() => n.pop()} style={tw`h-7 w-7 ml-2 rounded-full bg-gray-500/50 items-center justify-center`}>
           <ExpoIcon name='close' iconName='ion' color='black' size={20} />
@@ -363,6 +405,7 @@ export default function FoodDetail2(props: {
         </TouchableOpacity>}
         </YStack>
       </XStack>
+      <Spacer /> */}
       <Spacer />
       {searchOptions.length > 1 && <Selector searchOptions={searchOptions} selectedOption={selectedOption} onPress={setSelectedOption} />}
       <Spacer />
@@ -409,7 +452,7 @@ export default function FoodDetail2(props: {
         <TextArea editable={!props.meal_id ? true : false} value={form.ingredients || ''} height={'$9'} textSize={16} id='ingredients' />
         <View style={tw`h-90`} />
       </ScrollView>}
-      <Overlay excludeBanner visible={showCategory} onDismiss={() => setShowCategory(false)}>
+      <Overlay style={{zIndex: 100000000000000000000}} excludeBanner visible={showCategory} onDismiss={() => setShowCategory(false)}>
         <ManageButton buttonText='Done' title='Food Category' onPress={() => setShowCategory(false)} />
         <Spacer sm />
         <ScrollView showsVerticalScrollIndicator={false}>
@@ -430,7 +473,7 @@ export default function FoodDetail2(props: {
           <Spacer xl />
         </ScrollView>
       </Overlay>
-      {(shouldShowInput || keyboardOpen) && <LogFoodKeyboardAccessory onEnterPress={onSubmit} onOpen={() => setKeyboardOpen(true)} onClose={() => {
+      {(shouldShowInput || keyboardOpen) && <LogFoodKeyboardAccessory visible={!showCategory && !showingMenu && isFocused && initialized} onEnterPress={onSubmit} onOpen={() => setKeyboardOpen(true)} onClose={() => {
         let amt = form.quantity || 0
         setInitialValue(Math.round(amt) < amt ? Number(amt.toFixed(2)) : amt)
         setKeyboardOpen(false)

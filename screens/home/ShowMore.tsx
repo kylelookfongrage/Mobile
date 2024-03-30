@@ -1,5 +1,5 @@
 import { View } from '../../components/base/Themed'
-import React, { useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { TouchableOpacity } from 'react-native-gesture-handler'
 import { ExpoIcon } from '../../components/base/ExpoIcon'
 import tw from 'twrnc'
@@ -30,6 +30,8 @@ type TShowMoreDialogue = {
   messgage_id?: string;
   options?: TActionButton[];
   px?: number | string;
+  onOpen?: () => void;
+  onClose?: () => void;
 }
 
 export const EditModeButton = (editing: boolean, onPress: () => void, user_id: string | null | undefined, current_user_id: string | null | undefined): TActionButton => {
@@ -72,23 +74,34 @@ export const DeleteButton = (name: string, onDelete: () => Promise<any>, user_id
 export const ShowMoreDialogue = (props: TShowMoreDialogue) => {
   const navigator = useNavigation()
   const [showDialogue, setShowDialogue] = useState<boolean>(false)
-  let options: TActionButton[] = (props.options || [])
   let dm = useColorScheme() === 'dark'
   let { workout_id, exercise_id, meal_id, messgage_id, post_id, plan_id, food_id, user_id, comment_id } = props;
   let ids = {workout_id, exercise_id, meal_id, messgage_id, post_id, plan_id, food_id, user_id, comment_id}
   let canReport = workout_id || exercise_id || meal_id || messgage_id || plan_id || post_id || food_id || user_id || comment_id
-  if (canReport) {
-    options = [...options, {
-      title: 'Report',
-      icon: 'Danger',
-      hidden: false,
-      onPress: () => {
-        //@ts-ignore
-        navigator.navigate('Report', { ...ids })
-      }
-    }]
-  }
+  let options = useMemo(() => {
+    let _options = props.options || []
+    if (canReport) {
+      _options = [..._options, {
+        title: 'Report',
+        icon: 'Danger',
+        hidden: false,
+        onPress: () => {
+          //@ts-ignore
+          navigator.navigate('Report', { ...ids })
+        }
+      }]
+    }
+    return _options
+  }, [canReport])
+  
   const s = Dimensions.get('screen')
+  useEffect(() => {
+    if (showDialogue) {
+      props.onOpen && props.onOpen()
+    } else {
+      props.onClose && props.onClose()
+    }
+  }, [showDialogue])
   return (
     <TouchableOpacity onPress={() => {
       //@ts-ignore
@@ -97,7 +110,7 @@ export const ShowMoreDialogue = (props: TShowMoreDialogue) => {
       <View style={[tw`p-2 rounded-full items-center justify-center mx-${props.px ? props.px : 2}`, { zIndex: 1, backgroundColor: dm ? _tokens.dark2 + '90' : _tokens.gray300 + '90'}]}>
         <ExpoIcon color='gray' size={20} iconName='feather' name={showDialogue ? 'x' : 'more-horizontal'} />
       </View>
-      <Overlay style={{ ...tw`` }} dialogueHeight={35} visible={showDialogue} onDismiss={() => setShowDialogue(false)}>
+      <Overlay style={{ ...tw`` }} id='show-more' dialogueHeight={35} index={-1} visible={showDialogue} onDismiss={() => setShowDialogue(false)}>
         {options.filter(x => !x.hidden).map((x, i) => {
           return <SettingItem key={x.title + 'Setting item -' + i} hideCarat setting={{title: x.title, dangerous: x.title.toLowerCase().includes('delete'), icon: x.icon, onPress: () => {
             x.onPress && x.onPress();

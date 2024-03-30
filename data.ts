@@ -912,9 +912,6 @@ export function findLastIndex<T>(array: Array<T>, predicate: (value: T, index: n
 }
 
 
-type RepeatFrequencies = 'DAILY' | 'MONTHLY' | 'BI-MONTHLY' | 'WEEKLY' | 'BI-WEEKLY' | 'ANNUALLY' | undefined | null
-
-
 export const ConversionChart = {
     'Gram': 1, 
     'Milliliter': 1,

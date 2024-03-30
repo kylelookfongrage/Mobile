@@ -32,7 +32,7 @@ export const getCommonScreens = (prefix: string, Stack: any) => {
                 {/* @ts-ignore */}
                 {props => <MealDetail {...props} {...props.route?.params}  grocery={props.route?.params?.grocery} progressId={props.route?.params?.progressId} idFromProgress={props.route?.params?.idFromProgress} id={props.route?.params?.id} editable={props.route?.params?.editable} dow={props.route?.params?.dow} planId={props.route?.params?.planId} />}
             </Stack.Screen>
-            <Stack.Screen name={prefix + 'FoodDetail'} options={{ headerShown: false, presentation: 'modal' }}>
+            <Stack.Screen name={prefix + 'FoodDetail'} options={{ headerShown: false }}>
                 {/* @ts-ignore */}
                 {props => <FoodDetail2 {...props?.route?.params} />}
             </Stack.Screen>

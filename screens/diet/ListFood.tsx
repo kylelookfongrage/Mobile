@@ -3,7 +3,7 @@ import React, { useState } from 'react'
 import { Text, View } from '../../components/base/Themed'
 import tw from 'twrnc'
 import { ExpoIcon, Icon } from '../../components/base/ExpoIcon'
-import { getMatchingNavigationScreen, substringForLists, titleCase } from '../../data'
+import { OpenFoodFactToFood, OpenFoodFactsBarcodeSearch, OpenFoodFactsRequest, getMatchingNavigationScreen, substringForLists, titleCase } from '../../data'
 import { useNavigation } from '@react-navigation/native'
 import Barcode from '@kichiyaki/react-native-barcode-generator'
 import { BarCodeScanner } from 'expo-barcode-scanner'
@@ -24,6 +24,9 @@ import { USDABarcodeSearch, USDAKeywordSearch, getEmojiByCategory } from '../../
 import SearchResult from '../../components/base/SearchResult'
 import Overlay from '../../components/screens/Overlay'
 import Animated, { Easing, interpolate, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated'
+import { supabase } from '../../supabase'
+import { useGet } from '../../hooks/useGet'
+import { Tables } from '../../supabase/dao'
 export const categoryMapping = {
   'generic foods': '🍎',
   'generic meals': '🍽',
@@ -41,6 +44,7 @@ interface ListFoodSearchResults {
   calories: number;
   servingSize: number;
   servingUnit: string;
+  form?: Tables['food']['Insert']
 }
 
 interface ListFoodProps {
@@ -54,7 +58,7 @@ export default function ListFood(props: ListFoodProps) {
   const navigator = useNavigation()
   const { profile } = useSelector(x => x.auth)
   let s = Dimensions.get('screen')
-  const dm = useColorScheme() === 'dark'
+  let g = useGet()
   const [searchKey, setSearchKey] = React.useState<string>('')
   const searchOptions = ['All', 'My Foods'] as const
   const [showBarcode, setShowBarcode] = useState<boolean>(false)
@@ -65,68 +69,74 @@ export default function ListFood(props: ListFoodProps) {
   const [displaySearchState, setDisplaySearchState] = React.useState('Search for food!')
   let [barcodeError, setBarcodeError] = useState<boolean>(false)
   let dao = SearchDao()
-  let search = async (term: string | null) => {
-    let _results: ListFoodSearchResults[] = []
-    if (selectedOption == 'All' && term) {
-      setDisplaySearchState('Searching....')
-      let res = await USDAKeywordSearch(term)
-      if (res && res.foods.length > 0) {
-        console.log(res.foods.map(x => x.foodCategory))
-        let apiResults: ListFoodSearchResults[] = res.foods.map((y) => ({
-          name: titleCase(`${y.brandOwner ? (y.brandOwner.toLowerCase() === 'not a branded item' ? '' : y.brandOwner + ' ') : ''}${y.commonNames || y.description}`),
-          category: y.foodCategory,
-          id: y.fdcId,
-          fromApi: true,
-          calories: y.foodNutrients.filter(x => x.nutrientNumber == '208')?.[0]?.value || -1,
-          servingSize: y.servingSize || 1,
-          servingUnit: y.servingSizeUnit || 'servings',
-          score: y.score || 0
-        }))
-        //@ts-ignore
-        _results = apiResults
-      }
-    }
 
-    let res = await dao.search('food', {
-      keyword: term, keywordColumn: 'name', selectString: `
-        *, author: user_id(username), calories, servingSize:quantity, servingUnit:servingSize`,
-      belongsTo: selectedOption === 'My Foods' ? profile?.id : undefined,
-      favorited: selectedOption === 'Favorites', user_id: profile?.id,
-      filters: [{ column: 'public', value: true }]
-    })
-    if (res) {
+
+  let search = async (term: string | null) => {
+    let _results: ListFoodSearchResults[] = [];
+    let fn = supabase.from('food').select('*, author:user_id(username), servingSize:quantity, servingUnit:servingSize').filter('public', 'eq', true)
+    if (term) fn = fn.textSearch('name', `${term.split(' ').join(' | ')}`)
+    if (selectedOption === 'My Foods' && profile) fn = fn.filter('user_id', 'eq', profile.id)
+    setDisplaySearchState('Searching....')
+    try {
+      g.set('loading', true)
+      g.time('food search from db')
+      let res = await fn.range(0, 25)
+      g.time('food search from db')
       //@ts-ignore
-      _results = [..._results.sort((a, b) => b.score - a.score), ...res.map(x => {
-        return { ...x }
-      })].filter(x => x.calories !== -1)
+      if (res.data) _results = [..._results, ...res.data]
+      if (res.error) throw Error(res.error.message)
+      setResults(_results)
+      g.set('loading', false)
+
+     try {
+      //TODO: In the future, use data loaded in by the database using their files
+      g.time('open food search')
+      let res2 = (term && selectedOption === 'All') ? await OpenFoodFactsRequest(term) : null
+      g.time('open food search')
+      if (res2) {
+        setResults(p => {
+          return [...p, ...(res2?.products || []).map(p => {
+            let form = OpenFoodFactToFood(p)
+            return {name: form.name, id: -1, fromApi: true, calories: form.calories || 0, servingSize: form.quantity || 1, servingUnit: form.servingSize || 'Serving', form}
+          })]
+        })
+      }
+     } catch (error) {
+      console.log('error fetching from open food facts')
+     }
+      
+    } catch (error) {
+      g.setFn(p => {
+        let og = { ...p }
+        return { ...og, loading: false, error: error?.toString() || 'there was a problem' }
+      })
     }
-    setResults(_results)
   }
 
   useAsync(async () => {
     search(searchKey)
   }, [searchKey, selectedOption])
-  console.log('barcode', barcode)
 
   let searchBarcode = async (_barcode: string) => {
     if (barcode) return;
     if (!_barcode) return;
-    let res = await USDABarcodeSearch(_barcode)
-    if (res && res.foods && res.foods[0]) {
-      let apiResults: ListFoodSearchResults[] = res.foods.map((y) => ({
-        name: titleCase(`${y.brandOwner ? (y.brandOwner.toLowerCase() === 'not a branded item' ? '' : y.brandOwner + ' ') : ''}${y.commonNames || y.description}`),
-        category: y.foodCategory,
-        id: y.fdcId,
-        fromApi: true,
-        calories: y.foodNutrients.filter(x => x.nutrientNumber == '208')?.[0]?.value || -1,
-        servingSize: y.servingSize || 1,
-        servingUnit: y.servingSizeUnit || 'servings',
-        score: y.score || 0
-      }))
-      setResults(apiResults)
-      setShowBarcode(false)
-      return apiResults.length;
-    } else {
+    try {
+      g.set('loading', true)
+      let res = await OpenFoodFactsBarcodeSearch(_barcode)
+      console.log(res)
+      if (res.product) {
+        let form = OpenFoodFactToFood(res.product)
+        g.set('loading', false)
+      setResults([{name: form.name, id: -1, fromApi: true, calories: form.calories || 0, servingSize: form.quantity || 1, servingUnit: form.servingSize || 'Serving', form}])
+      } else {
+        throw Error('No food found')
+      }
+      return res.product ? 1 : 0
+    } catch (error) {
+      g.setFn(p => {
+        let og = { ...p }
+        return { ...og, loading: false, error: error?.toString() || 'there was a problem' }
+      })
       setBarcodeError(true)
     }
   }
@@ -170,7 +180,6 @@ export default function ListFood(props: ListFoodProps) {
             </TouchableOpacity>
           </View>}
         </View>} */}
-        {(displaySearchState !== '' && results.length === 0) && <View style={tw`w-12/12 justify-center items-center mt-9`}><Text>{displaySearchState}</Text></View>}
         {results.map((r, idx) => {
           return <TouchableOpacity
             key={`food item ${r.name} at index ${idx}`}
@@ -180,14 +189,14 @@ export default function ListFood(props: ListFoodProps) {
               navigator.navigate(foodDetailScreen, {
                 id: r.fromApi ? undefined : r.id,
                 api_id: r.fromApi ? r.id : undefined,
-                category: r.category, mealId: props.mealId
+                category: r.category, mealId: props.mealId, form: r.form
               })
             }}
             style={tw`flex-row items-center px-2 my-3 w-12/12`}>
             <Text h4>{getEmojiByCategory(r.category)}</Text>
             <View style={tw`w-12/12 items-start ml-2`}>
-              <Text style={tw`max-w-11/12`} lg weight='semibold'>{substringForLists(r.name, 100)}</Text>
-              <Text style={tw`text-gray-500`}>{r.calories.toFixed()} kcal per {r.servingSize?.toFixed()} {r.servingUnit} • {r.author ? `@${r.author.username}` : r.fromApi ? 'USDA Food Database' : 'Menustat.org'}</Text>
+              <Text style={tw`max-w-11/12`} lg weight='semibold'>{r.name}</Text>
+              <Text style={tw`text-gray-500`}>{r.calories?.toFixed()} kcal per {r.servingSize?.toFixed()} {r.servingUnit} • {(r.author) ? `@${r.author.username}` : r.fromApi ? 'Open Food Facts' : 'Menustat.org'}</Text>
             </View>
           </TouchableOpacity>
         })}
@@ -208,7 +217,7 @@ export default function ListFood(props: ListFoodProps) {
             let num = await searchBarcode(code)
             if ((num || 0) > 0) setShowBarcode(false)
           }} />
-          {barcodeError && <Text lg weight='bold' style={{alignSelf: 'center', color: _tokens.error}}>No results found for barcode</Text>}
+        {barcodeError && <Text lg weight='bold' style={{ alignSelf: 'center', color: _tokens.error }}>No results found for barcode</Text>}
       </Overlay>
       <FAB onPress={() => {
         setShowBarcode(true)
@@ -273,11 +282,11 @@ const BarcodeScannerView = (props: BarcodeScannerViewProps) => {
   );
 
   scale.value = withRepeat(
-    withTiming(0.75, {duration: 2000, easing: Easing.ease}),
+    withTiming(0.75, { duration: 2000, easing: Easing.ease }),
     isScanning ? -1 : 0, true
   )
 
-  const avStyle = useAnimatedStyle(() => isScanning ? ({ opacity: opacity.value, transform: [{scale: scale.value}] }) : ({ opacity: 1 }), [isScanning]);
+  const avStyle = useAnimatedStyle(() => isScanning ? ({ opacity: opacity.value, transform: [{ scale: scale.value }] }) : ({ opacity: 1 }), [isScanning]);
   if (hasPermission === null) {
     return <Text style={tw`text-center mt-6`}>Requesting for camera permission</Text>;
   }
@@ -295,11 +304,11 @@ const BarcodeScannerView = (props: BarcodeScannerViewProps) => {
       <ExpoIcon name='barcode' iconName='matc' size={200} color={_tokens.gray500} />
       {isScanning && <ActivityIndicator size={'large'} />}
       {!isScanning && <TouchableOpacity style={tw`self-center flex-row items-center`} onPress={props.onScanAgain}>
-            <Icon name='Scan' weight='bold' color='white' size={30} />
-            <Text style={tw`text-white`} weight='bold' lg> Scan Again</Text>
-          </TouchableOpacity>}
+        <Icon name='Scan' weight='bold' color='white' size={30} />
+        <Text style={tw`text-white`} weight='bold' lg> Scan Again</Text>
+      </TouchableOpacity>}
     </Animated.View>
-    
+
 
   </View>
 

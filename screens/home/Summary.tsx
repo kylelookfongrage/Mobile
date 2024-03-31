@@ -70,7 +70,6 @@ export const SummaryScreen = () => {
     moment(formattedDate).startOf("week").add(x, "days")
   );
   let g = useGet()
-  console.log(today)
   return (
     <View style={{ flex: 1 }} includeBackground>
       <SafeAreaView edges={["top"]} style={[{ flex: 1 }, tw`h-12/12`]}>

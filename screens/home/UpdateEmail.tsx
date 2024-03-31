@@ -15,6 +15,7 @@ import { UserQueries } from '../../types/UserDao'
 import { useDispatch, useSelector } from '../../redux/store'
 import { fetchUser } from '../../redux/api/auth'
 import Input from '../../components/base/Input'
+import { useGet } from '../../hooks/useGet'
 
 
 const redirectTo = makeRedirectUri({scheme: 'ragepersonalhealth'}) + 'email';
@@ -52,6 +53,7 @@ export default function UpdateEmail() {
   const url = Linking.useURL();
   const [session, setSession] = useState(null)
   let dao = UserQueries()
+  let g = useGet()
 
   useEffect(() => {
     if (!url || session) return;
@@ -68,27 +70,36 @@ export default function UpdateEmail() {
 
   async function onPressConfirm() {
     setMessage('')
-    if (oldEmail !== profile?.email?.toLowerCase()) {
-      setErrors(['Your current email is not correct'])
+    if (oldEmail.toLowerCase() !== profile?.email?.toLowerCase()) {
+      g.set('error', 'Your current email is not correct')
       return;
     }
     if (newEmail.length === 0 || !newEmail.includes('@')) {
-      setErrors(['Your must input an email'])
+      g.set('error', 'Your must input an email')
       return;
     }
     if (newEmail.toLowerCase() === profile?.email?.toLowerCase()) {
-      setErrors(['You already have this username in place'])
+      g.set('error', 'You already have this email in place')
       return;
     }
     try {
-      await supabase.auth.updateUser({email: newEmail}, {emailRedirectTo: redirectTo})
-      setMessage('We have sent an email to your new email address, please confirm to solidify the change.')
+    g.set('loading', true)
+      let data = await supabase.auth.updateUser({email: newEmail}, {emailRedirectTo: redirectTo})
+      if (data.error) {
+        throw Error(data.error.message)
+      }
+      g.setFn(p => {
+        let og = {...p, msg: 'We have sent an email to your new email address, please confirm to solidify the change', loading: false}
+        return og
+      })
       // navigator.pop()
     } catch (error) {
-      setErrors([error?.toString() || 'There was a problem'])
+      g.setFn(p => {
+        let og = {...p, error: error?.toString() || 'there was a problem', loading: false}
+        return og
+      })
     }
     setErrors([])
-    setUploading(true)
    
   }
 

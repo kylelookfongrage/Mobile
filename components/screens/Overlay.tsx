@@ -38,13 +38,10 @@ export default forwardRef(function Overlay(props: {bg?: string; index?: number |
     let [disabled, setDisabled] = useState(false)
     const snapPoints = useMemo(() => {
         if (props.snapPoints) {
-            console.log('props.snapPoints', props.snapPoints, '-', props.id)
             return props.snapPoints.sort((a,b) => getTotalHeight(a) - getTotalHeight(b))
         } else if (props.dialogueHeight) {
-            console.log('props.dialogueHeight', props.dialogueHeight, '-', props.id)
             return [`${props.dialogueHeight}%`]
         } else {
-            console.log('no height provided, default 70%','-', props.id)
             return ['70%']
         }
     }, [props.snapPoints, props.dialogueHeight, props.disableClose])
@@ -79,7 +76,6 @@ export default forwardRef(function Overlay(props: {bg?: string; index?: number |
                 bottomSheetRef.current?.collapse()
             }, 
             minimizeAndDisable(){
-                console.log('minimizing')
                 bottomSheetRef.current?.collapse();
                 setDisabled(true);
             },
@@ -88,7 +84,6 @@ export default forwardRef(function Overlay(props: {bg?: string; index?: number |
             }
         }
     }, [snapPoints, disabled, props.disableClose])
-    console.log('snapPoints', snapPoints, '-', props.id)
     return (
         <Portal>
         <BottomSheet

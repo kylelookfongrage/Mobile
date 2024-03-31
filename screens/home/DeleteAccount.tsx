@@ -23,7 +23,6 @@ export default function DeleteAccount() {
   async function onPressConfirm() {
     setUploading(true)
     if (!profile) return;
-    console.log(profile)
     try {
       let {data, error} = await supabase.from('user').delete().filter('id', 'eq', profile.id)
       console.log(error)

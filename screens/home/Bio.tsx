@@ -16,6 +16,7 @@ import { useDispatch, useSelector } from '../../redux/store'
 import { fetchUser } from '../../redux/api/auth'
 import Input, { TextArea } from '../../components/base/Input'
 import Spacer from '../../components/base/Spacer'
+import { useGet } from '../../hooks/useGet'
 
 type TextInputProps = TextInput['props'];
 interface TextInputWithLeftProps extends TextInputProps{
@@ -45,29 +46,39 @@ export default function Bio(props: {registration?: boolean;}) {
     const [pic, setPic] = React.useState<string>(profile?.pfp || '')
     const [usernameError, setUsernameError] = useState<string | null>(null)
     let dao = UserQueries()
+    let g = useGet()
     
     
     const onFinishPress = async () => {
         setUploading(true)
         setUsernameError(null)
-        if (!registration) {
-            if (!profile) return;
-            const error = await dao.validateUsername(newUsername, profile?.username)
-            if (error) {
-                setUsernameError(error)
-                setUploading(false)
-                return;
-            }
-            let res = await dao.update_profile({name: name || '', username: newUsername || profile?.username || '', bio, links: [newLink], pfp: pic}, profile)
-            if (res) {
-                setProfile()
-                navigator.pop()
-            }
-            
-        } 
+        try {
+            g.set('loading', true)
+            if (!registration) {
+                if (!profile) return;
+                if (!name) throw Error('You must have a name')
+                const error = await dao.validateUsername(newUsername, profile?.username)
+                if (error) {
+                    setUsernameError(error)
+                    throw Error('Username is already taken')
+                }
+                let res = await dao.update_profile({name: name || '', username: newUsername || profile?.username || '', bio, links: [newLink], pfp: pic}, profile)
+                g.set('loading', false)
+                if (res) {
+                    setUploading(false)
+                    setProfile()
+                    navigator.pop()
+                }
+            } 
+        } catch (error) {
+            setUploading(false)
+            g.setFn(p => {
+                let og = {...p}
+                return {...og, loading: false, error: error?.toString() || 'There was a problem'}
+            })
+        }
     }
 
-    
     const padding = useSafeAreaInsets()
   return (
     <View includeBackground style={{flex: 1, paddingTop: !registration ? 0 : padding.top }}>
@@ -82,7 +93,7 @@ export default function Bio(props: {registration?: boolean;}) {
             <Spacer />
             <Input id='Name' iconLeft='Profile' name='Name' value={name || ''} textChange={setName} placeholder='Your Name...'  />
             <Spacer />
-            <Input id='Username' error={usernameError || undefined} iconLeft='Send' name='Username' value={newUsername || ''} textChange={setNewUsername} placeholder='@...'  />
+            <Input id='Username' error={usernameError || undefined} iconLeft='Send' name='Username' value={newUsername || ''} textChange={v => setNewUsername(v.toLowerCase())} placeholder='@...'  />
             <Spacer />
             <TextArea value={bio} iconLeft='Document' height={'$12'} textChange={setBio} placeholder='Your bio...' id='Bio' name='Bio' />
             <Spacer />

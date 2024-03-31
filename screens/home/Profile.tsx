@@ -74,7 +74,6 @@ export default function Profile(props: ProfileProps) {
         if (!queryID) return
         const user = await dao.fetchProfile(queryID)
         if (user) {
-            console.log(user)
             setProfileName(user.username)
             setBio(user.bio)
             setImg(user.pfp)

@@ -38,7 +38,6 @@ export const fetchTodaysTasks = createAsyncThunk('progress/fetchTodaysTasks', as
     if (atError || !tasks) {
         throw Error(atError?.message)
     }
-    console.log(tasks)
     return {plans, tasks}
 })
 
@@ -52,7 +51,6 @@ export const saveTaskProgress = createAsyncThunk('progress/saveTaskProgress', as
 
 export const deleteTaskProgress = createAsyncThunk('progress/deleteTaskProgress', async (task_progress: Tables['task_progress']['Row']) => {
     let {data, error} = await supabase.from('task_progress').delete().filter('id', 'eq', task_progress.id)
-    console.log(error)
     if (error) throw Error(error?.message || 'There was a problem, please try again.')
     return {task_id: task_progress.task_id}
 })

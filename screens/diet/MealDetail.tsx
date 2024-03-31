@@ -1,5 +1,5 @@
-import { TextInput, TouchableOpacity } from 'react-native'
-import React, { useState } from 'react'
+import { Keyboard, TextInput, TouchableOpacity } from 'react-native'
+import React, { useRef, useState } from 'react'
 import { Text, View } from '../../components/base/Themed'
 //@ts-ignore
 import { v4 as uuidv4 } from 'uuid';
@@ -89,6 +89,7 @@ export default function MealDetailScreen(props: MealDetailProps) {
         showLogProgress: false
     })
     let [screen, setScreen] = [ScreenForm.state, ScreenForm.setForm]
+    let textRef = useRef<TextInput>(null)
     const [imageSource, setImageSource] = React.useState<MediaType[]>([])
     const canViewDetails = !props.id || form.user_id === profile?.id || !form.price || false // if user purchased meal or subscribed to user
     const dm = useColorScheme() === 'dark'
@@ -269,10 +270,14 @@ export default function MealDetailScreen(props: MealDetailProps) {
                             <View style={{ ...tw`h-8 w-8 items-center justify-center rounded-full mr-2`, backgroundColor: _tokens.primary900 + '80' }}>
                                 <Text lg style={tw`text-white`} weight='bold'>{(form.steps || []).length + 1}</Text>
                             </View>
-                            <TextInput multiline numberOfLines={3} onSubmitEditing={() => {
+                            <TextInput ref={textRef} multiline numberOfLines={screen.newStep ? 3 : 1} onSubmitEditing={() => {
                                 if (!screen.newStep!!) return;
-                                setForm('steps', [...(form.steps || []), screen.newStep])
-                                setScreen('newStep', '')
+                                setTimeout(() => {
+                                    setScreen('newStep', '')  
+                                    textRef.current?.clear()    
+                                    setForm('steps', [...(form.steps || []), screen.newStep])
+                                    Keyboard.dismiss()
+                                }, 200)
                             }} placeholder='Your new step (press enter to add)' placeholderTextColor={'gray'} style={tw`text-${dm ? 'white' : 'black'} max-w-10/12`} value={screen.newStep} onChangeText={(v) => setScreen('newStep', v)} />
                         </View>}
                         <Spacer />

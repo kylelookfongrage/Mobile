@@ -48,6 +48,7 @@ export default function FoodDetail2(props: {
   meal_name?: string;
   meal_author?: Tables['user']['Row']['id'];
   meal_id?: number;
+  form?: Tables['food']['Insert']
 }) {
   let { profile } = useSelector(x => x.auth)
   let { foodProgress, mealProgress } = useSelector(x => x.progress)
@@ -58,7 +59,7 @@ export default function FoodDetail2(props: {
   let multiPartForm = useMultiPartForm('meals', props.mealId || '')
   let g = useGet()
 
-  let { state: form, setForm, dispatch: formDispatch } = useForm<Tables['food']['Insert']>({
+  let { state: form, setForm, dispatch: formDispatch } = useForm<Tables['food']['Insert']>(props.form || {
     name: '',
     calories: 0,
     carbs: 0,
@@ -90,7 +91,7 @@ export default function FoodDetail2(props: {
   let [author, setAuthor] = useState('@' + profile?.username)
   let [initialValue, setInitialValue] = useState<number>(1)
   let [keyboardOpen, setKeyboardOpen] = useState<boolean>(false)
-  let [totalAlreadyConsumed, setTotalAlreadyConsumed] = useState({protein: 0, carbs: 0, calories: 0, fat: 0})
+  let [totalAlreadyConsumed, setTotalAlreadyConsumed] = useState({ protein: 0, carbs: 0, calories: 0, fat: 0 })
   useAsync(async () => {
     console.log(props)
     if ((props.id || props.ingredient_id || props.progress_id)) {
@@ -109,47 +110,20 @@ export default function FoodDetail2(props: {
         //@ts-ignore
         setInitialValue(data?.quantity)
         if (props.progress_id) {
-          setTotalAlreadyConsumed({calories: data.calories || 0, protein: data.protein || 0, carbs: data.carbs || 0, fat: data.fat || 0})
+          setTotalAlreadyConsumed({ calories: data.calories || 0, protein: data.protein || 0, carbs: data.carbs || 0, fat: data.fat || 0 })
         }
         if (data.serving) { data.servingSize = data.serving }
         if (data.servingSizes && typeof data.servingSizes === 'string') { data.servingSizes = JSON.parse(data.servingSizes) }
         data.otherNutrition = MenuStatOtherNutritionToUSDANutrition(data.otherNutrition)
         formDispatch({ type: FormReducer.Set, payload: data })
       }
-    } else if (props.api_id) {
-      console.log('condition 2')
-      // use USDA Database to collect all info needed for food 
-      let res = await USDAFoodDetails(props.api_id)
-      if (res) {
-        let y = res;
-        let _nutrients = USDANutrientToOtherNutrition(res.foodNutrients)
-        //@ts-ignore
-        let _weight = ExpandedConversionChart[y.servingSizeUnit] || 1
-        let servingSizes = {}
-        if (y.servingSizeUnit) {
-          servingSizes[y.servingSizeUnit] = _weight
-        } else if (y.householdServingFullText) {
-          servingSizes[y.householdServingFullText] = _weight
-        }
-        let payload = {
-          name: titleCase(`${y.brandOwner ? (y.brandOwner.toLowerCase() === 'not a branded item' ? '' : y.brandOwner + ' ') : ''}${y.commonNames || y.description}`),
-          otherNutrition: _nutrients?.otherNutrition || {},
-          calories: _nutrients?.calories || 0,
-          protein: _nutrients?.protein || 0,
-          carbs: _nutrients?.carbs || 0,
-          fat: _nutrients?.fat || 0,
-          weight: (_weight) * y.servingSize,
-          quantity: y.servingSize || 1,
-          servingSize: y.servingSizeUnit,
-          servingSizes: servingSizes,
-          category: props.category || '',
-          ingredients: y.ingredients
-
-        }
-        formDispatch({ type: FormReducer.Set, payload: payload })
-        setAuthor('USDA Food Database')
-        setInitialValue(y.servingSize || 1,)
-      }
+    } else if (props.api_id && props.form) {
+      let data = props.form
+      data.otherNutrition = MenuStatOtherNutritionToUSDANutrition(data.otherNutrition)
+      formDispatch({ type: FormReducer.Set, payload: data })
+      setAuthor('Open Food Facts')
+      setInitialValue(props.form.quantity || 1)
+      await sleep(1000)
     } else if (props.mealId && props.tempId) {
       console.log('fetching data')
       let potentialData = (multiPartForm.data || []).filter(x => x.tempId == props.tempId)?.[0]
@@ -179,7 +153,7 @@ export default function FoodDetail2(props: {
 
       }
       let _nutrients = getMacrosFromIngredients(potentialData, _quantity)
-      if (props.meal_progress_id) {setTotalAlreadyConsumed(_nutrients)}
+      if (props.meal_progress_id) { setTotalAlreadyConsumed(_nutrients) }
       let payload = {
         name: props.meal_name,
         otherNutrition: _nutrients?.otherNutrition || {},
@@ -204,7 +178,7 @@ export default function FoodDetail2(props: {
     }
 
     setInitialized(true)
-    
+
     return () => { setInitialized(false) }
   }, [])
 
@@ -249,8 +223,8 @@ export default function FoodDetail2(props: {
     if (!props.meal) return;
     let meal_id = props.meal_id
     console.log('edited', multiPartForm.edited)
-    if (multiPartForm.edited === true) { 
-      let {data: copy, error} = await supabase.from('meal').select('*').filter('id', 'eq', props.meal_id).single()
+    if (multiPartForm.edited === true) {
+      let { data: copy, error } = await supabase.from('meal').select('*').filter('id', 'eq', props.meal_id).single()
       if (error) throw Error(error.message)
       // Want to duplicate meal, setting it to private, when we update the ingredients
       // If it's already duplicated (aka original meal is already filled out), we want to UPDATE it
@@ -284,7 +258,7 @@ export default function FoodDetail2(props: {
           n.pop()
           g.set('loading', false)
         }
-  
+
       } else if (props.mealId && !props.meal_id) {
         let existingIngredients = [...(multiPartForm.data || [])]
         if (props.tempId) {
@@ -296,12 +270,14 @@ export default function FoodDetail2(props: {
                   ...form,
                   id: (Number(props.id) || undefined)
                 },
-                  { calories: form.calories || 0, 
-                    protein: form.protein || 0, 
-                    carbs: form.carbs || 0, 
-                    fat: form.fat || 0, 
-                    otherNutrition: form.otherNutrition || {}, 
-                    tempId: props.tempId || '' }
+                  {
+                    calories: form.calories || 0,
+                    protein: form.protein || 0,
+                    carbs: form.carbs || 0,
+                    fat: form.fat || 0,
+                    otherNutrition: form.otherNutrition || {},
+                    tempId: props.tempId || ''
+                  }
                 ),
               }
             }
@@ -325,19 +301,19 @@ export default function FoodDetail2(props: {
         })
         g.set('loading', false)
         n.pop(2)
-  
+
       } else {
         let { data, error } = await supabase.from('food').insert(form).select().single()
         if (data) {
           n.pop()
           g.set('loading', false)
         } else {
-          g.setFn(p => ({...p, loading: false, error: error?.message.toString() || null}))
+          g.setFn(p => ({ ...p, loading: false, error: error?.message.toString() || null }))
         }
       }
     } catch (error) {
-      g.setFn(p => ({...p, loading: false, error: error?.toString() || 'there was an issue'}))
-    } 
+      g.setFn(p => ({ ...p, loading: false, error: error?.toString() || 'there was an issue' }))
+    }
   }
 
   let deleteFood = useMemo(() => {
@@ -346,13 +322,13 @@ export default function FoodDetail2(props: {
         if (props.id) {
           try {
             g.set('loading', true)
-            let {error} = await supabase.from('food').delete().filter('id', 'eq', props.id)
+            let { error } = await supabase.from('food').delete().filter('id', 'eq', props.id)
             if (error) throw Error(error.message)
             n.pop()
             g.set('loading', false)
           } catch (error) {
             g.setFn(p => {
-              let og = {...p, error: error?.toString() || 'there was a problem', loading: false}
+              let og = { ...p, error: error?.toString() || 'there was a problem', loading: false }
               return og;
             })
           }
@@ -360,13 +336,13 @@ export default function FoodDetail2(props: {
       }
     }
 
-  }, [form.user_id, profile?.id, props.id]) 
+  }, [form.user_id, profile?.id, props.id])
 
   let renderRight = useCallback(() => {
     if (props.id) {
       return <ShowMoreDialogue options={[
         ...(deleteFood ? [DeleteButton('Food', deleteFood, form.user_id, profile?._user)] : [])
-      ]} food_id={props.id} onOpen={() => setShowingMenu(true)} onClose={() => setShowingMenu(false)}  />
+      ]} food_id={props.id} onOpen={() => setShowingMenu(true)} onClose={() => setShowingMenu(false)} />
     }
     return <View />
   }, [props.id, deleteFood])
@@ -375,21 +351,21 @@ export default function FoodDetail2(props: {
 
   let [showingMenu, setShowingMenu] = useState(false)
   let isFocused = useIsFocused()
-  console.log({initialized, isFocused, showCategory, showingMenu})
+  console.log({ initialized, isFocused, showCategory, showingMenu })
 
 
   return (
     <View includeBackground style={{ flex: 1 }}>
       <BackButton name='Food' Right={renderRight} />
       <XStack alignItems='flex-start' w='99%'>
-          <Text disabled={props.meal_id ? true : false} onPress={() => {
-            setShowCategory(true)
-          }} h2>{props.meal_id ? '🍽️' : getEmojiByCategory(form?.category || undefined)}</Text>
-          <YStack ml='$2'>
-            <TextInput placeholderTextColor={'gray'} value={form.name} multiline numberOfLines={3} onChangeText={v => setForm('name', v)} placeholder='New Food' style={{ ...tw`text-${dm ? 'white' : "black"}`, fontFamily: 'Urbanist_700Bold', fontSize: 18, width: Dimensions.get('screen').width * 0.7 }} />
-            <Text style={tw`text-gray-500`}>{author}</Text>
-          </YStack>
-        </XStack>
+        <Text disabled={props.meal_id ? true : false} onPress={() => {
+          setShowCategory(true)
+        }} h2>{props.meal_id ? '🍽️' : getEmojiByCategory(form?.category || undefined)}</Text>
+        <YStack ml='$2'>
+          <TextInput placeholderTextColor={'gray'} value={form.name} multiline numberOfLines={3} onChangeText={v => setForm('name', v)} placeholder='New Food' style={{ ...tw`text-${dm ? 'white' : "black"}`, fontFamily: 'Urbanist_700Bold', fontSize: 18, width: Dimensions.get('screen').width * 0.7 }} />
+          <Text style={tw`text-gray-500`}>{author}</Text>
+        </YStack>
+      </XStack>
       {/* <XStack alignItems='flex-start' justifyContent='space-between' px='$3'>
        
         <YStack>
@@ -452,7 +428,7 @@ export default function FoodDetail2(props: {
         <TextArea editable={!props.meal_id ? true : false} value={form.ingredients || ''} height={'$9'} textSize={16} id='ingredients' />
         <View style={tw`h-90`} />
       </ScrollView>}
-      <Overlay style={{zIndex: 100000000000000000000}} excludeBanner visible={showCategory} onDismiss={() => setShowCategory(false)}>
+      <Overlay style={{ zIndex: 100000000000000000000 }} excludeBanner visible={showCategory} onDismiss={() => setShowCategory(false)}>
         <ManageButton buttonText='Done' title='Food Category' onPress={() => setShowCategory(false)} />
         <Spacer sm />
         <ScrollView showsVerticalScrollIndicator={false}>

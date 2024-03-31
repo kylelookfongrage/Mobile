@@ -1,206 +1,10 @@
-export interface EdamamParserRequest {
-    app_id?: string;
-    app_key?: string;
-    ingr?: string;
-    upc?: string
-    nutrition_type?: 'logging' | 'cooking'
-}
-
-interface EdamamFood {
-    foodId: string;
-    label: string;
-    image: string;
-    knownAs: string;
-    foodContentsLabel?: string;
-    nutrients: {
-        ENERC_KCAL: number;
-        PROCNT: number;
-        FAT: number;
-        CHOCDF: number;
-        FIBTG: number
-    };
-    category: "Generic foods" | 'Generic meals' | 'Packaged foods' | 'Fast foods';
-    quantity: number;
-    measure: {
-        uri: string;
-        label: string;
-        weight: number
-    }
-}
-
-export interface EdamamParserResponse {
-    text: string;
-    error?: string;
-    message?: string;
-    parsed: {
-        food: EdamamFood
-    }[];
-    hints: {
-        food: EdamamFood,
-        measures?: {
-            uri: string;
-            label: string;
-            weight: number
-        }[]
-    }[];
-    _links: {
-        next: {
-            title: string;
-            href: string
-        }
-    }
-}
-
-export interface EdamamNutrientsRequest {
-    app_id?: string;
-    app_key?: string;
-    ingredients: {
-        quantity: number;
-        measureURI: string;
-        foodId: string
-    }[]
-}
-
-interface totalNutrientsType {
-    label: string;
-    quantity: number;
-    unit: string;
-}
-
-export interface EdamamNutrientsResponse {
-    uri: string;
-    calories: number;
-    totalWeight: number;
-    dietLabels: string[];
-    healthLabels: string[];
-    cautions: string[];
-    totalNutrients: {
-        ENERC_KCAL: totalNutrientsType,
-        FAT: totalNutrientsType;
-        FASAT: totalNutrientsType;
-        FATRN: totalNutrientsType;
-        FAMS: totalNutrientsType;
-        FAPU: totalNutrientsType;
-        CHOCDF: totalNutrientsType;
-        "CHOCDF.net": totalNutrientsType;
-        FIBTG: totalNutrientsType;
-        SUGAR: totalNutrientsType;
-        PROCNT: totalNutrientsType;
-        CHOLE: totalNutrientsType;
-        NA: totalNutrientsType;
-        CA: totalNutrientsType;
-        MG: totalNutrientsType;
-        K: totalNutrientsType;
-        FE: totalNutrientsType;
-        ZN: totalNutrientsType;
-        P: totalNutrientsType;
-        VITA_RAE: totalNutrientsType;
-        VITC: totalNutrientsType;
-        THIA: totalNutrientsType;
-        RIBF: totalNutrientsType;
-        NIA: totalNutrientsType;
-        VITB6A: totalNutrientsType;
-        FOLDFE: totalNutrientsType;
-        FOLFD: totalNutrientsType;
-        FOLAC: totalNutrientsType;
-        VITB12: totalNutrientsType;
-        VITD: totalNutrientsType;
-        TOCPHA: totalNutrientsType;
-        VITK1: totalNutrientsType;
-        WATER: totalNutrientsType;
-    };
-    totalDaily: {
-        ENERC_KCAL: totalNutrientsType,
-        FAT: totalNutrientsType;
-        FASAT: totalNutrientsType;
-        FATRN: totalNutrientsType;
-        FAMS: totalNutrientsType;
-        FAPU: totalNutrientsType;
-        CHOCDF: totalNutrientsType;
-        "CHOCDF.net": totalNutrientsType;
-        FIBTG: totalNutrientsType;
-        SUGAR: totalNutrientsType;
-        PROCNT: totalNutrientsType;
-        CHOLE: totalNutrientsType;
-        NA: totalNutrientsType;
-        CA: totalNutrientsType;
-        MG: totalNutrientsType;
-        K: totalNutrientsType;
-        FE: totalNutrientsType;
-        ZN: totalNutrientsType;
-        P: totalNutrientsType;
-        VITA_RAE: totalNutrientsType;
-        VITC: totalNutrientsType;
-        THIA: totalNutrientsType;
-        RIBF: totalNutrientsType;
-        NIA: totalNutrientsType;
-        VITB6A: totalNutrientsType;
-        FOLDFE: totalNutrientsType;
-        FOLFD: totalNutrientsType;
-        FOLAC: totalNutrientsType;
-        VITB12: totalNutrientsType;
-        VITD: totalNutrientsType;
-        TOCPHA: totalNutrientsType;
-        VITK1: totalNutrientsType;
-        WATER: totalNutrientsType;
-    };
-    ingredients: {
-        parsed: {
-            quantity: number;
-            measure: string;
-            food: string;
-            foodId: string;
-            weight: number;
-            retainedWeight: number;
-            servingsPerContainer: number;
-            measureURI: string;
-            status: string
-        }[]
-    }[]
-
-}
-
-
-export const FetchEdamamParser = async (body: EdamamParserRequest): Promise<EdamamParserResponse> => {
-    let url = `https://api.edamam.com/api/food-database/v2/parser?app_id=${body.app_id || Env.EDAMAM_PROJECT_ID || "028e7728"}&app_key=${body.app_key || Env.EDAMAM_API_KEY || "ab2e80c58bdc5491b4c0d34fd7d23d82"}`
-    if (body.ingr) { url += `&ingr=${body.ingr}` }
-    if (body.upc) { url += `&upc=${body.upc}` }
-    if (body.nutrition_type) { url += `&nutrition-type=${body.nutrition_type}` }
-    const res: Response = await fetch(encodeURI(url), {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json'
-        }
-
-    })
-    const json: EdamamParserResponse = await res.json()
-    return json;
-}
-
-export const FetchEdamamNutrients = async (body: EdamamNutrientsRequest): Promise<EdamamNutrientsResponse> => {
-    let url = `https://api.edamam.com/api/food-database/v2/nutrients?app_id=${body.app_id || Env.EDAMAM_PROJECT_ID || '028e7728'}&app_key=${body.app_key || Env.EDAMAM_API_KEY || "ab2e80c58bdc5491b4c0d34fd7d23d82"}`
-    const res = await fetch(url, {
-        method: "POST",
-        headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            ingredients: body.ingredients
-        })
-    })
-    const json: EdamamNutrientsResponse = await res.json()
-    return json
-}
-
-// 0074305001321
-// 0074305001321
 interface OpenFoodProduct {
     _id: string;
     _keywords: string[];
     allergens: string;
     brands: string;
     categories: string;
+    categories_tags: string[];
     code: string;
     image_front_url?: string;
     image_url?: string;
@@ -272,7 +76,7 @@ interface OpenFoodProduct {
     product_name: string;
     product_name_en: string;
     quantity: string;
-    serving_quantity: string;
+    serving_quantity: number;
     serving_size: string;
 }
 interface OpenFoodFactsSearchRepsonse {
@@ -285,10 +89,56 @@ interface OpenFoodFactsSearchRepsonse {
 }
 
 export const OpenFoodFactsRequest = async (keyword: string) => {
-    const url = `https://us.openfoodfacts.org/cgi/search.pl?action=process&search_terms=${keyword}&sort_by=unique_scans_n&page_size=24?sort_by=popularity&json=1`
+    const url = `https://us.openfoodfacts.org/cgi/search.pl?action=process&search_terms=${keyword}&sort_by=unique_scans_n&page_size=25&json=1`
     const res = await fetch(url)
     const json: OpenFoodFactsSearchRepsonse = await res.json()
     return json
+}
+
+const openFoodMacroByKey = (product: OpenFoodProduct, key: string) => {
+    //@ts-ignore
+    if (product.nutriments[`${key}_serving`] !== undefined && product.nutriments[`${key}_serving`] !== null) {
+        //@ts-ignore
+        return Number(product.nutriments[`${key}_serving`]) || 0
+    }
+    let fx = (product.serving_quantity || 1)
+    //@ts-ignore
+    if (product.nutriments[`${key}_100g`] !== undefined && product.nutriments[`${key}_100g`] !== null) {
+        //@ts-ignore
+        return (Number(product.nutriments[`${key}_100g`]) || 0) * fx
+    }
+    return 0
+
+}
+
+export const OpenFoodFactToFood = (product: OpenFoodProduct) => {
+    return {
+        name: product.product_name || 'food',
+        calories: openFoodMacroByKey(product, 'energy-kcal'),
+        carbs: openFoodMacroByKey(product, 'carbohydrates'),
+        protein: openFoodMacroByKey(product, 'proteins'),
+        fat: openFoodMacroByKey(product, 'fat'),
+        servingSizes: { 'Serving': product.serving_quantity || 0, [product.serving_size || '']: product.serving_quantity || 0 },
+        otherNutrition: {
+            "cholesterol": openFoodMacroByKey(product, 'cholesterol'),
+            "fiber": openFoodMacroByKey(product, 'fiber'),
+            "potassium": openFoodMacroByKey(product, 'potassium'),
+            "sat_fat": openFoodMacroByKey(product, 'saturated-fat'), 
+            "sodium": openFoodMacroByKey(product, 'sodium'),
+            "sugar": openFoodMacroByKey(product, 'sugars'),
+            "trans_fat": openFoodMacroByKey(product, 'trans-fat'),
+            'monounsaturated_fat': openFoodMacroByKey(product, 'monounsaturated-fat'), 
+            'polyunsaturated_fat': openFoodMacroByKey(product, 'polyunsaturated-fat'),
+            'vitamin_d': openFoodMacroByKey(product, 'vitamin-d'),
+            'calcium': openFoodMacroByKey(product, 'calcium'), 
+            'iron': openFoodMacroByKey(product, 'iron'), 
+            'added_sugar': openFoodMacroByKey(product, 'added-sugars')
+        },
+        // @ts-ignore 
+        category: OpenFoodFactsCategories[product.categories_tags?.[0] || 'en:cooking-helpers'],
+        ingredients: product.ingredients_text,
+        quantity: 1, servingSize: product.serving_size || 'Serving', weight: product.serving_quantity
+    }
 }
 
 
@@ -308,7 +158,9 @@ export const OpenFoodFactsBarcodeSearch = async (barcode: string) => {
 
 //@ts-ignore
 import { v4 as uuidv4 } from 'uuid';
-import { Coordinates } from './aws/models';
+interface Coordinates {
+    lat: number; long: number
+}
 import { Env } from './env';
 
 export const isStorageUri = (id: string): boolean => {
@@ -343,10 +195,10 @@ export function toHHMMSS(duration: number, seperator: string = ':') {
 export const titleCase = (str: string) => {
     return str.replace(
         /([^\W_]+[^\s-]*) */g,
-        function(txt) {
-          return txt.charAt(0).toUpperCase() + txt.substring(1).toLowerCase();
+        function (txt) {
+            return txt.charAt(0).toUpperCase() + txt.substring(1).toLowerCase();
         }
-      );
+    );
     // try {
     //     var sentence = str.toLowerCase().split(" ");
     //     for (var i = 0; i < sentence.length; i++) {
@@ -572,7 +424,7 @@ import sleepy_sleep from './assets/animations/sleepy_sleep.json'
 import squirrel_sleep from './assets/animations/squirrel-sleeping.json'
 
 
-export const animations = {timer, meditation, pigeon_wait, sleepy_sleep, sloth_sleep, sloth_sleeping, bear_sleep, squirrel_sleep}
+export const animations = { timer, meditation, pigeon_wait, sleepy_sleep, sloth_sleep, sloth_sleeping, bear_sleep, squirrel_sleep }
 
 export const animationMapping = [
     { name: 'Up Next Video', animation: null },
@@ -717,6 +569,7 @@ import { IngredientAdditions } from './hooks/useMultipartForm';
 import { Tables } from './supabase/dao';
 import { Json } from './types/Database';
 import { USDAMacroMapping } from './types/FoodApi';
+import { OpenFoodFactsCategories } from './screens/diet/OpenFoodFactsCategories';
 
 function calculateTDEE(male: boolean, weight: number, height: number, age: number, activity: 'sedentary' | 'light' | 'average' | 'active', metric: boolean = false): number {
     const heightMultiplier = metric ? 1 : 2.54; // Convert inches to cm if not using metric units
@@ -856,7 +709,7 @@ export const validate = function (textFieldValuesAndOptions: ValidationObject[])
 
 
 
-export const getMacrosFromIngredients = (ingrs: IngredientAdditions[], mul=1): { protein: number, carbs: number; calories: number; fat: number, otherNutrition: { [k: string]: number } } => {
+export const getMacrosFromIngredients = (ingrs: IngredientAdditions[], mul = 1): { protein: number, carbs: number; calories: number; fat: number, otherNutrition: { [k: string]: number } } => {
     let protein: number = 0;
     let calories: number = 0;
     var carbs: number = 0;
@@ -913,9 +766,9 @@ export function findLastIndex<T>(array: Array<T>, predicate: (value: T, index: n
 
 
 export const ConversionChart = {
-    'Gram': 1, 
+    'Gram': 1,
     'Milliliter': 1,
-    'Ounce': 28.3495, 
+    'Ounce': 28.3495,
     'Tablespoon (liquid)': 15,
     'Tablespoon': 14.175,
     'Teaspoon (liquid)': 5,
@@ -940,33 +793,33 @@ export const ExpandedConversionChart = {
     'fl oz': 29.5735, 'floz': 29.5735, 'fluid ounces': 29.5735,
     'lb': 453.592, 'lbs': 453.592, 'pounds': 453.592,
     'cups': 250,
-    'gallons' : 3785.41,
+    'gallons': 3785.41,
     'q': 946.353, 'quarts': 946.353,
     'p': 568.261, 'pints': 568.261
-} 
+}
 
 
 function toDeci(fraction: string) {
     if (!fraction) return fraction;
     fraction = fraction.toString();
-    var result=fraction as string | number,wholeNum=0, frac, deci=0;
-    if(fraction.search('/') >=0){
-        if(fraction.search('-') >=0){
+    var result = fraction as string | number, wholeNum = 0, frac, deci = 0;
+    if (fraction.search('/') >= 0) {
+        if (fraction.search('-') >= 0) {
             //@ts-ignore
             wholeNum = fraction.split('-');
             //@ts-ignore
             frac = wholeNum[1];
             //@ts-ignore
-            wholeNum = parseInt(wholeNum,10);
-        }else{
+            wholeNum = parseInt(wholeNum, 10);
+        } else {
             frac = fraction;
         }
-        if(fraction.search('/') >=0){
-            frac =  frac.split('/');
+        if (fraction.search('/') >= 0) {
+            frac = frac.split('/');
             deci = parseInt(frac[0], 10) / parseInt(frac[1], 10);
         }
-        result = wholeNum+deci;
-    }else{
+        result = wholeNum + deci;
+    } else {
         result = fraction
     }
     return result;
@@ -981,25 +834,25 @@ export const getMacroTargets = (profile: Tables['user']['Row'] | null | undefine
     const totalProteinGrams = profile?.proteinLimit || (tdee * 0.4) / 4
     const totalFatGrams = profile?.fatLimit || (tdee * 0.3) / 9
     const totalCarbsGrams = profile?.carbLimit || (tdee * 0.3) / 4
-    return {tdee, totalProteinGrams, totalCarbsGrams, totalFatGrams}
+    return { tdee, totalProteinGrams, totalCarbsGrams, totalFatGrams }
 }
 
 export const foodToFoodProgressAndMealIngredients = (f: Tables['food']['Insert'], profile: Tables['user']['Row'] | undefined | null): (Tables['food_progress']['Insert'] | Tables['meal_ingredients']['Insert']) => {
-        let obj = {...f}
-        delete obj['barcode']
-        delete obj['created_at']
-        delete obj['edamamId']
-        delete obj['healthLabels']
-        delete obj['id']
-        delete obj['image']
-        delete obj['tags']
-        //@ts-ignore
-        delete obj['author']
-        delete obj['public']
-        obj['serving'] = obj['servingSize']
-        delete obj['servingSize']
-        obj['user_id'] = profile?.id
-        return obj
+    let obj = { ...f }
+    delete obj['barcode']
+    delete obj['created_at']
+    delete obj['edamamId']
+    delete obj['healthLabels']
+    delete obj['id']
+    delete obj['image']
+    delete obj['tags']
+    //@ts-ignore
+    delete obj['author']
+    delete obj['public']
+    obj['serving'] = obj['servingSize']
+    delete obj['servingSize']
+    obj['user_id'] = profile?.id
+    return obj
 }
 /*
 map.set(208, { name: 'Calories', unit: 'kcal', bolded: true, xl: true, border: 4 })
@@ -1024,10 +877,10 @@ map.set(306, { name: 'Potassium', unit: 'mg' })
 */
 export const MenuStatOtherNutritionToUSDANutrition = (otherNutrition: string | Json) => {
     let copy = otherNutrition
-    let mapping = {'cholesterol' : 601, 'fiber': 291, 'potassium': 306, 'sat_fat': 606, 'sodium': 307, 'sugar': 269, 'trans_fat': 204, 'monounsaturated_fat': 645, 'polyunsaturated_fat': 646, 'vitamin_d': 382, 'calcium': 301, 'iron': 303, 'added_sugar': 539 }
-    if (typeof otherNutrition==='string') {copy = JSON.parse(otherNutrition)}
+    let mapping = { 'cholesterol': 601, 'fiber': 291, 'potassium': 306, 'sat_fat': 606, 'sodium': 307, 'sugar': 269, 'trans_fat': 204, 'monounsaturated_fat': 645, 'polyunsaturated_fat': 646, 'vitamin_d': 382, 'calcium': 301, 'iron': 303, 'added_sugar': 539 }
+    if (typeof otherNutrition === 'string') { copy = JSON.parse(otherNutrition) }
     //@ts-ignore
-    let obj = {...copy}
+    let obj = { ...copy }
     for (var k of Object.keys(mapping)) {
         //@ts-ignore
         let v = mapping[k]

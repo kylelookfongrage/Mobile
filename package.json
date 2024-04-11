@@ -7,7 +7,8 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "test": "jest --watchAll",
-    "build:ios": "react-native bundle --entry-file='index.tsx' --bundle-output='./ios/main.jsbundle' --dev=false --platform='ios'"
+    "build:ios": "react-native bundle --entry-file='index.tsx' --bundle-output='./ios/main.jsbundle' --dev=false --platform='ios'",
+    "start": "expo start --dev-client"
   },
   "jest": {
     "preset": "jest-expo"
@@ -41,11 +42,11 @@
     "@tensorflow/tfjs": "3.18.0",
     "@tensorflow/tfjs-react-native": "0.8.0",
     "burnt": "^0.12.1",
-    "expo": "^47.0.13",
+    "expo": "~47.0.14",
     "expo-apple-authentication": "~5.0.1",
     "expo-asset": "~8.7.0",
     "expo-auth-session": "~3.8.0",
-    "expo-av": "^13.6.0",
+    "expo-av": "~13.0.3",
     "expo-barcode-scanner": "~12.1.0",
     "expo-camera": "~13.1.0",
     "expo-constants": "~14.0.2",
@@ -82,7 +83,7 @@
     "prop-types": "^15.8.1",
     "react": "18.1.0",
     "react-dom": "18.1.0",
-    "react-native": "0.71.11",
+    "react-native": "0.70.8",
     "react-native-body-highlighter": "^2.1.4",
     "react-native-calendars": "^1.1293.0",
     "react-native-chart-kit": "^6.12.0",
@@ -94,7 +95,7 @@
     "react-native-image-zoom-viewer": "^3.0.1",
     "react-native-linear-gradient": "^2.8.1",
     "react-native-maps": "1.3.2",
-    "react-native-pager-view": "6.2.0",
+    "react-native-pager-view": "6.0.1",
     "react-native-paper": "^4.12.5",
     "react-native-purchases": "5.13.2",
     "react-native-reanimated": "~2.12.0",
@@ -115,8 +116,7 @@
     "tamagui": "^1.7.2",
     "twrnc": "^3.4.1",
     "use-immer": "^0.9.0",
-    "victory-native": "^36.9.1",
-    "yarn": "^1.22.19"
+    "victory-native": "^36.9.1"
   },
   "devDependencies": {
     "@babel/core": "^7.12.9",

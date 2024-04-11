@@ -1,15 +1,12 @@
 // Learn more https://docs.expo.io/guides/customizing-metro
-const { getDefaultConfig } = require('expo/metro-config');
-const blacklist = require('metro-config/src/defaults/exclusionList');
 
-module.exports = (() => {
-  const defaultConfig = getDefaultConfig(__dirname);
-  const {assetExts} = defaultConfig.resolver;
-  return {
-    resolver: {
-      blacklistRE: blacklist([/#current-cloud-backend\/.*/]),
-      // Add bin to assetExts
-      assetExts: [...assetExts, 'bin'],
-    }
-  };
-})();
+const { getDefaultConfig } = require('expo/metro-config');
+
+const config = getDefaultConfig(__dirname);
+
+config.resolver.assetExts.push(
+  // Adds support for `.db` files for SQLite databases
+  'bin'
+);
+
+module.exports = config;

@@ -83,6 +83,7 @@ import { RegisterKeyboard } from '../components/features/Keyboard';
 function RootNavigator() {
   let profile = useSelector(x => x.auth.profile)
   let dispatch = useDispatch()
+  
 
   React.useEffect(() => {
     if (!profile?.id) return;

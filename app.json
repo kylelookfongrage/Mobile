@@ -53,11 +53,6 @@
     "web": {
       "favicon": "./assets/images/favicon.png"
     },
-    "extra": {
-      "eas": {
-        "projectId": "cef1e5e1-1c0d-4cfc-9adc-e6b22e8203ad"
-      }
-    },
     "owner": "rageappinc"
   },
   "react-native-google-mobile-ads": {

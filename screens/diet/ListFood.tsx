@@ -80,31 +80,13 @@ export default function ListFood(props: ListFoodProps) {
     try {
       g.set('loading', true)
       g.time('food search from db')
-      let res = await fn.range(0, 25)
+      let res = await fn.range(0, 50)
       g.time('food search from db')
       //@ts-ignore
       if (res.data) _results = [..._results, ...res.data]
       if (res.error) throw Error(res.error.message)
       setResults(_results)
       g.set('loading', false)
-
-     try {
-      //TODO: In the future, use data loaded in by the database using their files
-      g.time('open food search')
-      let res2 = (term && selectedOption === 'All') ? await OpenFoodFactsRequest(term) : null
-      g.time('open food search')
-      if (res2) {
-        setResults(p => {
-          return [...p, ...(res2?.products || []).map(p => {
-            let form = OpenFoodFactToFood(p)
-            return {name: form.name, id: -1, fromApi: true, calories: form.calories || 0, servingSize: form.quantity || 1, servingUnit: form.servingSize || 'Serving', form}
-          })]
-        })
-      }
-     } catch (error) {
-      console.log('error fetching from open food facts')
-     }
-      
     } catch (error) {
       g.setFn(p => {
         let og = { ...p }
@@ -122,16 +104,15 @@ export default function ListFood(props: ListFoodProps) {
     if (!_barcode) return;
     try {
       g.set('loading', true)
-      let res = await OpenFoodFactsBarcodeSearch(_barcode)
-      console.log(res)
-      if (res.product) {
-        let form = OpenFoodFactToFood(res.product)
+      let res = await supabase.from('food').select('*, author:user_id(username), servingSize:quantity, servingUnit:servingSize')
+        .filter('public', 'eq', true).or(`barcode.eq.${barcode},barcode.eq.0${barcode},barcode.eq.00${barcode}`)
+      if (res.data && !res.error && res.data.length) {
         g.set('loading', false)
-      setResults([{name: form.name, id: -1, fromApi: true, calories: form.calories || 0, servingSize: form.quantity || 1, servingUnit: form.servingSize || 'Serving', form}])
+        setResults(res.data)
       } else {
-        throw Error('No food found')
+        throw Error(res.error?.message || 'No food found')
       }
-      return res.product ? 1 : 0
+      return res.data ? 1 : 0
     } catch (error) {
       g.setFn(p => {
         let og = { ...p }

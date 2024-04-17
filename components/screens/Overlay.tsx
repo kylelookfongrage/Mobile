@@ -1,12 +1,12 @@
 import { View as DefaultView, useColorScheme } from 'react-native'
-import React, { ForwardedRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
+import React, { ForwardedRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import { Incubator } from 'react-native-ui-lib'
 import { Portal, PortalHost } from '@gorhom/portal';
 
 import Colors from '../../constants/Colors';
 import tw from 'twrnc'
 import { View } from '../base/Themed';
-import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import BottomSheet, { BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { _tokens } from '../../tamagui.config';
 import { forwardRef } from 'react';
 import { useGet } from '../../hooks/useGet';
@@ -21,7 +21,7 @@ export type TRefOverlay = {
 
 }
 
-export default forwardRef(function Overlay(props: {bg?: string; index?: number | undefined; disableScroll?: boolean; disableClose?: boolean; id?: string; visible?: boolean; snapPoints?: string[]; disablePadding?: boolean; onDismiss?: (b?: boolean) => void, excludeBanner?: boolean, dialogueHeight?: number | string, dynamicHeight?: boolean} & DefaultView['props'], ref: ForwardedRef<TRefOverlay>) {
+export default forwardRef(function Overlay(props: {bg?: string; ignoreBackdrop?: boolean; index?: number | undefined; disableScroll?: boolean; disableClose?: boolean; id?: string; visible?: boolean; snapPoints?: string[]; disablePadding?: boolean; onDismiss?: (b?: boolean) => void, excludeBanner?: boolean, dialogueHeight?: number | string, dynamicHeight?: boolean} & DefaultView['props'], ref: ForwardedRef<TRefOverlay>) {
     let g = useGet()
     let h = g.s.height
     const getTotalHeight = (x: string | number) => {
@@ -35,6 +35,19 @@ export default forwardRef(function Overlay(props: {bg?: string; index?: number |
     const color = props.bg || g.modalBg;
     const bottomSheetRef = useRef<BottomSheet>(null);
     let dismiss = () => (props.onDismiss && props.onDismiss(false));
+    const renderBackdrop = useCallback(
+        _props => (
+          <BottomSheetBackdrop
+            {..._props}
+            pressBehavior={'close'}
+            appearsOnIndex={1}
+            animatedIndex={{
+              value: (props.visible && !props.ignoreBackdrop) ? 1 : 0,
+            }}
+          />
+        ),
+        [props.visible, props.ignoreBackdrop],
+    )
     let [disabled, setDisabled] = useState(false)
     const snapPoints = useMemo(() => {
         if (props.snapPoints) {
@@ -90,6 +103,7 @@ export default forwardRef(function Overlay(props: {bg?: string; index?: number |
             ref={bottomSheetRef}
             snapPoints={snapPoints}
             index={-1}
+            backdropComponent={renderBackdrop}
             handleIndicatorStyle={props.excludeBanner ? {opacity: 0} : {backgroundColor: g.dm ? _tokens.gray500 : _tokens.dark1}}
             enableHandlePanningGesture={!disabled}
             enableContentPanningGesture={!disabled}

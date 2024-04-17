@@ -140,7 +140,7 @@ export const LogFoodKeyboardAccessory = (props: INutritionKeyboardProps) => {
     }, [open])
     let _index = useMemo(() => 0, [])
 
-    return <Overlay id='nutrition-keyboard' index={_index} dialogueHeight={'15'} visible={props.visible === false ? false : true} disableClose snapPoints={open ? ['55%'] : undefined} excludeBanner style={{ flex: 1, backgroundColor: dm ? _tokens.dark1 : _tokens.gray50 }} >
+    return <Overlay ignoreBackdrop id='nutrition-keyboard' index={_index} dialogueHeight={'15'} visible={props.visible === false ? false : true} disableClose snapPoints={open ? ['55%'] : undefined} excludeBanner style={{ flex: 1, backgroundColor: dm ? _tokens.dark1 : _tokens.gray50 }} >
         <View style={{ flex: 1, paddingTop: 16, paddingBottom: open ? 16 : insets.bottom + 10, ...tw`flex-row items-center justify-between -mt-3` }}>
             <Pressable style={[tw`w-9/12 rounded-lg px-2 flex-row items-center`, { backgroundColor: dm ? _tokens.dark2 : _tokens.gray300, height: s.height * 0.055 }]} onPress={() => {
                 _expand(); setOpen(true)

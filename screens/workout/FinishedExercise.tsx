@@ -174,6 +174,7 @@ export const SubscriptionOverlay = (props: {
   visible={props.visible}
   onDismiss={props.onDismiss}
   dialogueHeight={45}
+  ignoreBackdrop
 >
   <Spacer sm />
   <SupabaseImage

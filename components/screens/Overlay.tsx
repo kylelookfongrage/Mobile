@@ -36,6 +36,7 @@ export default forwardRef(function Overlay(props: {bg?: string; ignoreBackdrop?:
     const bottomSheetRef = useRef<BottomSheet>(null);
     let dismiss = () => (props.onDismiss && props.onDismiss(false));
     const renderBackdrop = useCallback(
+        //@ts-ignore
         _props => (
           <BottomSheetBackdrop
             {..._props}

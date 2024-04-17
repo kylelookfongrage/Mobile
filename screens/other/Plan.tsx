@@ -224,7 +224,7 @@ export default function Plan(props: { id: Tables['fitness_plan']['Row']['id'] })
                 />
             </ScrollViewWithDrag>
             <SubscriptionOverlay visible={(showSubscription && !canViewDetails)} onDismiss={() => setShowSubscription(false)} onNotNowPress={() => {}} />
-            <Overlay dialogueHeight={55} visible={(showSubscription && canViewDetails)} onDismiss={() => setShowSubscription(false)}>
+            <Overlay ignoreBackdrop dialogueHeight={55} visible={(showSubscription && canViewDetails)} onDismiss={() => setShowSubscription(false)}>
             <Text h4 weight='bold' style={tw`text-center`}>Subscribe to Plan</Text>
             <Spacer xs />
             <Text style={tw`text-center px-9 text-gray-400`} sm weight='semibold'>You can update settings, including start and end dates in your Agenda.</Text>

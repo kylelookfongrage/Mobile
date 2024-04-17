@@ -250,6 +250,7 @@ export default function TaskAgenda() {
       </HideView>
       <Overlay id='task_new_task'
         dialogueHeight={'70'}
+        ignoreBackdrop
         disableClose={(!isfocused) ? true : false}
         snapPoints={!isfocused ? ['10%', '70%'] : undefined}
         ref={ref}
@@ -334,7 +335,7 @@ export default function TaskAgenda() {
         ]} />
       </Overlay>
 
-      {selectedOption === 'Today' && <SaveButton discludeBackground onSave={() => {
+      {selectedOption === 'Today' && <SaveButton discludeBackground safeArea onSave={() => {
         _setNewTask(def)
       }} title='Add Task' />}
 

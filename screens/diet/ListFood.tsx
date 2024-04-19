@@ -45,6 +45,7 @@ interface ListFoodSearchResults {
   servingSize: number;
   servingUnit: string;
   form?: Tables['food']['Insert']
+  barcode?: string;
 }
 
 interface ListFoodProps {
@@ -177,7 +178,7 @@ export default function ListFood(props: ListFoodProps) {
             <Text h4>{getEmojiByCategory(r.category)}</Text>
             <View style={tw`w-12/12 items-start ml-2`}>
               <Text style={tw`max-w-11/12`} lg weight='semibold'>{r.name}</Text>
-              <Text style={tw`text-gray-500`}>{r.calories?.toFixed()} kcal per {r.servingSize?.toFixed()} {r.servingUnit} • {(r.author) ? `@${r.author.username}` : r.fromApi ? 'Open Food Facts' : 'Menustat.org'}</Text>
+              <Text style={tw`text-gray-500`}>{r.calories?.toFixed()} kcal per {r.servingSize?.toFixed()} {r.servingUnit} • {(r.author) ? `@${r.author.username}` : r.barcode ? 'Open Food Facts' : 'Menustat.org'}</Text>
             </View>
           </TouchableOpacity>
         })}

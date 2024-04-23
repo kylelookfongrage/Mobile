@@ -6,10 +6,10 @@ export function EquiptmentDao(){
     const dao = useDao()
     const storage = useStorage()
     const find = async (id: string) => (await dao.find('equiptment', id))
-    const search = async (keyword: string | undefined) => {
+    const search = async (keyword: string | undefined, exercise_equipment=true) => {
         // console.log('searching for ' + keyword)
-        if (!keyword) return (await supabase.from('equiptment').select('*').range(0, 50))?.data || null
-        let res = await supabase.from('equiptment').select('*').filter('name', 'ilike', `%${keyword}%`).range(0, 50)
+        if (!keyword) return (await supabase.from('equiptment').select('*').filter('exercise_equipment', exercise_equipment ? 'eq' : 'neq', true).order('name', {ascending: true}).range(0, 55))?.data || null
+        let res = await supabase.from('equiptment').select('*').filter('name', 'ilike', `%${keyword}%`).filter('exercise_equipment', exercise_equipment ? 'eq' : 'neq', true).order('name', {ascending: true}).range(0, 55)
         return res?.data || null
     }
     const save = async (document: Tables['equiptment']['Insert']): Promise<Tables['equiptment']['Insert'] | null> => {

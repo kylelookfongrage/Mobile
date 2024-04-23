@@ -15,7 +15,7 @@ import { FormReducer, useForm } from '../../hooks/useForm';
 import { Tables } from '../../supabase/dao';
 import Spacer from '../../components/base/Spacer';
 import Overlay from '../../components/screens/Overlay';
-import SearchEquiptment, { EquiptmentTile } from '../../components/features/SearchEquiptment';
+import SearchEquiptment, { EquipmentDetailsOverlay, EquiptmentTile } from '../../components/features/SearchEquiptment';
 import { ExerciseDao } from '../../types/ExerciseDao';
 import { EquiptmentDao } from '../../types/EquiptmentDao';
 import TitleInput from '../../components/inputs/TitleInput';
@@ -27,6 +27,7 @@ import Description from '../../components/base/Description';
 import { useSelector } from '../../redux/store';
 import { useGet } from '../../hooks/useGet';
 import { _tokens } from '../../tamagui.config';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 
 
 export interface ExerciseDetailProps {
@@ -156,6 +157,8 @@ export default function ExerciseDetail(props: ExerciseDetailProps) {
         } 
     }
 
+    let [selectedEquipment, setSelectedEquipment] = useState<Tables['equiptment']['Row'] | null>(null)
+
 
     return (
         <View style={{ flex: 1 }} includeBackground>
@@ -221,16 +224,19 @@ export default function ExerciseDetail(props: ExerciseDetailProps) {
                     <Spacer />
                     {equiptment.length === 0 && <Text style={tw`my-3 text-gray-500 text-center`} weight='semibold'>No equiptment to display</Text>}
                     {equiptment.map(equ => {
-                        return <EquiptmentTile item={equ} key={`equiptment: ${equ.id}`} />
+                        return <TouchableOpacity key={`equiptment: ${equ.id}`} onPress={() => setSelectedEquipment(equ)}>
+                            <EquiptmentTile item={equ} />
+                        </TouchableOpacity>
                     })}
-                    <Spacer divider lg />
+                    <Spacer divider />
+                    <Spacer />
                     {!screenForm.editMode && <ExerciseProgress exerciseId={Number(props.id)} />}
                 </View>
                 <View style={tw`h-40`} />
             </ScrollViewWithDrag>
-            <Overlay dialogueHeight={70} bg={dm ? _tokens.dark1 : undefined} style={{ ...tw``, flex: 1 }} visible={screenForm.showEquiptment} onDismiss={() => setScreen('showEquiptment', false)}>
+            <Overlay disableScroll dialogueHeight={90} bg={dm ? _tokens.dark1 : _tokens.gray50} style={{ ...tw``, flex: 1 }} visible={screenForm.showEquiptment} onDismiss={() => setScreen('showEquiptment', false)}>
                 <ManageButton title='Manage Equipment' hidden />
-                <Spacer />
+                <Spacer xs />
                 <SearchEquiptment selected={equiptment.map(x => x.id)} onSelect={(item, s) => {
                     if (s) {
                         setEquiptment([...equiptment].filter(z => z.id !== item.id))
@@ -239,6 +245,7 @@ export default function ExerciseDetail(props: ExerciseDetailProps) {
                     }
                 }} />
             </Overlay>
+            <EquipmentDetailsOverlay selectedEquipment={selectedEquipment} onDismiss={() => setSelectedEquipment(null)} />
             <SaveButton discludeBackground title={props.workoutId ? 'Add to Workout' : screenForm.editMode ? 'Save Exercise' : 'See Workouts'} uploading={screenForm.uploading} onSave={saveExercise} favoriteId={form.id} favoriteType='exercise' />
         </View>
     )

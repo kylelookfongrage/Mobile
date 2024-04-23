@@ -51,6 +51,7 @@ interface HeadlingProps {
   h1?: boolean
   medium?: boolean; regular?: boolean; thin?: boolean; extralight?: boolean; semibold?: boolean; bold?: boolean; extrabold?: boolean; blackWeight?: boolean;
   center?: boolean; left?: boolean; right?: boolean;
+  white?: boolean
 }
 
 
@@ -91,13 +92,14 @@ export function Text(props: TextProps) {
 
   let g = useGet();
   let color = useMemo(() => {
+    if (props.white) return _tokens.white
     if (props.primary) return _tokens.primary900;
     if (props.gray) return _tokens.gray500
     if (props.error) return _tokens.error;
     if (props.warning) return _tokens.warning;
     if (props.inverted) return g.dm ? _tokens.black : _tokens.white
     return g.dm ? _tokens.white : _tokens.black
-  }, [props.primary, props.gray, props.warning, props.error, props.inverted, g.dm])
+  }, [props.primary, props.white, props.gray, props.warning, props.error, props.inverted, g.dm])
   let fontSize = 14
   if (props.xs) fontSize=10
   if (props.sm) fontSize=12

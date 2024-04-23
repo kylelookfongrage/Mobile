@@ -21,7 +21,7 @@ export type TRefOverlay = {
 
 }
 
-export default forwardRef(function Overlay(props: {bg?: string; ignoreBackdrop?: boolean; index?: number | undefined; disableScroll?: boolean; disableClose?: boolean; id?: string; visible?: boolean; snapPoints?: string[]; disablePadding?: boolean; onDismiss?: (b?: boolean) => void, excludeBanner?: boolean, dialogueHeight?: number | string, dynamicHeight?: boolean} & DefaultView['props'], ref: ForwardedRef<TRefOverlay>) {
+export default forwardRef(function Overlay(props: {bg?: string; whiteBanner?: boolean; ignoreBackdrop?: boolean; index?: number | undefined; disableScroll?: boolean; disableClose?: boolean; id?: string; visible?: boolean; snapPoints?: string[]; disablePadding?: boolean; onDismiss?: (b?: boolean) => void, excludeBanner?: boolean, dialogueHeight?: number | string, dynamicHeight?: boolean} & DefaultView['props'], ref: ForwardedRef<TRefOverlay>) {
     let g = useGet()
     let h = g.s.height
     const getTotalHeight = (x: string | number) => {
@@ -98,6 +98,7 @@ export default forwardRef(function Overlay(props: {bg?: string; ignoreBackdrop?:
             }
         }
     }, [snapPoints, disabled, props.disableClose])
+
     return (
         <Portal>
         <BottomSheet
@@ -105,7 +106,7 @@ export default forwardRef(function Overlay(props: {bg?: string; ignoreBackdrop?:
             snapPoints={snapPoints}
             index={-1}
             backdropComponent={renderBackdrop}
-            handleIndicatorStyle={props.excludeBanner ? {opacity: 0} : {backgroundColor: g.dm ? _tokens.gray500 : _tokens.dark1}}
+            handleIndicatorStyle={props.whiteBanner ? {backgroundColor: _tokens.white} : props.excludeBanner ? {opacity: 0} : {backgroundColor: g.dm ? _tokens.gray500 : _tokens.dark1}}
             enableHandlePanningGesture={!disabled}
             enableContentPanningGesture={!disabled}
             backgroundStyle={{backgroundColor: color}}
@@ -116,11 +117,13 @@ export default forwardRef(function Overlay(props: {bg?: string; ignoreBackdrop?:
                 if (e === -1 && props.onDismiss) {props.onDismiss(false)}
             }}
         >
-           <View style={[props.style, {flex: 1}]} >
+           {props.disableScroll ? <View style={[props.style, {flex: 1}]} >
+                {props.children}
+            </View> : <View style={[props.style, {flex: 1}]} >
                 <BottomSheetScrollView scrollEnabled={!props.disableScroll} showsVerticalScrollIndicator={false} keyboardDismissMode={'interactive'}>
                 {props.children}
                 </BottomSheetScrollView>
-            </View>
+            </View>}
         </BottomSheet>
         {props.id && <PortalHost name={props.id} />}
         </Portal>

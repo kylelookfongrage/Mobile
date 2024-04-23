@@ -373,7 +373,7 @@ function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
         return <Tab key={`Tab-${route.name}`} route={route} isFocused={isFocused} color={color} label={label} options={options} onLongPress={onLongPress} onPress={onPress} icon={icon} />
       })}
        <Overlay excludeBanner id='create-menu' dialogueHeight={30} bg={_tokens.primary900} visible={showOverlay} onDismiss={() => setShowOverlay(false)}>
-        <Text center bold h4 style={tw`-mt-1.5`}>Quick Actions</Text>
+        <Text white center bold h4 style={tw`-mt-1.5`}>Quick Actions</Text>
         <Spacer sm  />
         <XStack flexWrap='wrap' w={'100%'} px='$4' alignItems='center'>
         {actions.map(x => {
@@ -384,8 +384,8 @@ function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
             if (x.onPress) x.onPress()
             setShowOverlay(false)
           }} key={x.title + '-Action Button'} style={tw`w-4/12 mb-5`}>
-            <Text h3 style={tw`text-center`}>{x.icon}</Text>
-            <Text style={tw`text-center`} bold lg>{x.title}</Text>
+            <Text white h3 style={tw`text-center`}>{x.icon}</Text>
+            <Text white style={tw`text-center`} bold lg>{x.title}</Text>
           </TouchableOpacity>
         })}
         </XStack>

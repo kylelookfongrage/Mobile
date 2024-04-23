@@ -57,7 +57,7 @@ export default function Input(props: InputProps) {
             <Spacer size='$2' />
             <XStack alignItems='center' borderWidth={borderColor === 'transparent' ? 0 : 2} borderColor={borderColor} borderRadius={'$4'} space='$2' alignSelf='center' height={props.height || 65}
                 width={props.width || '100%'} backgroundColor={props.bg || (dm ? tokens.dark1 : tokens.gray200)} paddingHorizontal={20}
-                paddingVertical={18} >
+                >
                 {(props.iconLeft) && <TouchableOpacity disabled={!props.leftOnPress} onPress={props.leftOnPress}>
                     <Icon name={props.iconLeft} size={20} color={_tokens.gray500} />
                 </TouchableOpacity>}

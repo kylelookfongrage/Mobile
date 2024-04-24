@@ -203,9 +203,9 @@ export default function ExerciseDetail(props: ExerciseDetailProps) {
                     <ManageButton title='Muscular Profile' buttonText='Manage' onPress={() => setShowMuscles(true)} hidden={!screenForm.editMode} />
                     <Spacer  />
                     {(!form.muscles?.length) && <NothingToDisplay text='No Associated Muscles' />}
-                    <View style={{...tw`flex-row flex-wrap justify-between items-center`}}>
+                    <View style={{...tw`flex-row flex-wrap items-center -mx-1 self-center`}}>
             {(form.muscles || []).map(item => {
-                return <TouchableOpacity key={`Equiptment Search=` + item}>
+                return <TouchableOpacity style={tw`mr-1`} key={`Equiptment Search=` + item}>
                     <MuscleTile item={item} selected={false} />
                 </TouchableOpacity>
             })}
@@ -236,13 +236,7 @@ export default function ExerciseDetail(props: ExerciseDetailProps) {
                     }
                 }} />
             </Overlay>
-            <MuscleOverlay selected={(form.muscles || [])} onSelect={(m, s) => {
-                if (s) {
-                    setForm('muscles', [...(form.muscles || [])].filter(z => z !== m))
-                } else {
-                    setForm('muscles', [...(form.muscles || []), m])
-                }
-            }} visible={showMuscles} onDismiss={() => setShowMuscles(false)} />
+            <MuscleOverlay selected={(form.muscles || [])} onSelect={i => setForm('muscles', i)} visible={showMuscles} onDismiss={() => setShowMuscles(false)} />
             <EquipmentDetailsOverlay selectedEquipment={selectedEquipment} onDismiss={() => setSelectedEquipment(null)} />
             <SaveButton discludeBackground title={props.workoutId ? 'Add to Workout' : screenForm.editMode ? 'Save Exercise' : 'See Workouts'} uploading={screenForm.uploading} onSave={saveExercise} favoriteId={form.id} favoriteType='exercise' />
         </View>

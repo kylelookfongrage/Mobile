@@ -1,4 +1,4 @@
-import { ScrollView, TouchableOpacity } from "react-native";
+import { ScrollView, TouchableOpacity, Image } from "react-native";
 import React from "react";
 import { Text, View } from "../../components/base/Themed";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -27,6 +27,7 @@ import ManageButton from "../../components/features/ManageButton";
 import presetDashboardComponents, { UserInputs } from "../../components/features/PresetSummaryListItems";
 import { useGet } from "../../hooks/useGet";
 import {MasonryFlashList} from '@shopify/flash-list'
+import { Muscles } from "../../assets/muscles/muscles";
 
 export const SummaryScreen = () => {
   let { profile } = useSelector((x) => x.auth);

@@ -424,7 +424,6 @@ import bear_sleep from './assets/animations/bear_sleep.json'
 import sleepy_sleep from './assets/animations/sleepy_sleep.json'
 import squirrel_sleep from './assets/animations/squirrel-sleeping.json'
 
-
 export const animations = { timer, meditation, pigeon_wait, sleepy_sleep, sloth_sleep, sloth_sleeping, bear_sleep, squirrel_sleep }
 
 export const animationMapping = [

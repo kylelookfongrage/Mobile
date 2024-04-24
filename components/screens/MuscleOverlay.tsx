@@ -21,7 +21,7 @@ export default function MuscleOverlay(props: {onSelect?: (items: (keyof typeof M
         setSelectedMuscles(props.selected)
     }, [props.selected])
     return (
-        <Overlay ignoreBackdrop dialogueHeight={65} id="muscles-overlay" visible={props.visible} onDismiss={() => {
+        <Overlay clearBackground dialogueHeight={65} id="muscles-overlay" visible={props.visible} onDismiss={() => {
             props.onSelect && props.onSelect(selectedMuscles)
             props.onDismiss && props.onDismiss()
         }}>

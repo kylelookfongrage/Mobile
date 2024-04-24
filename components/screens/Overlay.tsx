@@ -21,7 +21,7 @@ export type TRefOverlay = {
 
 }
 
-export default forwardRef(function Overlay(props: {bg?: string; whiteBanner?: boolean; ignoreBackdrop?: boolean; index?: number | undefined; disableScroll?: boolean; disableClose?: boolean; id?: string; visible?: boolean; snapPoints?: string[]; disablePadding?: boolean; onDismiss?: (b?: boolean) => void, excludeBanner?: boolean, dialogueHeight?: number | string, dynamicHeight?: boolean} & DefaultView['props'], ref: ForwardedRef<TRefOverlay>) {
+export default forwardRef(function Overlay(props: {bg?: string; clearBackground?: boolean; whiteBanner?: boolean; ignoreBackdrop?: boolean; index?: number | undefined; disableScroll?: boolean; disableClose?: boolean; id?: string; visible?: boolean; snapPoints?: string[]; disablePadding?: boolean; onDismiss?: (b?: boolean) => void, excludeBanner?: boolean, dialogueHeight?: number | string, dynamicHeight?: boolean} & DefaultView['props'], ref: ForwardedRef<TRefOverlay>) {
     let g = useGet()
     let h = g.s.height
     const getTotalHeight = (x: string | number) => {
@@ -42,6 +42,7 @@ export default forwardRef(function Overlay(props: {bg?: string; whiteBanner?: bo
             {..._props}
             pressBehavior={'close'}
             appearsOnIndex={1}
+            opacity={props.clearBackground ? 0 : 1}
             animatedIndex={{
               value: (props.visible && !props.ignoreBackdrop) ? 1 : 0,
             }}

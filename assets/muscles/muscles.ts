@@ -39,7 +39,7 @@ export const Muscles = {
         descrption: '',
         image: require('./hamstrings.png')
     },
-    "Hea": {
+    "Head": {
         descrption: '',
         image: require('./head.png')
     },

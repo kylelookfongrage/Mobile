@@ -99,3 +99,8 @@ function getRandomInt(min: number, max: number) {
   max = Math.floor(max);
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
+
+import tw from 'twrnc'
+export const NothingToDisplay = (props: {text: string}) => {
+  return <DText style={tw`my-4 text-gray-500 text-center`} lg weight='semibold'>{props.text}</DText>
+}

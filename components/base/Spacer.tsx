@@ -14,7 +14,7 @@ export default function Spacer(props: {includeBackground?: boolean; horizontal?:
   if (props.xl) size=8
   if (props.xs) size=1
   if (props.divider) {
-    return <Divider style={{...tw`bg-gray-${dm ? '800' : '300'} m${props.horizontal ? 'x' : 'y'}-${size}`, ...(props.full && {width: Dimensions.get('screen').width + 100, marginLeft: -100})}} />
+    return <Divider style={{...tw`bg-gray-${dm ? '800' : '300'}/40 m${props.horizontal ? 'x' : 'y'}-${size}`, ...(props.full && {width: Dimensions.get('screen').width + 100, marginLeft: -100})}} />
   }
   return (
     <View style={tw`${letter}-${size}`} includeBackground={props.includeBackground} />

@@ -31,7 +31,7 @@ const ProgressPicture = () => {
     let g = useGet();
     let n = useNavigation()
     let [pictures, setPictures] = useState(defaultProgressPictureInput)
-    let [useCamera, setUseCamera] = useState(false)
+    let [useCamera, setUseCamera] = useState(true)
     let [showSettings, setShowSettings] = useState(false)
     let [showActionsFor, setShowActionsFor] = useState(null as null | keyof TProgressPictureInput)
     let remainingPictures = useMemo(() => [...arr].filter(x => x!==showActionsFor), [showActionsFor])

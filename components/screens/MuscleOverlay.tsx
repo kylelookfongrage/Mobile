@@ -25,7 +25,6 @@ export default function MuscleOverlay(props: {onSelect?: (items: (keyof typeof M
             props.onSelect && props.onSelect(selectedMuscles)
             props.onDismiss && props.onDismiss()
         }}>
-        <Text h4 bold>Muscles</Text>
             <Spacer  />
             <View style={tw`flex-row items-center flex-wrap self-center w-12/12`}>
                 {muscles.map(item => {
@@ -59,6 +58,6 @@ export const MuscleTile = (props: {item: keyof typeof Muscles, selected?: boolea
         {selected && <ExpoIcon name="checkbox" iconName="ion" size={15} color="white" />}
         </View>
         </View>
-        <Image source={Muscles[item].image} style={tw`h-9/12 w-9/12`} />
+        <Image source={Muscles[item]?.image} style={tw`h-9/12 w-9/12`} />
     </View>
 }

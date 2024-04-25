@@ -42,7 +42,7 @@ export default forwardRef(function Overlay(props: {bg?: string; clearBackground?
             {..._props}
             pressBehavior={'close'}
             appearsOnIndex={1}
-            opacity={props.clearBackground ? 0 : 1}
+            opacity={props.clearBackground ? 0 : 0.6}
             animatedIndex={{
               value: (props.visible && !props.ignoreBackdrop) ? 1 : 0,
             }}

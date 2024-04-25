@@ -225,8 +225,7 @@ export default function ExerciseDetail(props: ExerciseDetailProps) {
                 </View>
                 <View style={tw`h-40`} />
             </ScrollViewWithDrag>
-            <Overlay disableScroll dialogueHeight={90} bg={dm ? _tokens.dark1 : _tokens.gray50} style={{ ...tw``, flex: 1 }} visible={screenForm.showEquiptment} onDismiss={() => setScreen('showEquiptment', false)}>
-                <ManageButton title='Manage Equipment' hidden />
+            <Overlay clearBackground disableScroll dialogueHeight={90} bg={dm ? _tokens.dark1 : _tokens.gray50} style={{ ...tw``, flex: 1 }} visible={screenForm.showEquiptment} onDismiss={() => setScreen('showEquiptment', false)}>
                 <Spacer xs />
                 <SearchEquiptment selected={equiptment.map(x => x.id)} onSelect={(item, s) => {
                     if (s) {

@@ -52,7 +52,7 @@ export default function SearchEquiptment(props: {onSelect?: (item: Tables['equip
 export const EquipmentDetailsOverlay = (props: {selectedEquipment: Tables['equiptment']['Row'] | null, onDismiss: () => void}) => {
     let {selectedEquipment} = props;
     let g = useGet()
-    return <Overlay whiteBanner ignoreBackdrop bg={_tokens.primary900} dialogueHeight={60} visible={selectedEquipment ? true : false} onDismiss={props.onDismiss}>
+    return <Overlay clearBackground whiteBanner bg={_tokens.primary900} dialogueHeight={60} visible={selectedEquipment ? true : false} onDismiss={props.onDismiss}>
     <View style={tw`flex-row items-start justify-around`}>
         <View style={tw`max-w-8/12`}>
         <Text white h3 bold>{selectedEquipment?.name}</Text>

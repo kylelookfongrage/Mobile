@@ -235,7 +235,7 @@ const VideoControls = (props: {
       <View
         style={tw`flex-row items-center justify-between mb-${props.indicatorMarginBottom || '16'} rounded-3xl w-12/12`}
       >
-        <Text style={tw`text-xs text-white`}>
+        <Text style={tw`text-xs text-white -ml-2`}>
           {toHHMMSS(playbackInstanceInfo.position / 1000)}
         </Text>
         <Slider.Slider
@@ -282,8 +282,8 @@ const VideoControls = (props: {
             });
           }}
         />
-        <Pressable style={tw`self-end px-2 mb-2`} onPress={toggleMuted}>
-              <Icon name={muted ? 'Volume-Off' : 'Volume-Up'} size={25} color={muted ? 'gray' : _tokens.primary900} weight="bold" />
+        <Pressable style={tw`self-end px-2 mx-1 mb-2`} onPress={toggleMuted}>
+              <Icon name={muted ? 'Volume-Off' : 'Volume-Up'} size={25} color={muted ? 'gray' : _tokens.primary700} weight="bold" />
             </Pressable>
         <Pressable onPress={toggleFullScreen}>
           <ExpoIcon

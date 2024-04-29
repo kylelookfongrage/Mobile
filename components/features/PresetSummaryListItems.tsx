@@ -8,6 +8,9 @@ import { TouchableOpacity } from "react-native-gesture-handler";
 import { defaultImage, getMatchingNavigationScreen, substringForLists, toHHMMSS } from "../../data";
 import SupabaseImage from "../base/SupabaseImage";
 import { _tokens } from "../../tamagui.config";
+import { XStack, YStack } from "tamagui";
+import { MacronutrientCircleProgress } from "./MacronutrientBar";
+import Spacer from "../base/Spacer";
 
 export interface UserInputs {
     backgroundColor?: string;
@@ -40,7 +43,7 @@ const presetDashboardComponents = {
         },
         "Intake Progress": (props1: DashboardInputs, props: UserInputs) => {
             let { water, waterGoal } = props1;
-            return <SummaryListItem title='Water' type='circle-progress' screen='LogWater' {...props} progressColor={_tokens.blue} progressValue={(water || 0)} progressTotal={(waterGoal || 1)} suffix='fl oz' description={`Goal: ${waterGoal?.toFixed()} fl oz`} />
+            return <SummaryListItem title='Water' size="quarter" type='circle-progress' screen='LogWater' {...props} progressColor={_tokens.blue} progressValue={(water || 0)} progressTotal={(waterGoal || 1)} suffix='fl oz' description={`goal: ${waterGoal?.toFixed()} fl oz`} />
         },
         "Intake Progress Bar": (props1: DashboardInputs, props: UserInputs) => {
             let { water, waterGoal } = props1;
@@ -61,7 +64,15 @@ const presetDashboardComponents = {
         "Macros Preview": (props1: DashboardInputs, props: UserInputs) => {
             let { foodProgress, mealProgress } = props1;
             let { protein, carbs, fat, calories } = aggregateFoodAndMeals(foodProgress, mealProgress)
-            return <SummaryListItem title='Macros' type='text' size='long' useMatchingScreen screen='SummaryFoodList' {...props} textValue={calories?.toFixed()} textValue2={`${protein?.toFixed()}`} suffix='kcal' suffix2={`g (protein)`} textValue3={carbs?.toFixed()} suffix3='g (carbs)' description={`${fat?.toFixed()}g (fat)`} />
+            return <SummaryListItem title='Macronutrient Overview' size="wide" useMatchingScreen screen='SummaryFoodList' {...props} >
+                <Spacer sm />
+                <XStack alignItems="center" justifyContent="space-around" px='$3'>
+                    <MacronutrientCircleProgress disableMultiplier calories weight={calories} totalEnergy={calories} goal={props1.tdee || 1400} />
+                    <MacronutrientCircleProgress protein weight={protein} totalEnergy={calories} goal={props1.proteinGoal || 100} />
+                    <MacronutrientCircleProgress carbs weight={carbs} totalEnergy={calories} goal={props1.carbGoal || 100} />
+                    <MacronutrientCircleProgress fat weight={fat} totalEnergy={calories} goal={props1.fatGoal || 1400} />
+                </XStack>
+            </SummaryListItem>
         },
         "Macros List": (props1: DashboardInputs, props: UserInputs) => {
             let { foodProgress, mealProgress, tdee, proteinGoal, carbGoal, fatGoal } = props1;
@@ -111,7 +122,7 @@ const presetDashboardComponents = {
     'Tasks' : {
         "Tasks Preview": (props1: DashboardInputs, props: UserInputs) => {
             let { tasksCompleted, tasksTotal } = props1;
-            return <SummaryListItem title="Today's Tasks" useMatchingScreen screen="TaskAgenda" size={undefined} type='text' {...props} textValue={(tasksCompleted || 0).toFixed()} description={`${(tasksTotal || 0)?.toFixed()} Total`} />
+            return <SummaryListItem title="Tasks" useMatchingScreen screen="TaskAgenda" size={'quarter'} type='text' {...props} textValue={(tasksCompleted || 0).toFixed()} description={`remaining`} />
         },
     },
     'Activity' : {

@@ -124,13 +124,13 @@ export default function WorkoutPlayStatic(props: WorkoutPlayDisplayProps) {
                
             </YStack>
 
-            <Overlay dialogueHeight={45} visible={showExerciseDetails} onDismiss={() => setShowExerciseDetails(false)}>
+            <Overlay clearBackground dialogueHeight={30} visible={showExerciseDetails} onDismiss={() => setShowExerciseDetails(false)}>
                 <Text h4 weight='bold'>{exercise?.name}</Text>
                 <Spacer sm />
-                <XStack alignItems='center' justifyContent='space-around'>
-                    <Text>{wd?.reps} x {wd?.sets} Sets</Text>
-                    <Text>{toHHMMSS(wd?.rest || 0)} Rest</Text>
-                    <Text>{toHHMMSS(wd?.time || 0)} Time</Text>
+                <XStack alignItems='center' justifyContent='space-between'>
+                    <Text bold lg>{wd?.reps} x {wd?.sets} Sets</Text>
+                    <Text bold lg>{toHHMMSS(wd?.rest || 0)} Rest</Text>
+                    <Text bold lg>{toHHMMSS(wd?.time || 0)} Time</Text>
                 </XStack>
                 <Spacer sm />
                 <Description value={exercise?.description + (!wd?.note ? '' : `\nNote: ${wd?.note}`)} editable={false} />
@@ -232,20 +232,20 @@ export default function WorkoutPlayStatic(props: WorkoutPlayDisplayProps) {
                 </XStack>
             </YStack>
 
-            <Overlay dialogueHeight={30} visible={showExerciseDetails} onDismiss={() => setShowExerciseDetails(false)}>
+            <Overlay clearBackground dialogueHeight={30} visible={showExerciseDetails} onDismiss={() => setShowExerciseDetails(false)}>
                 <Text h4 weight='bold'>{currentExercise.name}</Text>
                 <Spacer sm />
-                <XStack alignItems='center' justifyContent='space-around'>
-                    <Text>{selectedWorkoutDetail.reps} x {selectedWorkoutDetail.sets} Sets</Text>
-                    <Text>{toHHMMSS(selectedWorkoutDetail.rest || 0)} Rest</Text>
-                    <Text>{toHHMMSS(selectedWorkoutDetail.time || 0)} Time</Text>
+                <XStack alignItems='center' justifyContent='space-between'>
+                    <Text lg bold>{selectedWorkoutDetail.reps} x {selectedWorkoutDetail.sets} Sets</Text>
+                    <Text lg bold>{toHHMMSS(selectedWorkoutDetail.rest || 0)} Rest</Text>
+                    <Text lg bold>{toHHMMSS(selectedWorkoutDetail.time || 0)} Time</Text>
                 </XStack>
                 <Spacer sm />
                 <Description value={currentExercise.description + (!selectedWorkoutDetail.note ? '' : `\nNote: ${selectedWorkoutDetail.note}`)} editable={false} />
 
             </Overlay>
 
-            <Overlay dialogueHeight={45} visible={showOptions} onDismiss={() => setShowOptions(false)}>
+            <Overlay clearBackground dialogueHeight={45} visible={showOptions} onDismiss={() => setShowOptions(false)}>
                 <Text h4 weight='bold' style={tw`text-center`}>Workout Settings</Text>
                 <Spacer divider />
                 <SettingItem setting={{title: 'Resting Display', description: selectedAnimation ? titleCase(selectedAnimation) : 'Up Next Video', onPress: (n) => {

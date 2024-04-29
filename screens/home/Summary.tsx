@@ -26,8 +26,10 @@ import Spacer from "../../components/base/Spacer";
 import ManageButton from "../../components/features/ManageButton";
 import presetDashboardComponents, { UserInputs } from "../../components/features/PresetSummaryListItems";
 import { useGet } from "../../hooks/useGet";
-import {MasonryFlashList} from '@shopify/flash-list'
+import { MasonryFlashList } from '@shopify/flash-list'
 import { Muscles } from "../../assets/muscles/muscles";
+import { XStack, YStack } from "tamagui";
+import { NothingToDisplay } from "../../components/base/Toast";
 
 export const SummaryScreen = () => {
   let { profile } = useSelector((x) => x.auth);
@@ -38,12 +40,12 @@ export const SummaryScreen = () => {
     mealProgress,
     workoutProgress,
     runProgress,
-    tasks, 
+    tasks,
     plans
   } = useSelector((x) => x.progress);
   let progressId = today?.id;
   let weight = today?.weight || profile?.weight || 100
-  let {tdee, totalCarbsGrams, totalFatGrams, totalProteinGrams} = getMacroTargets(profile)
+  let { tdee, totalCarbsGrams, totalFatGrams, totalProteinGrams } = getMacroTargets(profile)
   let waterGoal = Number(weight * 0.5);
   let dispatch = useDispatch();
   let setDate = (_date: string) => dispatch(changeDate({ date: _date }));
@@ -71,6 +73,8 @@ export const SummaryScreen = () => {
     moment(formattedDate).startOf("week").add(x, "days")
   );
   let g = useGet()
+  let weightDiff = (profile?.weight || 0) - (today?.weight || profile?.weight || 0) 
+  let fatDiff = (profile?.startFat || 0) - (today?.fat || profile?.startFat || 0) 
   return (
     <View style={{ flex: 1 }} includeBackground>
       <SafeAreaView edges={["top"]} style={[{ flex: 1 }, tw`h-12/12`]}>
@@ -140,59 +144,60 @@ export const SummaryScreen = () => {
             );
           })}
         </View>
-        <ManageButton viewStyle={tw`px-2`} title={"Daily Summary"} buttonText=" " 
-        // onPress={() => navigator.navigate('EditDashboard')} 
-        />
-        <Spacer />
-        {presetDashboardComponents['Tasks']['Tasks Preview'](obj, {index: 1  })}
         <ScrollView
           style={[tw``]}
           showsVerticalScrollIndicator={false}
         >
-          <View style={{minHeight: 2}}>
-          {/* <MasonryFlashList style={{alignItems: 'center', justifyContent: 'center', columnGap: 5}} numColumns={2} estimatedItemSize={163} data={[
-            {name: 'Workouts', type: 'Workout Amount', index: 0},
-            {name: 'Nutrition', type: 'Macros List', index: 1},
-            {name: 'Tasks', type: 'Tasks Preview', index: 2},
-            {name: 'Activity', type: 'Activity Preview', index: 3},
-            {name: 'Water', type: 'Intake Progress', index: 4},
-          ]} renderItem={({item, index}) => {
-            //@ts-ignore
-            return presetDashboardComponents[item.name][item.type](obj, {index: item.index, color: item.backgroundColor, progressColor1: item.progressColor1, progressColor2: item.progressColor2  })
-          }} /> */}
-          </View>
-          
+          <ThisAdHelpsKeepFree />
+          <Spacer xs />
+          {presetDashboardComponents['Nutrition']['Macros Preview'](obj, { index: 1 })}
+          <XStack style={{ flex: 1, width: g.s.width }}>
+          <TouchableOpacity onPress={() => {
+            let s = getMatchingNavigationScreen('TaskAgenda', navigator)
+            navigator.navigate(s)
+          }} style={{ width: g.s.width * 0.43, height: g.s.height * 0.17, marginLeft: 8, margin: 4, marginTop: 8 }}>
+            <View card style={{flex: 1, ...tw`p-2 rounded-lg`}}>
+              <Text bold lg>Progress Log</Text>
+              <Spacer sm />
+              <XStack alignItems="center" justifyContent="space-between">
+                <YStack>
+                  <Text blackWeight>Weight</Text>
+                  <Text sm gray>{profile?.metric ? 'kgs' : 'lbg'}</Text>
+                </YStack>
+                <YStack>
+                  <Text blackWeight right gray={!today?.weight}>{today?.weight || '--'}</Text>
+                  <Text sm right gray={weightDiff === 0} style={{color: weightDiff > 0 ? _tokens.green : weightDiff < 0 ? _tokens.red : _tokens.gray500}}>{weightDiff > 0 ? '-' : '+'} {Math.abs(weightDiff)}</Text>
+                </YStack>
+              </XStack>
+              <Spacer />
+              <XStack alignItems="center" justifyContent="space-between">
+                <YStack>
+                  <Text blackWeight>Body Fat</Text>
+                  <Text sm gray>%</Text>
+                </YStack>
+                <YStack>
+                  <Text blackWeight right gray={!today?.fat}>{today?.fat || '--'}</Text>
+                  <Text sm right gray={fatDiff === 0} style={{color: fatDiff > 0 ? _tokens.green : fatDiff < 0 ? _tokens.red : _tokens.gray500}}>{fatDiff > 0 ? '-' : '+'} {Math.abs(fatDiff)}</Text>
+                </YStack>
+              </XStack>
+            </View>
+          </TouchableOpacity>
+            {presetDashboardComponents['Water']['Intake Progress'](obj, { index: 2 })}
+            {presetDashboardComponents['Tasks']['Tasks Preview'](obj, { index: 3 })}
+          </XStack>
           <Spacer />
-          {/* <View style={tw`flex-row items-center justify-between w-12/12 mt-2`}>
-            <Text style={tw`text-lg`} weight="semibold">
-              Latest {lastRun?.type || "Run"} Activity
-            </Text>
-            <TouchableOpacity
-              style={tw`p-3`}
-              onPress={() => {
-                //@ts-ignore
-                navigator.navigate("Run", { progressId: progressId });
-              }}
-            >
-              <Text style={tw`text-red-500`} weight="semibold">
-                Start a Run
-              </Text>
-            </TouchableOpacity>
-          </View> */}
-          <ManageButton title="Today's Workouts" buttonText="Search" onPress={() => {
-                const screen = getMatchingNavigationScreen(
-                  "ListWorkout",
-                  navigator
-                );
-                //@ts-ignore
-                navigator.navigate(screen, { progressId: progressId });
-              }} />
-          <Spacer sm/>
-          {workoutProgress.length === 0 && (
-            <Text style={tw`text-center my-6`}>
-              There are no workouts to display
-            </Text>
-          )}
+          <View style={tw`px-3`}>
+          <ManageButton  title="Today's Workouts" buttonText="Search" onPress={() => {
+            const screen = getMatchingNavigationScreen(
+              "ListWorkout",
+              navigator
+            );
+            //@ts-ignore
+            navigator.navigate(screen, { progressId: progressId });
+          }} />
+          </View>
+          <Spacer sm />
+          {workoutProgress.length === 0 && <NothingToDisplay  text="No Workouts Completed, yet!"/>}
           {workoutProgress.map((w, i) => {
             return (
               <SwipeWithDelete
@@ -223,8 +228,8 @@ export const SummaryScreen = () => {
                         {w.workout?.name || "Workout"}
                       </Text>
                       <Text style={tw`text-red-500`}>
-                            @{w.workout?.user?.username}
-                          </Text>
+                        @{w.workout?.user?.username}
+                      </Text>
                     </View>
                   </View>
                 </TouchableOpacity>
@@ -232,7 +237,6 @@ export const SummaryScreen = () => {
             );
           })}
           <View style={tw`pb-10`} />
-          <ThisAdHelpsKeepFree />
           <View style={tw`pb-40`} />
         </ScrollView>
       </SafeAreaView>

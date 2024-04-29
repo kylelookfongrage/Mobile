@@ -32,19 +32,24 @@ let SummaryListItem = <T extends any>(props: {
     useMatchingScreen?: boolean;
     title: string;
     screen?: string;
-    size?: 'lg' | 'long' | undefined
+    size?: 'lg' | 'long' | undefined | 'quarter' | 'wide'
     color?: string
+    children?: any
 }) => {
     let s = Dimensions.get('screen')
     let n = useNavigation()
     let size = useMemo(() => {
-        let _size = { height: s.height * 0.19, width: s.width * 0.45 }
+        let _size = { height: s.height * 0.15, width: s.width * 0.45 }
         if (props.size === 'long' || (props.size === 'lg' && props.type === 'text')) {
             _size.height = s.height * 0.30
         } else if (props.size === 'lg' || props.type === 'list') {
             _size.height = s.height * 0.35
         } else if (props.type === 'progress') {
             _size = { height: s.height * 0.19, width: s.width * 0.45 }
+        } else if (props.size === 'quarter') {
+            _size = {height: s.height * 0.17, width: s.width * 0.24}
+        } else if (props.size === 'wide') {
+            _size = {height: s.height * 0.19, width: s.width * 0.96}
         }
         return { ..._size, maxWidth: _size.width, maxHeight: _size.height }
     }, [props.size, props.type])
@@ -83,14 +88,15 @@ let SummaryListItem = <T extends any>(props: {
             if (screen) { //@ts-ignore
                 n.navigate(screen)
             }
-        }} style={{ ...size, margin: 8, alignSelf: 'center' }}>
-            <View card={!props.color} style={{ width: '100%', height: '100%', ...tw`rounded justify-between`, ...(props.color ? { backgroundColor: props.color } : {}) }}>
+        }} style={{ ...size, margin: 4, marginTop: 8, alignSelf: 'center' }}>
+            <View card={!props.color} style={{ width: '100%', height: '100%', ...tw`rounded-${props.size === 'quarter' ? 'lg' : 'xl'} justify-between`, ...(props.color ? { backgroundColor: props.color } : {}) }}>
                 <Text weight="bold" lg style={tw`text-center pt-2`}>
                     {props.title}
                 </Text>
+                {props.children}
                 {props.type === 'circle-progress' && <View style={tw`flex-row items-center justify-around`}>
                     <AnimatedCircularProgress
-                        size={size.height * 0.6}
+                        size={size.height * 0.5}
                         width={size.height * 0.03}
                         rotation={270}
                         fill={0}
@@ -105,7 +111,7 @@ let SummaryListItem = <T extends any>(props: {
                                 <Text h4 weight="black">
                                     {props.progressAsPercentage ? fill.toFixed(0) : progressValue.toFixed()}
                                 </Text>
-                                {(props.suffix || props.progressAsPercentage) && <Text weight="semibold">{props.progressAsPercentage ? ' %' : props.suffix}</Text>}
+                                {(props.suffix || props.progressAsPercentage) && <Text gray sm>{props.progressAsPercentage ? ' %' : props.suffix}</Text>}
                             </View>
                         )}
                     </AnimatedCircularProgress>
@@ -154,7 +160,7 @@ let SummaryListItem = <T extends any>(props: {
                 {(props.type === 'list' && props.listData && props.renderList) && <ScrollView  horizontal scrollEnabled={false}>
                 <FlatList style={{width: size.width, marginTop: 10}} keyExtractor={props.listKeyExtractor} data={props.listData} showsVerticalScrollIndicator={false} renderItem={props.renderList} />
                     </ScrollView>}
-                <Text sm style={tw`text-center p-2`}>{props.description || ''}</Text>
+                <Text gray sm style={tw`text-center p-2`}>{props.description || ''}</Text>
             </View>
         </TouchableOpacity>
     );

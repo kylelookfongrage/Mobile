@@ -11,6 +11,7 @@ import {
 import moment from 'moment'
 import Spacer from '../base/Spacer'
 import { useSelector } from '../../redux/store'
+import { NothingToDisplay } from '../base/Toast'
 
 export default function ExerciseProgress(props: {
     exerciseId: number
@@ -55,7 +56,7 @@ export default function ExerciseProgress(props: {
     }, [])
     if (chartTitle === '' || sortedChartLabels.length === 0 || sortedChart.length === 0) return <View>
         <Text weight='bold' h5>Progress</Text>
-        <Text style={tw`my-3 text-gray-500 text-center`} weight='semibold'>No progress to display</Text>
+        <NothingToDisplay text='No progress yet!' />
     </View>
     return (
         <View>

@@ -218,21 +218,20 @@ export default function Profile(props: ProfileProps) {
                     </Pressable>
                 </YStack>
             </XStack>
-            <Spacer />
-            <XStack alignItems='center' justifyContent='center'>
-                <Button pill width={'76%'} height={'$4'} 
+            <Spacer lg/>
+            <XStack alignItems='center' alignSelf='center' justifyContent='center'>
+                <Button width={'90%'}  height={'$4'} 
                     onPress={isCurrentUsersProfile ? () => navigator.navigate('UserBio') : onFollowingPress} 
                     title={!isCurrentUsersProfile ? (isFollowing ? 'Unsubscribe' : 'Subscribe') : "Edit Profile"} 
                     type={!isCurrentUsersProfile ? (isFollowing ? 'outline' : 'primary') : 'light'} />
-                <Spacer horizontal lg />
-                <IconButton iconName='Send' circle size={'$4'} type='dark' />
+                {/* <IconButton iconName='Send' circle size={'$4'} type='dark' /> */}
             </XStack>
-            <Spacer />
+            <Spacer lg/>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{minHeight: 50, ...tw`ml-3`}}>
             {Object.keys(options).map(x => {
                 let selected = selectedOption === x
                 return <TouchableOpacity key={x} style={tw`mr-2`} onPress={() => setSelectedOption(x)}>
-                <Tag type={selected ? 'primary' : 'outline'} color={selected ? 'primary900' : (dm ? "white" : 'dark1')}>{x}</Tag>
+                <Tag type={selected ? 'primary' : 'light'} color={selected ? 'primary900' : (dm ? "white" : 'dark1')}>{x}</Tag>
             </TouchableOpacity>
             })}
             </ScrollView>

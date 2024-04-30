@@ -303,7 +303,17 @@ export default function FoodDetail2(props: {
         n.pop(2)
 
       } else {
-        let { data, error } = await supabase.from('food').insert(form).select().single()
+        let _form = {...form}
+        //@ts-ignore
+        let servings = {...(form.servingSizes || {})}
+        if (servings && typeof servings === 'string') {
+          servings = JSON.parse(servings)
+        } else {
+          servings = {}
+        }
+        servings['Serving'] = _form?.weight || 1
+        _form['servingSizes'] = servings
+        let { data, error } = await supabase.from('food').insert(_form).select().single()
         if (data) {
           n.pop()
           g.set('loading', false)
@@ -428,7 +438,7 @@ export default function FoodDetail2(props: {
         <TextArea editable={!props.meal_id ? true : false} value={form.ingredients || ''} height={'$9'} textSize={16} id='ingredients' />
         <View style={tw`h-90`} />
       </ScrollView>}
-      <Overlay style={{ zIndex: 100000000000000000000 }} excludeBanner visible={showCategory} onDismiss={() => setShowCategory(false)}>
+      <Overlay clearBackground style={{ zIndex: 100000000000000000000 }} excludeBanner visible={showCategory} onDismiss={() => setShowCategory(false)}>
         <ManageButton buttonText='Done' title='Food Category' onPress={() => setShowCategory(false)} />
         <Spacer sm />
         <ScrollView showsVerticalScrollIndicator={false}>
@@ -438,9 +448,9 @@ export default function FoodDetail2(props: {
               setForm('category', x)
             }} style={tw`py-1 flex-row items-center justify-between`} key={x}>
               <XStack alignItems='center'>
-                <Text lg>{USDAFoodCategories[x]}</Text>
+                <Text xl>{USDAFoodCategories[x]}</Text>
                 <Spacer horizontal sm />
-                <Text weight={selected ? 'bold' : 'regular'}>{x}</Text>
+                <Text lg weight={selected ? 'bold' : 'regular'}>{x}</Text>
               </XStack>
               {selected && <ExpoIcon name='check' iconName='feather' size={20} color={_tokens.primary900} />}
             </Pressable>

@@ -67,7 +67,7 @@ export function KeyboardView(props: INutritionKeyboardProps) {
     }
 
     return (
-        <ScrollView scrollEnabled={false} contentContainerStyle={[{ backgroundColor: dm ? _tokens.dark1 : _tokens.gray50, flex: 1 }]}>
+        <ScrollView scrollEnabled={false} contentContainerStyle={[{ backgroundColor: dm ? _tokens.dark1 : _tokens.gray100, flex: 1 }]}>
             <DView style={{...tw`flex-wrap flex-row self-center`, width: Dimensions.get('screen').width}}>
                 {[1, 2, 3, '/', 4, 5, 6, ' ', 7, 8, 9, 'BACK', '.', 0, 'ENTER'].map(x => {
                     return <TouchableOpacity onPress={() => {
@@ -127,7 +127,7 @@ export const LogFoodKeyboardAccessory = (props: INutritionKeyboardProps) => {
 
     let s = Dimensions.get('screen')
     let dm = useColorScheme() === 'dark'
-    let selectedColor = dm ? _tokens.dark5 : _tokens.gray500
+    let selectedColor = _tokens.primary900
     let unselectedColor = dm ? _tokens.dark3 : _tokens.gray300
 
     useEffect(() => {
@@ -140,7 +140,7 @@ export const LogFoodKeyboardAccessory = (props: INutritionKeyboardProps) => {
     }, [open])
     let _index = useMemo(() => 0, [])
 
-    return <Overlay ignoreBackdrop id='nutrition-keyboard' index={_index} dialogueHeight={'15'} visible={props.visible === false ? false : true} disableClose snapPoints={open ? ['55%'] : undefined} excludeBanner style={{ flex: 1, backgroundColor: dm ? _tokens.dark1 : _tokens.gray50 }} >
+    return <Overlay ignoreBackdrop id='nutrition-keyboard' index={_index} dialogueHeight={'15'} visible={props.visible === false ? false : true} disableClose snapPoints={open ? ['55%'] : undefined} excludeBanner style={{ flex: 1, backgroundColor: dm ? _tokens.dark1 : _tokens.gray100 }} >
         <View style={{ flex: 1, paddingTop: 16, paddingBottom: open ? 16 : insets.bottom + 10, ...tw`flex-row items-center justify-between -mt-3` }}>
             <Pressable style={[tw`w-9/12 rounded-lg px-2 flex-row items-center`, { backgroundColor: dm ? _tokens.dark2 : _tokens.gray300, height: s.height * 0.055 }]} onPress={() => {
                 _expand(); setOpen(true)
@@ -152,7 +152,7 @@ export const LogFoodKeyboardAccessory = (props: INutritionKeyboardProps) => {
             </Pressable>
             <Pressable onPress={open ? () => setOpen(false) : onEnterPress} style={[tw`w-2.5/12 px-1 items-center justify-center rounded-lg`, { height: s.height * 0.055 }, !open && { backgroundColor: _tokens.primary900 }]}>
                 {!open && <Text lg weight='bold' style={tw`text-${(open && !dm) ? 'black' : 'white'}`}>{open ? 'Done' : 'Save'}</Text>}
-                {open && <ExpoIcon iconName='material' name='keyboard-hide' size={25} color={'white'} />}
+                {open && <ExpoIcon iconName='material' name='keyboard-hide' size={25} color={dm ? "white" : 'black'} />}
             </Pressable>
         </View>
         <HideView hidden={!open}>
@@ -162,9 +162,9 @@ export const LogFoodKeyboardAccessory = (props: INutritionKeyboardProps) => {
 
                     return <TouchableOpacity onPress={() => {
                         onServingChange(x)
-                    }} key={x} style={{ ...tw`px-2 mx-1 items-center justify-center rounded-2xl`, backgroundColor: selected ? selectedColor : unselectedColor, height: 40 }}>
+                    }} key={x} style={{ ...tw`px-2 mx-1 items-center justify-center rounded-lg`, backgroundColor: selected ? selectedColor : unselectedColor, height: 40 }}>
                         {/* @ts-ignore */}
-                        <Text weight='semibold'>{x} {`(${Math.round(servingSizes[x] || 1)}g)`}</Text>
+                        <Text white={selected} bold={selected}>{x} {`(${Math.round(servingSizes[x] || 1)}g)`}</Text>
                     </TouchableOpacity>
                 })}
             </ScrollView>

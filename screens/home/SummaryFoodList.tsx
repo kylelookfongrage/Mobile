@@ -23,14 +23,14 @@ import { aggregateFoodAndMeals } from '../../redux/reducers/progress'
 import { useSelector } from '../../redux/store'
 
 export default function SummaryFoodList() {
-    let {profile} = useSelector(x => x.auth)
-    let {today} = useSelector(x => x.progress)
-    let progressId = today?.id 
-    let {tdee, totalCarbsGrams, totalFatGrams, totalProteinGrams} = getMacroTargets(profile)
+    let { profile } = useSelector(x => x.auth)
+    let { today } = useSelector(x => x.progress)
+    let progressId = today?.id
+    let { tdee, totalCarbsGrams, totalFatGrams, totalProteinGrams } = getMacroTargets(profile)
     const dm = useColorScheme() === 'dark'
     const dao = ProgressDao()
     const [food_progress, meal_progress] = [dao.foodProgress, dao.mealProgress]
-    let {calories: caloriesConsumed, protein: proteinConsumed, carbs: carbsConsumed, fat: fatConsumed, otherNutrition} = aggregateFoodAndMeals(food_progress, meal_progress)
+    let { calories: caloriesConsumed, protein: proteinConsumed, carbs: carbsConsumed, fat: fatConsumed, otherNutrition } = aggregateFoodAndMeals(food_progress, meal_progress)
     const navigator = useNavigation()
     const caloriePercent = (caloriesConsumed / tdee) * 100
     const totalProteinPercent = (proteinConsumed / totalProteinGrams) * 100
@@ -39,37 +39,38 @@ export default function SummaryFoodList() {
     let [showNutrition, setShowNutrition] = useState<boolean>(false)
     let g = useGet()
 
-    
+
     return (
         <View style={{ flex: 1 }} includeBackground>
             <BackButton name='Food and Meals' Right={() => {
-                return <TouchableOpacity onPress={() => setShowNutrition(p => !p)} style={tw`px-4`}>
-                    <Text lg weight='bold' style={{color: _tokens.primary900}}>Nutrition Label</Text>
+                return <TouchableOpacity onPress={() => setShowNutrition(true)} style={tw`px-4`}>
+                    <Text lg weight='bold' style={{ color: _tokens.primary900 }}>Nutrition Label</Text>
                 </TouchableOpacity>
             }} />
             <Spacer />
-            <Overlay visible={showNutrition} onDismiss={() => setShowNutrition(false)}>
+            <Overlay clearBackground visible={showNutrition} onDismiss={() => setShowNutrition(false)}>
                 <ScrollView showsVerticalScrollIndicator={false}>
-                <NutritionLabel disabled calories={caloriesConsumed} protein={proteinConsumed} fat={fatConsumed} carbs={carbsConsumed} otherNutrition={otherNutrition}/>
-                <Spacer xl/>
-                <Spacer xl/>
+                    <NutritionLabel disabled calories={caloriesConsumed} protein={proteinConsumed} fat={fatConsumed} carbs={carbsConsumed} otherNutrition={otherNutrition} />
+                    <Spacer xl />
+                    <Spacer xl />
                 </ScrollView>
             </Overlay>
-            <View style={[tw`shadow-xl rounded-lg items-center justify-center self-center bg-transparent w-12/12`]}>
-               <ImpactGridItem header t2='Goal' t3='Consumed' t4='%' />
-        <ImpactGridItem t1='Calories (kcal)' t2={(tdee || 0).toFixed()} t3={(caloriesConsumed || 0).toFixed()} t3Color={caloriesConsumed > tdee ? _tokens.red : undefined} t4={caloriePercent.toFixed()} t4Color={caloriesConsumed > tdee ? _tokens.red : _tokens.green} />
-        <ImpactGridItem t1='Protein (g)' t2={(totalProteinGrams || 0).toFixed()} t3={(proteinConsumed || 0).toFixed()} t3Color={proteinConsumed > totalProteinGrams ? _tokens.red : undefined} t4={totalProteinPercent.toFixed()} t4Color={proteinConsumed > totalProteinGrams ? _tokens.red : _tokens.green} />
-        <ImpactGridItem t1='Carbs (g)' t2={(totalCarbsGrams || 0).toFixed()} t3={(carbsConsumed || 0).toFixed()} t3Color={carbsConsumed > totalCarbsGrams ? _tokens.red : undefined} t4={totalCarbsPercent.toFixed()} t4Color={carbsConsumed > totalCarbsGrams ? _tokens.red : _tokens.green} />
-        <ImpactGridItem t1='Fats (g)' t2={(totalFatGrams || 0).toFixed()} t3={(fatConsumed || 0).toFixed()} t3Color={fatConsumed > totalFatGrams ? _tokens.red : undefined} t4={totalFatPercent.toFixed()} t4Color={fatConsumed > totalFatGrams ? _tokens.red : _tokens.green} />
+
+            <ScrollView style={tw`px-4 `} showsVerticalScrollIndicator={false}>
+            <ThisAdHelpsKeepFree addedPb />
+                <View style={[tw`rounded-lg items-center justify-center self-center w-12/12 py-3 px-4`, {backgroundColor: g.dm ? _tokens.dark1 : _tokens.gray100}]}>
+                    <ImpactGridItem header t2='Goal' t3='Consumed' t4='%' />
+                    <ImpactGridItem t1='Calories (kcal)' t2={(tdee || 0).toFixed()} t3={(caloriesConsumed || 0).toFixed()} t3Color={caloriesConsumed > tdee ? _tokens.red : undefined} t4={caloriePercent.toFixed()} t4Color={caloriesConsumed > tdee ? _tokens.red : _tokens.green} />
+                    <ImpactGridItem t1='Protein (g)' t2={(totalProteinGrams || 0).toFixed()} t3={(proteinConsumed || 0).toFixed()} t3Color={proteinConsumed > totalProteinGrams ? _tokens.red : undefined} t4={totalProteinPercent.toFixed()} t4Color={proteinConsumed > totalProteinGrams ? _tokens.red : _tokens.green} />
+                    <ImpactGridItem t1='Carbs (g)' t2={(totalCarbsGrams || 0).toFixed()} t3={(carbsConsumed || 0).toFixed()} t3Color={carbsConsumed > totalCarbsGrams ? _tokens.red : undefined} t4={totalCarbsPercent.toFixed()} t4Color={carbsConsumed > totalCarbsGrams ? _tokens.red : _tokens.green} />
+                    <ImpactGridItem t1='Fats (g)' t2={(totalFatGrams || 0).toFixed()} t3={(fatConsumed || 0).toFixed()} t3Color={fatConsumed > totalFatGrams ? _tokens.red : undefined} t4={totalFatPercent.toFixed()} t4Color={fatConsumed > totalFatGrams ? _tokens.red : _tokens.green} />
                 </View>
-            <ScrollView style={tw`px-4 mt-4`} showsVerticalScrollIndicator={false}>
-                
-                <Spacer />
-                <ManageButton title='Food' buttonText='Add Food'  onPress={() => {
-                        const screen = getMatchingNavigationScreen('ListFood', navigator)
-                        //@ts-ignore
-                        navigator.navigate(screen, { progressId: progressId })
-                    }} />
+                <Spacer lg />
+                <ManageButton title='Food' buttonText='Add Food' onPress={() => {
+                    const screen = getMatchingNavigationScreen('ListFood', navigator)
+                    //@ts-ignore
+                    navigator.navigate(screen, { progressId: progressId })
+                }} />
                 {food_progress.length === 0 && <Text style={tw`text-center my-6`}>There is no food to display, add some!</Text>}
                 {food_progress.map(ingr => {
                     return <SwipeWithDelete onDelete={async () => {
@@ -78,7 +79,7 @@ export default function SummaryFoodList() {
                             await dao.deleteProgress(ingr.id, 'food_progress')
                         } catch (error) {
                             //@ts-ignore
-                            g.setFn(prev => ({...prev, error: error.toString(), loading: false}))
+                            g.setFn(prev => ({ ...prev, error: error.toString(), loading: false }))
                         } finally {
                             g.set('loading', false)
                         }
@@ -108,11 +109,11 @@ export default function SummaryFoodList() {
                 })}
                 <Spacer />
                 <ManageButton title='Meals' buttonText='Add Meals' onPress={() => {
-                        const screen = getMatchingNavigationScreen('ListMeal', navigator)
-                        //@ts-ignore
-                        navigator.navigate(screen, { progressId: progressId })
-                    }} />
-                
+                    const screen = getMatchingNavigationScreen('ListMeal', navigator)
+                    //@ts-ignore
+                    navigator.navigate(screen, { progressId: progressId })
+                }} />
+
                 {meal_progress.length === 0 && <Text style={tw`text-center my-6`}>There are no meals to display, add one!</Text>}
                 {meal_progress.map((ingr, i) => {//@ts-ignore
                     const r = getMacrosFromIngredients(ingr.meal.meal_ingredients)
@@ -122,12 +123,12 @@ export default function SummaryFoodList() {
                             await dao.deleteProgress(ingr.id, 'meal_progress')
                         } catch (error) {
                             //@ts-ignore
-                            g.setFn(prev => ({...prev, error: error.toString(), loading: false}))
+                            g.setFn(prev => ({ ...prev, error: error.toString(), loading: false }))
                         } finally {
                             g.set('loading', false)
                         }
-                    }} key={'meal_progress_'+ `${ingr.id}` + `${i}`}>
-                         <View
+                    }} key={'meal_progress_' + `${ingr.id}` + `${i}`}>
+                        <View
                             card
                             style={tw`w-12/12 my-1 flex-row justify-between items-center  rounded-2xl py-2 px-3`}>
                             <TouchableOpacity onPress={() => {
@@ -151,7 +152,6 @@ export default function SummaryFoodList() {
                     </SwipeWithDelete>
                 })}
                 <View style={tw`h-12`} />
-                <ThisAdHelpsKeepFree />
                 <View style={tw`h-40`} />
             </ScrollView>
         </View>

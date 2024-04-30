@@ -148,8 +148,7 @@ export const SummaryScreen = () => {
           style={[tw``]}
           showsVerticalScrollIndicator={false}
         >
-          <ThisAdHelpsKeepFree />
-          <Spacer xs />
+          <ThisAdHelpsKeepFree addedPb/>
           {presetDashboardComponents['Nutrition']['Macros Preview'](obj, { index: 1 })}
           <XStack style={{ flex: 1, width: g.s.width }}>
           <TouchableOpacity onPress={() => {

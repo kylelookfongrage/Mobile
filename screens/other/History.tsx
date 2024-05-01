@@ -205,8 +205,8 @@ const History = () => {
                     buttonOnPress={editGoal}
                     currentValue={`Weight Goal: ${goalWeight}`}
                     currentValueSuffix={profile?.metric ? 'kgs' : 'lbs'}
-                    baselineDesc='Start Weight' baselineValue={startWeight?.toFixed() || '-'} baselineSuffix='lbs'
-                    secondaryDesc='Current Weight' secondaryValue={(currentWeight).toFixed(0)} secondarySuffix='lbs'
+                    baselineDesc='Start Weight' baselineValue={startWeight?.toFixed() || '-'} baselineSuffix={profile?.metric ? 'kgs' : 'lbs'}
+                    secondaryDesc='Current Weight' secondaryValue={(currentWeight).toFixed(0)} secondarySuffix={profile?.metric ? 'kgs' : 'lbs'}
                     tertiaryDesc='Progress' tertiaryValue={(Math.abs(100 * (startWeight - currentWeight) / (goalWeight))).toFixed()} tertiarySuffix='%'
                 />
                 <Spacer />

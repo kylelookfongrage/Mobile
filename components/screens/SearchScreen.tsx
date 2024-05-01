@@ -52,8 +52,10 @@ export default function SearchScreen<T extends string[], K extends keyof Tables>
         <BackButton name={props.name} />
         <Spacer />
         <SearchBar onSearch={x => setSearchKey(x)} />
-        <Spacer />
+        {(searchOptions.length > 0) && <View>
+            <Spacer />
         <Selector searchOptions={availableOptions} selectedOption={selectedOption} onPress={setSelectedOption} />
+            </View>}
         <Spacer />
         <ScrollView
             keyboardDismissMode='interactive'

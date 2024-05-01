@@ -284,6 +284,8 @@ export default function TaskAgenda() {
           {/* @ts-ignore */}
           <Text weight={selectedTaskDetails?.related ? 'bold' : 'regular'} style={{ color: !selectedTaskDetails.related ? tw`text-gray-500`.color : _tokens.primary900 }}>{selectedTaskDetails.related || 'No Related Workout/Meal'}</Text>
         </TouchableOpacity>} />
+        
+        {!newTask && <OverlayRowItem title='Starting' disabled={true} date value={selectedTaskDetails.start_date || moment().format()} dateValue={selectedTaskDetails.start_date} />}
         <OverlayRowItem onDelete={selectedTaskDetails.start_time ? () => setNewTask('start_time', null) : undefined} title='@ Time' disabled={disabled} onDateChange={v => setNewTask('start_time', moment(v).format('hh:mm:ss A'))} value={selectedTaskDetails.start_time || 'All Day'} time dateValue={selectedTaskDetails.start_time} />
         <OverlayRowItem onDelete={selectedTaskDetails.repeat_frequency ? () => setNewTask('repeat_frequency', null) : undefined} title='Repeating' disabled={disabled} value={titleCase(selectedTaskDetails.repeat_frequency || '')} Right={<Picker.Select title='Repeating' displayValue={titleCase} formatValue={titleCase} options={['DAILY', 'WEEKLY', 'MONTHLY', 'ANNUALLY']} selected={selectedTaskDetails.repeat_frequency} onSelect={v => setNewTask('repeat_frequency', v)} />} />
         {selectedTaskDetails.repeat_frequency === 'WEEKLY' &&  <OverlayRowItem onDelete={selectedTaskDetails.days_of_week ? () => setNewTask('days_of_week', null) : undefined} title='On' disabled={disabled} Right={<Picker.Select title='Day(s) of Week' disabled={disabled} displayValue={v => moment().day(v).format('ddd')} formatValue={(v) => (moment().day(v).format(' dddd'))} joinOptions=', ' options={[0, 1, 2, 3, 4, 5, 6]} selected={selectedTaskDetails.days_of_week} onMultiSelect={v => setNewTask('days_of_week', v || [])} />} />}
@@ -302,7 +304,7 @@ export default function TaskAgenda() {
           </TouchableOpacity>
         </HideView>
         <Spacer />
-        {(newTask || (selectedTask && today && taskIncludesToday(selectedTask, today.date))) && <Button onPress={() => {
+        {(newTask || (selectedTask && today && taskIncludesToday(selectedTask, today.date))) && <Button disabled={g.loading} onPress={() => {
           if (selectedTask && !newTask) {
             completeTask(selectedTask)
           } else if (newTask) {
@@ -335,7 +337,7 @@ export default function TaskAgenda() {
         ]} />
       </Overlay>
 
-      {selectedOption === 'Today' && <SaveButton discludeBackground safeArea onSave={() => {
+      {selectedOption === 'Today' && <SaveButton disabled={g.loading} discludeBackground safeArea onSave={() => {
         _setNewTask(def)
       }} title='Add Task' />}
 

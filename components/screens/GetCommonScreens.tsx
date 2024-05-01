@@ -17,6 +17,7 @@ import React from 'react'
 import LogWater from "../../screens/home/LogWater"
 import TaskAgenda from "../../screens/other/TaskAgenda"
 import FoodDetail2 from "../../screens/diet/FoodDetail2"
+import ListProfile from "../../screens/other/UserSearch"
 
 export const getCommonScreens = (prefix: string, Stack: any) => {
     return <Stack.Group>
@@ -75,6 +76,7 @@ export const getCommonScreens = (prefix: string, Stack: any) => {
             </Stack.Screen>
             <Stack.Screen name={prefix + 'ListRun'} component={ListRuns} options={{ headerShown: false }} />
             <Stack.Screen name={prefix + 'ListPlan'} component={ListPlans} options={{ headerShown: false }} />
+            <Stack.Screen name={prefix + 'ListProfile'} component={ListProfile} options={{ headerShown: false }} />
             <Stack.Screen name={prefix + 'LogWater'} component={LogWater} options={{ headerShown: false }} />
             <Stack.Screen name={prefix + 'TaskAgenda'} component={TaskAgenda} options={{ headerShown: false }} />
     </Stack.Group>

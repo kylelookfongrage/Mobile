@@ -63,7 +63,7 @@ export default function FoodTab() {
 
 const searchOptions = [
     {'All': 'null'},
-    // {'Users': 'null' },
+    {'Profiles': 'ListProfile' },
     {'Plans' : 'ListPlan'},
     {'Meals': 'ListMeals'}, 
     {'Workouts': 'ListWorkout'}, 

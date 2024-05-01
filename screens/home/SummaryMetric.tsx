@@ -29,7 +29,7 @@ export default function SummaryMetric(props: {weight?: boolean}) {
   return <View card style={[tw``, {paddingTop: padding.top, flex: 1}]}>
     <Text h3 style={tw`mb-12 mt-12 px-3`} weight='bold'>{props.weight ? 'Body Weight' : 'Body Fat'}</Text>
     <View style={tw`w-12/12 px-4`}>
-    <Ruler initial={props.weight ? (today?.weight || profile?.weight || min) : (today?.fat || profile?.startFat || min)} unit={props.weight ? 'lbs' : '%'} onChange={setNewValue} min={min} max={props.weight ? 300 : 60} />
+    <Ruler initial={props.weight ? (today?.weight || profile?.weight || min) : (today?.fat || profile?.startFat || min)} unit={props.weight ? (profile?.metric ? 'kgs' : 'lbs') : '%'} onChange={setNewValue} min={min} max={props.weight ? 300 : 60} />
     </View>
     <SaveButton title={`${hasNewValue ? 'Save Changes' : 'Close'}`} discludeBackground safeArea onSave={onClose} />
   </View>

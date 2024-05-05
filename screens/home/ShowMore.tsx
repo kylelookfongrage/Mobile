@@ -110,11 +110,11 @@ export const ShowMoreDialogue = (props: TShowMoreDialogue) => {
       <View style={[tw`p-2 rounded-full items-center justify-center mx-${props.px ? props.px : 2}`, { zIndex: 1, backgroundColor: dm ? _tokens.dark2 + '90' : _tokens.gray300 + '90'}]}>
         <ExpoIcon color='gray' size={20} iconName='feather' name={showDialogue ? 'x' : 'more-horizontal'} />
       </View>
-      <Overlay style={{ ...tw`` }} id='show-more' dialogueHeight={35} index={-1} visible={showDialogue} onDismiss={() => setShowDialogue(false)}>
+      <Overlay clearBackground style={{ ...tw`` }} id='show-more' dialogueHeight={35} index={-1} visible={showDialogue} onDismiss={() => setShowDialogue(false)}>
         {options.filter(x => !x.hidden).map((x, i) => {
           return <SettingItem key={x.title + 'Setting item -' + i} hideCarat setting={{title: x.title, dangerous: x.title.toLowerCase().includes('delete'), icon: x.icon, onPress: () => {
-            x.onPress && x.onPress();
             setShowDialogue(false)
+            x.onPress && x.onPress();
           }  }} />
         })}
       </Overlay>

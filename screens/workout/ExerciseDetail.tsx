@@ -30,6 +30,7 @@ import { _tokens } from '../../tamagui.config';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { NothingToDisplay } from '../../components/base/Toast';
 import MuscleOverlay, { MuscleTile } from '../../components/screens/MuscleOverlay';
+import ImagePickerInput from '../../components/inputs/ImagePickerInput';
 
 
 export interface ExerciseDetailProps {
@@ -161,11 +162,11 @@ export default function ExerciseDetail(props: ExerciseDetailProps) {
 
     let [selectedEquipment, setSelectedEquipment] = useState<Tables['equiptment']['Row'] | null>(null)
     let [showMuscles, setShowMuscles] = useState(false)
-
+    console.log(video)
 
     return (
         <View style={{ flex: 1 }} includeBackground>
-            <ScrollViewWithDrag disableRounding rerenderTopView={[video, screenForm.editMode, form.user_id]} TopView={() => {
+            <ScrollViewWithDrag disableRounding rerenderTopView={[video, screenForm.editMode, form.user_id, form.ai_video]} TopView={() => {
                 return <View>
                     <BackButton inplace Right={() => {
                         if (screenForm.editMode || !id || !Number(id)) return <View />
@@ -174,11 +175,17 @@ export default function ExerciseDetail(props: ExerciseDetailProps) {
                             DeleteButton('Exercise', deleteExercise, form.user_id, profile?.id),
                             // ShowUserButton(form.user_id, navigator),
                             ShareButton({ exercise_id: Number(id) }),
-                            // { title: 'Preview AI Camera', icon: 'Video', onPress: () => navigator.navigate('Video', { uri: video?.[0]?.uri }) }
+                            { title: `${video?.[0]?.uri?.includes('ai_exercise') ? 'Preview Media' : 'AI Preview'}`, hidden: (!form?.ai_video || screenForm.editMode), icon: 'Video', onPress: () => {
+                                if (video?.[0]?.uri?.includes('ai_exercise') && form.video){
+                                    setVideo([{type: 'video', uri: form.video}])
+                                } else if (form.ai_video) {
+                                    setVideo([{type: 'video', uri: form.ai_video}])
+                                }
+                            } }
                         ]} />
 
                     }} />
-                    <ImagePickerView type='all' editable={screenForm.editMode} srcs={video} onChange={x => {
+                    <ImagePickerInput type='all' editable={screenForm.editMode} srcs={video} onChange={x => {
                         setVideo(x)
                     }} />
                 </View>

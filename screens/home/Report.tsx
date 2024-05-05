@@ -22,7 +22,7 @@ import { useNavigation } from '@react-navigation/native';
 
 
 const reportReasons = [
-    { name: 'Hate Speech / Spam', icon: 'Volume-Off', reason: 'HATE_SPEECH', description: 'Any description/text includes speech that is hateful or spammful'},
+    { name: 'Hate Speech / Spam', icon: 'Volume-Off', reason: 'HATE_SPEECH', description: 'Any text includes speech that is hateful or spammful'},
     { name: 'Inaccuracy', icon: 'Info-Circle', reason: "VIOLENCE", description: 'This includes information that is inaccurate or misleading' },
     { name: 'Nudity', icon: 'Image', reason: "NUDITY", description: 'Any videos/pictures related to this includes nudity.' },
     { name: 'Unoriginal Content', icon: 'Shield-Done', reason: "UNORIGINAL_CONTENT", description: 'This content is copied from someone else, paid or free.' },
@@ -112,9 +112,8 @@ export default function Report(props: {
 
     return (
         <View style={[{ flex: 1 }]} includeBackground>
-            <BackButton name='Back' />
-            <Text center h3 bold>Report {details.type}</Text>
-            <Spacer sm />
+            <BackButton name={`Report ${details.type}`} />
+            <Spacer />
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={tw`px-2`}>
                 <XStack alignItems='center'>
                     {((details.uri || !details.category) && !props.food_id) && <SupabaseImage uri={details.uri || defaultImage} style={tw`h-15 w-15 rounded-full`} />}
@@ -131,7 +130,7 @@ export default function Report(props: {
                 <Spacer sm />
                 {reportReasons.map(x => {
                     let selected = details.selectedReason === x.reason
-                    return <TouchableOpacity onPress={() => setDetails(p => ({...p, selectedReason: x.reason}))} key={x.reason} style={{...tw`my-1 py-2 rounded-lg flex-row items-center`, ...(selected ? {backgroundColor: _tokens.primary900, paddingHorizontal: 6} : {})}}>
+                    return <TouchableOpacity onPress={() => setDetails(p => ({...p, selectedReason: x.reason}))} key={x.reason} style={{...tw`my-1 py-1 px-2 rounded-lg flex-row items-center`, ...(selected ? {backgroundColor: _tokens.primary900} : {})}}>
                         <Icon name={x.icon} color={selected ? 'white' : 'gray'} size={20} />
                         <Spacer horizontal sm />
                         <View>

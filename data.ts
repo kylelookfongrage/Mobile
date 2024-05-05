@@ -164,7 +164,7 @@ interface Coordinates {
 import { Env } from './env';
 
 export const isStorageUri = (id: string): boolean => {
-    if (id.includes('equipment/')) return true;
+    if (id.includes('equipment/') || id.includes('ai_exercise/')) return true;
     if (!id || typeof id !== 'string') return false;
     const re = /^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}\.[A-Za-z]{3}/
     const re2 = /^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}\.[A-Za-z]{4}/

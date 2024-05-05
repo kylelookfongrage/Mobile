@@ -2,11 +2,12 @@ import React from 'react'
 import { useStorage } from '../../supabase/storage';
 import { View } from './Themed';
 import { defaultImage, isStorageUri } from '../../data';
-import { Image, ImageBackground } from 'react-native';
+import { Image, ImageBackground, Pressable } from 'react-native';
 import tw from 'twrnc'
 import useAsync from '../../hooks/useAsync';
 const loadingIndicator = require('../../assets/animations/loader.gif')
 import * as fs from 'expo-file-system';
+import { useNavigation } from '@react-navigation/native';
 
 export default function SupabaseImage(props: { 
     uri: string; 
@@ -14,10 +15,12 @@ export default function SupabaseImage(props: {
     disableSave?: boolean; 
     resizeMode?: string; 
     background?: boolean, 
+    disablePress?: boolean
     children?: any 
 }){
     let [src, setSrc] = React.useState<string>('')
     const s = useStorage()
+    let n = useNavigation()
 
     useAsync(async () => {
         let _img = props.uri || defaultImage
@@ -61,8 +64,10 @@ export default function SupabaseImage(props: {
 
     if (!src) return <View />
     let Component = props.background ? ImageBackground : Image
-    //@ts-ignore
-    return <Component loadingIndicatorSource={loadingIndicator} defaultSource={defaultImage} {...(props.background ? props : {})} source={src ? { uri: src } : loadingIndicator} style={(typeof props.style === 'string') ? tw`${props.style}` : props.style} resizeMethod={props.resizeMode || 'scale'} />
+    return <Pressable disabled={props.disablePress} onPress={() => n.navigate('Image', {uris: [src]})}>
+        {/* @ts-ignore */}
+        <Component loadingIndicatorSource={loadingIndicator} defaultSource={defaultImage} {...(props.background ? props : {})} source={src ? { uri: src } : loadingIndicator} style={(typeof props.style === 'string') ? tw`${props.style}` : props.style} resizeMethod={props.resizeMode || 'scale'} />
+    </Pressable>
 }
 
 

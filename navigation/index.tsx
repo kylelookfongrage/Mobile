@@ -78,6 +78,7 @@ import ProgressPicture from '../screens/other/ProgressPicture';
 import Overlay from '../components/screens/Overlay';
 import { XStack } from 'tamagui';
 import { RegisterKeyboard } from '../components/features/Keyboard';
+import AICamera from '../components/features/AICamera';
 
 
 function RootNavigator() {
@@ -140,6 +141,7 @@ function RootNavigator() {
       <Stack.Screen name='UserBio' component={Bio} options={{ headerShown: false }} />
       <Stack.Screen name='ProgressPicture' component={ProgressPicture} options={{ headerShown: false }} />
       <Stack.Screen name='EditDashboard' component={EditDashboard} options={{ headerShown: false }} />
+      <Stack.Screen name='AICamera' component={AICamera} options={{headerShown: false}} />
       <Stack.Screen name="FinishedExercise" options={{ headerShown: false, gestureEnabled: false }}>
         {/* @ts-ignore */}
         {props => <FinishedExercise weight={props.route?.params?.weight} time={props.route?.params?.time} metric={props.route?.params?.metric} exercises={props.route?.params?.exercises} />}

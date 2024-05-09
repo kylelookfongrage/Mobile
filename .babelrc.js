@@ -1,9 +1,8 @@
 module.exports = function (api) {
   api.cache(true);
   return {
-    presets: ["babel-preset-expo"],
+    presets: ["babel-preset-expo", '@babel/preset-flow'],
     plugins: [
-      "react-native-reanimated/plugin",
       [
         "@tamagui/babel-plugin",
         {
@@ -12,7 +11,8 @@ module.exports = function (api) {
           logTimings: true,
         },
       ],
-      "transform-inline-environment-variables",
+      ["transform-inline-environment-variables"],
+      ["@babel/plugin-syntax-flow"],
       [
         "module:react-native-dotenv",
         {
@@ -24,6 +24,7 @@ module.exports = function (api) {
           allowUndefined: false,
         },
       ],
+      ["react-native-reanimated/plugin"],
     ],
   };
 };

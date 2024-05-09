@@ -5,6 +5,9 @@ module.exports = async function (env, argv) {
   return {
     ...config, node: {
       fs: "empty"
-    }
+    },
+    externals: {
+        "react-native": true,
+    },
   };
 };

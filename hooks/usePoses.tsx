@@ -6,11 +6,11 @@ import React, { useEffect, useState } from 'react'
 import { useCameraPermissions } from 'expo-image-picker';
 // import type { io } from '@tensorflow/tfjs';
 
-export default function usePoses(tf: any, config: io.IOHandler | null=null, score=0.3) {
-    const [ready, setReady] = useState<boolean>(false)
-    const [error, setError] = useState<string | null>(null);
-    let [permissions, request_permissions] = useCameraPermissions()
-    const [model, setModel] = useState();
+export default function usePoses(tf: any, config:null=null, score=0.3) {
+    // const [ready, setReady] = useState<boolean>(false)
+    // const [error, setError] = useState<string | null>(null);
+    // let [permissions, request_permissions] = useCameraPermissions()
+    // const [model, setModel] = useState();
     // useEffect(() => {
     //     (async () => {
     //         try {
@@ -21,7 +21,7 @@ export default function usePoses(tf: any, config: io.IOHandler | null=null, scor
     //                 throw Error('We need your camera access for this feature, please update your settings')
     //             } 
     //             await tf.ready()
-    //             const movenetModelConfig: posedetection.MoveNetModelConfig = {
+    //             const movenetModelConfig = {
     //                 modelType: posedetection.movenet.modelType.SINGLEPOSE_LIGHTNING,
     //                 enableSmoothing: true,
     //                 trackerType: posedetection.TrackerType.Keypoint,
@@ -42,5 +42,5 @@ export default function usePoses(tf: any, config: io.IOHandler | null=null, scor
     //     })()
     // }, [])
   
-    return {ready, error, model, detector: null}
+    // return {ready, error, model, detector: null}
 }

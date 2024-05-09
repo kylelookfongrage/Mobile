@@ -1,4 +1,10 @@
 {
+  "react-native-google-mobile-ads": {
+    "android_app_id": "ca-app-pub-8201182773199572~8350476114",
+    "ios_app_id": "ca-app-pub-8201182773199572~8067652508",
+    "user_tracking_usage_description": "This will be used to deliver personalized ads to you.",
+    "delay_app_measurement_init": true
+  },
   "expo": {
     "name": "Rage",
     "slug": "ragepersonalhealth",
@@ -19,7 +25,13 @@
         {
           "userTrackingPermission": "This identifier will be used to deliver personalized ads to you."
         }
-      ]
+      ],
+      [
+        "react-native-vision-camera"
+      ],
+      ["expo-asset"],
+      ["expo-font"],
+      ["expo-secure-store"]
     ],
     "userInterfaceStyle": "automatic",
     "splash": {
@@ -33,14 +45,14 @@
     "assetBundlePatterns": [
       "**/*"
     ],
-    "jsEngine": "hermes",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.health.rage",
       "buildNumber": "6",
-      "jsEngine": "jsc"
+      "jsEngine": "hermes"
     },
     "android": {
+      "jsEngine": "hermes",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -54,11 +66,5 @@
       "favicon": "./assets/images/favicon.png"
     },
     "owner": "rageappinc"
-  },
-  "react-native-google-mobile-ads": {
-    "android_app_id": "ca-app-pub-8201182773199572~8350476114",
-    "ios_app_id": "ca-app-pub-8201182773199572~8067652508",
-    "user_tracking_usage_description": "This will be used to deliver personalized ads to you.",
-    "delay_app_measurement_init": true
   }
 }

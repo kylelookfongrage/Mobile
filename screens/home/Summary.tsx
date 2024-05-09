@@ -30,6 +30,7 @@ import { MasonryFlashList } from '@shopify/flash-list'
 import { Muscles } from "../../assets/muscles/muscles";
 import { XStack, YStack } from "tamagui";
 import { NothingToDisplay } from "../../components/base/Toast";
+import Button from "../../components/base/Button";
 
 export const SummaryScreen = () => {
   let { profile } = useSelector((x) => x.auth);
@@ -144,6 +145,7 @@ export const SummaryScreen = () => {
             );
           })}
         </View>
+        <Button onPress={() => navigator.navigate('AICamera')} />
         <ScrollView
           style={[tw``]}
           showsVerticalScrollIndicator={false}

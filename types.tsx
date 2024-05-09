@@ -56,6 +56,7 @@ export type RootStackParamList = {
   ScanBarcode: undefined;
   LineChartData: undefined;
   ProgressPicture: undefined; 
+  AICamera: undefined
 };
 
 

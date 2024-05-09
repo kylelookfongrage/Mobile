@@ -1,11 +1,12 @@
 import { Text, ScrollView, useColorScheme } from 'react-native'
 import React, { useMemo, useRef } from 'react'
-import Animated from 'react-native-reanimated'
+// import Animated from 'react-native-reanimated'
 import tw from 'twrnc'
 import LinearGradient from 'react-native-linear-gradient'
 import Colors from '../../constants/Colors'
 import BackgroundGradient from './BackgroundGradient'
 import { View } from '../base/Themed'
+import { Animated } from 'react-native'
 
 type ScrollProps = ScrollView['props'] & {TopView: React.JSXElementConstructor<any>; rerenderTopView?: any[], gradient?: boolean, disableRounding?: boolean;}
 export default function ScrollViewWithDrag(props: ScrollProps) {

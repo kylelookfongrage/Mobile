@@ -1,4 +1,4 @@
-import Animated from "react-native-reanimated";
+// import Animated from "react-native-reanimated";
 import * as ImagePicker from "expo-image-picker";
 import React, { useMemo, useRef, useState } from "react";
 import {
@@ -9,6 +9,7 @@ import {
   Image,
   StyleSheet,
   Platform,
+  Animated
 } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import { useNavigation } from "@react-navigation/native";
@@ -167,7 +168,7 @@ export const ImagePickerView = (props: ImagePickerViewProps) => {
             },
             // @ts-ignore
           },
-        ])}
+        ], undefined)}
         horizontal={props.multiple}
         showsVerticalScrollIndicator={false}
         showsHorizontalScrollIndicator={false}

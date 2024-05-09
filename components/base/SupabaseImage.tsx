@@ -62,11 +62,11 @@ export default function SupabaseImage(props: {
         }
     }, [props.uri])
 
-    if (!src) return <View />
+    if (!src) return <View {...props.style} />
     let Component = props.background ? ImageBackground : Image
     return <Pressable disabled={props.disablePress} onPress={() => n.navigate('Image', {uris: [src]})}>
         {/* @ts-ignore */}
-        <Component loadingIndicatorSource={loadingIndicator} defaultSource={defaultImage} {...(props.background ? props : {})} source={src ? { uri: src } : loadingIndicator} style={(typeof props.style === 'string') ? tw`${props.style}` : props.style} resizeMethod={props.resizeMode || 'scale'} />
+        <Component loadingIndicatorSource={loadingIndicator} {...(props.background ? props : {})} source={src ? { uri: src } : loadingIndicator} style={(typeof props.style === 'string') ? tw`${props.style}` : props.style} resizeMethod={props.resizeMode || 'scale'} />
     </Pressable>
 }
 

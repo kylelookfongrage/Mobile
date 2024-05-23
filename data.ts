@@ -157,7 +157,6 @@ export const OpenFoodFactsBarcodeSearch = async (barcode: string) => {
 
 
 //@ts-ignore
-import { v4 as uuidv4 } from 'uuid';
 interface Coordinates {
     lat: number; long: number
 }

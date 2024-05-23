@@ -19,8 +19,7 @@ import moment from 'moment'
 import { TouchableOpacity } from 'react-native-gesture-handler'
 import { ActionSheet } from 'react-native-ui-lib'
 import { useNavigation } from '@react-navigation/native'
-//@ts-ignore
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID as uuidv4 } from 'expo-crypto'
 import useOnLeaveScreen from '../../hooks/useOnLeaveScreen'
 import SupabaseImage from '../../components/base/SupabaseImage'
 import SwipeWithDelete from '../../components/base/SwipeWithDelete'

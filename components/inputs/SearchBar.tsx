@@ -6,7 +6,7 @@ import { TextInput, TouchableOpacity, useColorScheme } from 'react-native'
 import { useDebounce } from '../../hooks/useDebounce'
 import Input from '../base/Input'
 //@ts-ignore
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID as uuidv4 } from 'expo-crypto'
 
 export default function SearchBar(props: {onSearch?: (v: string) => void; full?: boolean, bg?: string, height?: string | number, iconSize?: number; hideClear?: boolean; hideSearch?: boolean}) {
     const dm = useColorScheme() === 'dark'

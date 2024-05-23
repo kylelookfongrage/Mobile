@@ -64,6 +64,7 @@ const ImagePickerInput = (props: ImagePickerInputProps) => {
                     : ImagePicker.launchImageLibraryAsync({ ...settings }));
                 if (result && result.assets && result.assets.length > 0) {
                     const res = result.assets[0];
+                    console.log(res)
                     props.onChange &&
                         props.onChange([
                             ...(props.srcs || []),

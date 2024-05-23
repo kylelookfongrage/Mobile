@@ -5,6 +5,8 @@ import useColorScheme from "./hooks/useColorScheme";
 import "react-native-gesture-handler";
 import "expo-dev-client";
 import Navigation from "./navigation";
+import "@tensorflow/tfjs-react-native";
+
 import Purchases from "react-native-purchases";
 import { Platform } from "react-native";
 import { User } from "@supabase/supabase-js";

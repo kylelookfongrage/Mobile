@@ -1,8 +1,7 @@
 import { Keyboard, TextInput, TouchableOpacity } from 'react-native'
 import React, { useRef, useState } from 'react'
 import { Text, View } from '../../components/base/Themed'
-//@ts-ignore
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID as uuidv4 } from 'expo-crypto'
 import tw from 'twrnc'
 import useColorScheme from '../../hooks/useColorScheme';
 import { useNavigation } from '@react-navigation/native';

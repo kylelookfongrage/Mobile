@@ -9,8 +9,7 @@ import { defaultImage, getMatchingNavigationScreen, toHHMMSS, validate, MediaTyp
 import { ErrorMessage } from '../../components/base/ErrorMessage'
 import { BackButton } from '../../components/base/BackButton'
 import { DeleteButton, EditModeButton, ShareButton, ShowMoreDialogue } from '../home/ShowMore'
-//@ts-ignore
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID as uuidv4 } from 'expo-crypto'
 import ScrollViewWithDrag from '../../components/screens/ScrollViewWithDrag'
 import { FormReducer, useForm } from '../../hooks/useForm'
 import { Tables } from '../../supabase/dao'

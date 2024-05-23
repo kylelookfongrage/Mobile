@@ -24,8 +24,7 @@ import { _tokens } from '../../tamagui.config';
 import { ProgressDao } from '../../types/ProgressDao';
 import { ImpactGridItem } from '../../components/base/InputGridItem';
 import { formToIngredient, useMultiPartForm } from '../../redux/api/mpf';
-//@ts-ignore
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID as uuidv4 } from 'expo-crypto'
 import NutritionLabel from '../../components/features/NutritionLabel';
 import Overlay from '../../components/screens/Overlay';
 import { MealDao } from '../../types/MealDao';

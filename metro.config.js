@@ -8,5 +8,9 @@ config.resolver.assetExts.push(
   // Adds support for `.db` files for SQLite databases
   'bin'
 );
+config.resolver.assetExts.push(
+  // Adds support for `.db` files for SQLite databases
+  'tflite'
+);
 
 module.exports = config;

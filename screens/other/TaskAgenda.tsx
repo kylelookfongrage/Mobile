@@ -28,8 +28,7 @@ import Description from '../../components/base/Description'
 import { getTwentyFourHourTime, Picker, timeStringToMoment } from '../../components/inputs/Picker'
 import SwipeWithDelete, { TSwipeableWithDeleteRef } from '../../components/base/SwipeWithDelete'
 import { useMultiPartForm } from '../../redux/api/mpf'
-// @ts-ignore 
-import { v4 } from 'uuid';
+import { randomUUID as v4 } from 'expo-crypto'
 import useOnLeaveScreen from '../../hooks/useOnLeaveScreen'
 
 type TaskType = 'meal' | 'workout' | 'run' | 'task' | undefined

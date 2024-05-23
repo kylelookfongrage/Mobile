@@ -31,6 +31,7 @@ import { Muscles } from "../../assets/muscles/muscles";
 import { XStack, YStack } from "tamagui";
 import { NothingToDisplay } from "../../components/base/Toast";
 import Button from "../../components/base/Button";
+import AIImage from "../../components/features/AIImage";
 
 export const SummaryScreen = () => {
   let { profile } = useSelector((x) => x.auth);
@@ -145,7 +146,7 @@ export const SummaryScreen = () => {
             );
           })}
         </View>
-        <Button onPress={() => navigator.navigate('AICamera')} />
+        {/* <Button onPress={() => navigator.navigate('AICamera')} /> */}
         <ScrollView
           style={[tw``]}
           showsVerticalScrollIndicator={false}
@@ -237,6 +238,7 @@ export const SummaryScreen = () => {
               </SwipeWithDelete>
             );
           })}
+          {/* <AIImage src="file:///var/mobile/Containers/Data/Application/C2C744A3-E54F-417D-B339-FAB20C670FFB/Library/Caches/ImagePicker/B9B2C79D-F9ED-445A-BCD0-AF3F2A39C647.jpg" /> */}
           <View style={tw`pb-10`} />
           <View style={tw`pb-40`} />
         </ScrollView>

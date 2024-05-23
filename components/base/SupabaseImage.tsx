@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useStorage } from '../../supabase/storage';
 import { View } from './Themed';
 import { defaultImage, isStorageUri } from '../../data';
@@ -8,6 +8,9 @@ import useAsync from '../../hooks/useAsync';
 const loadingIndicator = require('../../assets/animations/loader.gif')
 import * as fs from 'expo-file-system';
 import { useNavigation } from '@react-navigation/native';
+import usePoses, { useBlazePose } from '../../hooks/usePoses';
+import { Circle, Svg } from 'react-native-svg';
+import { _tokens } from '../../tamagui.config';
 
 export default function SupabaseImage(props: { 
     uri: string; 
@@ -17,6 +20,7 @@ export default function SupabaseImage(props: {
     background?: boolean, 
     disablePress?: boolean
     children?: any 
+    onSrcChange?: (src: string) => void;
 }){
     let [src, setSrc] = React.useState<string>('')
     const s = useStorage()
@@ -62,9 +66,14 @@ export default function SupabaseImage(props: {
         }
     }, [props.uri])
 
+    useEffect(() => {
+        if (!src || !props.onSrcChange) return;
+        props.onSrcChange(src)
+    }, [src])
+
     if (!src) return <View {...props.style} />
     let Component = props.background ? ImageBackground : Image
-    return <Pressable disabled={props.disablePress} onPress={() => n.navigate('Image', {uris: [src]})}>
+    return <Pressable disabled={props.disablePress} {...props.style} onPress={() => n.navigate('Image', {uris: [src]})}>
         {/* @ts-ignore */}
         <Component loadingIndicatorSource={loadingIndicator} {...(props.background ? props : {})} source={src ? { uri: src } : loadingIndicator} style={(typeof props.style === 'string') ? tw`${props.style}` : props.style} resizeMethod={props.resizeMode || 'scale'} />
     </Pressable>

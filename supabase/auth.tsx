@@ -6,8 +6,7 @@ import {
     CryptoDigestAlgorithm,
     digestStringAsync,
   } from "expo-crypto";
-//@ts-ignore
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID as uuidv4 } from 'expo-crypto'
 import { supabase } from "./index";
 import * as WebBrowser from 'expo-web-browser'
 import { useEffect } from 'react';

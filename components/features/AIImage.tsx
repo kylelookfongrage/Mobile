@@ -7,9 +7,8 @@ import { Circle, Svg, Text as SVGText, G, Line } from 'react-native-svg'
 import { _tokens } from '../../tamagui.config'
 import { useGet } from '../../hooks/useGet'
 import tw from 'twrnc'
-import tf from '@tensorflow/tfjs-core'
+import * as tf from '@tensorflow/tfjs-react-native'
 import * as ImagePicker from 'expo-image-picker'
-import { manipulateAsync, FlipType, SaveFormat } from 'expo-image-manipulator';
 import { useResizePlugin } from 'vision-camera-resize-plugin'
 import { Frame } from 'react-native-vision-camera'
 import Spacer from '../base/Spacer'
@@ -55,7 +54,7 @@ const AIImage = (props: {
           if (Object.keys(detections).length) return;
           setLoading(p => 'Getting image information')
           if (!src || isStorageUri(src) || !model) return;
-          let res = await fetch(src, {}, {isBinary: true})
+          let res = await tf.fetch(src, {}, {isBinary: true})
           if (!res) {console.log('no res'); return;}
           let arr = await res.arrayBuffer()
           let _arr = new Uint8Array(arr)

@@ -34,13 +34,15 @@ export default function AICamera() {
         let output = outputs[0]
         if (!output) return;
         let results = process_keypoints(output)
+        console.log(results)
         if (!results) return;
-        let fx = (_x: number) => (w * (_x / tensorWidth))
-        let fy = (_y: number) => (h * (_y / tensorHeight))
+        let fx = (_x: number) => (w * (_x / (tensorWidth-1)))
+        let fy = (_y: number) => (h * (_y / (tensorHeight-1)))
         for (var keypoint of _keypoints) {
             if (keypoint.includes('finger')) continue;
-            if (results[keypoint] && results[keypoint]?.confidence > 0.70) {
+            if (results[keypoint] && results[keypoint]?.confidence > 0.70 && results[keypoint]?.confidence < 1.01) {
                 let {x,y,z} = results[keypoint]
+                if (!x || !y) continue;
                 let x1 = fx(x)
                 let y1 = fy(y)
                 frame.drawCircle(x1, y1, 5, paint)
@@ -49,9 +51,10 @@ export default function AICamera() {
         }
         for (var point of skeleton_points) {
             let [from, to] = [results[point[0]], results[point[1]]]
+            if (!from || !to) continue;
             let {x: x1, y: y1, z: z1, confidence: c1} = from
             let {x: x2, y: y2, z: z2, confidence: c2} = to
-            if (c1 > 0.7 && c2 > 0.7) {
+            if (c1 > 0.7 && c2 > 0.7 && c1 < 1.01 && c2 < 1.01) {
                 frame.drawLine(fx(x1), fy(y1), fx(x2), fy(y2), paint)
             }
         }

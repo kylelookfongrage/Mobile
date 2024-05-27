@@ -1,5 +1,5 @@
 import { ScrollView, TouchableOpacity, Image } from "react-native";
-import React from "react";
+import React, { useState } from "react";
 import { Text, View } from "../../components/base/Themed";
 import { SafeAreaView } from "react-native-safe-area-context";
 import tw from "twrnc";
@@ -32,6 +32,7 @@ import { XStack, YStack } from "tamagui";
 import { NothingToDisplay } from "../../components/base/Toast";
 import Button from "../../components/base/Button";
 import AIImage from "../../components/features/AIImage";
+import { BlazePoseStandardResultObject, calculateEuclideanDistance, estimateBlazePoseBodyFat, skeleton_points } from "../../hooks/usePoses";
 
 export const SummaryScreen = () => {
   let { profile } = useSelector((x) => x.auth);
@@ -77,6 +78,7 @@ export const SummaryScreen = () => {
   let g = useGet()
   let weightDiff = (profile?.weight || 0) - (today?.weight || profile?.weight || 0) 
   let fatDiff = (profile?.startFat || 0) - (today?.fat || profile?.startFat || 0) 
+  const [detections, setDetections] = useState<BlazePoseStandardResultObject>({})
   return (
     <View style={{ flex: 1 }} includeBackground>
       <SafeAreaView edges={["top"]} style={[{ flex: 1 }, tw`h-12/12`]}>
@@ -238,7 +240,20 @@ export const SummaryScreen = () => {
               </SwipeWithDelete>
             );
           })}
-          <AIImage src="file:///var/mobile/Containers/Data/Application/C2C744A3-E54F-417D-B339-FAB20C670FFB/Library/Caches/ImagePicker/B9B2C79D-F9ED-445A-BCD0-AF3F2A39C647.jpg" />
+          <AIImage onDetect={setDetections} />
+          {detections && [['left_ear', 'right_ear'], ['left_shoulder', 'right_shoulder'], ['left_hip', 'right_hip'], ['right_wrist', 'right_thumb']].map((x, i) => {
+            let [from, to] = [detections?.[x[0]], detections?.[x[1]]]
+            if (!from || !to) return <View key={`point not found ${i} ${x[0]} ${x[1]}`} />
+            let {x: x1, y: y1, z: z1, confidence: c1} = from
+            let {x: x2, y: y2, z: z2, confidence: c2} = to
+            if (c1 < 0.4 || c2 < 0.4) return <View key={`point not found ${i} ${x[0]} ${x[1]}`} />
+            return <View key={`point found ${i} ${x[0]} ${x[1]}`} style={tw`flex-row items-center justify-between`}>
+              <Text>{`${x[0]}->${x[1]}`}</Text>
+              <Text>{Math.round(calculateEuclideanDistance(to, from, g.s.width, g.s.height))}</Text>
+              <Text>{to.z}</Text>
+            </View>
+          })}
+          {detections && <Text>{Math.abs(Math.round(estimateBlazePoseBodyFat(detections, profile)))}</Text>}
           <View style={tw`pb-10`} />
           <View style={tw`pb-40`} />
         </ScrollView>

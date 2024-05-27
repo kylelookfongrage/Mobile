@@ -510,6 +510,7 @@ export enum WorkoutMode {
 
 
 export function calculateBodyFat(sex: 'male' | 'female', unit: 'USC' | 'Metric', waist: number, neck: number, height: number, hip?: number): number {
+    'worklet'
     const logWaistNeck = Math.log10(waist - neck);
     const logHeight = Math.log10(height);
 
@@ -527,6 +528,7 @@ export function calculateBodyFat(sex: 'male' | 'female', unit: 'USC' | 'Metric',
 
         if (sex === 'male') {
             bfp = 86.010 * logWaistNeck - 70.041 * logHeight + 36.76;
+            console.log(bfp)
         } else {
             if (waist + (hip || 0) - neck <= 0) {
                 throw new Error('Invalid measurements: waist + hip - neck must be greater than zero for females in USC units.');

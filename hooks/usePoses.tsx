@@ -12,8 +12,13 @@ import * as tf from '@tensorflow/tfjs-core'
 import * as poseDetection from '@tensorflow-models/pose-detection';
 import '@mediapipe/pose'
 import { decodeJpeg } from '@tensorflow/tfjs-react-native'
+import { Tables } from '../supabase/dao'
+import { calculateBodyFat } from '../data'
 
-export const standardKeypointsToBlazeposeKeypoints = (data: {[k: typeof blazePoseKeypoints[number]] : {x: number, y: number, z: number, confidence: number}}): poseDetection.Keypoint[] => {
+export type BlazePoseStandardizedResults = {x: number, y: number, z: number, confidence: number}
+export type BlazePoseStandardResultObject = {[key: typeof blazePoseKeypoints[number]] : BlazePoseStandardizedResults}
+
+export const standardKeypointsToBlazeposeKeypoints = (data: {[k: typeof blazePoseKeypoints[number]] : BlazePoseStandardizedResults}): poseDetection.Keypoint[] => {
     'worklet'
     let arr = [] as poseDetection.Keypoint[]
     for (var keypoint of Object.keys(data)) {
@@ -23,14 +28,54 @@ export const standardKeypointsToBlazeposeKeypoints = (data: {[k: typeof blazePos
     return arr
 }
 
-export const blazePoseKeypointsToStandard = (data: poseDetection.Keypoint[]): {[k: typeof blazePoseKeypoints[number]] : {x: number, y: number, z: number, confidence: number}} => {
+export const blazePoseKeypointsToStandard = (data: poseDetection.Keypoint[]): {[k: typeof blazePoseKeypoints[number]] : BlazePoseStandardizedResults} => {
     'worklet'
-    let obj: {[k: typeof blazePoseKeypoints[number]] : {x: number, y: number, z: number, confidence: number}} = {}
+    let obj: {[k: typeof blazePoseKeypoints[number]] : BlazePoseStandardizedResults} = {}
     for (var keypoint of data) {
         //@ts-ignore
         obj[keypoint.name] = {confidence: keypoint.score, x: keypoint.x, y: keypoint.y, z: keypoint.z}
     }
     return obj
+}
+
+export const calculateEuclideanDistance = (to: BlazePoseStandardizedResults, from: BlazePoseStandardizedResults, width=1, height=1) => {
+    'worklet'
+    let diff_x = ((from.x * width) - (to.x * width)) ** 2
+    let diff_y = ((from.y * height) - (to.y * height)) ** 2
+    return Math.sqrt(diff_x + diff_y)
+}   
+
+export const estimateBlazePoseBodyFat = (detections: BlazePoseStandardResultObject, profile: Tables['user']['Row']) => {
+    'worklet'
+    if (!profile) return;
+    let fingers = [
+        ['right_wrist', 'right_thumb'],// ['right_wrist', 'right_thumb'], ['right_wrist', 'right_thumb'], 
+        ['left_wrist', 'left_thumb'], // ['left_wrist', 'left_thumb'], ['left_wrist', 'left_thumb']
+    ]
+    let max_confidence = undefined as undefined | number
+    let corresponding_dist = undefined as undefined | number
+    for (var f of fingers) {
+        let [from, to] = [detections?.[f[0]], detections?.[f[1]]]
+        if (!from || !to) continue;
+        let {x: x1, y: y1, z: z1, confidence: c1} = from
+        let {x: x2, y: y2, z: z2, confidence: c2} = to
+        if (c2 < (max_confidence || 0)) continue;
+        max_confidence = c2;
+        corresponding_dist = calculateEuclideanDistance(to, from)
+    }
+    if (!max_confidence || !corresponding_dist) return;
+    let fx = (2.5/corresponding_dist) * Math.PI // average length of thumb
+    let waist = calculateEuclideanDistance(detections['right_shoulder'], detections['left_shoulder']) * fx 
+    let hip = calculateEuclideanDistance(detections['right_hip'], detections['left_hip']) * fx 
+    let neck = calculateEuclideanDistance(detections['right_ear'], detections['left_ear']) * fx
+    let h = (profile.height || 0)
+    if (profile.metric) {
+        h = h/2.54
+    }
+    console.log({waist, hip, neck, fx, height: profile.height})
+    let fat = calculateBodyFat(profile.gender || 'male', 'USC', waist, neck, h, hip)
+    console.log(fat)
+    return fat
 }
 
 export const sigmoid = (z: number) => {
@@ -41,9 +86,9 @@ export const blazePoseKeypoints = [
     'nose','right_inner_eye','right_eye','right_outer_eye','left_inner_eye',
     'left_eye','left_outer_eye','right_ear','left_ear','mouth_right',
     'mouth_left','right_shoulder','left_shoulder','right_elbow',
-    'left_elbow','right_wrist','left_wrist','right_pinky_finger',
-    'left_pinky_finger','right_index_finger','left_index_finger',
-    'right_thumb_finger','left_thumb_finger','right_hip','left_hip',
+    'left_elbow','right_wrist','left_wrist','right_pinky',
+    'left_pinky','right_index','left_index',
+    'right_thumb','left_thumb','right_hip','left_hip',
     'right_knee','left_knee','right_ankle','left_ankle',
     'right_heel','left_heel','right_foot', 'left_foot'
 ]
@@ -82,7 +127,15 @@ export const skeleton_points = [
     ['left_hip', 'right_hip'],
     ['right_hip', 'right_knee'],
     ['right_knee', 'right_ankle'],
-    ['left_knee', 'left_ankle']
+    ['left_knee', 'left_ankle'],
+    ['right_wrist', 'right_thumb'],
+    ['right_wrist', 'right_index'],
+    ['right_wrist', 'right_pinky'],
+    ['left_wrist', 'left_thumb'],
+    ['left_wrist', 'left_index'],
+    ['left_wrist', 'left_pinky'],
+    ['right_ear', 'left_ear'],
+    
 ]
 
 function onlyUnique(value: any, index: number, array: any[]) {
@@ -179,6 +232,7 @@ export const useBlazePose = () => {
         modelType: 'full'
     };
     let [detector, setDetector] = useState<poseDetection.PoseDetector | null>(null)
+    let [isReady, setIsReady] = useState(false)
     
 
 
@@ -186,12 +240,13 @@ export const useBlazePose = () => {
         try {
             await tf.ready()
             let _detector = await poseDetection.createDetector(model, detectorConfig);
-        setDetector(_detector)
+            setDetector(_detector)
+            setIsReady(true)
         } catch (error) {
             console.log(error)
         }
     }, [])
     
-    return {model, detector, helpers: poseDetection, decodeJpeg}
+    return {model, detector, helpers: poseDetection, decodeJpeg, isReady: detector ? false : isReady}
 }
 

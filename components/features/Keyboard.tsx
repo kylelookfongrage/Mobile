@@ -39,60 +39,6 @@ interface INutritionKeyboardProps {
     visible?: boolean;
 }
 
-export function KeyboardView(props: INutritionKeyboardProps) {
-    const onButtonPress = (p: INutritionKeyboardButtonPress) => {
-        props.onButtonPress && props.onButtonPress(p);
-    }
-    let dm = useColorScheme() === 'dark'
-
-    let SpaceIcon = () => (<ExpoIcon iconName='material' name='space-bar' size={25} color={dm ? 'white' : 'black'} />)
-    let BackIcon = () => (<ExpoIcon iconName='material' name='backspace' size={25} color={dm ? 'white' : 'black'} />)
-    let LogButton = () => {
-        return <DView style={[tw`items-center justify-center rounded-lg`, { width: (Dimensions.get('screen').width * 0.9) / (4), height: (Dimensions.get('screen').height * 0.26) / 4.5 }]}>
-            <ExpoIcon iconName='material' name='keyboard-hide' size={25} color={'white'} />
-        </DView>
-    }
-
-    let EnterButton = () => {
-        return <DView style={[tw`items-center justify-center rounded-lg`, { backgroundColor: _tokens.primary900, width: (Dimensions.get('screen').width * 0.9) / (2), height: (Dimensions.get('screen').height * 0.26) / 4.5 }]}>
-            <Text bold style={tw`text-white`} lg>Save</Text>
-    </DView>
-    }
-
-    let ButtonMapping: { [k: keyof INutritionKeyboardButtonPress['buttonPress']]: () => React.JSXElementConstructor<any> } = {
-        ' ': <SpaceIcon />,
-        'BACK': <BackIcon />,
-        'DISMISS': <LogButton />,
-        'ENTER': <EnterButton />
-    }
-
-    return (
-        <ScrollView scrollEnabled={false} contentContainerStyle={[{ backgroundColor: dm ? _tokens.dark1 : _tokens.gray100, flex: 1 }]}>
-            <DView style={{...tw`flex-wrap flex-row self-center`, width: Dimensions.get('screen').width}}>
-                {[1, 2, 3, '/', 4, 5, 6, ' ', 7, 8, 9, 'BACK', '.', 0, 'ENTER'].map(x => {
-                    return <TouchableOpacity onPress={() => {
-                        if (x === 'ENTER') {
-                            props.onEnterPress && props.onEnterPress()
-                        } else if (x === 'DISMISS'){
-                            props.onDismissPress && props.onDismissPress()
-                        } else if (typeof x === 'string') {
-                            //@ts-ignore
-                            onButtonPress({ buttonPress: x })
-                        } else {
-                            //@ts-ignore
-                            onButtonPress({ numberPress: x })
-                        }
-                    }} key={x} style={{ ...tw`items-center justify-center`, height: (Dimensions.get('screen').height * 0.3333333) / 4, width: (Dimensions.get('screen').width * 0.99) / (x === 'ENTER' ? 2 : 4) }}>
-                        {/* @ts-ignore */}
-                        {ButtonMapping[x] ? ButtonMapping[x] : <Text weight='bold' h5>{x}</Text>}
-                    </TouchableOpacity>
-                })}
-            </DView>
-        </ScrollView>
-    );
-}
-
-
 
 export const LogFoodKeyboardAccessory = (props: INutritionKeyboardProps) => {
     let [open, setOpen] = useState<boolean>(false);
@@ -130,6 +76,28 @@ export const LogFoodKeyboardAccessory = (props: INutritionKeyboardProps) => {
     let selectedColor = _tokens.primary900
     let unselectedColor = dm ? _tokens.dark3 : _tokens.gray300
 
+    let SpaceIcon = () => (<ExpoIcon iconName='material' name='space-bar' size={25} color={dm ? 'white' : 'black'} />)
+    let BackIcon = () => (<ExpoIcon iconName='material' name='backspace' size={25} color={dm ? 'white' : 'black'} />)
+    let LogButton = () => {
+        return <DView style={[tw`items-center justify-center rounded-lg`, { width: (Dimensions.get('screen').width * 0.9) / (4), height: (Dimensions.get('screen').height * 0.26) / 4.5 }]}>
+            <ExpoIcon iconName='material' name='keyboard-hide' size={25} color={'white'} />
+        </DView>
+    }
+
+    let EnterButton = () => {
+        return <DView style={[tw`items-center justify-center rounded-lg`, { backgroundColor: _tokens.primary900, width: (Dimensions.get('screen').width * 0.9) / (2), height: (Dimensions.get('screen').height * 0.26) / 4.5 }]}>
+            <Text bold style={tw`text-white`} lg>Save</Text>
+    </DView>
+    }
+
+    let ButtonMapping: { [k: keyof INutritionKeyboardButtonPress['buttonPress']]: () => React.JSXElementConstructor<any> } = {
+        ' ': <SpaceIcon />,
+        'BACK': <BackIcon />,
+        'DISMISS': <LogButton />,
+        'ENTER': <EnterButton />
+    }
+
+
     useEffect(() => {
         if (open) {
             props.onOpen && props.onOpen()
@@ -138,7 +106,8 @@ export const LogFoodKeyboardAccessory = (props: INutritionKeyboardProps) => {
             _dismiss()
         }
     }, [open])
-    let _index = useMemo(() => 0, [])
+    let _index = useMemo(() => 0, [props.visible])
+    console.log({visibile: props.visible})
 
     return <Overlay ignoreBackdrop id='nutrition-keyboard' index={_index} dialogueHeight={'15'} visible={props.visible === false ? false : true} disableClose snapPoints={open ? ['55%'] : undefined} excludeBanner style={{ flex: 1, backgroundColor: dm ? _tokens.dark1 : _tokens.gray100 }} >
         <View style={{ flex: 1, paddingTop: 16, paddingBottom: open ? 16 : insets.bottom + 10, ...tw`flex-row items-center justify-between -mt-3` }}>
@@ -168,25 +137,33 @@ export const LogFoodKeyboardAccessory = (props: INutritionKeyboardProps) => {
                     </TouchableOpacity>
                 })}
             </ScrollView>
-            <KeyboardView onDismissPress={() => setOpen(false)} onEnterPress={onEnterPress}  onButtonPress={args => {
-                if (args.buttonPress) {
-                    if (args.buttonPress === 'ENTER') {
-                        onEnterPress()
-                        console.log('enter')
-                    } else if (args.buttonPress !== 'BACK') {
-                        setStringValue(p => p + args.buttonPress)
-                    } else if (args.buttonPress === 'BACK') {
-                        setStringValue(p => {
-                            if (p.length === 0) return p;
-                            return p.slice(0, -1);
-                        })
-                    }
-                } else if (args.servingSizePress) {
-                    onServingChange(args.servingSizePress)
-                } else if (args.numberPress || args.numberPress === 0) {
-                    setStringValue(p => p + args.numberPress?.toString())
-                }
-            }} />
+            <ScrollView scrollEnabled={false} contentContainerStyle={[{ backgroundColor: dm ? _tokens.dark1 : _tokens.gray100, flex: 1 }]}>
+            <DView style={{...tw`flex-wrap flex-row self-center`, width: Dimensions.get('screen').width}}>
+                {[1, 2, 3, '/', 4, 5, 6, ' ', 7, 8, 9, 'BACK', '.', 0, 'ENTER'].map(x => {
+                    return <TouchableOpacity onPress={() => {
+                        if (x === 'ENTER') {
+                            onEnterPress()
+                        } else if (x === 'DISMISS'){
+                           setOpen(false)
+                        } else if (typeof x === 'string') {
+                            if (x === 'BACK') {
+                                setStringValue(p => {
+                                    if (p.length === 0) return p;
+                                    return p.slice(0, -1);
+                                })
+                            } else {
+                                setStringValue(p => p + `${x}`)
+                            }
+                        } else {
+                            setStringValue(p => p + `${x}`)
+                        }
+                    }} key={x} style={{ ...tw`items-center justify-center`, height: (Dimensions.get('screen').height * 0.3333333) / 4, width: (Dimensions.get('screen').width * 0.99) / (x === 'ENTER' ? 2 : 4) }}>
+                        {/* @ts-ignore */}
+                        {ButtonMapping[x] ? ButtonMapping[x] : <Text weight='bold' h5>{x}</Text>}
+                    </TouchableOpacity>
+                })}
+            </DView>
+        </ScrollView>
         </HideView>
 
     </Overlay>

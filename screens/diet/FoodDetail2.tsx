@@ -171,6 +171,7 @@ export default function FoodDetail2(props: {
       formDispatch({ type: FormReducer.Set, payload: payload })
       setAuthor('Meal')
       setInitialValue(Math.round(_quantity) < _quantity ? Number(_quantity.toFixed(2)) : _quantity)
+      await sleep(1000)
     } else {
       //todo: find way to make not have to sleep
       await sleep(1000)
@@ -360,7 +361,7 @@ export default function FoodDetail2(props: {
 
   let [showingMenu, setShowingMenu] = useState(false)
   let isFocused = useIsFocused()
-  console.log({ initialized, isFocused, showCategory, showingMenu })
+  console.log({ initialized, isFocused, showCategory, showingMenu, shouldShowInput, keyboardOpen })
 
 
   return (
@@ -458,7 +459,7 @@ export default function FoodDetail2(props: {
           <Spacer xl />
         </ScrollView>
       </Overlay>
-      {(shouldShowInput || keyboardOpen) && <LogFoodKeyboardAccessory visible={!showCategory && !showingMenu && isFocused && initialized} onEnterPress={onSubmit} onOpen={() => setKeyboardOpen(true)} onClose={() => {
+      {(shouldShowInput || keyboardOpen) && <LogFoodKeyboardAccessory visible={(!showCategory && !showingMenu && isFocused && initialized)} onEnterPress={onSubmit} onOpen={() => setKeyboardOpen(true)} onClose={() => {
         let amt = form.quantity || 0
         setInitialValue(Math.round(amt) < amt ? Number(amt.toFixed(2)) : amt)
         setKeyboardOpen(false)

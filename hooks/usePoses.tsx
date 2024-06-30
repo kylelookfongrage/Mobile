@@ -14,6 +14,7 @@ import '@mediapipe/pose'
 import { decodeJpeg } from '@tensorflow/tfjs-react-native'
 import { Tables } from '../supabase/dao'
 import { calculateBodyFat } from '../data'
+import * as bodyPix from '@tensorflow-models/body-pix'; 
 
 export type BlazePoseStandardizedResults = {x: number, y: number, z: number, confidence: number}
 export type BlazePoseStandardResultObject = {[key: typeof blazePoseKeypoints[number]] : BlazePoseStandardizedResults}
@@ -250,3 +251,20 @@ export const useBlazePose = () => {
     return {model, detector, helpers: poseDetection, decodeJpeg, isReady: detector ? false : isReady}
 }
 
+
+export const useBodyPix = () => {
+    let [model, setModel] = useState<null | bodyPix.BodyPix>(null)
+    let [state, set_state] = useState({loading: false, error: null as string | null})
+    useEffect(() => {
+        (async () => {
+            try {
+                const net = await bodyPix.load();
+                setModel(net)
+                set_state({loading: false, error: null})
+            } catch (error) {
+                set_state({loading: false, error: error?.toString() || ''})
+            }
+        })()
+    }, [])
+    return {model, loading: model ? false : true, toMask: bodyPix.drawMask}
+}

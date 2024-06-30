@@ -78,7 +78,6 @@ export const SummaryScreen = () => {
   let g = useGet()
   let weightDiff = (profile?.weight || 0) - (today?.weight || profile?.weight || 0) 
   let fatDiff = (profile?.startFat || 0) - (today?.fat || profile?.startFat || 0) 
-  const [detections, setDetections] = useState<BlazePoseStandardResultObject>({})
   return (
     <View style={{ flex: 1 }} includeBackground>
       <SafeAreaView edges={["top"]} style={[{ flex: 1 }, tw`h-12/12`]}>
@@ -91,6 +90,7 @@ export const SummaryScreen = () => {
               <TouchableOpacity
                 style={tw`p-.5`}
                 onPress={() => {
+                  //@ts-ignore
                   navigator.navigate("Calendar")
                   // g.set('error', 'testing this')
                 }}
@@ -148,7 +148,7 @@ export const SummaryScreen = () => {
             );
           })}
         </View>
-        <Button onPress={() => navigator.navigate('AICamera')} />
+        {/* <Button onPress={() => navigator.navigate('AICamera')} /> */}
         <ScrollView
           style={[tw``]}
           showsVerticalScrollIndicator={false}
@@ -158,6 +158,7 @@ export const SummaryScreen = () => {
           <XStack style={{ flex: 1, width: g.s.width }}>
           <TouchableOpacity onPress={() => {
             let s = getMatchingNavigationScreen('TaskAgenda', navigator)
+            //@ts-ignore
             navigator.navigate(s)
           }} style={{ width: g.s.width * 0.43, height: g.s.height * 0.17, marginLeft: 8, margin: 4, marginTop: 8 }}>
             <View card style={{flex: 1, ...tw`p-2 rounded-lg`}}>
@@ -240,20 +241,6 @@ export const SummaryScreen = () => {
               </SwipeWithDelete>
             );
           })}
-          <AIImage onDetect={setDetections} />
-          {detections && [['left_ear', 'right_ear'], ['left_shoulder', 'right_shoulder'], ['left_hip', 'right_hip'], ['right_wrist', 'right_thumb']].map((x, i) => {
-            let [from, to] = [detections?.[x[0]], detections?.[x[1]]]
-            if (!from || !to) return <View key={`point not found ${i} ${x[0]} ${x[1]}`} />
-            let {x: x1, y: y1, z: z1, confidence: c1} = from
-            let {x: x2, y: y2, z: z2, confidence: c2} = to
-            if (c1 < 0.4 || c2 < 0.4) return <View key={`point not found ${i} ${x[0]} ${x[1]}`} />
-            return <View key={`point found ${i} ${x[0]} ${x[1]}`} style={tw`flex-row items-center justify-between`}>
-              <Text>{`${x[0]}->${x[1]}`}</Text>
-              <Text>{Math.round(calculateEuclideanDistance(to, from, g.s.width, g.s.height))}</Text>
-              <Text>{to.z}</Text>
-            </View>
-          })}
-          {detections && <Text>{Math.abs(Math.round(estimateBlazePoseBodyFat(detections, profile)))}</Text>}
           <View style={tw`pb-10`} />
           <View style={tw`pb-40`} />
         </ScrollView>

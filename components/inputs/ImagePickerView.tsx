@@ -168,7 +168,7 @@ export const ImagePickerView = (props: ImagePickerViewProps) => {
             },
             // @ts-ignore
           },
-        ], undefined)}
+        ], {useNativeDriver: true})}
         horizontal={props.multiple}
         showsVerticalScrollIndicator={false}
         showsHorizontalScrollIndicator={false}

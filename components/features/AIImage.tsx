@@ -2,7 +2,7 @@ import { View, Text } from '../base/Themed'
 import React, { useEffect, useRef, useState } from 'react'
 import { ActivityIndicator, Dimensions, Image, ImageBackground, TouchableOpacity } from 'react-native'
 import { isStorageUri } from '../../data'
-import usePoses, { skeleton_points, useBlazePose, blazePoseKeypointsToStandard, BlazePoseStandardResultObject } from '../../hooks/usePoses'
+import usePoses, { skeleton_points, useBlazePose, blazePoseKeypointsToStandard, BlazePoseStandardResultObject, useBodyPix } from '../../hooks/usePoses'
 import { Circle, Svg, Text as SVGText, G, Line } from 'react-native-svg'
 import { _tokens } from '../../tamagui.config'
 import { useGet } from '../../hooks/useGet'
@@ -20,6 +20,7 @@ const AIImage = (props: {
     let g = useGet()
     let imageRef = useRef<Image>(null)
     let [src, setSrc] = useState(null)
+    let bpix = useBodyPix()
     let [h,w] = [Dimensions.get('window').height * 0.45, Dimensions.get('window').width]
     let [detections, setDetections] = useState<BlazePoseStandardResultObject>({})
     let [loading, setLoading] = useState(null as null | string)
@@ -39,23 +40,29 @@ const AIImage = (props: {
               };
               //@ts-ignore
               const result = await ImagePicker.launchImageLibraryAsync({ ...settings });
+              console.log(result)
               if (result && result.assets && result.assets.length > 0) {
                   setSrc(result.assets[0].uri)
                   
               }
           }
       } catch (error) {
+        console.log(error)
+        if (error) {  
           g.setFn(p => ({ ...p, error: error?.toString() || 'There was a problem', loading: false }))
+        } else {
+          g.setFn(p => ({...p, loading: false}))
+        }
       }
   }
     useEffect(() => {
       (async () => {
         try {
-          if (bp.detector === null) {
+          if (bp.detector === null || bpix.loading) {
             setLoading('waiting for model')
             return;
           }
-          if (Object.keys(detections).length) throw Error('Already detected');
+          // if (Object.keys(detections).length) throw Error('Already detected');
           setLoading(p => 'Getting image information')
           if (!src || isStorageUri(src)) throw Error('No source');
           let res = await tf.fetch(src, {}, {isBinary: true})
@@ -66,6 +73,14 @@ const AIImage = (props: {
           setLoading(p => 'Transforming image')
           let z = bp.decodeJpeg(_arr)
           let shape = z.shape
+          console.log(shape)
+
+          let _res = await bpix.model?.segmentPerson(z)
+          if (_res) {
+            // let data = _res.data
+            // console.log(data)
+          }
+          
 
           setLoading(p => 'Estimating poses')
           let outputs = await bp.detector?.estimatePoses(z)
@@ -82,7 +97,7 @@ const AIImage = (props: {
         }
         setLoading(p => null)
       })()
-    }, [src, bp.detector === null])
+    }, [src, bp.detector === null, bpix.loading])
 
     let fx = (_x: number) => `${Math.round(100 * (_x))}%`
     let fy = (_y: number) => `${Math.round(100 * (_y))}%`

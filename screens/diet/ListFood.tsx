@@ -185,7 +185,7 @@ export default function ListFood(props: ListFoodProps) {
         <View style={tw`pb-40`} />
       </ScrollView>
       {/* @ts-ignore */}
-      <Overlay disablePadding visible={showBarcode} dialogueHeight={45} excludeBanner onDismiss={setShowBarcode}>
+      {/* <Overlay disablePadding visible={showBarcode} dialogueHeight={45} excludeBanner onDismiss={setShowBarcode}>
         <BarcodeScannerView
           onScanAgain={() => {
             setBarcode(null)
@@ -200,8 +200,8 @@ export default function ListFood(props: ListFoodProps) {
             if ((num || 0) > 0) setShowBarcode(false)
           }} />
         {barcodeError && <Text lg weight='bold' style={{ alignSelf: 'center', color: _tokens.error }}>No results found for barcode</Text>}
-      </Overlay>
-      <FAB onPress={() => {
+      </Overlay> */}
+      {/* <FAB onPress={() => {
         setShowBarcode(true)
         setBarcodeError(false)
       }} icon={() => {
@@ -216,7 +216,7 @@ export default function ListFood(props: ListFoodProps) {
         padding: 0,
         bottom: 0,
         backgroundColor: _tokens.primary900
-      }} />
+      }} /> */}
     </View>
   )
 }

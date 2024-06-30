@@ -2,7 +2,7 @@ import React, { useEffect } from 'react'
 import { useStorage } from '../../supabase/storage';
 import { View } from './Themed';
 import { defaultImage, isStorageUri } from '../../data';
-import { Image, ImageBackground, Pressable } from 'react-native';
+import { ActivityIndicator, Image, ImageBackground, Pressable } from 'react-native';
 import tw from 'twrnc'
 import useAsync from '../../hooks/useAsync';
 const loadingIndicator = require('../../assets/animations/loader.gif')
@@ -71,7 +71,9 @@ export default function SupabaseImage(props: {
         props.onSrcChange(src)
     }, [src])
 
-    if (!src) return <View {...props.style} />
+    if (!src) return <View {...props.style} >
+        <ActivityIndicator />
+    </View>
     let Component = props.background ? ImageBackground : Image
     return <Pressable disabled={props.disablePress} {...props.style} onPress={() => n.navigate('Image', {uris: [src]})}>
         {/* @ts-ignore */}

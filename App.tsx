@@ -46,7 +46,6 @@ import { getTrackingPermissionsAsync, requestTrackingPermissionsAsync } from "ex
 Colors.loadDesignTokens({ primaryColor: tw`bg-red-600`.backgroundColor });
 import * as SplashScreen from 'expo-splash-screen';
 import { fetchUser } from "./redux/api/auth";
-import { KeyboardView } from "./components/features/Keyboard";
 import { set } from "./redux/reducers/get";
 import { GlobalLoader, GlobalToastView } from "./components/base/Toast";
 import { GestureHandlerRootView } from 'react-native-gesture-handler'

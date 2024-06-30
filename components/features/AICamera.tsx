@@ -84,3 +84,15 @@ export default function AICamera() {
 }
 
 
+
+
+// import { View, Text } from 'react-native'
+// import React from 'react'
+
+// export default function AICamera() {
+//   return (
+//     <View>
+//       <Text>AICamera</Text>
+//     </View>
+//   )
+// }
